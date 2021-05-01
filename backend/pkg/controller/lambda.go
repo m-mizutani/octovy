@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/aws/aws-lambda-go/events"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/backend/pkg/api"
@@ -17,6 +18,8 @@ func (x *Controller) LambdaAPIHandler(event golambda.Event) (interface{}, error)
 	}
 
 	svc := service.New(x.Config)
+
+	gin.SetMode(gin.ReleaseMode)
 	engine := api.New(&api.Config{
 		Service:  svc,
 		Usecase:  x.Usecase,

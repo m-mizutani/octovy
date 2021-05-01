@@ -4,6 +4,7 @@ import * as iam from "@aws-cdk/aws-iam";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as sqs from "@aws-cdk/aws-sqs";
 import * as ec2 from "@aws-cdk/aws-ec2";
+import * as secretsmanager from "@aws-cdk/aws-secretsmanager";
 
 import * as apigateway from "@aws-cdk/aws-apigateway";
 import { SqsEventSource } from "@aws-cdk/aws-lambda-event-sources";
@@ -170,6 +171,12 @@ export class OctovyStack extends cdk.Stack {
       this.metaTable.grantFullAccess(apiHandler);
       this.metaTable.grantFullAccess(scanRepo);
       this.scanRequestQueue.grantSendMessages(apiHandler);
+      const secret = secretsmanager.Secret.fromSecretCompleteArn(
+        this,
+        "secret",
+        props.secretsARN
+      );
+      secret.grantRead(scanRepo);
     }
   }
 }

@@ -59,7 +59,6 @@ func errResp(c *gin.Context, code int, err error) {
 }
 
 func New(cfg *Config) *gin.Engine {
-	gin.SetMode(gin.DebugMode)
 	engine := gin.Default()
 
 	engine.Use(func(c *gin.Context) {
