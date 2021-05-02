@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
@@ -21,19 +22,20 @@ type Interfaces struct {
 }
 
 // AWS
+// SecretsManager
+type NewSecretManager func(region string) (SecretsManagerClient, error)
 type SecretsManagerClient interface {
 	GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
 }
 
-type NewSecretManager func(region string) (SecretsManagerClient, error)
-
+// SQS
+type NewSQS func(region string) (SQSClient, error)
 type SQSClient interface {
 	SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error)
 }
 
-type NewSQS func(region string) (SQSClient, error)
-
 // DB
+type NewDB func(region, tableName string) (DBClient, error)
 type DBClient interface {
 	InsertPackage(*model.Package) error
 	DeletePackage(*model.Package) error
@@ -50,8 +52,6 @@ type DBClient interface {
 	Close() error
 }
 
-type NewDB func(region, tableName string) (DBClient, error)
-
 // FileSystem
 type FS interface {
 	WriteFile(r io.Reader, path string) error
@@ -62,3 +62,10 @@ type FS interface {
 
 // HTTP
 type NewHTTPClient func(http.RoundTripper) *http.Client
+
+// Trivy DB
+type NewTrivyDB func(dbPath string) (TrivyDBClient, error)
+type TrivyDBClient interface {
+	GetAdvisories(source, pkgName string) ([]*model.AdvisoryData, error)
+	GetVulnerability(vulnID string) (*types.Vulnerability, error)
+}

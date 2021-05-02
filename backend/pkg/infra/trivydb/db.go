@@ -86,5 +86,35 @@ func (x *TrivyDB) GetVulnerability(vulnID string) (*types.Vulnerability, error) 
 	}
 
 	return vuln, nil
+}
 
+type TrivyDBMock struct {
+	DBPath           string
+	AdvisoryMap      map[string]map[string][]*model.AdvisoryData
+	VulnerabilityMap map[string]*types.Vulnerability
+}
+
+func NewMock() (infra.NewTrivyDB, *TrivyDBMock) {
+	mock := &TrivyDBMock{
+		AdvisoryMap:      make(map[string]map[string][]*model.AdvisoryData),
+		VulnerabilityMap: make(map[string]*types.Vulnerability),
+	}
+
+	return func(dbPath string) (infra.TrivyDBClient, error) {
+		mock.DBPath = dbPath
+		return mock, nil
+	}, mock
+}
+
+func (x *TrivyDBMock) GetAdvisories(source string, pkgName string) ([]*model.AdvisoryData, error) {
+	pkgBucket, ok := x.AdvisoryMap[source]
+	if !ok {
+		return nil, goerr.New("Invalid package source name for trivy DB").With("source", source)
+	}
+
+	return pkgBucket[pkgName], nil
+}
+
+func (x *TrivyDBMock) GetVulnerability(vulnID string) (*types.Vulnerability, error) {
+	return x.VulnerabilityMap[vulnID], nil
 }
