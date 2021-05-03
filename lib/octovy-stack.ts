@@ -56,6 +56,13 @@ export class OctovyStack extends cdk.Stack {
       indexName: "secondary",
       partitionKey: { name: "pk2", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk2", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.KEYS_ONLY,
+    });
+    this.metaTable.addGlobalSecondaryIndex({
+      indexName: "tertiary",
+      partitionKey: { name: "pk3", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk3", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.KEYS_ONLY,
     });
 
     // SQS
