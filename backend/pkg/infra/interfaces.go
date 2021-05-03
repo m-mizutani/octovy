@@ -7,16 +7,21 @@ import (
 	"os"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 )
 
 type Interfaces struct {
 	// Factories
 	NewDB            NewDB
+	NewTrivyDB       NewTrivyDB
 	NewSecretManager NewSecretManager
 	NewSQS           NewSQS
+	NewS3            NewS3
+	NewGitHub        NewGitHub
 	NewHTTP          NewHTTPClient // Interface set
 	FS               FS
 }
@@ -32,6 +37,13 @@ type SecretsManagerClient interface {
 type NewSQS func(region string) (SQSClient, error)
 type SQSClient interface {
 	SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error)
+}
+
+// S3
+type NewS3 func(region string) (S3Client, error)
+type S3Client interface {
+	GetObject(*s3.GetObjectInput) (*s3.GetObjectOutput, error)
+	PutObject(*s3.PutObjectInput) (*s3.PutObjectOutput, error)
 }
 
 // DB
@@ -62,6 +74,13 @@ type FS interface {
 
 // HTTP
 type NewHTTPClient func(http.RoundTripper) *http.Client
+
+// GitHub
+type NewGitHub func() GitHubClient
+type GitHubClient interface {
+	ListReleases(owner, repo string) ([]*github.RepositoryRelease, error)
+	DownloadReleaseAsset(owner, repo string, assetID int64) (io.ReadCloser, error)
+}
 
 // Trivy DB
 type NewTrivyDB func(dbPath string) (TrivyDBClient, error)

@@ -6,7 +6,9 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/db"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/fs"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/github"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/net"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
 )
 
 var logger = golambda.Logger
@@ -15,16 +17,18 @@ type Service struct {
 	config *Config
 	infra.Interfaces
 
-	dbClient  infra.DBClient
-	smClient  infra.SecretsManagerClient
-	sqsClient infra.SQSClient
+	trivyDBPath string
+	dbClient    infra.DBClient
 }
 
 var defaultInfra = infra.Interfaces{
 	NewDB:            db.NewDynamoClient,
+	NewTrivyDB:       trivydb.New,
 	NewSecretManager: aws.NewSecretsManager,
 	NewSQS:           aws.NewSQS,
+	NewS3:            aws.NewS3,
 	NewHTTP:          net.NewHTTP,
+	NewGitHub:        github.New,
 	FS:               &fs.FS{},
 }
 

@@ -4,7 +4,10 @@ import * as iam from "@aws-cdk/aws-iam";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as sqs from "@aws-cdk/aws-sqs";
 import * as ec2 from "@aws-cdk/aws-ec2";
+import * as s3 from "@aws-cdk/aws-s3";
 import * as secretsmanager from "@aws-cdk/aws-secretsmanager";
+import * as events from "@aws-cdk/aws-events";
+import * as targets from "@aws-cdk/aws-events-targets";
 
 import * as apigateway from "@aws-cdk/aws-apigateway";
 import { SqsEventSource } from "@aws-cdk/aws-lambda-event-sources";
@@ -18,6 +21,10 @@ export interface vpcConfig {
 
 interface OctovyProps extends cdk.StackProps {
   readonly secretsARN: string;
+
+  readonly s3Region: string;
+  readonly s3Bucket: string;
+  readonly s3Prefix?: string;
 
   readonly lambdaRoleARN?: string;
   readonly githubEndpoint?: string;
@@ -97,6 +104,11 @@ export class OctovyStack extends cdk.Stack {
       SECRETS_ARN: props.secretsARN,
       SCAN_REQUEST_QUEUE: this.scanRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
+
+      S3_REGION: props.s3Region,
+      S3_BUCKET: props.s3Bucket,
+      S3_PREFIX: props.s3Prefix || "",
+
       SENTRY_DSN: props.sentryDSN || "",
       SENTRY_ENV: props.sentryEnv || "",
     };
@@ -128,6 +140,21 @@ export class OctovyStack extends cdk.Stack {
       securityGroups,
     });
 
+    const updateDB = new lambda.Function(this, "updateDB", {
+      runtime: lambda.Runtime.GO_1_X,
+      handler: "updateDB",
+      role: lambdaRole,
+      code: asset,
+      timeout: cdk.Duration.seconds(300),
+      memorySize: 1024,
+      environment: envVars,
+    });
+    const rule = new events.Rule(this, "PeriodicUpdateDB", {
+      schedule: events.Schedule.rate(cdk.Duration.hours(1)),
+    });
+    rule.addTarget(new targets.LambdaFunction(updateDB));
+
+    // API gateway
     const gw = new apigateway.LambdaRestApi(this, "api", {
       handler: apiHandler,
       proxy: false,
@@ -170,13 +197,23 @@ export class OctovyStack extends cdk.Stack {
     if (props.lambdaRoleARN === undefined) {
       this.metaTable.grantFullAccess(apiHandler);
       this.metaTable.grantFullAccess(scanRepo);
+
       this.scanRequestQueue.grantSendMessages(apiHandler);
+
       const secret = secretsmanager.Secret.fromSecretCompleteArn(
         this,
         "secret",
         props.secretsARN
       );
       secret.grantRead(scanRepo);
+
+      const bucket = s3.Bucket.fromBucketName(
+        this,
+        "data-bucket",
+        props.s3Bucket
+      );
+      bucket.grantReadWrite(updateDB);
+      bucket.grantRead(scanRepo);
     }
   }
 }

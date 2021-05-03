@@ -9,6 +9,7 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/api"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 )
 
 func (x *Controller) LambdaAPIHandler(event golambda.Event) (interface{}, error) {
@@ -50,5 +51,13 @@ func (x *Controller) LambdaScanRepo(event golambda.Event) (interface{}, error) {
 	}
 
 	return nil, nil
+}
 
+func (x *Controller) LambdaUpdateDB() (interface{}, error) {
+	svc := service.New(x.Config)
+
+	if err := usecase.UpdateTrivyDB(svc); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }

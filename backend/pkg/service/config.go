@@ -8,6 +8,10 @@ type Config struct {
 	SecretsARN       string `env:"SECRETS_ARN"`
 	ScanRequestQueue string `env:"SCAN_REQUEST_QUEUE"`
 	GitHubEndpoint   string `env:"GITHUB_ENDPOINT"`
+
+	S3Region string `env:"S3_REGION"`
+	S3Bucket string `env:"S3_BUCKET"`
+	S3Prefix string `env:"S3_PREFIX"`
 }
 
 func NewConfig() *Config {
