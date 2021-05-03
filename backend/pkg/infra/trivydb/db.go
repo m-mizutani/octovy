@@ -45,13 +45,16 @@ func (x *TrivyDB) GetAdvisories(source string, pkgName string) ([]*model.Advisor
 			return nil
 		}
 
-		advBucket.ForEach(func(k, v []byte) error {
+		err := advBucket.ForEach(func(k, v []byte) error {
 			advisories = append(advisories, &model.AdvisoryData{
 				VulnID: string(k),
 				Data:   v,
 			})
 			return nil
 		})
+		if err != nil {
+			return goerr.Wrap(err)
+		}
 
 		return nil
 	}

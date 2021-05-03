@@ -33,6 +33,9 @@ func genRSAKey(t *testing.T) []byte {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	return buf.Bytes()
 }

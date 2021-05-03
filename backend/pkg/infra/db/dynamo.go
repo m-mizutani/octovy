@@ -22,11 +22,6 @@ const (
 	dynamoGSIName = "secondary"
 )
 
-var (
-	logger  = golambda.Logger
-	wrapErr = golambda.WrapError
-)
-
 type dynamoRecord struct {
 	PK string `dynamo:"pk,hash"`
 	SK string `dynamo:"sk,range"`
@@ -34,17 +29,14 @@ type dynamoRecord struct {
 	PK2 string `dynamo:"pk2,omitempty" index:"secondary,hash"`
 	SK2 string `dynamo:"sk2,omitempty" index:"secondary,range"`
 
+	PK3 string `dynamo:"pk3,omitempty" index:"tertiary,hash"`
+	SK3 string `dynamo:"sk3,omitempty" index:"tertiary,range"`
+
 	Doc interface{} `dynamo:"doc"`
 }
 
 func (x *dynamoRecord) HashKey() interface{}  { return x.PK }
 func (x *dynamoRecord) RangeKey() interface{} { return x.SK }
-
-type dynamoMetaSequence struct {
-	PK  string `dynamo:"pk,hash"`
-	SK  string `dynamo:"sk,range"`
-	Seq int64  `dynamo:"seq"`
-}
 
 // DynamoClient is implementation of infra.DBClient to use Amazon DynamoDB
 type DynamoClient struct {
@@ -152,6 +144,7 @@ func isConditionalCheckErr(err error) bool {
 	return false
 }
 
+/*
 func isTransactionException(err error) bool {
 	if err == nil {
 		return false
@@ -166,6 +159,7 @@ func isTransactionException(err error) bool {
 	}
 	return false
 }
+*/
 
 func isNotFoundErr(err error) bool {
 	if err == nil {

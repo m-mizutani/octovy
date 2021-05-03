@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
@@ -75,6 +74,10 @@ func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID 
 	logger.With("code", r.StatusCode).Debug("")
 
 	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return goerr.Wrap(err)
+	}
+
 	httpClient := x.NewHTTP(nil)
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -95,27 +98,4 @@ func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID 
 	}
 
 	return nil
-}
-
-func newGithubClient(endpoint string, appID, installID int64, privateKey []byte) (*github.Client, error) {
-	tr := http.DefaultTransport
-
-	itr, err := ghinstallation.New(tr, appID, installID, privateKey)
-	if err != nil {
-		return nil, goerr.Wrap(err)
-	}
-	itr.BaseURL = endpoint + "app"
-
-	client := github.NewClient(&http.Client{Transport: itr})
-
-	if endpoint != "" {
-		url, err := url.Parse(endpoint)
-		if err != nil {
-			return nil, goerr.Wrap(err).With("endpoint", endpoint)
-		}
-
-		client.BaseURL = url
-	}
-
-	return client, nil
 }

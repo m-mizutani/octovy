@@ -16,37 +16,39 @@ func postWebhookGitHub(c *gin.Context) {
 
 	githubEventType := c.Request.Header.Get("X-GitHub-Event")
 	if githubEventType == "" {
-		c.Error(goerr.Wrap(errAPIInvalidParameter, "No X-GitHub-Event"))
+		_ = c.Error(goerr.Wrap(errAPIInvalidParameter, "No X-GitHub-Event"))
 		return
 	}
 
 	eventBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.Error(goerr.Wrap(err, "Failed to read github webhook event body"))
+		_ = c.Error(goerr.Wrap(err, "Failed to read github webhook event body"))
 		return
 	}
 	raw, err := github.ParseWebHook(githubEventType, eventBody)
 	if err != nil {
-		c.Error(goerr.Wrap(err, "Failed to parse github webhook event body").With("body", string(eventBody)))
+		_ = c.Error(goerr.Wrap(err, "Failed to parse github webhook event body").With("body", string(eventBody)))
 		return
 	}
 
 	switch event := raw.(type) {
 	case *github.PushEvent:
 		if err := handlePushEvent(cfg, event); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 
 	case *github.InstallationEvent:
 		if err := handleInstallationEvent(cfg, event); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
+
+	default:
+		logger.With("event", event).With("type", githubEventType).Warn("Unsupported event")
 	}
 
 	c.JSON(200, baseResponse{Data: "OK"})
-	return
 }
 
 func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error {

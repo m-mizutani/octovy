@@ -14,7 +14,6 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
-	"github.com/m-mizutani/octovy/backend/pkg/utils"
 )
 
 type parser struct {
@@ -49,33 +48,7 @@ func stepDownDirectory(fpath string) string {
 	return filepath.Join(arr...)
 }
 
-func hasString(ss []string, target string) bool {
-	for _, s := range ss {
-		if s == target {
-			return true
-		}
-	}
-	return false
-}
-
 func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepositoryRequest) error {
-	var repo *model.Repository
-	if err := utils.Backoff(5, func() (bool, error) {
-		r, err := svc.DB().FindRepoByFullName(req.Owner, req.RepoName)
-		if r == nil || r.Branches == nil {
-			return false, err
-		}
-		repo = r
-		return true, nil
-	}); err != nil {
-		return err
-	}
-
-	if !hasString(repo.Branches, req.Branch) {
-		logger.With("repo", repo).With("req", req).Warn("Branch is not found in repo setting")
-		return nil
-	}
-
 	tmp, err := svc.FS.TempFile("", "*.zip")
 	if err != nil {
 		return goerr.Wrap(err)
@@ -103,6 +76,10 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		defer fd.Close()
 
 		pkgs, err := psr.Parse(fd)
+		if err != nil {
+			return goerr.Wrap(err)
+		}
+
 		parsed := make([]*model.Package, len(pkgs))
 		for i := range pkgs {
 			parsed[i] = &model.Package{

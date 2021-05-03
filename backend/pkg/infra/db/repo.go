@@ -24,7 +24,7 @@ func (x *DynamoClient) InsertRepo(repo *model.Repository) (bool, error) {
 		if isConditionalCheckErr(err) {
 			return false, nil
 		}
-		return false, wrapErr(err).With("record", record)
+		return false, goerr.Wrap(err).With("record", record)
 	}
 
 	return true, nil

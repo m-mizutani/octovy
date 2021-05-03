@@ -31,7 +31,7 @@ func (x *DynamoClient) InsertPackage(pkg *model.Package) error {
 	q := x.table.Put(record).If("attribute_not_exists(pk) AND attribute_not_exists(sk)")
 	if err := q.Run(); err != nil {
 		if !isConditionalCheckErr(err) {
-			return wrapErr(err).With("record", record)
+			return goerr.Wrap(err).With("record", record)
 		}
 	}
 
@@ -44,7 +44,7 @@ func (x *DynamoClient) DeletePackage(pkg *model.Package) error {
 
 	if err := x.table.Delete("pk", pk).Range("sk", sk).Run(); err != nil {
 		if !isNotFoundErr(err) {
-			return wrapErr(err).With("pkg", pkg).With("pk", pk).With("sk", sk)
+			return goerr.Wrap(err).With("pkg", pkg).With("pk", pk).With("sk", sk)
 		}
 	}
 	return nil

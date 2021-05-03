@@ -11,7 +11,7 @@ func getRepos(c *gin.Context) {
 	cfg := getConfig(c)
 	repos, err := cfg.Service.DB().FindRepo()
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -23,7 +23,7 @@ func getReposByOwner(c *gin.Context) {
 	owner := c.Param("owner")
 	repos, err := cfg.Service.DB().FindRepoByOwner(owner)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func getRepoInfo(c *gin.Context) {
 	name := c.Param("name")
 	repo, err := cfg.Service.DB().FindRepoByFullName(owner, name)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func getPackagesByRepoBranch(c *gin.Context) {
 
 	packages, err := cfg.Service.DB().FindPackagesByBranch(branch)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func getPackage(c *gin.Context) {
 	pkgName := c.Query("name")
 	packages, err := cfg.Service.DB().FindPackagesByName(model.PkgType(pkgType), pkgName)
 	if err != nil {
-		c.Error(err)
+		_ = c.Error(err)
 		return
 	}
 
