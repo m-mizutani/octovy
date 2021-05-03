@@ -65,6 +65,7 @@ func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error
 		}
 		// Do not scan private repository
 		if repo.Private != nil && *repo.Private {
+			logger.With("repo", repo).Info("Skip private repository")
 			continue
 		}
 
@@ -109,6 +110,7 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 	}
 	// Do not scan private repository
 	if event.Repo.Private != nil && *event.Repo.Private {
+		logger.With("repo", event.Repo).Info("Skip private repository")
 		return nil
 	}
 

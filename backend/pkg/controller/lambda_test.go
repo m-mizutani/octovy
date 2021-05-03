@@ -61,8 +61,16 @@ func TestLambdaAPI(t *testing.T) {
 
 			Commits: []github.PushEventCommit{
 				{
-					ID:        github.String("beefcafe"),
+					ID:        github.String("abcdef123"),
 					Timestamp: &github.Timestamp{Time: ts},
+				},
+				{
+					ID:        github.String("beefcafe"),
+					Timestamp: &github.Timestamp{Time: ts.Add(time.Minute)},
+				},
+				{
+					ID:        github.String("bbbbbbbb"),
+					Timestamp: &github.Timestamp{Time: ts.Add(time.Second)},
 				},
 			},
 			Installation: &github.Installation{
@@ -94,7 +102,7 @@ func TestLambdaAPI(t *testing.T) {
 		assert.Equal(t, "master", req.Branch)
 		assert.Equal(t, int64(1234), req.InstallID)
 		assert.Equal(t, "beefcafe", req.Ref)
-		assert.Equal(t, ts.Unix(), req.UpdatedAt)
+		assert.Equal(t, ts.Add(time.Minute).Unix(), req.UpdatedAt)
 
 		require.NotNil(t, repo)
 	})
