@@ -1,7 +1,6 @@
 package detector
 
 import (
-	"github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/backend/pkg/infra"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
@@ -47,7 +46,7 @@ func init() {
 	}
 }
 
-func (x *Detector) Detect(pkgType model.PkgType, pkgName, version string) ([]*types.Vulnerability, error) {
+func (x *Detector) Detect(pkgType model.PkgType, pkgName, version string) ([]*model.Vulnerability, error) {
 	options, ok := pkgTypeSourceMap[pkgType]
 	if !ok {
 		logger.With("pkgType", pkgType).Warn("Unsupported pkgType")
@@ -70,13 +69,16 @@ func (x *Detector) Detect(pkgType model.PkgType, pkgName, version string) ([]*ty
 		}
 	}
 
-	var vulnerabilities []*types.Vulnerability
+	var vulnerabilities []*model.Vulnerability
 	for _, adv := range affected {
 		vuln, err := x.trivyDB.GetVulnerability(adv.VulnID)
 		if err != nil {
 			return nil, err
 		}
-		vulnerabilities = append(vulnerabilities, vuln)
+		vulnerabilities = append(vulnerabilities, &model.Vulnerability{
+			Detail: *vuln,
+			VulnID: adv.VulnID,
+		})
 	}
 
 	return vulnerabilities, nil

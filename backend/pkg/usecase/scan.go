@@ -63,7 +63,14 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		return goerr.Wrap(err).With("file", tmp.Name())
 	}
 
+	dt, err := svc.Detector()
+	if err != nil {
+		return err
+	}
+
 	var newPkgs []*model.PackageRecord
+	detectedVulnMap := map[string]*model.Vulnerability{}
+
 	for _, f := range zipFile.File {
 		psr, ok := parserMap[filepath.Base(f.Name)]
 		if !ok {
@@ -83,14 +90,26 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 
 		parsed := make([]*model.PackageRecord, len(pkgs))
 		for i := range pkgs {
+			vulns, err := dt.Detect(psr.PkgType, pkgs[i].Name, pkgs[i].Version)
+			if err != nil {
+				return err
+			}
+
+			var vulnIDs []string
+			for _, vuln := range vulns {
+				vulnIDs = append(vulnIDs, vuln.VulnID)
+				detectedVulnMap[vuln.VulnID] = vuln
+			}
+
 			parsed[i] = &model.PackageRecord{
 				Detected: req.ScanTarget,
 
 				Source: stepDownDirectory(f.Name),
 				Package: model.Package{
-					Type:    psr.PkgType,
-					Name:    pkgs[i].Name,
-					Version: pkgs[i].Version,
+					Type:            psr.PkgType,
+					Name:            pkgs[i].Name,
+					Version:         pkgs[i].Version,
+					Vulnerabilities: vulnIDs,
 				},
 			}
 		}
@@ -125,6 +144,12 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	for _, pkg := range delPkgs {
 		if err := svc.DB().RemovePackageRecord(pkg); err != nil {
 			return goerr.Wrap(err).With("pkg", pkg)
+		}
+	}
+
+	for _, vuln := range detectedVulnMap {
+		if err := svc.DB().InsertVulnerability(vuln); err != nil {
+			return goerr.Wrap(err).With("vuln", vuln)
 		}
 	}
 

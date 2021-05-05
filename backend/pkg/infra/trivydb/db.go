@@ -99,7 +99,15 @@ type TrivyDBMock struct {
 
 func NewMock() (infra.NewTrivyDB, *TrivyDBMock) {
 	mock := &TrivyDBMock{
-		AdvisoryMap:      make(map[string]map[string][]*model.AdvisoryData),
+		AdvisoryMap: map[string]map[string][]*model.AdvisoryData{
+			"GitHub Security Advisory Rubygems": make(map[string][]*model.AdvisoryData),
+			"GitHub Security Advisory Npm":      make(map[string][]*model.AdvisoryData),
+			"GitHub Security Advisory Pip":      make(map[string][]*model.AdvisoryData),
+			"go::GitLab Advisory Database":      make(map[string][]*model.AdvisoryData),
+			"nodejs-security-wg":                make(map[string][]*model.AdvisoryData),
+			"python-safety-db":                  make(map[string][]*model.AdvisoryData),
+			"ruby-advisory-db":                  make(map[string][]*model.AdvisoryData),
+		},
 		VulnerabilityMap: make(map[string]*types.Vulnerability),
 	}
 

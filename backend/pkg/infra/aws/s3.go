@@ -23,11 +23,14 @@ func NewS3(region string) (infra.S3Client, error) {
 }
 
 type MockS3 struct {
-	Region  string
-	Objects map[string]map[string][]byte
+	Region   string
+	Objects  map[string]map[string][]byte
+	GetInput []*s3.GetObjectInput
 }
 
 func (x *MockS3) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+	x.GetInput = append(x.GetInput, input)
+
 	bucket, ok := x.Objects[*input.Bucket]
 	if !ok {
 		return nil, goerr.New(s3.ErrCodeNoSuchBucket)

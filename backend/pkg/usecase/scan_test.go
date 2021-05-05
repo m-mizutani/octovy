@@ -15,8 +15,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/m-mizutani/octovy/backend/pkg/infra"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
@@ -25,7 +27,20 @@ import (
 )
 
 func TestScanBundler(t *testing.T) {
-	svc, dbClient := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
+	svc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
+
+	trivyDBMock.AdvisoryMap["ruby-advisory-db"] = map[string][]*model.AdvisoryData{
+		"rack": {
+			{
+				VulnID: "CVE-2020-8161",
+				// patched version is modified for test
+				Data: []byte(`{"PatchedVersions":["~\u003e 2.3.3","\u003e= 2.4.0"]}`),
+			},
+		},
+	}
+	trivyDBMock.VulnerabilityMap["CVE-2020-8161"] = &types.Vulnerability{
+		Title: "test vuln",
+	}
 
 	req := &model.ScanRepositoryRequest{
 		ScanTarget: model.ScanTarget{
@@ -48,10 +63,21 @@ func TestScanBundler(t *testing.T) {
 	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
 	require.NoError(t, err)
 	assert.Equal(t, 41, len(packages))
+
+	vulns, err := dbClient.FindLatestVulnerabilities(10)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(vulns))
+	assert.Equal(t, "CVE-2020-8161", vulns[0].VulnID)
+
+	rackPkgs, err := dbClient.FindPackageRecordsByName(model.PkgBundler, "rack")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(rackPkgs))
+	assert.Equal(t, "rack", rackPkgs[0].Package.Name)
+	assert.Contains(t, rackPkgs[0].Package.Vulnerabilities, "CVE-2020-8161")
 }
 
 func TestScanGoModule(t *testing.T) {
-	svc, dbClient := setupScanRepositoryService(t, "../testdata/src/go_mod.zip")
+	svc, dbClient, _ := setupScanRepositoryService(t, "../testdata/src/go_mod.zip")
 
 	req := &model.ScanRepositoryRequest{
 		ScanTarget: model.ScanTarget{
@@ -77,7 +103,7 @@ func TestScanGoModule(t *testing.T) {
 }
 
 func TestScanNPM(t *testing.T) {
-	svc, dbClient := setupScanRepositoryService(t, "../testdata/src/npm.zip")
+	svc, dbClient, _ := setupScanRepositoryService(t, "../testdata/src/npm.zip")
 
 	req := &model.ScanRepositoryRequest{
 		ScanTarget: model.ScanTarget{
@@ -152,7 +178,7 @@ func newResp(code int, body interface{}) *http.Response {
 	}
 }
 
-func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*service.Service, infra.DBClient) {
+func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*service.Service, infra.DBClient, *trivydb.TrivyDBMock) {
 	pem := genRSAKey(t)
 	base64PEM := base64.StdEncoding.EncodeToString(pem)
 	const (
@@ -183,6 +209,9 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 	cfg.SecretsARN = secretsARN
 	cfg.GitHubEndpoint = "https://ghe.example.org/api/v3"
 	cfg.TableName = dbClient.TableName()
+	cfg.S3Region = "ap-northeast-0"
+	cfg.S3Bucket = "my-db-bucket"
+	cfg.S3Prefix = "test-prefix/"
 
 	// Build service and injects mocks
 	svc := service.New(cfg)
@@ -190,6 +219,19 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 	svc.NewDB = func(region, tableName string) (infra.DBClient, error) {
 		return dbClient, nil
 	}
+
+	// Build trivy mock
+	newTrivyDBMock, trivyDBMock := trivydb.NewMock()
+	svc.NewTrivyDB = newTrivyDBMock
+
+	// Setup S3 mock
+	newS3Mock, s3Mock := aws.NewMockS3()
+	svc.NewS3 = newS3Mock
+	s3Mock.Objects["my-db-bucket"] = map[string][]byte{
+		"test-prefix/db/trivy.db.gz": []byte("boom!"),
+	}
+
+	// Setup trivy DB
 
 	var calledGetArchiveLink, calledDownloadArchive int
 	svc.NewHTTP = newHTTPMockFactory(func(req *http.Request) (*http.Response, error) {
@@ -226,9 +268,12 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 	})
 
 	t.Cleanup(func() {
+		assert.Equal(t, "ap-northeast-0", s3Mock.Region)
+		require.Equal(t, 1, len(s3Mock.GetInput))
+		assert.Equal(t, "test-prefix/db/trivy.db.gz", *s3Mock.GetInput[0].Key)
 		assert.Equal(t, 1, calledDownloadArchive)
 		assert.Equal(t, 1, calledGetArchiveLink)
 	})
 
-	return svc, dbClient
+	return svc, dbClient, trivyDBMock
 }
