@@ -20,8 +20,8 @@ type Usecases interface {
 	FindRepos(svc *service.Service) ([]*model.Repository, error)
 	FindReposByOwner(svc *service.Service, owner string) ([]*model.Repository, error)
 	FindReposByFullName(svc *service.Service, owner, name string) (*model.Repository, error)
-	FindPkgs(svc *service.Service, pkgType model.PkgType, name string) ([]*model.Package, error)
-	FindPkgsByRepo(svc *service.Service, branch *model.GitHubBranch) ([]*model.Package, error)
+	FindPkgs(svc *service.Service, pkgType model.PkgType, name string) ([]*model.PackageRecord, error)
+	FindPkgsByRepo(svc *service.Service, branch *model.GitHubBranch) ([]*model.PackageRecord, error)
 }
 
 type Default struct{}

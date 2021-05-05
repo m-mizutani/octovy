@@ -17,3 +17,9 @@ func (x *AdvisoryData) Unmarshal(v interface{}) error {
 	}
 	return nil
 }
+
+type TrivyDBMeta struct {
+	Version   int
+	Type      int
+	UpdatedAt int64
+}

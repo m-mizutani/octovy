@@ -10,9 +10,17 @@ type GitHubBranch struct {
 	Branch string
 }
 
+type GitHubCommit struct {
+	GitHubRepo
+	CommitID string
+}
+
 type Repository struct {
 	GitHubRepo
 	URL           string
 	Branches      []string
 	DefaultBranch string
+	InstallID     int64
+	VulnerablePkg int64
+	TotalPkg      int64
 }

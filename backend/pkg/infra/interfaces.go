@@ -49,10 +49,15 @@ type S3Client interface {
 // DB
 type NewDB func(region, tableName string) (DBClient, error)
 type DBClient interface {
-	InsertPackage(*model.Package) error
-	DeletePackage(*model.Package) error
-	FindPackagesByName(pkgType model.PkgType, pkgName string) ([]*model.Package, error)
-	FindPackagesByBranch(*model.GitHubBranch) ([]*model.Package, error)
+	InsertPackageRecord(*model.PackageRecord) (bool, error)
+	RemovePackageRecord(*model.PackageRecord) error
+	UpdatePackageRecord(*model.PackageRecord) error
+	FindPackageRecordsByName(pkgType model.PkgType, pkgName string) ([]*model.PackageRecord, error)
+	FindPackageRecordsByBranch(*model.GitHubBranch) ([]*model.PackageRecord, error)
+
+	InsertScanResult(*model.ScanResult) error
+	FindLatestScanResults(branch *model.GitHubBranch, n int) ([]*model.ScanResult, error)
+	FindScanResult(commit *model.GitHubCommit) (*model.ScanResult, error)
 
 	InsertRepo(*model.Repository) (bool, error)
 	SetRepoBranches(*model.GitHubRepo, []string) error
@@ -60,6 +65,11 @@ type DBClient interface {
 	FindRepo() ([]*model.Repository, error)
 	FindRepoByOwner(owner string) ([]*model.Repository, error)
 	FindRepoByFullName(owner, name string) (*model.Repository, error)
+
+	InsertVulnerability(vuln *model.Vulnerability) error
+	FindVulnerability(vulnID string) (*model.Vulnerability, error)
+	FindLatestVulnerabilities(n int) ([]*model.Vulnerability, error)
+
 	TableName() string
 	Close() error
 }

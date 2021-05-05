@@ -129,7 +129,7 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 				},
 				Branch: refs[2],
 			},
-			Ref:       *commit.ID,
+			CommitID:  *commit.ID,
 			UpdatedAt: commit.Timestamp.Unix(),
 		},
 		InstallID: *event.Installation.ID,

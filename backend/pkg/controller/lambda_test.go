@@ -101,7 +101,7 @@ func TestLambdaAPI(t *testing.T) {
 		assert.Equal(t, "blue", req.RepoName)
 		assert.Equal(t, "master", req.Branch)
 		assert.Equal(t, int64(1234), req.InstallID)
-		assert.Equal(t, "beefcafe", req.Ref)
+		assert.Equal(t, "beefcafe", req.CommitID)
 		assert.Equal(t, ts.Add(time.Minute).Unix(), req.UpdatedAt)
 
 		require.NotNil(t, repo)

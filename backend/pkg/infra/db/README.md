@@ -11,36 +11,36 @@
 ### Repository
 
 - PK: `list:repository`
-- SK: `{Org}/{RepoName}`
+- SK: `{Owner}/{RepoName}`
 
-### Package
+### PackageRecord
 
-- PK: `pkg:{Org}/{RepoName}@{Branch}`
+- PK: `pkg:{Owner}/{RepoName}@{Branch}`
 - SK: `{Source}|{PkgType}|{PkgName}|{Version}`
-- PK2: `pkg:{PkgType}:{PkgName}`
-- SK2: `{Org}/{RepoName}@{Branch}|{Version}`
-- PK3: `pkg:{Org}/{RepoName}@{Branch}`
+- PK2: `pkg:{PkgType}|{PkgName}`
+- SK2: `{Owner}/{RepoName}@{Branch}|{Version}`
+- PK3: `pkg:{Owner}/{RepoName}@{Branch}`
 - SK3: `{Source}|{PkgType}|{PkgName}|{Version}`
 
 PK3 and SK3 are available while the package exists in the branch.
 
 ### ScanResult
 
-- PK: `scan:{Org}/{RepoName}`
-- SK: `{CommitTimestamp}/{CommitID}`
-- PK2: `scan:{Org}/{RepoName}`
-- SK2: `{CommitID}`
+- PK: `scan:{Owner}/{RepoName}@{Branch}`
+- SK: `{ScannedAt}/{CommitID}`
+- PK2: `scan:{Owner}/{RepoName}`
+- SK2: `{CommitID}/{ScannedAt}`
 
 ### Vulnerability Status
 
-- PK: `vuln:{Org}/{RepoName}@{Branch}`
+- PK: `vuln:{Owner}/{RepoName}@{Branch}`
 - SK: `{Source}|{PkgType}:{PkgName}@{Version}`
 - PK2: `vuln:{PkgType}:{PkgName}`
-- SK2: `{Org}/{RepoName}@{Branch}|{Version}`
+- SK2: `{Owner}/{RepoName}@{Branch}|{Version}`
 
 ### Vulnerability Info
 
-- PK: `list:vulninfo`
+- PK: `list:vulnerability`
 - SK: `{VulnID}`
-- PK: `list:vulninfo`
-- SK: `{DetectedTimestamp}`
+- PK: `list:vulnerability`
+- SK: `{DetectedTimestamp}/{VulnID}`

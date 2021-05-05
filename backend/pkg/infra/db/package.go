@@ -7,81 +7,114 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 )
 
-func packagePK(branch *model.GitHubBranch) string {
+func packageRecordPK(branch *model.GitHubBranch) string {
 	return fmt.Sprintf("pkg:%s/%s@%s", branch.Owner, branch.RepoName, branch.Branch)
 }
-func packageSK(src string, pkgType model.PkgType, pkgName string, pkgVer string) string {
-	return fmt.Sprintf("%s|%s:%s@%s", src, pkgType, pkgName, pkgVer)
+func packageRecordSK(src string, pkgType model.PkgType, pkgName string, pkgVer string) string {
+	return fmt.Sprintf("%s|%s|%s|%s", src, pkgType, pkgName, pkgVer)
 }
-func packagePK2(pkgType model.PkgType, pkgName string) string {
-	return fmt.Sprintf("pkg:%s:%s", pkgType, pkgName)
+func packageRecordPK2(pkgType model.PkgType, pkgName string) string {
+	return fmt.Sprintf("pkg:%s|%s", pkgType, pkgName)
 }
-func packageSK2(branch *model.GitHubBranch, pkgVer string) string {
+func packageRecordSK2(branch *model.GitHubBranch, pkgVer string) string {
 	return fmt.Sprintf("%s/%s@%s|%s", branch.Owner, branch.RepoName, branch.Branch, pkgVer)
 }
 
-func (x *DynamoClient) InsertPackage(pkg *model.Package) error {
+func (x *DynamoClient) InsertPackageRecord(pkg *model.PackageRecord) (bool, error) {
 	record := &dynamoRecord{
-		PK:  packagePK(&pkg.GitHubBranch),
-		SK:  packageSK(pkg.Source, pkg.PkgType, pkg.PkgName, pkg.Version),
-		PK2: packagePK2(pkg.PkgType, pkg.PkgName),
-		SK2: packageSK2(&pkg.GitHubBranch, pkg.Version),
+		PK:  packageRecordPK(&pkg.Detected.GitHubBranch),
+		SK:  packageRecordSK(pkg.Source, pkg.Type, pkg.Name, pkg.Version),
+		PK2: packageRecordPK2(pkg.Type, pkg.Name),
+		SK2: packageRecordSK2(&pkg.Detected.GitHubBranch, pkg.Version),
+		PK3: packageRecordPK(&pkg.Detected.GitHubBranch),
+		SK3: packageRecordSK(pkg.Source, pkg.Type, pkg.Name, pkg.Version),
 		Doc: pkg,
 	}
 	q := x.table.Put(record).If("attribute_not_exists(pk) AND attribute_not_exists(sk)")
 	if err := q.Run(); err != nil {
 		if !isConditionalCheckErr(err) {
-			return goerr.Wrap(err).With("record", record)
+			return false, goerr.Wrap(err).With("record", record)
 		}
+
+		return false, nil
 	}
 
-	return nil
+	return true, nil
 }
 
-func (x *DynamoClient) DeletePackage(pkg *model.Package) error {
-	pk := packagePK(&pkg.GitHubBranch)
-	sk := packageSK(pkg.Source, pkg.PkgType, pkg.PkgName, pkg.Version)
+func (x *DynamoClient) RemovePackageRecord(pkg *model.PackageRecord) error {
+	pk := packageRecordPK(&pkg.Detected.GitHubBranch)
+	sk := packageRecordSK(pkg.Source, pkg.Type, pkg.Name, pkg.Version)
 
-	if err := x.table.Delete("pk", pk).Range("sk", sk).Run(); err != nil {
-		if !isNotFoundErr(err) {
+	q := x.table.Update("pk", pk).
+		Range("sk", sk).
+		Set("doc.'Removed'", true).
+		Remove("pk3", "sk3").
+		Set("doc.'Removed'", true).
+		Set("doc.'UpdatedAt'", pkg.UpdatedAt).
+		If("doc.'UpdatedAt' < ?", pkg.UpdatedAt)
+
+	if err := q.Run(); err != nil {
+		if !isConditionalCheckErr(err) {
 			return goerr.Wrap(err).With("pkg", pkg).With("pk", pk).With("sk", sk)
 		}
 	}
+
 	return nil
 }
 
-func (x *DynamoClient) FindPackagesByName(pkgType model.PkgType, pkgName string) ([]*model.Package, error) {
+func (x *DynamoClient) UpdatePackageRecord(pkg *model.PackageRecord) error {
+	pk := packageRecordPK(&pkg.Detected.GitHubBranch)
+	sk := packageRecordSK(pkg.Source, pkg.Type, pkg.Name, pkg.Version)
+
+	// Record exists, then update vulnerability info
+	update := x.table.Update("pk", pk).
+		Range("sk", sk).
+		Set("doc.'Vulnerabilities'", pkg.Vulnerabilities).
+		Set("doc.'UpdatedAt'", pkg.UpdatedAt).
+		If("doc.'UpdatedAt' < ?", pkg.UpdatedAt)
+
+	if err := update.Run(); err != nil {
+		if !isConditionalCheckErr(err) {
+			return goerr.Wrap(err)
+		}
+	}
+
+	return nil
+}
+
+func (x *DynamoClient) FindPackageRecordsByName(pkgType model.PkgType, pkgName string) ([]*model.PackageRecord, error) {
 	var records []*dynamoRecord
-	pk2 := packagePK2(pkgType, pkgName)
-	if err := x.table.Get("pk2", pk2).Index(dynamoGSIName).All(&records); err != nil {
+	pk2 := packageRecordPK2(pkgType, pkgName)
+	if err := x.table.Get("pk2", pk2).Index(dynamoGSIName2nd).All(&records); err != nil {
 		if !isNotFoundErr(err) {
 			return nil, goerr.Wrap(err).With("pk2", pk2)
 		}
 	}
 
-	packages := make([]*model.Package, len(records))
+	packageRecords := make([]*model.PackageRecord, len(records))
 	for i := range records {
-		if err := records[i].Unmarshal(&packages[i]); err != nil {
+		if err := records[i].Unmarshal(&packageRecords[i]); err != nil {
 			return nil, err
 		}
 	}
-	return packages, nil
+	return packageRecords, nil
 }
 
-func (x *DynamoClient) FindPackagesByBranch(branch *model.GitHubBranch) ([]*model.Package, error) {
+func (x *DynamoClient) FindPackageRecordsByBranch(branch *model.GitHubBranch) ([]*model.PackageRecord, error) {
 	var records []*dynamoRecord
-	pk := packagePK(branch)
-	if err := x.table.Get("pk", pk).All(&records); err != nil {
+	pk := packageRecordPK(branch)
+	if err := x.table.Get("pk3", pk).Index(dynamoGSIName3rd).All(&records); err != nil {
 		if !isNotFoundErr(err) {
 			return nil, goerr.Wrap(err).With("pk", pk)
 		}
 	}
 
-	packages := make([]*model.Package, len(records))
+	packageRecords := make([]*model.PackageRecord, len(records))
 	for i := range records {
-		if err := records[i].Unmarshal(&packages[i]); err != nil {
+		if err := records[i].Unmarshal(&packageRecords[i]); err != nil {
 			return nil, err
 		}
 	}
-	return packages, nil
+	return packageRecords, nil
 }

@@ -53,7 +53,7 @@ func getPackagesByRepoBranch(c *gin.Context) {
 		Branch: c.Param("branch"),
 	}
 
-	packages, err := cfg.Service.DB().FindPackagesByBranch(branch)
+	packages, err := cfg.Service.DB().FindPackageRecordsByBranch(branch)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -66,7 +66,7 @@ func getPackage(c *gin.Context) {
 	cfg := getConfig(c)
 	pkgType := c.Query("type")
 	pkgName := c.Query("name")
-	packages, err := cfg.Service.DB().FindPackagesByName(model.PkgType(pkgType), pkgName)
+	packages, err := cfg.Service.DB().FindPackageRecordsByName(model.PkgType(pkgType), pkgName)
 	if err != nil {
 		_ = c.Error(err)
 		return

@@ -53,10 +53,10 @@ func (x *Default) FindReposByFullName(svc *service.Service, owner string, name s
 	return nil, nil
 }
 
-func (x *Default) FindPkgs(svc *service.Service, pkgType model.PkgType, name string) ([]*model.Package, error) {
-	return svc.DB().FindPackagesByName(pkgType, name)
+func (x *Default) FindPkgs(svc *service.Service, pkgType model.PkgType, name string) ([]*model.PackageRecord, error) {
+	return svc.DB().FindPackageRecordsByName(pkgType, name)
 }
 
-func (x *Default) FindPkgsByRepo(svc *service.Service, branch *model.GitHubBranch) ([]*model.Package, error) {
-	return svc.DB().FindPackagesByBranch(branch)
+func (x *Default) FindPkgsByRepo(svc *service.Service, branch *model.GitHubBranch) ([]*model.PackageRecord, error) {
+	return svc.DB().FindPackageRecordsByBranch(branch)
 }

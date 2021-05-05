@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"sort"
 
 	"github.com/aquasecurity/go-dep-parser/pkg/bundler"
 	"github.com/aquasecurity/go-dep-parser/pkg/gomod"
@@ -53,7 +54,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	if err != nil {
 		return goerr.Wrap(err)
 	}
-	if err := svc.GetCodeZip(&req.GitHubRepo, req.Ref, req.InstallID, tmp); err != nil {
+	if err := svc.GetCodeZip(&req.GitHubRepo, req.CommitID, req.InstallID, tmp); err != nil {
 		return err
 	}
 
@@ -62,7 +63,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		return goerr.Wrap(err).With("file", tmp.Name())
 	}
 
-	var newPkgs []*model.Package
+	var newPkgs []*model.PackageRecord
 	for _, f := range zipFile.File {
 		psr, ok := parserMap[filepath.Base(f.Name)]
 		if !ok {
@@ -80,15 +81,17 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 			return goerr.Wrap(err)
 		}
 
-		parsed := make([]*model.Package, len(pkgs))
+		parsed := make([]*model.PackageRecord, len(pkgs))
 		for i := range pkgs {
-			parsed[i] = &model.Package{
-				ScanTarget: req.ScanTarget,
+			parsed[i] = &model.PackageRecord{
+				Detected: req.ScanTarget,
 
-				Source:  stepDownDirectory(f.Name),
-				PkgType: psr.PkgType,
-				PkgName: pkgs[i].Name,
-				Version: pkgs[i].Version,
+				Source: stepDownDirectory(f.Name),
+				Package: model.Package{
+					Type:    psr.PkgType,
+					Name:    pkgs[i].Name,
+					Version: pkgs[i].Version,
+				},
 			}
 		}
 
@@ -99,19 +102,28 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		return nil
 	}
 
-	oldPkgs, err := svc.DB().FindPackagesByBranch(&req.GitHubBranch)
+	oldPkgs, err := svc.DB().FindPackageRecordsByBranch(&req.GitHubBranch)
 	if err != nil {
 		return goerr.Wrap(err)
 	}
 
-	addPkgs, delPkgs := diffPackageList(oldPkgs, newPkgs)
+	addPkgs, modPkgs, delPkgs := diffPackageList(oldPkgs, newPkgs)
 	for _, pkg := range addPkgs {
-		if err := svc.DB().InsertPackage(pkg); err != nil {
+		if inserted, err := svc.DB().InsertPackageRecord(pkg); err != nil {
+			return goerr.Wrap(err).With("pkg", pkg)
+		} else if !inserted {
+			modPkgs = append(modPkgs, pkg)
+		}
+	}
+
+	for _, pkg := range modPkgs {
+		if err := svc.DB().UpdatePackageRecord(pkg); err != nil {
 			return goerr.Wrap(err).With("pkg", pkg)
 		}
 	}
+
 	for _, pkg := range delPkgs {
-		if err := svc.DB().DeletePackage(pkg); err != nil {
+		if err := svc.DB().RemovePackageRecord(pkg); err != nil {
 			return goerr.Wrap(err).With("pkg", pkg)
 		}
 	}
@@ -119,22 +131,51 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	return nil
 }
 
-func mapPackages(pkgs []*model.Package) map[string]*model.Package {
-	resp := make(map[string]*model.Package)
+func mapPackages(pkgs []*model.PackageRecord) map[string]*model.PackageRecord {
+	resp := make(map[string]*model.PackageRecord)
 	for _, pkg := range pkgs {
-		key := fmt.Sprintf("%s/%s/%s", pkg.Source, pkg.PkgName, pkg.Version)
+		key := fmt.Sprintf("%s|%s|%s", pkg.Source, pkg.Name, pkg.Version)
 		resp[key] = pkg
 	}
 	return resp
 }
 
-func diffPackageList(oldPkgs, newPkgs []*model.Package) (addPkgs, delPkgs []*model.Package) {
+func matchVulnerabilities(a, b *model.PackageRecord) bool {
+	copyVulnList := func(p *model.PackageRecord) []string {
+		v := make([]string, len(p.Vulnerabilities))
+		for i := range p.Vulnerabilities {
+			v[i] = p.Vulnerabilities[i]
+		}
+		sort.Slice(v, func(i int, j int) bool {
+			return v[i] < v[j]
+		})
+		return v
+	}
+
+	v1 := copyVulnList(a)
+	v2 := copyVulnList(b)
+	if len(v1) != len(v2) {
+		return false
+	}
+	for i := range v1 {
+		if v1[i] != v2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func diffPackageList(oldPkgs, newPkgs []*model.PackageRecord) (addPkgs, modPkgs, delPkgs []*model.PackageRecord) {
 	oldMap := mapPackages(oldPkgs)
 	newMap := mapPackages(newPkgs)
 
 	for oldKey, oldPkg := range oldMap {
-		if _, ok := newMap[oldKey]; !ok {
+		if newPkg, ok := newMap[oldKey]; !ok {
 			delPkgs = append(delPkgs, oldPkg)
+		} else {
+			if !matchVulnerabilities(oldPkg, newPkg) {
+				modPkgs = append(modPkgs, newPkg)
+			}
 		}
 	}
 

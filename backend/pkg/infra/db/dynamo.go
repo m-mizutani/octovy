@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	dynamoGSIName = "secondary"
+	dynamoGSIName2nd = "secondary"
+	dynamoGSIName3rd = "tertiary"
 )
 
 type dynamoRecord struct {

@@ -24,6 +24,84 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestScanBundler(t *testing.T) {
+	svc, dbClient := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
+
+	req := &model.ScanRepositoryRequest{
+		ScanTarget: model.ScanTarget{
+			GitHubBranch: model.GitHubBranch{
+				GitHubRepo: model.GitHubRepo{
+					Owner:    "five",
+					RepoName: "blue",
+				},
+				Branch: "master",
+			},
+			CommitID:  "beefcafe",
+			UpdatedAt: 1234,
+		},
+		InstallID: 999,
+	}
+
+	uc := usecase.New()
+	require.NoError(t, uc.ScanRepository(svc, req))
+
+	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
+	require.NoError(t, err)
+	assert.Equal(t, 41, len(packages))
+}
+
+func TestScanGoModule(t *testing.T) {
+	svc, dbClient := setupScanRepositoryService(t, "../testdata/src/go_mod.zip")
+
+	req := &model.ScanRepositoryRequest{
+		ScanTarget: model.ScanTarget{
+			GitHubBranch: model.GitHubBranch{
+				GitHubRepo: model.GitHubRepo{
+					Owner:    "five",
+					RepoName: "blue",
+				},
+				Branch: "master",
+			},
+			CommitID:  "beefcafe",
+			UpdatedAt: 1234,
+		},
+		InstallID: 999,
+	}
+
+	uc := usecase.New()
+	require.NoError(t, uc.ScanRepository(svc, req))
+
+	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
+	require.NoError(t, err)
+	assert.Equal(t, 147, len(packages))
+}
+
+func TestScanNPM(t *testing.T) {
+	svc, dbClient := setupScanRepositoryService(t, "../testdata/src/npm.zip")
+
+	req := &model.ScanRepositoryRequest{
+		ScanTarget: model.ScanTarget{
+			GitHubBranch: model.GitHubBranch{
+				GitHubRepo: model.GitHubRepo{
+					Owner:    "five",
+					RepoName: "blue",
+				},
+				Branch: "master",
+			},
+			CommitID:  "beefcafe",
+			UpdatedAt: 1234,
+		},
+		InstallID: 999,
+	}
+
+	uc := usecase.New()
+	require.NoError(t, uc.ScanRepository(svc, req))
+
+	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
+	require.NoError(t, err)
+	assert.Equal(t, 50, len(packages))
+}
+
 func genRSAKey(t *testing.T) []byte {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
@@ -72,6 +150,87 @@ func newResp(code int, body interface{}) *http.Response {
 		StatusCode: code,
 		Body:       rc,
 	}
+}
+
+func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*service.Service, infra.DBClient) {
+	pem := genRSAKey(t)
+	base64PEM := base64.StdEncoding.EncodeToString(pem)
+	const (
+		secretsARN       = "arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"
+		installID  int64 = 234
+	)
+
+	// mocking DB
+	dbClient := newTestTable(t)
+	inserted, err := dbClient.InsertRepo(&model.Repository{
+		GitHubRepo: model.GitHubRepo{
+			Owner:    "five",
+			RepoName: "blue",
+		},
+		Branches: []string{"master"},
+	})
+	require.NoError(t, err)
+	require.True(t, inserted)
+
+	// mocking SecretsManager
+	newSM, mockSM := aws.NewMockSecretsManagerSet()
+	mockSM.OutData[secretsARN] = map[string]string{
+		"github_app_private_key": base64PEM,
+		"github_app_id":          "123",
+	}
+
+	cfg := service.NewConfig()
+	cfg.SecretsARN = secretsARN
+	cfg.GitHubEndpoint = "https://ghe.example.org/api/v3"
+	cfg.TableName = dbClient.TableName()
+
+	// Build service and injects mocks
+	svc := service.New(cfg)
+	svc.NewSecretManager = newSM
+	svc.NewDB = func(region, tableName string) (infra.DBClient, error) {
+		return dbClient, nil
+	}
+
+	var calledGetArchiveLink, calledDownloadArchive int
+	svc.NewHTTP = newHTTPMockFactory(func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, "ghe.example.org", req.URL.Host)
+		switch req.URL.Path {
+		case "/api/v3/repos/five/blue/zipball/beefcafe":
+			calledGetArchiveLink++
+			assert.Equal(t, "GET", req.Method)
+			assert.Equal(t, "application/vnd.github.v3+json", req.Header.Get("Accept"))
+
+			// In test, used stub and ghinstallation is not working
+			assert.False(t, strings.HasPrefix(req.Header.Get("Authorization"), "token "))
+			hdr := http.Header{}
+			hdr.Set("Location", "https://ghe.example.org/_codeload/five/blue/legacy.zip/master?token=hogehoge")
+			return &http.Response{
+				StatusCode: http.StatusFound,
+				Header:     hdr,
+				Body:       ioutil.NopCloser(bytes.NewBuffer(nil)),
+			}, nil
+
+		case "/_codeload/five/blue/legacy.zip/master":
+			calledDownloadArchive++
+			assert.Equal(t, "GET", req.Method)
+			assert.False(t, strings.HasPrefix(req.Header.Get("Authorization"), "token "))
+
+			r, err := os.Open(scannedArchivePath)
+			require.NoError(t, err)
+			return newResp(http.StatusOK, r), nil
+
+		default:
+			require.Fail(t, "Invalid path", req.URL.Path)
+			return &http.Response{}, nil
+		}
+	})
+
+	t.Cleanup(func() {
+		assert.Equal(t, 1, calledDownloadArchive)
+		assert.Equal(t, 1, calledGetArchiveLink)
+	})
+
+	return svc, dbClient
 }
 
 func TestScanRepository(t *testing.T) {
@@ -156,7 +315,7 @@ func TestScanRepository(t *testing.T) {
 				},
 				Branch: "master",
 			},
-			Ref:       "beefcafe",
+			CommitID:  "beefcafe",
 			UpdatedAt: 1234,
 		},
 		InstallID: installID,
@@ -167,7 +326,7 @@ func TestScanRepository(t *testing.T) {
 	assert.True(t, calledGetArchiveLink)
 	assert.True(t, calledDownloadArchive)
 
-	packages, err := dbClient.FindPackagesByBranch(&req.GitHubBranch)
+	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
 	require.NoError(t, err)
 	assert.Equal(t, 41, len(packages))
 }
