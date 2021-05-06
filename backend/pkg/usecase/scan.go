@@ -107,6 +107,11 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 			var vulnIDs []string
 			for _, vuln := range vulns {
 				vulnIDs = append(vulnIDs, vuln.VulnID)
+				vuln.FirstSeenAt = scannedAt.Unix()
+				if vuln.Detail.LastModifiedDate != nil {
+					vuln.LastModifiedAt = vuln.Detail.LastModifiedDate.Unix()
+				}
+
 				detectedVulnMap[vuln.VulnID] = vuln
 			}
 
