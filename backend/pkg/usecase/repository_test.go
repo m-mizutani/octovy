@@ -32,8 +32,8 @@ func TestPutNewRepository(t *testing.T) {
 				RepoName: "blue",
 			},
 			URL:           "https://github-enterprise.example.com/five/blue",
-			Branches:      []string{"master"},
 			DefaultBranch: "main",
+			Branch:        model.Branch{PkgTypes: []model.PkgType{}},
 		}
 
 		repo2 := &model.Repository{
@@ -42,8 +42,8 @@ func TestPutNewRepository(t *testing.T) {
 				RepoName: "orange",
 			},
 			URL:           "https://github-enterprise.example.com/five/orange",
-			Branches:      []string{"master"},
 			DefaultBranch: "main",
+			Branch:        model.Branch{PkgTypes: []model.PkgType{}},
 		}
 
 		repo3 := &model.Repository{
@@ -52,8 +52,8 @@ func TestPutNewRepository(t *testing.T) {
 				RepoName: "heaven",
 			},
 			URL:           "https://github-enterprise.example.com/three/heaven",
-			Branches:      []string{"master"},
 			DefaultBranch: "main",
+			Branch:        model.Branch{PkgTypes: []model.PkgType{}},
 		}
 
 		testInsert := func(t *testing.T, repo *model.Repository) {
@@ -80,7 +80,6 @@ func TestPutNewRepository(t *testing.T) {
 		assert.Equal(t, "five", r1.Owner)
 		assert.Equal(t, "blue", r1.RepoName)
 		assert.Equal(t, "https://github-enterprise.example.com/five/blue", r1.URL)
-		assert.Contains(t, r1.Branches, "master")
 		assert.Equal(t, "main", r1.DefaultBranch)
 
 		// Find "five" owner repository
@@ -99,14 +98,12 @@ func TestPutNewRepository(t *testing.T) {
 				RepoName: "blue",
 			},
 			URL:           "https://github-enterprise.example.com/five/blue",
-			Branches:      []string{"master"},
 			DefaultBranch: "main",
 		}
 
 		repo2 := &model.Repository{
 			GitHubRepo:    repo1.GitHubRepo,
 			URL:           repo1.URL,
-			Branches:      []string{"x"},
 			DefaultBranch: "y",
 		}
 
@@ -117,7 +114,6 @@ func TestPutNewRepository(t *testing.T) {
 		result1, err := svc.DB().FindRepo()
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result1))
-		assert.Equal(t, []string{"master"}, result1[0].Branches)
 		assert.Equal(t, "y", result1[0].DefaultBranch)
 	})
 }

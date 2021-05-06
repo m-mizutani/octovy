@@ -80,7 +80,6 @@ func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error
 				RepoName: parts[1],
 			},
 			URL:           *event.Installation.Account.HTMLURL + "/" + parts[1],
-			Branches:      []string{},
 			DefaultBranch: "",
 			InstallID:     *event.Installation.ID,
 		}
@@ -144,7 +143,6 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 	repo := &model.Repository{
 		GitHubRepo:    req.GitHubRepo,
 		URL:           *event.Repo.HTMLURL,
-		Branches:      []string{*event.Repo.DefaultBranch},
 		DefaultBranch: *event.Repo.DefaultBranch,
 		InstallID:     *event.Installation.ID,
 	}

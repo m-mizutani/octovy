@@ -61,6 +61,10 @@ func (x *DynamoClient) SetRepoDefaultBranch(repo *model.GitHubRepo, branch strin
 	return nil
 }
 
+func (x *DynamoClient) UpdateRepoBranch(repo *model.GitHubRepo, branch *model.Branch) error {
+	return nil
+}
+
 func recordToRepo(records []*dynamoRecord) ([]*model.Repository, error) {
 	repositories := make([]*model.Repository, len(records))
 	for i := range records {

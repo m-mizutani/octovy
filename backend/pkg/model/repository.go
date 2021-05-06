@@ -18,8 +18,8 @@ type GitHubCommit struct {
 type Repository struct {
 	GitHubRepo
 	URL           string
-	Branches      []string
 	DefaultBranch string
+	Branch        Branch
 	InstallID     int64
 }
 

@@ -271,7 +271,6 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 			Owner:    "five",
 			RepoName: "blue",
 		},
-		Branches: []string{"master"},
 	})
 	require.NoError(t, err)
 	require.True(t, inserted)
