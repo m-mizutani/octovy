@@ -11,19 +11,19 @@ import { DataGrid } from "@material-ui/data-grid";
 import { useParams } from "react-router-dom";
 import useStyles from "./style";
 
-interface packageInfo {
+interface packageRecord {
   id?: string;
   Owner: string;
   RepoName: string;
   Branch: string;
   Source: string;
-  PkgName: string;
+  Name: string;
   Version: string;
 }
 
 const defColumns = [
   { field: "Source", headerName: "Source", width: 250 },
-  { field: "PkgName", headerName: "Package name", width: 500 },
+  { field: "Name", headerName: "Package name", width: 500 },
   { field: "Version", headerName: "Version", width: 130 },
 ];
 
@@ -33,7 +33,7 @@ export default function Repository() {
   const { owner, repoName } = useParams();
   const [branches, setBranches] = React.useState<string[]>([]);
   const [target, setTarget] = React.useState<string>();
-  const [packages, setPackages] = React.useState<packageInfo[]>([]);
+  const [packages, setPackages] = React.useState<packageRecord[]>([]);
   const [err, setErr] = React.useState("");
 
   React.useEffect(() => {
@@ -65,8 +65,8 @@ export default function Repository() {
       .then(
         (result) => {
           console.log(result);
-          result.data.forEach((pkg: packageInfo) => {
-            pkg.id = pkg.Source + "|" + pkg.PkgName + "|" + pkg.Version;
+          result.data.forEach((pkg: packageRecord) => {
+            pkg.id = pkg.Source + "|" + pkg.Name + "|" + pkg.Version;
           });
           setPackages(result.data);
         },

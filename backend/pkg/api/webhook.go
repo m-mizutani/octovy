@@ -54,6 +54,7 @@ func postWebhookGitHub(c *gin.Context) {
 func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error {
 	if event == nil ||
 		event.Installation == nil ||
+		event.Installation.ID == nil ||
 		event.Installation.Account == nil ||
 		event.Installation.Account.HTMLURL == nil {
 		return goerr.Wrap(errInvalidWebhookData, "Not enough event fields").With("event", event)
@@ -81,6 +82,7 @@ func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error
 			URL:           *event.Installation.Account.HTMLURL + "/" + parts[1],
 			Branches:      []string{},
 			DefaultBranch: "",
+			InstallID:     *event.Installation.ID,
 		}
 
 		if err := cfg.Usecase.RegisterRepository(cfg.Service, newRepo); err != nil {
@@ -144,6 +146,7 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 		URL:           *event.Repo.HTMLURL,
 		Branches:      []string{*event.Repo.DefaultBranch},
 		DefaultBranch: *event.Repo.DefaultBranch,
+		InstallID:     *event.Installation.ID,
 	}
 	if err := cfg.Usecase.RegisterRepository(cfg.Service, repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)

@@ -34,15 +34,15 @@ interface errorResponse {
 interface packageState {
   error?: errorResponse;
   isLoaded?: boolean;
-  items?: packageInfo[];
+  items?: packageRecord[];
 }
 
-interface packageInfo {
+interface packageRecord {
   Owner: string;
   RepoName: string;
   Branch: string;
   Source: string;
-  PkgName: string;
+  Name: string;
   Version: string;
 }
 
@@ -121,7 +121,7 @@ export default function Package() {
             </TableHead>
             <TableBody>
               {pkgState.items.map((pkg) => {
-                const key = `${pkg.Owner}/${pkg.RepoName}/${pkg.Branch}:${pkg.PkgName}@${pkg.Version}`;
+                const key = `${pkg.Owner}/${pkg.RepoName}/${pkg.Branch}:${pkg.Name}@${pkg.Version}`;
                 return (
                   <TableRow key={key}>
                     <TableCell component="th" scope="row">
