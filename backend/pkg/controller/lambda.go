@@ -38,6 +38,8 @@ func (x *Controller) LambdaScanRepo(event golambda.Event) (interface{}, error) {
 		return nil, goerr.Wrap(err).With("event", event)
 	}
 
+	x.Config.TrivyDBPath = "/tmp/trivy.db"
+
 	svc := service.New(x.Config)
 	for _, record := range records {
 		var req model.ScanRepositoryRequest

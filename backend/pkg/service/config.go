@@ -12,6 +12,8 @@ type Config struct {
 	S3Region string `env:"S3_REGION"`
 	S3Bucket string `env:"S3_BUCKET"`
 	S3Prefix string `env:"S3_PREFIX"`
+
+	TrivyDBPath string
 }
 
 func NewConfig() *Config {
