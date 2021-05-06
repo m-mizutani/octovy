@@ -5,7 +5,6 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/infra"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/db"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/fs"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/github"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/net"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
@@ -29,7 +28,7 @@ var defaultInfra = infra.Interfaces{
 	NewS3:            aws.NewS3,
 	NewHTTP:          net.NewHTTP,
 	NewGitHub:        github.New,
-	FS:               &fs.FS{},
+	Utils:            infra.DefaultUtils(),
 }
 
 func New(config *Config) *Service {

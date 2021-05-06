@@ -31,7 +31,7 @@ func TestPackage(t *testing.T) {
 					Version:         "1.2.3",
 					Vulnerabilities: []string{},
 				},
-				UpdatedAt: 1234,
+				ScannedAt: 1234,
 			},
 			{
 				Detected: model.ScanTarget{
@@ -51,7 +51,7 @@ func TestPackage(t *testing.T) {
 					Version:         "5.0.1",
 					Vulnerabilities: []string{},
 				},
-				UpdatedAt: 1234,
+				ScannedAt: 1234,
 			},
 			{
 				Detected: model.ScanTarget{
@@ -71,7 +71,7 @@ func TestPackage(t *testing.T) {
 					Version:         "1.2.4",
 					Vulnerabilities: []string{},
 				},
-				UpdatedAt: 1234,
+				ScannedAt: 1234,
 			},
 		}
 

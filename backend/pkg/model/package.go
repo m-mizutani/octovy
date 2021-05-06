@@ -17,7 +17,7 @@ type PackageRecord struct {
 	// File path of lock file
 	Source string
 	Package
-	UpdatedAt int64
+	ScannedAt int64
 	Removed   bool
 }
 

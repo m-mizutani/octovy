@@ -22,12 +22,15 @@ func TestGoMod(t *testing.T) {
 		},
 	}
 
-	vulnSet := []*types.Vulnerability{
+	vulnSet := []*model.Vulnerability{
 		{
-			Title: "blue",
+			VulnID: "CVE-1234-5678",
+			Detail: types.Vulnerability{
+				Title: "blue",
+			},
 		},
 	}
-	db.VulnerabilityMap["CVE-1234-5678"] = vulnSet[0]
+	db.VulnerabilityMap["CVE-1234-5678"] = &vulnSet[0].Detail
 
 	dt := detector.New(db)
 

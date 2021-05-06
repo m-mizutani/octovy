@@ -29,20 +29,30 @@ func TestPython(t *testing.T) {
 			},
 		},
 	}
-	vulnSet := []*types.Vulnerability{
+	vulnSet := []*model.Vulnerability{
 		{
-			Title: "blue",
+			VulnID: "CVE-1234-5678",
+			Detail: types.Vulnerability{
+				Title: "blue",
+			},
 		},
 		{
-			Title: "orange",
+			VulnID: "CVE-2345-6789",
+			Detail: types.Vulnerability{
+				Title: "orange",
+			},
 		},
 		{
-			Title: "red",
+			VulnID: "CVE-3456-7890",
+			Detail: types.Vulnerability{
+				Title: "red",
+			},
 		},
 	}
-	db.VulnerabilityMap["CVE-1234-5678"] = vulnSet[0]
-	db.VulnerabilityMap["CVE-2345-6789"] = vulnSet[1]
-	db.VulnerabilityMap["CVE-3456-7890"] = vulnSet[2]
+
+	for _, v := range vulnSet {
+		db.VulnerabilityMap[v.VulnID] = &v.Detail
+	}
 
 	dt := detector.New(db)
 

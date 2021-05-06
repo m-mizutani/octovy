@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/m-mizutani/octovy/backend/pkg/infra"
@@ -25,6 +26,83 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestScanRepository(t *testing.T) {
+	t.Run("Append a new vulnerability", func(t *testing.T) {
+		now := time.Unix(10000, 0)
+		svc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
+		svc.Utils.TimeNow = func() time.Time { return now }
+
+		trivyDBMock.AdvisoryMap["ruby-advisory-db"] = map[string][]*model.AdvisoryData{
+			"rack": {
+				{
+					VulnID: "CVE-2020-8161",
+					Data:   []byte(`{"PatchedVersions":["~\u003e 2.3.3","\u003e= 2.4.0"]}`),
+				},
+			},
+		}
+		trivyDBMock.VulnerabilityMap["CVE-2020-8161"] = &types.Vulnerability{
+			Title: "test vuln",
+		}
+
+		req := &model.ScanRepositoryRequest{
+			ScanTarget: model.ScanTarget{
+				GitHubBranch: model.GitHubBranch{
+					GitHubRepo: model.GitHubRepo{
+						Owner:    "five",
+						RepoName: "blue",
+					},
+					Branch: "master",
+				},
+				CommitID:  "beefcafe",
+				UpdatedAt: 1234,
+			},
+			InstallID: 999,
+		}
+
+		uc := usecase.New()
+		require.NoError(t, uc.ScanRepository(svc, req))
+		rackPkgs1, err := dbClient.FindPackageRecordsByName(model.PkgBundler, "rack")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(rackPkgs1))
+		assert.Equal(t, 1, len(rackPkgs1[0].Package.Vulnerabilities))
+		assert.Contains(t, rackPkgs1[0].Package.Vulnerabilities, "CVE-2020-8161")
+
+		// Add new one
+		trivyDBMock.AdvisoryMap["ruby-advisory-db"] = map[string][]*model.AdvisoryData{
+			"rack": {
+				{
+					VulnID: "CVE-2020-8161",
+					Data:   []byte(`{"PatchedVersions":["~\u003e 2.3.3","\u003e= 2.4.0"]}`),
+				},
+				{
+					VulnID: "CVE-2020-9999",
+					Data:   []byte(`{"PatchedVersions":["~\u003e 2.3.3","\u003e= 2.4.0"]}`),
+				},
+			},
+		}
+		trivyDBMock.VulnerabilityMap["CVE-2020-9999"] = &types.Vulnerability{
+			Title: "test vuln 2",
+		}
+
+		svc.Utils.TimeNow = func() time.Time { return now.Add(time.Second) }
+
+		// Scan again
+		require.NoError(t, uc.ScanRepository(svc, req))
+		rackPkgs2, err := dbClient.FindPackageRecordsByName(model.PkgBundler, "rack")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(rackPkgs2))
+		assert.Equal(t, 2, len(rackPkgs2[0].Package.Vulnerabilities))
+		assert.Contains(t, rackPkgs2[0].Package.Vulnerabilities, "CVE-2020-8161")
+		assert.Contains(t, rackPkgs2[0].Package.Vulnerabilities, "CVE-2020-9999")
+
+		vulns, err := dbClient.FindLatestVulnerabilities(10)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(vulns))
+		assert.Contains(t, []string{vulns[0].VulnID, vulns[1].VulnID}, "CVE-2020-8161")
+		assert.Contains(t, []string{vulns[0].VulnID, vulns[1].VulnID}, "CVE-2020-9999")
+	})
+}
 
 func TestScanBundler(t *testing.T) {
 	svc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
@@ -269,10 +347,10 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 
 	t.Cleanup(func() {
 		assert.Equal(t, "ap-northeast-0", s3Mock.Region)
-		require.Equal(t, 1, len(s3Mock.GetInput))
+		assert.Less(t, 0, calledDownloadArchive)
+		assert.Less(t, 0, calledGetArchiveLink)
+		require.Less(t, 0, len(s3Mock.GetInput))
 		assert.Equal(t, "test-prefix/db/trivy.db.gz", *s3Mock.GetInput[0].Key)
-		assert.Equal(t, 1, calledDownloadArchive)
-		assert.Equal(t, 1, calledGetArchiveLink)
 	})
 
 	return svc, dbClient, trivyDBMock

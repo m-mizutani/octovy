@@ -50,7 +50,7 @@ func stepDownDirectory(fpath string) string {
 }
 
 func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepositoryRequest) error {
-	tmp, err := svc.FS.TempFile("", "*.zip")
+	tmp, err := svc.Utils.TempFile("", "*.zip")
 	if err != nil {
 		return goerr.Wrap(err)
 	}
@@ -58,10 +58,18 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		return err
 	}
 
-	zipFile, err := svc.FS.OpenZip(tmp.Name())
+	zipFile, err := svc.Utils.OpenZip(tmp.Name())
 	if err != nil {
 		return goerr.Wrap(err).With("file", tmp.Name())
 	}
+	defer func() {
+		if err := zipFile.Close(); err != nil {
+			logger.With("zip", zipFile).With("error", err).Error("Failed to close zip file")
+		}
+		if err := svc.Utils.Remove(tmp.Name()); err != nil {
+			logger.With("filename", tmp.Name()).Error("Failed to remove zip file")
+		}
+	}()
 
 	dt, err := svc.Detector()
 	if err != nil {
@@ -71,6 +79,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	var newPkgs []*model.PackageRecord
 	detectedVulnMap := map[string]*model.Vulnerability{}
 
+	scannedAt := svc.Utils.TimeNow()
 	for _, f := range zipFile.File {
 		psr, ok := parserMap[filepath.Base(f.Name)]
 		if !ok {
@@ -102,9 +111,9 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 			}
 
 			parsed[i] = &model.PackageRecord{
-				Detected: req.ScanTarget,
-
-				Source: stepDownDirectory(f.Name),
+				Detected:  req.ScanTarget,
+				ScannedAt: scannedAt.Unix(),
+				Source:    stepDownDirectory(f.Name),
 				Package: model.Package{
 					Type:            psr.PkgType,
 					Name:            pkgs[i].Name,

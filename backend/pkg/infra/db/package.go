@@ -51,8 +51,8 @@ func (x *DynamoClient) RemovePackageRecord(pkg *model.PackageRecord) error {
 		Set("doc.'Removed'", true).
 		Remove("pk3", "sk3").
 		Set("doc.'Removed'", true).
-		Set("doc.'UpdatedAt'", pkg.UpdatedAt).
-		If("doc.'UpdatedAt' < ?", pkg.UpdatedAt)
+		Set("doc.'ScannedAt'", pkg.ScannedAt).
+		If("doc.'ScannedAt' < ?", pkg.ScannedAt)
 
 	if err := q.Run(); err != nil {
 		if !isConditionalCheckErr(err) {
@@ -71,8 +71,8 @@ func (x *DynamoClient) UpdatePackageRecord(pkg *model.PackageRecord) error {
 	update := x.table.Update("pk", pk).
 		Range("sk", sk).
 		Set("doc.'Vulnerabilities'", pkg.Vulnerabilities).
-		Set("doc.'UpdatedAt'", pkg.UpdatedAt).
-		If("doc.'UpdatedAt' < ?", pkg.UpdatedAt)
+		Set("doc.'ScannedAt'", pkg.ScannedAt).
+		If("doc.'ScannedAt' < ?", pkg.ScannedAt)
 
 	if err := update.Run(); err != nil {
 		if !isConditionalCheckErr(err) {

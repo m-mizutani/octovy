@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -23,7 +24,7 @@ type Interfaces struct {
 	NewS3            NewS3
 	NewGitHub        NewGitHub
 	NewHTTP          NewHTTPClient // Interface set
-	FS               FS
+	Utils            Utils
 }
 
 // AWS
@@ -74,14 +75,6 @@ type DBClient interface {
 	Close() error
 }
 
-// FileSystem
-type FS interface {
-	WriteFile(r io.Reader, path string) error
-	OpenZip(path string) (*zip.ReadCloser, error)
-	TempFile(dir, pattern string) (f *os.File, err error)
-	Remove(name string) error
-}
-
 // HTTP
 type NewHTTPClient func(http.RoundTripper) *http.Client
 
@@ -98,3 +91,10 @@ type TrivyDBClient interface {
 	GetAdvisories(source, pkgName string) ([]*model.AdvisoryData, error)
 	GetVulnerability(vulnID string) (*types.Vulnerability, error)
 }
+
+// Utils
+type TimeNow func() time.Time
+type WriteFile func(r io.Reader, path string) error
+type OpenZip func(path string) (*zip.ReadCloser, error)
+type TempFile func(dir, pattern string) (f *os.File, err error)
+type Remove func(name string) error
