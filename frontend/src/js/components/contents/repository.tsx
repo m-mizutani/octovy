@@ -2,122 +2,250 @@ import React from "react";
 
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
-import Tab from "@material-ui/core/Tab";
-import Tabs from "@material-ui/core/Tabs";
+import Tooltip from "@material-ui/core/Tooltip";
 import AppBar from "@material-ui/core/AppBar";
 import Grid from "@material-ui/core/Grid";
-import { DataGrid } from "@material-ui/data-grid";
+import IconButton from "@material-ui/core/IconButton";
+import RefreshIcon from "@material-ui/icons/Refresh";
+import TextField from "@material-ui/core/TextField";
+import Checkbox from "@material-ui/core/Checkbox";
+
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableContainer from "@material-ui/core/TableContainer";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
+
+import Chip from "@material-ui/core/Chip";
 
 import { useParams } from "react-router-dom";
 import useStyles from "./style";
+import { Link as RouterLink } from "react-router-dom";
 
 interface packageRecord {
-  id?: string;
+  key?: number;
+
   Owner: string;
   RepoName: string;
   Branch: string;
   Source: string;
   Name: string;
+  Type: string;
   Version: string;
+  Vulnerabilities: string[];
 }
 
-const defColumns = [
-  { field: "Source", headerName: "Source", width: 250 },
-  { field: "Name", headerName: "Package name", width: 500 },
-  { field: "Version", headerName: "Version", width: 130 },
-];
+interface packageStatus {
+  isLoaded: boolean;
+  allSrc: { [key: string]: packageRecord[] };
+  srcMap: { [key: string]: packageRecord[] };
+}
 
 export default function Repository() {
   const classes = useStyles();
 
   const { owner, repoName } = useParams();
-  const [branches, setBranches] = React.useState<string[]>([]);
-  const [target, setTarget] = React.useState<string>();
-  const [packages, setPackages] = React.useState<packageRecord[]>([]);
+  const [branch, setBranch] = React.useState<string>();
+  const [branchInput, setBranchInput] = React.useState<string>("");
+  const [vulnFilter, setVulnFilter] = React.useState<boolean>(true);
+
+  const [pkgStatus, setPkgStatus] = React.useState<packageStatus>({
+    isLoaded: false,
+    allSrc: {},
+    srcMap: {},
+  });
   const [err, setErr] = React.useState("");
 
-  React.useEffect(() => {
+  const getRepositoryInfo = () => {
     fetch(`api/v1/repo/${owner}/${repoName}`)
       .then((res) => res.json())
       .then(
         (result) => {
           console.log(result);
-          setBranches(result.data.Branches);
-          if (result.data.DefaultBranch) {
-            setTarget(result.data.DefaultBranch);
-          } else if (result.data.Branches.length > 0) {
-            setTarget(result.data.Branches[0]);
-          }
+          setBranch(result.data.DefaultBranch);
         },
         (error) => {
           setErr(error);
         }
       );
-  }, []);
+  };
 
-  React.useEffect(() => {
-    if (target === undefined) {
+  const updatePackages = () => {
+    console.log("update:", { branch });
+    if (branch === undefined) {
       return;
     }
+    setBranchInput(branch);
 
-    fetch(`api/v1/repo/${owner}/${repoName}/${target}/package`)
+    fetch(`api/v1/repo/${owner}/${repoName}/${branch}/package`)
       .then((res) => res.json())
       .then(
         (result) => {
           console.log(result);
-          result.data.forEach((pkg: packageRecord) => {
-            pkg.id = pkg.Source + "|" + pkg.Name + "|" + pkg.Version;
+          setPkgStatus({
+            isLoaded: true,
+            allSrc: result.data,
+            srcMap: filterSrcMap(result.data),
           });
-          setPackages(result.data);
         },
         (error) => {
           setErr(error);
         }
       );
-  }, [target]);
-
-  const [tab, setTab] = React.useState(0);
-  const handleTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
-    setTab(newValue);
   };
+
+  const filterSrcMap = (srcMap: {
+    [key: string]: packageRecord[];
+  }): { [key: string]: packageRecord[] } => {
+    let newMap: { [key: string]: packageRecord[] } = {};
+
+    Object.keys(srcMap).map((src) => {
+      newMap[src] = srcMap[src].filter((pkg) => {
+        return !vulnFilter || pkg.Vulnerabilities.length > 0;
+      });
+    });
+    return newMap;
+  };
+
+  const updateVulnFilter = () => {
+    if (!pkgStatus.allSrc) {
+      return;
+    }
+
+    setPkgStatus({
+      isLoaded: pkgStatus.isLoaded,
+      allSrc: pkgStatus.allSrc,
+      srcMap: filterSrcMap(pkgStatus.allSrc),
+    });
+  };
+
+  const onKeyUpBranch = (e: any) => {
+    if (e.which === 13) {
+      setBranch(e.target.value);
+    }
+  };
+  const onChangeBranch = (e: any) => {
+    setBranchInput(e.target.value);
+  };
+  const onChangeVulnFilter = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setVulnFilter(event.target.checked);
+  };
+
+  const packageView = () => {
+    if (!pkgStatus.isLoaded) {
+      return <div className={classes.contentWrapper}>Loading...</div>;
+    } else if (Object.keys(pkgStatus.srcMap).length === 0) {
+      return <div>No data</div>;
+    } else {
+      console.log({ pkgStatus });
+      return (
+        <div>
+          {Object.keys(pkgStatus.srcMap).map((src, idx) => {
+            return (
+              <div key={idx}>
+                <Grid item xs={12}>
+                  <Grid component="h4"> {src} </Grid>
+                </Grid>
+
+                <TableContainer component={Paper}>
+                  <Table
+                    className={classes.packageTable}
+                    size="small"
+                    aria-label="simple table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell className={classes.packageTableNameRow}>
+                          Name
+                        </TableCell>
+                        <TableCell className={classes.packageTableVersionRow}>
+                          Version
+                        </TableCell>
+                        <TableCell className={classes.packageTableVulnRow}>
+                          Vulnerabilities
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {pkgStatus.srcMap[src].map((pkg, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell component="th" scope="row">
+                            {pkg.Name}
+                          </TableCell>
+                          <TableCell>{pkg.Version}</TableCell>
+                          <TableCell>
+                            {pkg.Vulnerabilities.map((vulnID, idx) => {
+                              return (
+                                <RouterLink
+                                  to={"/vuln/" + vulnID}
+                                  key={idx}
+                                  className={classes.packageTableVulnCell}>
+                                  <Chip
+                                    size="small"
+                                    label={vulnID}
+                                    color="secondary"
+                                    clickable
+                                  />
+                                </RouterLink>
+                              );
+                            })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+  };
+
+  React.useEffect(getRepositoryInfo, []);
+  React.useEffect(updatePackages, [branch]);
+  React.useEffect(updateVulnFilter, [vulnFilter]);
 
   return (
     <Paper className={classes.paper}>
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar>
-          <Grid component="h3">
-            {owner}/{repoName}
+          <Grid container spacing={3} alignItems="center">
+            <Grid component="h3">
+              {owner}/{repoName}
+            </Grid>
+
+            <Grid item xs>
+              <TextField
+                value={branchInput}
+                onChange={onChangeBranch}
+                onKeyUp={onKeyUpBranch}
+                InputProps={{
+                  className: classes.searchInput,
+                }}
+              />
+            </Grid>
+
+            <Grid item>
+              <Checkbox
+                checked={vulnFilter}
+                onChange={onChangeVulnFilter}
+                inputProps={{ "aria-label": "primary checkbox" }}
+              />
+              Only vulnerables
+            </Grid>
+
+            <Tooltip title="Reload">
+              <IconButton onClick={updatePackages}>
+                <RefreshIcon className={classes.block} color="inherit" />
+              </IconButton>
+            </Tooltip>
           </Grid>
         </Toolbar>
       </AppBar>
 
-      <AppBar
-        position="static"
-        color="default"
-        elevation={1}
-        className={classes.branchTab}>
-        <Tabs
-          value={tab}
-          onChange={handleTabChange}
-          aria-label="simple tabs example">
-          {branches.map((branch) => {
-            return <Tab label={branch} key={branch} />;
-          })}
-        </Tabs>
-      </AppBar>
-
-      <AppBar
-        position="static"
-        color="default"
-        elevation={1}
-        className={classes.pkgList}>
-        <DataGrid
-          rows={packages}
-          columns={defColumns}
-          pageSize={50}
-          checkboxSelection
-        />
-      </AppBar>
+      <div className={classes.contentWrapper}>{packageView()}</div>
     </Paper>
   );
 }

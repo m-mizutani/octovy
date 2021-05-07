@@ -111,7 +111,6 @@ function Navigator(props: NavigatorProps) {
                 key={childId}
                 component={Link}
                 to={link}
-                button
                 className={clsx(classes.item)}>
                 <ListItemIcon className={classes.itemIcon}>{icon}</ListItemIcon>
                 <ListItemText

@@ -59,7 +59,12 @@ func getPackagesByRepoBranch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, baseResponse{Data: packages})
+	srcMap := map[string][]*model.PackageRecord{}
+	for _, pkg := range packages {
+		srcMap[pkg.Source] = append(srcMap[pkg.Source], pkg)
+	}
+
+	c.JSON(http.StatusOK, baseResponse{Data: srcMap})
 }
 
 func getPackage(c *gin.Context) {

@@ -15,12 +15,13 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     block: {
       display: "block",
+      margin: "10px",
     },
     addUser: {
       marginRight: theme.spacing(1),
     },
     contentWrapper: {
-      margin: "40px 16px",
+      margin: "40px 30px",
     },
 
     formControl: {
@@ -33,6 +34,22 @@ const useStyles = makeStyles((theme: Theme) =>
     packageList: {
       margin: theme.spacing(2),
     },
+    packageTable: {},
+    packageTableNameRow: {
+      width: "50%",
+    },
+    packageTableVersionRow: {
+      width: "30%",
+    },
+    packageTableVulnRow: {
+      width: "20%",
+    },
+    packageTableVulnCell: {
+      "& > *": {
+        margin: theme.spacing(0.5),
+      },
+    },
+
     branchTab: {
       flexGrow: 1,
       backgroundColor: theme.palette.background.paper,
