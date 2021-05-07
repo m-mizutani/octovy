@@ -173,20 +173,18 @@ export default function Repository() {
                             {pkg.Name}
                           </TableCell>
                           <TableCell>{pkg.Version}</TableCell>
-                          <TableCell>
+                          <TableCell className={classes.packageTableVulnCell}>
                             {pkg.Vulnerabilities.map((vulnID, idx) => {
                               return (
-                                <RouterLink
+                                <Chip
+                                  component={RouterLink}
                                   to={"/vuln/" + vulnID}
                                   key={idx}
-                                  className={classes.packageTableVulnCell}>
-                                  <Chip
-                                    size="small"
-                                    label={vulnID}
-                                    color="secondary"
-                                    clickable
-                                  />
-                                </RouterLink>
+                                  size="small"
+                                  label={vulnID}
+                                  color="secondary"
+                                  clickable
+                                />
                               );
                             })}
                           </TableCell>
