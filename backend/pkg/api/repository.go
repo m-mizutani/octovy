@@ -43,28 +43,48 @@ func getRepoInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, baseResponse{Data: repo})
 }
 
-func getPackagesByRepoBranch(c *gin.Context) {
+func getLatestScanResult(c *gin.Context) {
 	cfg := getConfig(c)
-	branch := &model.GitHubBranch{
-		GitHubRepo: model.GitHubRepo{
-			Owner:    c.Param("owner"),
-			RepoName: c.Param("name"),
-		},
-		Branch: c.Param("branch"),
-	}
+	owner := c.Param("owner")
+	name := c.Param("name")
+	ref := c.Param("ref")
 
-	packages, err := cfg.Service.DB().FindPackageRecordsByBranch(branch)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
+	if isValidCommitID(ref) {
+		commit := &model.GitHubCommit{
+			GitHubRepo: model.GitHubRepo{
+				Owner:    owner,
+				RepoName: name,
+			},
+			CommitID: ref,
+		}
 
-	srcMap := map[string][]*model.PackageRecord{}
-	for _, pkg := range packages {
-		srcMap[pkg.Source] = append(srcMap[pkg.Source], pkg)
-	}
+		result, err := cfg.Service.DB().FindScanResult(commit)
+		if err != nil {
+			_ = c.Error(err)
+			return
+		}
 
-	c.JSON(http.StatusOK, baseResponse{Data: srcMap})
+		c.JSON(http.StatusOK, baseResponse{Data: result})
+	} else {
+		branch := &model.GitHubBranch{
+			GitHubRepo: model.GitHubRepo{
+				Owner:    owner,
+				RepoName: name,
+			},
+			Branch: ref,
+		}
+		results, err := cfg.Service.DB().FindLatestScanResults(branch, 1)
+		if err != nil {
+			_ = c.Error(err)
+			return
+		}
+
+		if len(results) > 0 {
+			c.JSON(http.StatusOK, baseResponse{Data: results[0]})
+		} else {
+			c.JSON(http.StatusOK, baseResponse{Data: nil})
+		}
+	}
 }
 
 func getPackage(c *gin.Context) {

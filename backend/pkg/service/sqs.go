@@ -19,7 +19,7 @@ func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
 
 	raw, err := json.Marshal(req)
 	if err != nil {
-		return goerr.Wrap(model.ErrInvalidScanRequest, err.Error())
+		return goerr.Wrap(model.ErrInvalidInputValues, err.Error())
 	}
 
 	client, err := x.NewSQS(x.config.AwsRegion)

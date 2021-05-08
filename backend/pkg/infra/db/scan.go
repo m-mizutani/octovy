@@ -28,6 +28,10 @@ func scanResultSK2Prefix(commitID string) string {
 }
 
 func (x *DynamoClient) InsertScanResult(result *model.ScanResult) error {
+	if err := result.IsValid(); err != nil {
+		return err
+	}
+
 	record := &dynamoRecord{
 		PK:  scanResultPK(&result.Target.GitHubBranch),
 		SK:  scanResultSK(result),
@@ -44,6 +48,7 @@ func (x *DynamoClient) InsertScanResult(result *model.ScanResult) error {
 }
 
 func (x *DynamoClient) FindLatestScanResults(branch *model.GitHubBranch, n int) ([]*model.ScanResult, error) {
+
 	var records []*dynamoRecord
 	pk := scanResultPK(branch)
 	if err := x.table.Get("pk", pk).Limit(int64(n)).Order(dynamo.Descending).All(&records); err != nil {
@@ -64,7 +69,11 @@ func (x *DynamoClient) FindScanResult(commit *model.GitHubCommit) (*model.ScanRe
 	sk2Prefix := scanResultSK2Prefix(commit.CommitID)
 
 	var records []*dynamoRecord
-	q := x.table.Get("pk2", pk2).Index(dynamoGSIName2nd).Range("sk2", dynamo.BeginsWith, sk2Prefix).Order(dynamo.Descending)
+	q := x.table.
+		Get("pk2", pk2).
+		Index(dynamoGSIName2nd).
+		Range("sk2", dynamo.BeginsWith, sk2Prefix).
+		Order(dynamo.Descending)
 	if err := q.All(&records); err != nil {
 		if !isNotFoundErr(err) {
 			return nil, goerr.Wrap(err).With("pk2", pk2).With("sk2Prefix", sk2Prefix)

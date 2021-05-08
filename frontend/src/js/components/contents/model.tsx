@@ -1,8 +1,36 @@
-interface GitHubRepo {
+export interface GitHubRepo {
   Owner: string;
   RepoName: string;
   Branch: string;
   CommitID: string;
+  URL: string;
+}
+
+interface pkg {
+  Type: string;
+  Name: string;
+  Version: string;
+  Vulnerabilities: string[];
+}
+
+export interface packageSource {
+  Source: string;
+  Packages: pkg[];
+}
+
+interface scanTarget {
+  Owner: string;
+  RepoName: string;
+  Branch: string;
+  CommitID: string;
+  UpdatedAt: number;
+  RequestedAt: number;
+}
+
+export interface scanResult {
+  Target: scanTarget;
+  ScannedAt: number;
+  Sources: packageSource[];
 }
 
 export interface packageRecord {

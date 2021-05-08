@@ -26,8 +26,6 @@ func (x *DynamoClient) InsertPackageRecord(pkg *model.PackageRecord) (bool, erro
 		SK:  packageRecordSK(pkg.Source, pkg.Type, pkg.Name, pkg.Version),
 		PK2: packageRecordPK2(pkg.Type, pkg.Name),
 		SK2: packageRecordSK2(&pkg.Detected.GitHubBranch, pkg.Version),
-		PK3: packageRecordPK(&pkg.Detected.GitHubBranch),
-		SK3: packageRecordSK(pkg.Source, pkg.Type, pkg.Name, pkg.Version),
 		Doc: pkg,
 	}
 	q := x.table.Put(record).If("attribute_not_exists(pk) AND attribute_not_exists(sk)")
@@ -48,8 +46,6 @@ func (x *DynamoClient) RemovePackageRecord(pkg *model.PackageRecord) error {
 
 	q := x.table.Update("pk", pk).
 		Range("sk", sk).
-		Set("doc.'Removed'", true).
-		Remove("pk3", "sk3").
 		Set("doc.'Removed'", true).
 		Set("doc.'ScannedAt'", pkg.ScannedAt).
 		If("doc.'ScannedAt' < ?", pkg.ScannedAt)
@@ -104,7 +100,7 @@ func (x *DynamoClient) FindPackageRecordsByName(pkgType model.PkgType, pkgName s
 func (x *DynamoClient) FindPackageRecordsByBranch(branch *model.GitHubBranch) ([]*model.PackageRecord, error) {
 	var records []*dynamoRecord
 	pk := packageRecordPK(branch)
-	if err := x.table.Get("pk3", pk).Index(dynamoGSIName3rd).All(&records); err != nil {
+	if err := x.table.Get("pk", pk).All(&records); err != nil {
 		if !isNotFoundErr(err) {
 			return nil, goerr.Wrap(err).With("pk", pk)
 		}

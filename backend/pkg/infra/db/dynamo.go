@@ -20,7 +20,6 @@ import (
 
 const (
 	dynamoGSIName2nd = "secondary"
-	dynamoGSIName3rd = "tertiary"
 )
 
 type dynamoRecord struct {
@@ -29,9 +28,6 @@ type dynamoRecord struct {
 
 	PK2 string `dynamo:"pk2,omitempty" index:"secondary,hash"`
 	SK2 string `dynamo:"sk2,omitempty" index:"secondary,range"`
-
-	PK3 string `dynamo:"pk3,omitempty" index:"tertiary,hash"`
-	SK3 string `dynamo:"sk3,omitempty" index:"tertiary,range"`
 
 	Doc interface{} `dynamo:"doc"`
 }

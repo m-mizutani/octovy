@@ -4,7 +4,7 @@ import "github.com/m-mizutani/goerr"
 
 var (
 	// Data validation
-	ErrInvalidScanRequest = goerr.New("Invalid repository scan request")
+	ErrInvalidInputValues = goerr.New("Invalid input values")
 
 	// System data validation
 	ErrInvalidSecretValues = goerr.New("Unexpected values in SecretsManager")

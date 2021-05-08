@@ -19,8 +19,6 @@
 - SK: `{Source}|{PkgType}|{PkgName}|{Version}`
 - PK2: `pkg:{PkgType}|{PkgName}`
 - SK2: `{Owner}/{RepoName}@{Branch}|{Version}`
-- PK3: `pkg:{Owner}/{RepoName}@{Branch}`
-- SK3: `{Source}|{PkgType}|{PkgName}|{Version}`
 
 PK3 and SK3 are available while the package exists in the branch.
 
@@ -42,5 +40,5 @@ PK3 and SK3 are available while the package exists in the branch.
 
 - PK: `list:vulnerability`
 - SK: `{VulnID}`
-- PK: `list:vulnerability`
-- SK: `{DetectedTimestamp}/{VulnID}`
+- PK2: `list:vulnerability`
+- SK2: `{DetectedTimestamp}/{VulnID}`

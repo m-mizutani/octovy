@@ -39,7 +39,7 @@ func TestScanRepositoryRequest(t *testing.T) {
 					UpdatedAt: 0,
 				},
 				InstallID: 1,
-			}).IsValid(), model.ErrInvalidScanRequest)
+			}).IsValid(), model.ErrInvalidInputValues)
 		})
 
 		t.Run("No RepoName", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestScanRepositoryRequest(t *testing.T) {
 					UpdatedAt: 0,
 				},
 				InstallID: 1,
-			}).IsValid(), model.ErrInvalidScanRequest)
+			}).IsValid(), model.ErrInvalidInputValues)
 		})
 
 		t.Run("No Branch", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestScanRepositoryRequest(t *testing.T) {
 					UpdatedAt: 0,
 				},
 				InstallID: 1,
-			}).IsValid(), model.ErrInvalidScanRequest)
+			}).IsValid(), model.ErrInvalidInputValues)
 		})
 
 		t.Run("No CommitID", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestScanRepositoryRequest(t *testing.T) {
 					UpdatedAt: 0,
 				},
 				InstallID: 1,
-			}).IsValid(), model.ErrInvalidScanRequest)
+			}).IsValid(), model.ErrInvalidInputValues)
 		})
 
 		t.Run("No InstallID", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestScanRepositoryRequest(t *testing.T) {
 					UpdatedAt: 0,
 				},
 				InstallID: 0,
-			}).IsValid(), model.ErrInvalidScanRequest)
+			}).IsValid(), model.ErrInvalidInputValues)
 		})
 	})
 }

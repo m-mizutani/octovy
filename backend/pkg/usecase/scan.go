@@ -5,6 +5,7 @@ import (
 	"io"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/aquasecurity/go-dep-parser/pkg/bundler"
 	"github.com/aquasecurity/go-dep-parser/pkg/gomod"
@@ -49,6 +50,42 @@ func stepDownDirectory(fpath string) string {
 	return filepath.Join(arr...)
 }
 
+func putScanResult(svc *service.Service, scannedAt time.Time, target *model.ScanTarget, pkgs []*model.PackageRecord) error {
+
+	return nil
+}
+
+func putPackageRecords(svc *service.Service, branch *model.GitHubBranch, newPkgs []*model.PackageRecord) error {
+
+	oldPkgs, err := svc.DB().FindPackageRecordsByBranch(branch)
+	if err != nil {
+		return goerr.Wrap(err)
+	}
+
+	addPkgs, modPkgs, delPkgs := diffPackageList(oldPkgs, newPkgs)
+	for _, pkg := range addPkgs {
+		if inserted, err := svc.DB().InsertPackageRecord(pkg); err != nil {
+			return goerr.Wrap(err).With("pkg", pkg)
+		} else if !inserted {
+			modPkgs = append(modPkgs, pkg)
+		}
+	}
+
+	for _, pkg := range modPkgs {
+		if err := svc.DB().UpdatePackageRecord(pkg); err != nil {
+			return goerr.Wrap(err).With("pkg", pkg)
+		}
+	}
+
+	for _, pkg := range delPkgs {
+		if err := svc.DB().RemovePackageRecord(pkg); err != nil {
+			return goerr.Wrap(err).With("pkg", pkg)
+		}
+	}
+
+	return nil
+}
+
 func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepositoryRequest) error {
 	tmp, err := svc.Utils.TempFile("", "*.zip")
 	if err != nil {
@@ -78,6 +115,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 
 	var newPkgs []*model.PackageRecord
 	detectedVulnMap := map[string]*model.Vulnerability{}
+	sourcePkgMap := map[string][]*model.Package{}
 
 	scannedAt := svc.Utils.TimeNow()
 	for _, f := range zipFile.File {
@@ -115,7 +153,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 				detectedVulnMap[vuln.VulnID] = vuln
 			}
 
-			parsed[i] = &model.PackageRecord{
+			pkg := &model.PackageRecord{
 				Detected:  req.ScanTarget,
 				ScannedAt: scannedAt.Unix(),
 				Source:    stepDownDirectory(f.Name),
@@ -126,6 +164,9 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 					Vulnerabilities: vulnIDs,
 				},
 			}
+			parsed[i] = pkg
+
+			sourcePkgMap[pkg.Source] = append(sourcePkgMap[pkg.Source], &pkg.Package)
 		}
 
 		newPkgs = append(newPkgs, parsed...)
@@ -135,30 +176,26 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		return nil
 	}
 
-	oldPkgs, err := svc.DB().FindPackageRecordsByBranch(&req.GitHubBranch)
-	if err != nil {
-		return goerr.Wrap(err)
+	var sources []*model.PackageSource
+	for src, pkgs := range sourcePkgMap {
+		sources = append(sources, &model.PackageSource{
+			Source:   src,
+			Packages: pkgs,
+		})
 	}
 
-	addPkgs, modPkgs, delPkgs := diffPackageList(oldPkgs, newPkgs)
-	for _, pkg := range addPkgs {
-		if inserted, err := svc.DB().InsertPackageRecord(pkg); err != nil {
-			return goerr.Wrap(err).With("pkg", pkg)
-		} else if !inserted {
-			modPkgs = append(modPkgs, pkg)
-		}
+	result := &model.ScanResult{
+		Target:    req.ScanTarget,
+		Sources:   sources,
+		ScannedAt: scannedAt.Unix(),
 	}
 
-	for _, pkg := range modPkgs {
-		if err := svc.DB().UpdatePackageRecord(pkg); err != nil {
-			return goerr.Wrap(err).With("pkg", pkg)
-		}
+	if err := svc.DB().InsertScanResult(result); err != nil {
+		return err
 	}
 
-	for _, pkg := range delPkgs {
-		if err := svc.DB().RemovePackageRecord(pkg); err != nil {
-			return goerr.Wrap(err).With("pkg", pkg)
-		}
+	if err := putPackageRecords(svc, &req.GitHubBranch, newPkgs); err != nil {
+		return err
 	}
 
 	for _, vuln := range detectedVulnMap {

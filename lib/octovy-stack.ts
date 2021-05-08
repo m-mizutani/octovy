@@ -58,12 +58,6 @@ export class OctovyStack extends cdk.Stack {
       sortKey: { name: "sk2", type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
-    this.metaTable.addGlobalSecondaryIndex({
-      indexName: "tertiary",
-      partitionKey: { name: "pk3", type: dynamodb.AttributeType.STRING },
-      sortKey: { name: "sk3", type: dynamodb.AttributeType.STRING },
-      projectionType: dynamodb.ProjectionType.ALL,
-    });
 
     // SQS
     this.scanRequestQueue = new sqs.Queue(this, "scanRequest", {
@@ -185,6 +179,7 @@ export class OctovyStack extends cdk.Stack {
     const apiRoot = gw.root.addResource("api").addResource("v1");
     apiRoot.addResource("webhook").addResource("github").addMethod("POST");
 
+    // Repo
     const apiRepo = apiRoot.addResource("repo");
     apiRepo.addMethod("GET");
 
@@ -198,8 +193,17 @@ export class OctovyStack extends cdk.Stack {
       .addResource("package")
       .addMethod("GET");
 
+    // Package
     const apiPackage = apiRoot.addResource("package");
     apiPackage.addMethod("GET");
+
+    // Scan
+    const apiScan = apiRoot.addResource("scan");
+    const apiScanRef = apiScan
+      .addResource("{owner}")
+      .addResource("{name}")
+      .addResource("{ref}")
+      .addResource("result");
 
     if (props.lambdaRoleARN === undefined) {
       this.metaTable.grantFullAccess(apiHandler);

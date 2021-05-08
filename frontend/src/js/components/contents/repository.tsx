@@ -27,8 +27,8 @@ import * as model from "./model";
 
 interface packageStatus {
   isLoaded: boolean;
-  allSrc: { [key: string]: model.packageRecord[] };
-  srcMap: { [key: string]: model.packageRecord[] };
+  result?: model.scanResult;
+  displayed: model.packageSource[];
 }
 
 export default function Repository() {
@@ -41,8 +41,8 @@ export default function Repository() {
 
   const [pkgStatus, setPkgStatus] = React.useState<packageStatus>({
     isLoaded: false,
-    allSrc: {},
-    srcMap: {},
+    result: undefined,
+    displayed: [],
   });
   const [err, setErr] = React.useState("");
 
@@ -67,15 +67,15 @@ export default function Repository() {
     }
     setBranchInput(branch);
 
-    fetch(`api/v1/repo/${owner}/${repoName}/${branch}/package`)
+    fetch(`api/v1/scan/${owner}/${repoName}/${branch}/result`)
       .then((res) => res.json())
       .then(
         (result) => {
           console.log(result);
           setPkgStatus({
             isLoaded: true,
-            allSrc: result.data,
-            srcMap: filterSrcMap(result.data),
+            result: result.data,
+            displayed: filterPackages(result.data.Sources),
           });
         },
         (error) => {
@@ -84,28 +84,32 @@ export default function Repository() {
       );
   };
 
-  const filterSrcMap = (srcMap: {
-    [key: string]: model.packageRecord[];
-  }): { [key: string]: model.packageRecord[] } => {
-    let newMap: { [key: string]: model.packageRecord[] } = {};
+  const filterPackages = (
+    sources: model.packageSource[]
+  ): model.packageSource[] => {
+    if (sources === undefined) {
+      return [];
+    }
 
-    Object.keys(srcMap).map((src) => {
-      newMap[src] = srcMap[src].filter((pkg) => {
-        return !vulnFilter || pkg.Vulnerabilities.length > 0;
-      });
+    return sources.map((src) => {
+      return {
+        Source: src.Source,
+        Packages: src.Packages.filter((pkg) => {
+          return !vulnFilter || pkg.Vulnerabilities.length > 0;
+        }),
+      };
     });
-    return newMap;
   };
 
   const updateVulnFilter = () => {
-    if (!pkgStatus.allSrc) {
+    if (!pkgStatus.result) {
       return;
     }
 
     setPkgStatus({
       isLoaded: pkgStatus.isLoaded,
-      allSrc: pkgStatus.allSrc,
-      srcMap: filterSrcMap(pkgStatus.allSrc),
+      result: pkgStatus.result,
+      displayed: filterPackages(pkgStatus.result.Sources),
     });
   };
 
@@ -124,17 +128,17 @@ export default function Repository() {
   const packageView = () => {
     if (!pkgStatus.isLoaded) {
       return <div className={classes.contentWrapper}>Loading...</div>;
-    } else if (Object.keys(pkgStatus.srcMap).length === 0) {
+    } else if (Object.keys(pkgStatus.displayed).length === 0) {
       return <div>No data</div>;
     } else {
       console.log({ pkgStatus });
       return (
         <div>
-          {Object.keys(pkgStatus.srcMap).map((src, idx) => {
+          {pkgStatus.displayed.map((src, idx) => {
             return (
               <div key={idx}>
                 <Grid item xs={12}>
-                  <Grid component="h4"> {src} </Grid>
+                  <Grid component="h4"> {src.Source} </Grid>
                 </Grid>
 
                 <TableContainer component={Paper}>
@@ -156,7 +160,7 @@ export default function Repository() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {pkgStatus.srcMap[src].map((pkg, idx) => (
+                      {src.Packages.map((pkg, idx) => (
                         <TableRow key={idx}>
                           <TableCell component="th" scope="row">
                             {pkg.Name}

@@ -81,7 +81,7 @@ func New(cfg *Config) *gin.Engine {
 
 		if ginError := c.Errors.Last(); ginError != nil {
 			if err := errors.Cause(ginError); err != nil {
-				if errors.Is(ginError, model.ErrInvalidScanRequest) {
+				if errors.Is(ginError, model.ErrInvalidInputValues) {
 					errResp(c, http.StatusNotAcceptable, err)
 				} else {
 					errResp(c, http.StatusInternalServerError, err)
@@ -100,7 +100,7 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/repo", getRepos)
 	r.GET("/repo/:owner", getReposByOwner)
 	r.GET("/repo/:owner/:name", getRepoInfo)
-	r.GET("/repo/:owner/:name/:branch/package", getPackagesByRepoBranch)
+	r.GET("/scan/:owner/:name/:ref/result", getLatestScanResult)
 	r.GET("/package", getPackage)
 
 	return engine
