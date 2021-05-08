@@ -83,3 +83,7 @@ func (x *Detector) Detect(pkgType model.PkgType, pkgName, version string) ([]*mo
 
 	return vulnerabilities, nil
 }
+
+func (x Detector) TrivyDBMeta() (*model.TrivyDBMeta, error) {
+	return x.trivyDB.GetDBMeta()
+}

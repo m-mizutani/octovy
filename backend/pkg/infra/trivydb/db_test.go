@@ -78,3 +78,13 @@ func TestDBAccessVulnerability(t *testing.T) {
 		require.Nil(t, vuln)
 	})
 }
+
+func TestDBMeta(t *testing.T) {
+	db := setupDB(t)
+
+	meta, err := db.GetDBMeta()
+	require.NoError(t, err)
+	assert.Less(t, int64(0), meta.UpdatedAt)
+	assert.Equal(t, 1, meta.Version)
+	assert.Equal(t, 1, meta.Type)
+}

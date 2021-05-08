@@ -112,6 +112,10 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	if err != nil {
 		return err
 	}
+	trivyDBMeta, err := dt.TrivyDBMeta()
+	if err != nil {
+		return err
+	}
 
 	var newPkgs []*model.PackageRecord
 	detectedVulnMap := map[string]*model.Vulnerability{}
@@ -185,9 +189,10 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	}
 
 	result := &model.ScanResult{
-		Target:    req.ScanTarget,
-		Sources:   sources,
-		ScannedAt: scannedAt.Unix(),
+		Target:      req.ScanTarget,
+		Sources:     sources,
+		ScannedAt:   scannedAt.Unix(),
+		TrivyDBMeta: *trivyDBMeta,
 	}
 
 	if err := svc.DB().InsertScanResult(result); err != nil {

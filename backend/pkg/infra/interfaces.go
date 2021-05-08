@@ -90,6 +90,7 @@ type NewTrivyDB func(dbPath string) (TrivyDBClient, error)
 type TrivyDBClient interface {
 	GetAdvisories(source, pkgName string) ([]*model.AdvisoryData, error)
 	GetVulnerability(vulnID string) (*types.Vulnerability, error)
+	GetDBMeta() (*model.TrivyDBMeta, error)
 }
 
 // Utils
