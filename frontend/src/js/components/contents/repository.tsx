@@ -23,23 +23,12 @@ import { useParams } from "react-router-dom";
 import useStyles from "./style";
 import { Link as RouterLink } from "react-router-dom";
 
-interface packageRecord {
-  key?: number;
-
-  Owner: string;
-  RepoName: string;
-  Branch: string;
-  Source: string;
-  Name: string;
-  Type: string;
-  Version: string;
-  Vulnerabilities: string[];
-}
+import * as model from "./model";
 
 interface packageStatus {
   isLoaded: boolean;
-  allSrc: { [key: string]: packageRecord[] };
-  srcMap: { [key: string]: packageRecord[] };
+  allSrc: { [key: string]: model.packageRecord[] };
+  srcMap: { [key: string]: model.packageRecord[] };
 }
 
 export default function Repository() {
@@ -96,9 +85,9 @@ export default function Repository() {
   };
 
   const filterSrcMap = (srcMap: {
-    [key: string]: packageRecord[];
-  }): { [key: string]: packageRecord[] } => {
-    let newMap: { [key: string]: packageRecord[] } = {};
+    [key: string]: model.packageRecord[];
+  }): { [key: string]: model.packageRecord[] } => {
+    let newMap: { [key: string]: model.packageRecord[] } = {};
 
     Object.keys(srcMap).map((src) => {
       newMap[src] = srcMap[src].filter((pkg) => {
@@ -153,7 +142,7 @@ export default function Repository() {
                     className={classes.packageTable}
                     size="small"
                     aria-label="simple table">
-                    <TableHead>
+                    <TableHead className={classes.packageTableHeader}>
                       <TableRow>
                         <TableCell className={classes.packageTableNameRow}>
                           Name

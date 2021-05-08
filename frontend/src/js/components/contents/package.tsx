@@ -22,10 +22,10 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Redirect, useLocation } from "react-router-dom";
 
 import useStyles from "./style";
+import * as model from "./model";
 
 interface errorResponse {
   Error: string;
@@ -34,16 +34,7 @@ interface errorResponse {
 interface packageState {
   error?: errorResponse;
   isLoaded?: boolean;
-  items?: packageRecord[];
-}
-
-interface packageRecord {
-  Owner: string;
-  RepoName: string;
-  Branch: string;
-  Source: string;
-  Name: string;
-  Version: string;
+  items?: model.packageRecord[];
 }
 
 export default function Package() {
@@ -117,19 +108,20 @@ export default function Package() {
                 <TableCell align="right">Branch</TableCell>
                 <TableCell align="right">Source</TableCell>
                 <TableCell align="right">Version</TableCell>
+                <TableCell align="right">Detected</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {pkgState.items.map((pkg) => {
-                const key = `${pkg.Owner}/${pkg.RepoName}/${pkg.Branch}:${pkg.Name}@${pkg.Version}`;
+              {pkgState.items.map((pkg, idx) => {
                 return (
-                  <TableRow key={key}>
+                  <TableRow key={idx}>
                     <TableCell component="th" scope="row">
-                      {`${pkg.Owner}/${pkg.RepoName}`}
+                      {`${pkg.Detected.Owner}/${pkg.Detected.RepoName}`}
                     </TableCell>
-                    <TableCell align="right">{pkg.Branch}</TableCell>
+                    <TableCell align="right">{pkg.Detected.Branch}</TableCell>
                     <TableCell align="right">{pkg.Source}</TableCell>
                     <TableCell align="right">{pkg.Version}</TableCell>
+                    <TableCell align="right">{pkg.Detected.CommitID}</TableCell>
                   </TableRow>
                 );
               })}

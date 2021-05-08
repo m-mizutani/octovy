@@ -35,6 +35,9 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: theme.spacing(2),
     },
     packageTable: {},
+    packageTableHeader: {
+      background: "#eee",
+    },
     packageTableNameRow: {
       width: "50%",
     },
