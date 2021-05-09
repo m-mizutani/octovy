@@ -17,9 +17,6 @@ const useStyles = makeStyles((theme: Theme) =>
       display: "block",
       margin: "10px",
     },
-    addUser: {
-      marginRight: theme.spacing(1),
-    },
     contentWrapper: {
       margin: "40px 30px",
     },
@@ -53,16 +50,23 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
 
+    vulnParagraph: {
+      marginBottom: theme.spacing(5),
+    },
+    vulnDetailItem: {
+      padding: theme.spacing(2),
+    },
+    vulnDetailItemTitle: {
+      fontWeight: "bold",
+      marginBottom: theme.spacing(1),
+    },
+
     pageDivider: {
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(1),
       borderColor: "#aaa",
     },
 
-    branchTab: {
-      flexGrow: 1,
-      backgroundColor: theme.palette.background.paper,
-    },
     pkgList: {
       height: "600px",
       width: "100%",

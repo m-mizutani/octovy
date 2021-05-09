@@ -44,13 +44,19 @@ export interface packageRecord {
   Vulnerabilities: string[];
 }
 
+export interface cvss {
+  V2Vector: string;
+  V3Vector: string;
+  V2Score: number;
+  V3Score: number;
+}
+
 interface vulnDetail {
   Title: string;
   Description: string;
   Severity: string;
   CweIDs: string[];
-  //VendorSeverity   :VendorSeverity ;
-  //CVSS             :VendorCVSS     ;
+  CVSS: { [key: string]: cvss };
   References: string[];
   PublishedDate: string;
   LastModifiedDate: string;
