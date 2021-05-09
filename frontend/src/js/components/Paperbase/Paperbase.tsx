@@ -17,6 +17,7 @@ import Header from "./Header";
 import ContentPackage from "../contents/package";
 import ContentRepository from "../contents/repository";
 import ContentRepositoryList from "../contents/repository_list";
+import * as vulnerability from "../contents/vulnerability";
 
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import { Redirect, useLocation } from "react-router-dom";
@@ -216,6 +217,12 @@ function Paperbase(props: PaperbaseProps) {
                 </Route>
                 <Route path="/package">
                   <ContentPackage />
+                </Route>
+                <Route path="/vuln" exact>
+                  <vulnerability.Content />
+                </Route>
+                <Route path="/vuln/:vulnID">
+                  <vulnerability.Content />
                 </Route>
                 <Route path="/" exact>
                   <Redirect to="/repository" />

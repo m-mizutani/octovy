@@ -102,6 +102,7 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/repo/:owner/:name", getRepoInfo)
 	r.GET("/scan/:owner/:name/:ref/result", getLatestScanResult)
 	r.GET("/package", getPackage)
+	r.GET("/vuln/:vuln_id", getVulnerability)
 
 	return engine
 }

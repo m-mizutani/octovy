@@ -48,7 +48,6 @@ export class OctovyStack extends cdk.Stack {
     this.metaTable = new dynamodb.Table(this, "metaTable", {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
-      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
       timeToLiveAttribute: "expires_at",
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
@@ -196,6 +195,10 @@ export class OctovyStack extends cdk.Stack {
     // Package
     const apiPackage = apiRoot.addResource("package");
     apiPackage.addMethod("GET");
+
+    // Vulnerability
+    const apiVuln = apiRoot.addResource("vuln");
+    apiVuln.addMethod("GET");
 
     // Scan
     const apiScan = apiRoot.addResource("scan");

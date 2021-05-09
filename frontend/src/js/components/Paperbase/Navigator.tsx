@@ -13,6 +13,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import AllInboxIcon from "@material-ui/icons/AllInbox";
+import ReportProblemIcon from "@material-ui/icons/ReportProblem";
 import BusinessCenterIcon from "@material-ui/icons/AssignmentLate";
 import { Omit } from "@material-ui/types";
 
@@ -31,6 +32,11 @@ const categories = [
         id: "Package",
         icon: <BusinessCenterIcon />,
         link: "/package",
+      },
+      {
+        id: "Vulnerability",
+        icon: <ReportProblemIcon />,
+        link: "/vuln",
       },
     ],
   },

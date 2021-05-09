@@ -43,3 +43,22 @@ export interface packageRecord {
   Version: string;
   Vulnerabilities: string[];
 }
+
+interface vulnDetail {
+  Title: string;
+  Description: string;
+  Severity: string;
+  CweIDs: string[];
+  //VendorSeverity   :VendorSeverity ;
+  //CVSS             :VendorCVSS     ;
+  References: string[];
+  PublishedDate: string;
+  LastModifiedDate: string;
+}
+
+export interface vulnerability {
+  VulnID: string;
+  Detail: vulnDetail;
+  FirstSeenAt: number;
+  LastModifiedAt: number;
+}

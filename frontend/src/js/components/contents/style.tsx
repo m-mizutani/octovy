@@ -53,6 +53,12 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
 
+    pageDivider: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(1),
+      borderColor: "#aaa",
+    },
+
     branchTab: {
       flexGrow: 1,
       backgroundColor: theme.palette.background.paper,
