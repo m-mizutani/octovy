@@ -187,10 +187,6 @@ export class OctovyStack extends cdk.Stack {
 
     const apiRepoOwnerName = apiRepoOwner.addResource("{repoName}");
     apiRepoOwnerName.addMethod("GET");
-    apiRepoOwnerName
-      .addResource("{branch}")
-      .addResource("package")
-      .addMethod("GET");
 
     // Package
     const apiPackage = apiRoot.addResource("package");
@@ -207,6 +203,7 @@ export class OctovyStack extends cdk.Stack {
       .addResource("{name}")
       .addResource("{ref}")
       .addResource("result");
+    apiScanRef.addMethod("GET");
 
     if (props.lambdaRoleARN === undefined) {
       this.metaTable.grantFullAccess(apiHandler);
