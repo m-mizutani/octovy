@@ -68,6 +68,10 @@ type DBClient interface {
 	FindRepoByOwner(owner string) ([]*model.Repository, error)
 	FindRepoByFullName(owner, name string) (*model.Repository, error)
 
+	UpdateBranch(branch *model.Branch) error
+	LookupBranch(branch *model.GitHubBranch) (*model.Branch, error)
+	FindLatestScannedBranch(repo *model.GitHubRepo, n int) ([]*model.Branch, error)
+
 	InsertVulnerability(vuln *model.Vulnerability) error
 	FindVulnerability(vulnID string) (*model.Vulnerability, error)
 	FindLatestVulnerabilities(n int) ([]*model.Vulnerability, error)

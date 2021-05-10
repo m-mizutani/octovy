@@ -44,20 +44,28 @@ func getRepoInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, baseResponse{Data: repo})
 }
 
-func getScanReport(c *gin.Context) {
+func getBranchInfo(c *gin.Context) {
 	cfg := getConfig(c)
-	reportID := c.Param("report_id")
+	owner := c.Param("owner")
+	name := c.Param("name")
+	branch := c.Param("branch")
 
-	report, err := cfg.Service.DB().LookupScanReport(reportID)
+	resp, err := cfg.Service.DB().LookupBranch(&model.GitHubBranch{
+		GitHubRepo: model.GitHubRepo{
+			Owner:    owner,
+			RepoName: name,
+		},
+		Branch: branch,
+	})
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	if report == nil {
-		_ = c.Error(goerr.Wrap(errResourceNotFound, "No such report"))
+	if resp == nil {
+		_ = c.Error(goerr.Wrap(errResourceNotFound, "No such branch"))
 	}
 
-	c.JSON(http.StatusOK, baseResponse{Data: report})
+	c.JSON(http.StatusOK, baseResponse{Data: resp})
 }
 
 /*

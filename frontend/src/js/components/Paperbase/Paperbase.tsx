@@ -208,6 +208,9 @@ function Paperbase(props: PaperbaseProps) {
             <Header onDrawerToggle={handleDrawerToggle} />
             <main className={classes.main}>
               <Switch>
+                <Route path="/repository/:owner/:repoName/:branch">
+                  <ContentRepository />
+                </Route>
                 <Route path="/repository/:owner/:repoName">
                   <ContentRepository />
                 </Route>

@@ -27,7 +27,8 @@ interface scanTarget {
   RequestedAt: number;
 }
 
-export interface scanResult {
+export interface scanReport {
+  ReportID: string;
   Target: scanTarget;
   ScannedAt: number;
   Sources: packageSource[];

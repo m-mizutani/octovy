@@ -183,6 +183,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		}
 	}
 
+	// ScanReport
 	var sources []*model.PackageSource
 	for src, pkgs := range sourcePkgMap {
 		sources = append(sources, &model.PackageSource{
@@ -206,6 +207,9 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		GitHubBranch:  req.GitHubBranch,
 		LastScannedAt: report.ScannedAt,
 		ReportSummary: scanLog.Summary,
+	}
+	if err := svc.DB().UpdateBranch(branch); err != nil {
+		return err
 	}
 	if err := svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
 		return err

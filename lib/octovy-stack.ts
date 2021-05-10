@@ -188,6 +188,9 @@ export class OctovyStack extends cdk.Stack {
     const apiRepoOwnerName = apiRepoOwner.addResource("{repoName}");
     apiRepoOwnerName.addMethod("GET");
 
+    const apiRepoOwnerNameBranch = apiRepoOwnerName.addResource("{branch}");
+    apiRepoOwnerNameBranch.addMethod("GET");
+
     // Package
     const apiPackage = apiRoot.addResource("package");
     apiPackage.addMethod("GET");

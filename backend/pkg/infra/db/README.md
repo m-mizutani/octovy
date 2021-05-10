@@ -13,6 +13,13 @@
 - PK: `list:repository`
 - SK: `{Owner}/{RepoName}`
 
+### Branch
+
+- PK: `branch:{Owner}/{RepoName}`
+- SK: `{Branch}`
+- PK2: `branch:{Owner}/{RepoName}`
+- SK2: `{LastScannedAt}/{Branch}`
+
 ### PackageRecord
 
 - PK: `pkg:{Owner}/{RepoName}@{Branch}`
