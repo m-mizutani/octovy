@@ -6,4 +6,6 @@ var (
 	// API error
 	errAPIInvalidParameter = goerr.New("Invalid API parameter")
 	errInvalidWebhookData  = goerr.New("Invalid webhook data")
+
+	errResourceNotFound = goerr.New("Resource not found")
 )

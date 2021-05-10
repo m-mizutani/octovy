@@ -198,12 +198,10 @@ export class OctovyStack extends cdk.Stack {
 
     // Scan
     const apiScan = apiRoot.addResource("scan");
-    const apiScanRef = apiScan
-      .addResource("{owner}")
-      .addResource("{name}")
-      .addResource("{ref}")
-      .addResource("result");
-    apiScanRef.addMethod("GET");
+    const apiScanReport = apiScan
+      .addResource("report")
+      .addResource("{report_id}");
+    apiScanReport.addMethod("GET");
 
     if (props.lambdaRoleARN === undefined) {
       this.metaTable.grantFullAccess(apiHandler);

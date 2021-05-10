@@ -15,7 +15,6 @@ type Usecases interface {
 	RegisterRepository(svc *service.Service, repo *model.Repository) error
 	PutNewRepository(svc *service.Service, repo *model.Repository) (bool, error)
 	UpdateRepositoryDefaultBranch(svc *service.Service, repo *model.GitHubRepo, branch string) error
-	UpdateRepositoryBranches(svc *service.Service, repo *model.GitHubRepo, branches []string) error
 
 	FindRepos(svc *service.Service) ([]*model.Repository, error)
 	FindReposByOwner(svc *service.Service, owner string) ([]*model.Repository, error)

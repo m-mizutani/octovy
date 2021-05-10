@@ -22,16 +22,21 @@
 
 PK3 and SK3 are available while the package exists in the branch.
 
-### ScanResult
+### ScanLog
 
-- PK: `scan:{Owner}/{RepoName}@{Branch}`
+- PK: `scan_log:{Owner}/{RepoName}@{Branch}`
 - SK: `{ScannedAt}/{CommitID}`
-- PK2: `scan:{Owner}/{RepoName}`
+- PK2: `scan_log:{Owner}/{RepoName}`
 - SK2: `{CommitID}/{ScannedAt}`
+
+### ScanReport
+
+- PK: `scan_report:{ReportID}`
+- SK: `*`
 
 ### Vulnerability Package Map
 
-- PK: `vulnpkg:{VulnID}`
+- PK: `vuln_pkg:{VulnID}`
 - SK: `{Source}|{PkgType}:{PkgName}@{Version}`
 
 ### Vulnerability Info
@@ -40,4 +45,3 @@ PK3 and SK3 are available while the package exists in the branch.
 - SK: `{VulnID}`
 - PK2: `list:vulnerability`
 - SK2: `{DetectedTimestamp}/{VulnID}`
-

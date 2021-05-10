@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 )
 
@@ -43,6 +44,23 @@ func getRepoInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, baseResponse{Data: repo})
 }
 
+func getScanReport(c *gin.Context) {
+	cfg := getConfig(c)
+	reportID := c.Param("report_id")
+
+	report, err := cfg.Service.DB().LookupScanReport(reportID)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	if report == nil {
+		_ = c.Error(goerr.Wrap(errResourceNotFound, "No such report"))
+	}
+
+	c.JSON(http.StatusOK, baseResponse{Data: report})
+}
+
+/*
 func getLatestScanResult(c *gin.Context) {
 	cfg := getConfig(c)
 	owner := c.Param("owner")
@@ -86,6 +104,7 @@ func getLatestScanResult(c *gin.Context) {
 		}
 	}
 }
+*/
 
 func getPackage(c *gin.Context) {
 	cfg := getConfig(c)

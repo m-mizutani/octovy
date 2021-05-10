@@ -81,9 +81,12 @@ func New(cfg *Config) *gin.Engine {
 
 		if ginError := c.Errors.Last(); ginError != nil {
 			if err := errors.Cause(ginError); err != nil {
-				if errors.Is(ginError, model.ErrInvalidInputValues) {
+				switch {
+				case errors.Is(err, model.ErrInvalidInputValues):
 					errResp(c, http.StatusNotAcceptable, err)
-				} else {
+				case errors.Is(err, errResourceNotFound):
+					errResp(c, http.StatusNotFound, err)
+				default:
 					errResp(c, http.StatusInternalServerError, err)
 				}
 			} else {
@@ -100,7 +103,7 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/repo", getRepos)
 	r.GET("/repo/:owner", getReposByOwner)
 	r.GET("/repo/:owner/:name", getRepoInfo)
-	r.GET("/scan/:owner/:name/:ref/result", getLatestScanResult)
+	r.GET("/scan/report/:report_id", getScanReport)
 	r.GET("/package", getPackage)
 	r.GET("/vuln/:vuln_id", getVulnerability)
 

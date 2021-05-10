@@ -56,13 +56,14 @@ type DBClient interface {
 	FindPackageRecordsByName(pkgType model.PkgType, pkgName string) ([]*model.PackageRecord, error)
 	FindPackageRecordsByBranch(*model.GitHubBranch) ([]*model.PackageRecord, error)
 
-	InsertScanResult(*model.ScanResult) error
-	FindLatestScanResults(branch *model.GitHubBranch, n int) ([]*model.ScanResult, error)
-	FindScanResult(commit *model.GitHubCommit) (*model.ScanResult, error)
+	InsertScanReport(*model.ScanReport) error
+	LookupScanReport(reportID string) (*model.ScanReport, error)
+	FindScanLogsByBranch(branch *model.GitHubBranch, n int) ([]*model.ScanLog, error)
+	FindScanLogsByCommit(commit *model.GitHubCommit, n int) ([]*model.ScanLog, error)
 
 	InsertRepo(*model.Repository) (bool, error)
-	SetRepoBranches(*model.GitHubRepo, []string) error
-	SetRepoDefaultBranch(*model.GitHubRepo, string) error
+	UpdateBranchIfDefault(*model.GitHubRepo, *model.Branch) error
+	SetRepoDefaultBranchName(*model.GitHubRepo, string) error
 	FindRepo() ([]*model.Repository, error)
 	FindRepoByOwner(owner string) ([]*model.Repository, error)
 	FindRepoByFullName(owner, name string) (*model.Repository, error)

@@ -50,7 +50,5 @@ type Repository struct {
 type Branch struct {
 	GitHubBranch
 	LastScannedAt int64
-	PkgTypes      []PkgType
-	PkgCount      int64
-	VulnCount     int64
+	ReportSummary ScanReportSummary
 }

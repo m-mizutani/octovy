@@ -16,8 +16,9 @@ func TestScanResult(t *testing.T) {
 			Type:      1,
 			UpdatedAt: 2345,
 		}
-		results := []*model.ScanResult{
+		results := []*model.ScanReport{
 			{
+				ReportID: "aaaa",
 				Target: model.ScanTarget{
 					GitHubBranch: model.GitHubBranch{
 						GitHubRepo: model.GitHubRepo{
@@ -35,9 +36,10 @@ func TestScanResult(t *testing.T) {
 						Source: "Gemfile.lock",
 						Packages: []*model.Package{
 							{
-								Type:    model.PkgBundler,
-								Name:    "hoge",
-								Version: "1.2.3",
+								Type:            model.PkgBundler,
+								Name:            "hoge",
+								Version:         "1.2.3",
+								Vulnerabilities: []string{},
 							},
 						},
 					},
@@ -45,6 +47,7 @@ func TestScanResult(t *testing.T) {
 				TrivyDBMeta: trivyMeta,
 			},
 			{
+				ReportID: "bbbb",
 				Target: model.ScanTarget{
 					GitHubBranch: model.GitHubBranch{
 						GitHubRepo: model.GitHubRepo{
@@ -62,9 +65,10 @@ func TestScanResult(t *testing.T) {
 						Source: "Gemfile.lock",
 						Packages: []*model.Package{
 							{
-								Type:    model.PkgBundler,
-								Name:    "hoge",
-								Version: "1.2.4",
+								Type:            model.PkgBundler,
+								Name:            "hoge",
+								Version:         "bbbb",
+								Vulnerabilities: []string{},
 							},
 						},
 					},
@@ -72,6 +76,7 @@ func TestScanResult(t *testing.T) {
 				TrivyDBMeta: trivyMeta,
 			},
 			{
+				ReportID: "cccc",
 				Target: model.ScanTarget{
 					GitHubBranch: model.GitHubBranch{
 						GitHubRepo: model.GitHubRepo{
@@ -89,9 +94,10 @@ func TestScanResult(t *testing.T) {
 						Source: "Gemfile.lock",
 						Packages: []*model.Package{
 							{
-								Type:    model.PkgBundler,
-								Name:    "hoge",
-								Version: "1.2.5",
+								Type:            model.PkgBundler,
+								Name:            "hoge",
+								Version:         "1.2.5",
+								Vulnerabilities: []string{},
 							},
 						},
 					},
@@ -100,12 +106,18 @@ func TestScanResult(t *testing.T) {
 			},
 		}
 
-		require.NoError(t, client.InsertScanResult(results[0]))
-		require.NoError(t, client.InsertScanResult(results[1]))
-		require.NoError(t, client.InsertScanResult(results[2]))
+		require.NoError(t, client.InsertScanReport(results[0]))
+		require.NoError(t, client.InsertScanReport(results[1]))
+		require.NoError(t, client.InsertScanReport(results[2]))
+
+		t.Run("Lookup report", func(t *testing.T) {
+			r, err := client.LookupScanReport("cccc")
+			require.NoError(t, err)
+			assert.Equal(t, r, results[2])
+		})
 
 		t.Run("List latest scan results", func(t *testing.T) {
-			r, err := client.FindLatestScanResults(&model.GitHubBranch{
+			r, err := client.FindScanLogsByBranch(&model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
 					Owner:    "blue",
 					RepoName: "five",
@@ -114,12 +126,12 @@ func TestScanResult(t *testing.T) {
 			}, 2)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(r))
-			assert.Equal(t, "1.2.3", r[0].Sources[0].Packages[0].Version)
-			assert.Equal(t, "1.2.5", r[1].Sources[0].Packages[0].Version)
+			assert.Equal(t, "aaaa", r[0].ReportID)
+			assert.Equal(t, "cccc", r[1].ReportID)
 		})
 
 		t.Run("List latest scan results (over)", func(t *testing.T) {
-			r, err := client.FindLatestScanResults(&model.GitHubBranch{
+			r, err := client.FindScanLogsByBranch(&model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
 					Owner:    "blue",
 					RepoName: "five",
@@ -128,13 +140,13 @@ func TestScanResult(t *testing.T) {
 			}, 5)
 			require.NoError(t, err)
 			require.Equal(t, 3, len(r))
-			assert.Equal(t, "1.2.3", r[0].Sources[0].Packages[0].Version)
-			assert.Equal(t, "1.2.5", r[1].Sources[0].Packages[0].Version)
-			assert.Equal(t, "1.2.4", r[2].Sources[0].Packages[0].Version)
+			assert.Equal(t, "aaaa", r[0].ReportID)
+			assert.Equal(t, "cccc", r[1].ReportID)
+			assert.Equal(t, "bbbb", r[2].ReportID)
 		})
 
 		t.Run("No error by find not existing repo/branch", func(t *testing.T) {
-			r1, err := client.FindLatestScanResults(&model.GitHubBranch{
+			r1, err := client.FindScanLogsByBranch(&model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
 					Owner:    "blue",
 					RepoName: "five",
@@ -144,7 +156,7 @@ func TestScanResult(t *testing.T) {
 			require.NoError(t, err)
 			assert.Zero(t, len(r1))
 
-			r2, err := client.FindLatestScanResults(&model.GitHubBranch{
+			r2, err := client.FindScanLogsByBranch(&model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
 					Owner:    "blue",
 					RepoName: "six",
@@ -156,17 +168,18 @@ func TestScanResult(t *testing.T) {
 		})
 
 		t.Run("Find latest result of commitID", func(t *testing.T) {
-			r, err := client.FindScanResult(&model.GitHubCommit{
+			r, err := client.FindScanLogsByCommit(&model.GitHubCommit{
 				GitHubRepo: model.GitHubRepo{
 					Owner:    "blue",
 					RepoName: "five",
 				},
 				CommitID: "beef1111",
-			})
+			}, 3)
 
 			require.NoError(t, err)
-			require.NotNil(t, r)
-			assert.Equal(t, "1.2.3", r.Sources[0].Packages[0].Version)
+			require.Equal(t, 2, len(r))
+			assert.Contains(t, []string{r[0].ReportID, r[1].ReportID}, "aaaa")
+			assert.Contains(t, []string{r[0].ReportID, r[1].ReportID}, "bbbb")
 		})
 	})
 }

@@ -42,7 +42,22 @@ func (x *DynamoClient) SetRepoBranches(repo *model.GitHubRepo, branches []string
 	return nil
 }
 
-func (x *DynamoClient) SetRepoDefaultBranch(repo *model.GitHubRepo, branch string) error {
+func (x *DynamoClient) UpdateBranchIfDefault(repo *model.GitHubRepo, branch *model.Branch) error {
+	pk := repositoryPK()
+	sk := repositorySK(repo.Owner, repo.RepoName)
+	q := x.table.Update("pk", pk).Range("sk", sk).
+		Set("doc.'Branch'", branch).
+		If("doc.'DefaultBranch' = ?", branch.Branch)
+	if err := q.Run(); err != nil {
+		if isConditionalCheckErr(err) {
+			return nil
+		}
+		return goerr.Wrap(err).With("repo", repo).With("branch", branch)
+	}
+	return nil
+}
+
+func (x *DynamoClient) SetRepoDefaultBranchName(repo *model.GitHubRepo, branch string) error {
 	pk := repositoryPK()
 	sk := repositorySK(repo.Owner, repo.RepoName)
 	update := x.table.Update("pk", pk).Range("sk", sk).
@@ -51,17 +66,6 @@ func (x *DynamoClient) SetRepoDefaultBranch(repo *model.GitHubRepo, branch strin
 		return goerr.Wrap(err)
 	}
 
-	setBranch := x.table.Update("pk", pk).Range("sk", sk).
-		Set("doc.'Branches'", []string{branch}).
-		If("doc.'Branches'.length = 0")
-	if err := setBranch.Run(); err != nil && isConditionalCheckErr(err) {
-		return goerr.Wrap(err).With("repo", repo)
-	}
-
-	return nil
-}
-
-func (x *DynamoClient) UpdateRepoBranch(repo *model.GitHubRepo, branch *model.Branch) error {
 	return nil
 }
 

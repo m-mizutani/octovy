@@ -1,5 +1,5 @@
 package api
 
 func init() {
-	initValidate()
+	// initValidate()
 }

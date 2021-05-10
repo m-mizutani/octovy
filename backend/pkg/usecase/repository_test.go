@@ -33,7 +33,9 @@ func TestPutNewRepository(t *testing.T) {
 			},
 			URL:           "https://github-enterprise.example.com/five/blue",
 			DefaultBranch: "main",
-			Branch:        model.Branch{PkgTypes: []model.PkgType{}},
+			Branch: model.Branch{
+				ReportSummary: model.ScanReportSummary{PkgTypes: []model.PkgType{}},
+			},
 		}
 
 		repo2 := &model.Repository{
@@ -43,7 +45,9 @@ func TestPutNewRepository(t *testing.T) {
 			},
 			URL:           "https://github-enterprise.example.com/five/orange",
 			DefaultBranch: "main",
-			Branch:        model.Branch{PkgTypes: []model.PkgType{}},
+			Branch: model.Branch{
+				ReportSummary: model.ScanReportSummary{PkgTypes: []model.PkgType{}},
+			},
 		}
 
 		repo3 := &model.Repository{
@@ -53,7 +57,9 @@ func TestPutNewRepository(t *testing.T) {
 			},
 			URL:           "https://github-enterprise.example.com/three/heaven",
 			DefaultBranch: "main",
-			Branch:        model.Branch{PkgTypes: []model.PkgType{}},
+			Branch: model.Branch{
+				ReportSummary: model.ScanReportSummary{PkgTypes: []model.PkgType{}},
+			},
 		}
 
 		testInsert := func(t *testing.T, repo *model.Repository) {

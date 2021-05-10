@@ -13,6 +13,7 @@ import (
 	"github.com/aquasecurity/go-dep-parser/pkg/pipenv"
 	"github.com/aquasecurity/go-dep-parser/pkg/types"
 	"github.com/aquasecurity/go-dep-parser/pkg/yarn"
+	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
@@ -176,8 +177,10 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		newPkgs = append(newPkgs, parsed...)
 	}
 
-	if len(newPkgs) == 0 {
-		return nil
+	if len(newPkgs) > 0 {
+		if err := putPackageRecords(svc, &req.GitHubBranch, newPkgs); err != nil {
+			return err
+		}
 	}
 
 	var sources []*model.PackageSource
@@ -187,19 +190,23 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 			Packages: pkgs,
 		})
 	}
-
-	result := &model.ScanResult{
+	report := &model.ScanReport{
+		ReportID:    uuid.New().String(),
 		Target:      req.ScanTarget,
 		Sources:     sources,
 		ScannedAt:   scannedAt.Unix(),
 		TrivyDBMeta: *trivyDBMeta,
 	}
-
-	if err := svc.DB().InsertScanResult(result); err != nil {
+	if err := svc.DB().InsertScanReport(report); err != nil {
 		return err
 	}
 
-	if err := putPackageRecords(svc, &req.GitHubBranch, newPkgs); err != nil {
+	branch := &model.Branch{
+		GitHubBranch:  req.GitHubBranch,
+		LastScannedAt: report.ScannedAt,
+		ReportSummary: report.ToLog().Summary,
+	}
+	if err := svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
 		return err
 	}
 

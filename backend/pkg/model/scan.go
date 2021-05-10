@@ -42,20 +42,61 @@ func (x *ScanTarget) IsValid() error {
 	return nil
 }
 
-type ScanResult struct {
+type ScanLog struct {
+	Target    ScanTarget
+	ReportID  string
+	ScannedAt int64
+	Summary   ScanReportSummary
+}
+
+type ScanReportSummary struct {
+	PkgTypes     []PkgType
+	PkgCount     int64
+	VulnCount    int64
+	VulnPkgCount int64
+}
+
+type ScanReport struct {
+	ReportID    string
 	Target      ScanTarget
 	ScannedAt   int64
 	Sources     []*PackageSource
 	TrivyDBMeta TrivyDBMeta
 }
 
-func (x *ScanResult) IsValid() error {
-	if err := x.Target.IsValid(); err != nil {
-		return err
+func (x *ScanReport) IsValid() error {
+	if x.ReportID == "" {
+		return goerr.Wrap(ErrInvalidInputValues, "ID is not set")
 	}
 	if x.ScannedAt == 0 {
 		return goerr.Wrap(ErrInvalidInputValues, "ScannedAt is not set")
 	}
+	if err := x.Target.IsValid(); err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func (x *ScanReport) ToLog() *ScanLog {
+	var summary ScanReportSummary
+	pkgTypes := map[PkgType]struct{}{}
+
+	for _, src := range x.Sources {
+		summary.PkgCount += int64(len(src.Packages))
+		for _, pkg := range src.Packages {
+			pkgTypes[pkg.Type] = struct{}{}
+			summary.VulnCount += int64(len(pkg.Vulnerabilities))
+			if len(pkg.Vulnerabilities) > 0 {
+				summary.VulnPkgCount++
+			}
+		}
+	}
+
+	return &ScanLog{
+		Target:    x.Target,
+		ReportID:  x.ReportID,
+		ScannedAt: x.ScannedAt,
+		Summary:   summary,
+	}
 }

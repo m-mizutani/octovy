@@ -24,11 +24,7 @@ func (x *Default) PutNewRepository(svc *service.Service, repo *model.Repository)
 }
 
 func (x *Default) UpdateRepositoryDefaultBranch(svc *service.Service, repo *model.GitHubRepo, branch string) error {
-	return svc.DB().SetRepoDefaultBranch(repo, branch)
-}
-
-func (x *Default) UpdateRepositoryBranches(svc *service.Service, repo *model.GitHubRepo, branches []string) error {
-	return svc.DB().SetRepoBranches(repo, branches)
+	return svc.DB().SetRepoDefaultBranchName(repo, branch)
 }
 
 func (x *Default) FindRepos(svc *service.Service) ([]*model.Repository, error) {

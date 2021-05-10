@@ -1,7 +1,6 @@
 package api
 
-import "regexp"
-
+/*
 var ptnCommitID *regexp.Regexp
 
 func initValidate() {
@@ -11,3 +10,4 @@ func initValidate() {
 func isValidCommitID(s string) bool {
 	return ptnCommitID.MatchString(s)
 }
+*/
