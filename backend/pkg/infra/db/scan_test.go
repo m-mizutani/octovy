@@ -126,8 +126,8 @@ func TestScanResult(t *testing.T) {
 			}, 2)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(r))
-			assert.Equal(t, "aaaa", r[0].ReportID)
-			assert.Equal(t, "cccc", r[1].ReportID)
+			assert.Equal(t, "aaaa", r[0].Summary.ReportID)
+			assert.Equal(t, "cccc", r[1].Summary.ReportID)
 		})
 
 		t.Run("List latest scan results (over)", func(t *testing.T) {
@@ -140,9 +140,9 @@ func TestScanResult(t *testing.T) {
 			}, 5)
 			require.NoError(t, err)
 			require.Equal(t, 3, len(r))
-			assert.Equal(t, "aaaa", r[0].ReportID)
-			assert.Equal(t, "cccc", r[1].ReportID)
-			assert.Equal(t, "bbbb", r[2].ReportID)
+			assert.Equal(t, "aaaa", r[0].Summary.ReportID)
+			assert.Equal(t, "cccc", r[1].Summary.ReportID)
+			assert.Equal(t, "bbbb", r[2].Summary.ReportID)
 		})
 
 		t.Run("No error by find not existing repo/branch", func(t *testing.T) {
@@ -178,8 +178,8 @@ func TestScanResult(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, 2, len(r))
-			assert.Contains(t, []string{r[0].ReportID, r[1].ReportID}, "aaaa")
-			assert.Contains(t, []string{r[0].ReportID, r[1].ReportID}, "bbbb")
+			assert.Contains(t, []string{r[0].Summary.ReportID, r[1].Summary.ReportID}, "aaaa")
+			assert.Contains(t, []string{r[0].Summary.ReportID, r[1].Summary.ReportID}, "bbbb")
 		})
 	})
 }

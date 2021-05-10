@@ -44,12 +44,12 @@ func (x *ScanTarget) IsValid() error {
 
 type ScanLog struct {
 	Target    ScanTarget
-	ReportID  string
 	ScannedAt int64
 	Summary   ScanReportSummary
 }
 
 type ScanReportSummary struct {
+	ReportID     string
 	PkgTypes     []PkgType
 	PkgCount     int64
 	VulnCount    int64
@@ -79,7 +79,9 @@ func (x *ScanReport) IsValid() error {
 }
 
 func (x *ScanReport) ToLog() *ScanLog {
-	var summary ScanReportSummary
+	summary := ScanReportSummary{
+		ReportID: x.ReportID,
+	}
 	pkgTypes := map[PkgType]struct{}{}
 
 	for _, src := range x.Sources {
@@ -93,9 +95,12 @@ func (x *ScanReport) ToLog() *ScanLog {
 		}
 	}
 
+	for pkgType := range pkgTypes {
+		summary.PkgTypes = append(summary.PkgTypes, pkgType)
+	}
+
 	return &ScanLog{
 		Target:    x.Target,
-		ReportID:  x.ReportID,
 		ScannedAt: x.ScannedAt,
 		Summary:   summary,
 	}

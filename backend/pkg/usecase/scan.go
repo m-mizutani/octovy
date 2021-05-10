@@ -201,10 +201,11 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		return err
 	}
 
+	scanLog := report.ToLog()
 	branch := &model.Branch{
 		GitHubBranch:  req.GitHubBranch,
 		LastScannedAt: report.ScannedAt,
-		ReportSummary: report.ToLog().Summary,
+		ReportSummary: scanLog.Summary,
 	}
 	if err := svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
 		return err
@@ -215,6 +216,8 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 			return goerr.Wrap(err).With("vuln", vuln)
 		}
 	}
+
+	logger.With("log", scanLog).Info("Done repository scan")
 
 	return nil
 }

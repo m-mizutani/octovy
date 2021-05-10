@@ -47,7 +47,8 @@ func (x *DynamoClient) UpdateBranchIfDefault(repo *model.GitHubRepo, branch *mod
 	sk := repositorySK(repo.Owner, repo.RepoName)
 	q := x.table.Update("pk", pk).Range("sk", sk).
 		Set("doc.'Branch'", branch).
-		If("doc.'DefaultBranch' = ?", branch.Branch)
+		If("doc.'DefaultBranch' = ?", branch.Branch).
+		If("doc.'Branch'.'LastScannedAt' < ?", branch.LastScannedAt)
 	if err := q.Run(); err != nil {
 		if isConditionalCheckErr(err) {
 			return nil
