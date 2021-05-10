@@ -2,6 +2,7 @@ package trivydb
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
@@ -124,7 +125,8 @@ func (x *TrivyDB) GetDBMeta() (*model.TrivyDBMeta, error) {
 			return goerr.Wrap(err, "Failed to unmarshal trivy DB metadata").With("data", string(data))
 		}
 
-		ts, err := time.Parse("2006-01-02T15:04:05.00000000Z", v.UpdatedAt)
+		updatedAtParts := strings.Split(v.UpdatedAt, ".")
+		ts, err := time.Parse("2006-01-02T15:04:05", updatedAtParts[0])
 		if err != nil {
 			return goerr.Wrap(err, "Can not parse updatedAt in trivy DB metadata").With("meta", v)
 		}
