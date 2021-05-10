@@ -163,7 +163,10 @@ export default function Repository() {
                       {src.Packages.map((pkg, idx) => (
                         <TableRow key={idx}>
                           <TableCell component="th" scope="row">
-                            {pkg.Name}
+                            <RouterLink
+                              to={`/package?name=${pkg.Name}&type=${pkg.Type}`}>
+                              {pkg.Name}
+                            </RouterLink>
                           </TableCell>
                           <TableCell>{pkg.Version}</TableCell>
                           <TableCell className={classes.packageTableVulnCell}>

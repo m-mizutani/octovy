@@ -98,34 +98,38 @@ export default function Package() {
       return <div>Error: {pkgState.error}</div>;
     } else {
       return (
-        <TableContainer component={Paper}>
-          <Table size="small" aria-label="a dense table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="left">Repository</TableCell>
-                <TableCell align="right">Branch</TableCell>
-                <TableCell align="right">Source</TableCell>
-                <TableCell align="right">Version</TableCell>
-                <TableCell align="right">Detected</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pkgState.items.map((pkg, idx) => {
-                return (
-                  <TableRow key={idx}>
-                    <TableCell component="th" scope="row">
-                      {`${pkg.Detected.Owner}/${pkg.Detected.RepoName}`}
-                    </TableCell>
-                    <TableCell align="right">{pkg.Detected.Branch}</TableCell>
-                    <TableCell align="right">{pkg.Source}</TableCell>
-                    <TableCell align="right">{pkg.Version}</TableCell>
-                    <TableCell align="right">{pkg.Detected.CommitID}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Grid item xs={12}>
+          <TableContainer component={Paper}>
+            <Table size="small" aria-label="a dense table">
+              <TableHead>
+                <TableRow className={classes.packageTableHeader}>
+                  <TableCell align="left">Repository</TableCell>
+                  <TableCell align="right">Branch</TableCell>
+                  <TableCell align="right">Source</TableCell>
+                  <TableCell align="right">Version</TableCell>
+                  <TableCell align="right">Detected</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {pkgState.items.map((pkg, idx) => {
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell component="th" scope="row">
+                        {`${pkg.Detected.Owner}/${pkg.Detected.RepoName}`}
+                      </TableCell>
+                      <TableCell align="right">{pkg.Detected.Branch}</TableCell>
+                      <TableCell align="right">{pkg.Source}</TableCell>
+                      <TableCell align="right">{pkg.Version}</TableCell>
+                      <TableCell align="right">
+                        {pkg.Detected.CommitID}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Grid>
       );
     }
   };
@@ -134,59 +138,51 @@ export default function Package() {
     <Paper className={classes.paper}>
       <AppBar position="static" color="default" elevation={0}>
         <Toolbar>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item>
-              <SearchIcon color="inherit" />
-            </Grid>
+          <Grid item>
+            <SearchIcon color="inherit" />
+          </Grid>
 
-            <Grid item>
-              <FormControl className={classes.formControl}>
-                <Select
-                  id="pkg-type-select"
-                  value={pkgType}
-                  inputProps={{ "aria-label": "Without label" }}
-                  onChange={(e) => {
-                    setPkgType(e.target.value as string);
-                  }}>
-                  <MenuItem value="bundler">Bundler</MenuItem>
-                  <MenuItem value="npm">NPM</MenuItem>
-                  <MenuItem value="yarn">yarn</MenuItem>
-                  <MenuItem value="gomod">Go Modules</MenuItem>
-                  <MenuItem value="pipenv">Pipenv</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs>
-              <TextField
-                fullWidth
-                placeholder="Package name"
-                value={pkgName}
+          <Grid item xs={2}>
+            <FormControl className={classes.formControl}>
+              <Select
+                id="pkg-type-select"
+                value={pkgType}
+                inputProps={{ "aria-label": "Without label" }}
                 onChange={(e) => {
-                  setPkgName(e.target.value as string);
-                }}
-                InputProps={{
-                  disableUnderline: true,
-                }}
-              />
-            </Grid>
-            <Grid item>
-              <Tooltip title="Reload">
-                <IconButton onClick={submitSearch}>
-                  <RefreshIcon color="inherit" />
-                </IconButton>
-              </Tooltip>
-            </Grid>
+                  setPkgType(e.target.value as string);
+                }}>
+                <MenuItem value="bundler">Bundler</MenuItem>
+                <MenuItem value="npm">NPM</MenuItem>
+                <MenuItem value="yarn">yarn</MenuItem>
+                <MenuItem value="gomod">Go Modules</MenuItem>
+                <MenuItem value="pipenv">Pipenv</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={3}>
+            <TextField
+              fullWidth
+              placeholder="Package name"
+              value={pkgName}
+              onChange={(e) => {
+                setPkgName(e.target.value as string);
+              }}
+              InputProps={{
+                disableUnderline: true,
+              }}
+            />
+          </Grid>
+          <Grid item>
+            <Tooltip title="Reload">
+              <IconButton onClick={submitSearch}>
+                <RefreshIcon color="inherit" />
+              </IconButton>
+            </Tooltip>
           </Grid>
         </Toolbar>
 
-        <Toolbar>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item className={classes.packageList}>
-              {renderPackageList()}
-            </Grid>
-          </Grid>
-        </Toolbar>
+        {renderPackageList()}
       </AppBar>
       {doRedirect()}
     </Paper>

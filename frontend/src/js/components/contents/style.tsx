@@ -29,11 +29,11 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: theme.spacing(2),
     },
     packageList: {
-      margin: theme.spacing(2),
+      marginTop: theme.spacing(2),
     },
     packageTable: {},
     packageTableHeader: {
-      background: "#eee",
+      background: "#ddd",
     },
     packageTableNameRow: {
       width: "50%",
@@ -59,12 +59,6 @@ const useStyles = makeStyles((theme: Theme) =>
     vulnDetailItemTitle: {
       fontWeight: "bold",
       marginBottom: theme.spacing(1),
-    },
-
-    pageDivider: {
-      marginTop: theme.spacing(2),
-      marginBottom: theme.spacing(1),
-      borderColor: "#aaa",
     },
 
     pkgList: {
