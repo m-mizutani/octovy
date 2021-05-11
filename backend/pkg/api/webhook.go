@@ -69,6 +69,10 @@ func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error
 			logger.With("repo", repo).Info("Skip private repository")
 			continue
 		}
+		if repo.Fork != nil && *repo.Fork {
+			logger.With("repo", repo).Info("Skip forked repository")
+			continue
+		}
 
 		parts := strings.Split(*repo.FullName, "/")
 		if len(parts) != 2 {
