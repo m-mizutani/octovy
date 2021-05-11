@@ -118,6 +118,10 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 		logger.With("repo", event.Repo).Info("Skip private repository")
 		return nil
 	}
+	if event.Repo.Fork != nil && *event.Repo.Fork {
+		logger.With("repo", event.Repo).Info("Skip forked repository")
+		return nil
+	}
 
 	sort.Slice(event.Commits, func(i, j int) bool {
 		return event.Commits[i].Timestamp.After(event.Commits[j].Timestamp.Time)
