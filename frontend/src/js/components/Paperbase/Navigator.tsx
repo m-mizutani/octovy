@@ -14,7 +14,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import AllInboxIcon from "@material-ui/icons/AllInbox";
 import ReportProblemIcon from "@material-ui/icons/ReportProblem";
-import BusinessCenterIcon from "@material-ui/icons/AssignmentLate";
+import SearchIcon from "@material-ui/icons/Search";
 import { Omit } from "@material-ui/types";
 
 import { Link } from "react-router-dom";
@@ -30,7 +30,7 @@ const categories = [
       },
       {
         id: "Package",
-        icon: <BusinessCenterIcon />,
+        icon: <SearchIcon />,
         link: "/package",
       },
       {

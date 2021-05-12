@@ -17,10 +17,17 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Alert from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import { useLocation } from "react-router-dom";
 
+import Typography from "@material-ui/core/Typography";
 import { useParams } from "react-router-dom";
 import { Link as RouterLink } from "react-router-dom";
+
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import FolderIcon from "@material-ui/icons/Folder";
+import Divider from "@material-ui/core/Divider";
 
 import useStyles from "./style";
 
@@ -90,15 +97,21 @@ function Owners() {
     } else if (status.owners) {
       return (
         <div>
-          {status.owners.map((owner, idx) => {
-            return (
-              <div key={`owner-${idx}`}>
-                <RouterLink to={`/repository/${owner.Name}`}>
-                  {owner.Name}
-                </RouterLink>
-              </div>
-            );
-          })}
+          <Divider />
+          <List dense={true}>
+            {status.owners.map((owner, idx) => {
+              return (
+                <ListItem key={`owner-${idx}`}>
+                  <ListItemIcon>
+                    <FolderIcon />
+                  </ListItemIcon>
+                  <RouterLink to={`/repository/${owner.Name}`}>
+                    <ListItemText primary={owner.Name} />
+                  </RouterLink>
+                </ListItem>
+              );
+            })}
+          </List>
         </div>
       );
     }
@@ -108,7 +121,9 @@ function Owners() {
 
   return (
     <div>
-      <Grid component="h2">Owners</Grid>
+      <Typography variant="h6" className={classes.typographyTitle}>
+        Owners
+      </Typography>
       {renderOwners()}
     </div>
   );
@@ -232,7 +247,9 @@ function Repositories(props: RepositoriesProps) {
 
   return (
     <div>
-      <Grid component="h2">Repositories</Grid>
+      <Typography variant="h6" className={classes.typographyTitle}>
+        Repositories
+      </Typography>
       {renderRepositories()}
     </div>
   );

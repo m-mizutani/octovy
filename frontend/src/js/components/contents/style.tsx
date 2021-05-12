@@ -21,6 +21,12 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: "40px 30px",
     },
 
+    typographyTitle: {
+      marginTop: theme.spacing(0),
+      marginBottom: theme.spacing(1),
+      fontWeight: "bold",
+    },
+
     progressIcon: {
       marginTop: "2px",
       marginLeft: "15px",
