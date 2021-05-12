@@ -197,7 +197,7 @@ export class OctovyStack extends cdk.Stack {
 
     // Vulnerability
     const apiVuln = apiRoot.addResource("vuln");
-    apiVuln.addMethod("GET");
+    apiVuln.addResource("{vulnID}").addMethod("GET");
 
     // Scan
     const apiScan = apiRoot.addResource("scan");
