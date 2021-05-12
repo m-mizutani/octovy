@@ -100,7 +100,7 @@ func New(cfg *Config) *gin.Engine {
 
 	r := engine.Group("/api/v1")
 	r.POST("/webhook/github", postWebhookGitHub)
-	r.GET("/repo", getRepos)
+	r.GET("/repo", getOwners)
 	r.GET("/repo/:owner", getReposByOwner)
 	r.GET("/repo/:owner/:name", getRepoInfo)
 	r.GET("/repo/:owner/:name/:branch", getBranchInfo)

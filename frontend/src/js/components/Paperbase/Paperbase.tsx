@@ -214,6 +214,9 @@ function Paperbase(props: PaperbaseProps) {
                 <Route path="/repository/:owner/:repoName">
                   <ContentRepository />
                 </Route>
+                <Route path="/repository/:owner">
+                  <ContentRepositoryList />
+                </Route>
                 <Route path="/repository">
                   <ContentRepositoryList />
                 </Route>

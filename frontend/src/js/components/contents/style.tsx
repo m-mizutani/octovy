@@ -3,7 +3,7 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     paper: {
-      maxWidth: 936,
+      // maxWidth: 936,
       margin: "auto",
       overflow: "hidden",
     },
@@ -19,6 +19,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     contentWrapper: {
       margin: "40px 30px",
+    },
+
+    progressIcon: {
+      marginTop: "2px",
+      marginLeft: "15px",
     },
 
     formControl: {

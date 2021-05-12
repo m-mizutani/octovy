@@ -56,13 +56,9 @@ function Header(props: HeaderProps) {
                 <Switch>
                   <Route path="/repository">Repository</Route>
                   <Route path="/package">Package</Route>
+                  <Route path="/vuln">Vulnerability</Route>
                 </Switch>
               </Typography>
-            </Grid>
-            <Grid item>
-              <IconButton color="inherit" className={classes.iconButtonAvatar}>
-                <Avatar src="/static/images/avatar/1.jpg" alt="Test" />
-              </IconButton>
             </Grid>
           </Grid>
         </Toolbar>

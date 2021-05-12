@@ -67,6 +67,7 @@ type DBClient interface {
 	FindRepo() ([]*model.Repository, error)
 	FindRepoByOwner(owner string) ([]*model.Repository, error)
 	FindRepoByFullName(owner, name string) (*model.Repository, error)
+	FindOwners() ([]*model.Owner, error)
 
 	UpdateBranch(branch *model.Branch) error
 	LookupBranch(branch *model.GitHubBranch) (*model.Branch, error)

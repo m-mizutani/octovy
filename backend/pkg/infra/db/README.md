@@ -8,6 +8,11 @@
 
 ## Index schema
 
+### Owner
+
+- PK: `list:owner`
+- SK: `{Owner}`
+
 ### Repository
 
 - PK: `list:repository`

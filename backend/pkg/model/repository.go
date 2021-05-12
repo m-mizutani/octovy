@@ -39,6 +39,10 @@ type GitHubCommit struct {
 	CommitID string
 }
 
+type Owner struct {
+	Name string
+}
+
 type Repository struct {
 	GitHubRepo
 	URL           string

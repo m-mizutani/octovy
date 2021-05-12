@@ -8,15 +8,15 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/model"
 )
 
-func getRepos(c *gin.Context) {
+func getOwners(c *gin.Context) {
 	cfg := getConfig(c)
-	repos, err := cfg.Service.DB().FindRepo()
+	owners, err := cfg.Service.DB().FindOwners()
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
 
-	c.JSON(http.StatusOK, baseResponse{Data: repos})
+	c.JSON(http.StatusOK, baseResponse{Data: owners})
 }
 
 func getReposByOwner(c *gin.Context) {

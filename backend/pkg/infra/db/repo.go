@@ -13,18 +13,37 @@ func repositorySK(owner, name string) string {
 	return owner + "/" + name
 }
 
+func ownerPK() string {
+	return "list:owner"
+}
+func ownerSK(owner string) string {
+	return owner
+}
+
 func (x *DynamoClient) InsertRepo(repo *model.Repository) (bool, error) {
-	record := &dynamoRecord{
+	ownerRecord := &dynamoRecord{
+		PK:  ownerPK(),
+		SK:  ownerSK(repo.Owner),
+		Doc: model.Owner{Name: repo.Owner},
+	}
+	if err := x.table.Put(ownerRecord).Run(); err != nil {
+		if isConditionalCheckErr(err) {
+			return false, nil
+		}
+		return false, goerr.Wrap(err).With("ownerRecord", ownerRecord)
+	}
+
+	repoRecord := &dynamoRecord{
 		PK:  repositoryPK(),
 		SK:  repositorySK(repo.Owner, repo.RepoName),
 		Doc: repo,
 	}
-	put := x.table.Put(record).If("attribute_not_exists(pk) AND attribute_not_exists(sk)")
+	put := x.table.Put(repoRecord).If("attribute_not_exists(pk) AND attribute_not_exists(sk)")
 	if err := put.Run(); err != nil {
 		if isConditionalCheckErr(err) {
 			return false, nil
 		}
-		return false, goerr.Wrap(err).With("record", record)
+		return false, goerr.Wrap(err).With("repoRecord", repoRecord)
 	}
 
 	return true, nil
@@ -121,4 +140,22 @@ func (x *DynamoClient) FindRepoByFullName(owner, name string) (*model.Repository
 	}
 
 	return &repo, nil
+}
+
+func (x *DynamoClient) FindOwners() ([]*model.Owner, error) {
+	var records []*dynamoRecord
+	pk := ownerPK()
+	if err := x.table.Get("pk", pk).All(&records); err != nil {
+		if !isNotFoundErr(err) {
+			return nil, goerr.Wrap(err)
+		}
+	}
+
+	owners := make([]*model.Owner, len(records))
+	for i := range records {
+		if err := records[i].Unmarshal(&owners[i]); err != nil {
+			return nil, err
+		}
+	}
+	return owners, nil
 }

@@ -113,3 +113,43 @@ func TestRepo(t *testing.T) {
 		assert.NotEqual(t, r1.Branch, *branch)
 	})
 }
+
+func TestOwner(t *testing.T) {
+	client := newTestTable(t)
+
+	_, err := client.InsertRepo(&model.Repository{
+		GitHubRepo: model.GitHubRepo{
+			Owner:    "blue",
+			RepoName: "five",
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = client.InsertRepo(&model.Repository{
+		GitHubRepo: model.GitHubRepo{
+			Owner:    "orange",
+			RepoName: "doll",
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = client.InsertRepo(&model.Repository{
+		GitHubRepo: model.GitHubRepo{
+			Owner:    "blue",
+			RepoName: "timeless",
+		},
+	})
+	require.NoError(t, err)
+
+	owners, err := client.FindOwners()
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(owners))
+	assert.Contains(t, []string{owners[0].Name, owners[1].Name}, "blue")
+	assert.Contains(t, []string{owners[0].Name, owners[1].Name}, "orange")
+
+	repos, err := client.FindRepoByOwner("blue")
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(repos))
+	assert.Contains(t, []string{repos[0].RepoName, repos[1].RepoName}, "five")
+	assert.Contains(t, []string{repos[0].RepoName, repos[1].RepoName}, "timeless")
+}
