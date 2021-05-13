@@ -36,7 +36,7 @@ func TestScanResult(t *testing.T) {
 						Source: "Gemfile.lock",
 						Packages: []*model.Package{
 							{
-								Type:            model.PkgBundler,
+								Type:            model.PkgRubyGems,
 								Name:            "hoge",
 								Version:         "1.2.3",
 								Vulnerabilities: []string{},
@@ -65,7 +65,7 @@ func TestScanResult(t *testing.T) {
 						Source: "Gemfile.lock",
 						Packages: []*model.Package{
 							{
-								Type:            model.PkgBundler,
+								Type:            model.PkgRubyGems,
 								Name:            "hoge",
 								Version:         "bbbb",
 								Vulnerabilities: []string{},
@@ -94,7 +94,7 @@ func TestScanResult(t *testing.T) {
 						Source: "Gemfile.lock",
 						Packages: []*model.Package{
 							{
-								Type:            model.PkgBundler,
+								Type:            model.PkgRubyGems,
 								Name:            "hoge",
 								Version:         "1.2.5",
 								Vulnerabilities: []string{},

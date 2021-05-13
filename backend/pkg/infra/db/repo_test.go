@@ -10,7 +10,10 @@ import (
 
 func TestRepo(t *testing.T) {
 	repo := &model.Repository{
-		GitHubRepo:    model.GitHubRepo{},
+		GitHubRepo: model.GitHubRepo{
+			Owner:    "tower",
+			RepoName: "div",
+		},
 		URL:           "https://xxx",
 		DefaultBranch: "blue",
 		InstallID:     9,
@@ -21,7 +24,7 @@ func TestRepo(t *testing.T) {
 		},
 		LastScannedAt: 1234,
 		ReportSummary: model.ScanReportSummary{
-			PkgTypes:     []model.PkgType{model.PkgBundler},
+			PkgTypes:     []model.PkgType{model.PkgRubyGems},
 			PkgCount:     3,
 			VulnCount:    2,
 			VulnPkgCount: 1,
@@ -54,7 +57,7 @@ func TestRepo(t *testing.T) {
 			},
 			LastScannedAt: 2345,
 			ReportSummary: model.ScanReportSummary{
-				PkgTypes:     []model.PkgType{model.PkgBundler},
+				PkgTypes:     []model.PkgType{model.PkgRubyGems},
 				PkgCount:     4,
 				VulnCount:    5,
 				VulnPkgCount: 6,
@@ -82,7 +85,7 @@ func TestRepo(t *testing.T) {
 			},
 			LastScannedAt: 1000,
 			ReportSummary: model.ScanReportSummary{
-				PkgTypes:     []model.PkgType{model.PkgBundler},
+				PkgTypes:     []model.PkgType{model.PkgRubyGems},
 				PkgCount:     4,
 				VulnCount:    5,
 				VulnPkgCount: 6,

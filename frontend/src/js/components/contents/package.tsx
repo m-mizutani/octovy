@@ -151,11 +151,10 @@ export default function Package() {
                 onChange={(e) => {
                   setPkgType(e.target.value as string);
                 }}>
-                <MenuItem value="bundler">Bundler</MenuItem>
-                <MenuItem value="npm">NPM</MenuItem>
-                <MenuItem value="yarn">yarn</MenuItem>
+                <MenuItem value="rubygems">RubyGems</MenuItem>
+                <MenuItem value="npm">npm</MenuItem>
                 <MenuItem value="gomod">Go Modules</MenuItem>
-                <MenuItem value="pipenv">Pipenv</MenuItem>
+                <MenuItem value="pypi">PyPI</MenuItem>
               </Select>
             </FormControl>
           </Grid>

@@ -25,7 +25,7 @@ func TestBranch(t *testing.T) {
 			LastScannedAt: 1234,
 			ReportSummary: model.ScanReportSummary{
 				ReportID: "aaaa",
-				PkgTypes: []model.PkgType{model.PkgBundler},
+				PkgTypes: []model.PkgType{model.PkgRubyGems},
 			},
 		}
 		b2 := &model.Branch{
@@ -36,7 +36,7 @@ func TestBranch(t *testing.T) {
 			LastScannedAt: 2345,
 			ReportSummary: model.ScanReportSummary{
 				ReportID: "bbbb",
-				PkgTypes: []model.PkgType{model.PkgBundler},
+				PkgTypes: []model.PkgType{model.PkgRubyGems},
 			},
 		}
 		require.NoError(t, client.UpdateBranch(b1))
@@ -83,7 +83,7 @@ func TestBranch(t *testing.T) {
 			LastScannedAt: 1234,
 			ReportSummary: model.ScanReportSummary{
 				ReportID: "aaaa",
-				PkgTypes: []model.PkgType{model.PkgBundler},
+				PkgTypes: []model.PkgType{model.PkgRubyGems},
 			},
 		}
 
@@ -99,7 +99,7 @@ func TestBranch(t *testing.T) {
 				LastScannedAt: 2000,
 				ReportSummary: model.ScanReportSummary{
 					ReportID: "bbbb",
-					PkgTypes: []model.PkgType{model.PkgBundler},
+					PkgTypes: []model.PkgType{model.PkgRubyGems},
 				},
 			}
 
@@ -124,7 +124,7 @@ func TestBranch(t *testing.T) {
 				LastScannedAt: 1000,
 				ReportSummary: model.ScanReportSummary{
 					ReportID: "bbbb",
-					PkgTypes: []model.PkgType{model.PkgBundler},
+					PkgTypes: []model.PkgType{model.PkgRubyGems},
 				},
 			}
 

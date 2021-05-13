@@ -27,9 +27,6 @@ func (x *DynamoClient) InsertRepo(repo *model.Repository) (bool, error) {
 		Doc: model.Owner{Name: repo.Owner},
 	}
 	if err := x.table.Put(ownerRecord).Run(); err != nil {
-		if isConditionalCheckErr(err) {
-			return false, nil
-		}
 		return false, goerr.Wrap(err).With("ownerRecord", ownerRecord)
 	}
 

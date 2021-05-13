@@ -57,7 +57,7 @@ func TestPython(t *testing.T) {
 	dt := detector.New(db)
 
 	t.Run("detect both with 3.2.4", func(t *testing.T) {
-		results, err := dt.Detect(model.PkgPipenv, "somepkg", "3.2.4")
+		results, err := dt.Detect(model.PkgPyPI, "somepkg", "3.2.4")
 		require.NoError(t, err)
 		assert.Contains(t, results, vulnSet[0])
 		assert.Contains(t, results, vulnSet[1])
@@ -65,7 +65,7 @@ func TestPython(t *testing.T) {
 	})
 
 	t.Run("detect CVE-2345-6789 with 3.2.5", func(t *testing.T) {
-		results, err := dt.Detect(model.PkgPipenv, "somepkg", "3.2.5")
+		results, err := dt.Detect(model.PkgPyPI, "somepkg", "3.2.5")
 		require.NoError(t, err)
 		assert.NotContains(t, results, vulnSet[0])
 		assert.Contains(t, results, vulnSet[1])
@@ -73,7 +73,7 @@ func TestPython(t *testing.T) {
 	})
 
 	t.Run("detect no vulnerability with 3.3.5", func(t *testing.T) {
-		results, err := dt.Detect(model.PkgPipenv, "somepkg", "3.3.5")
+		results, err := dt.Detect(model.PkgPyPI, "somepkg", "3.3.5")
 		require.NoError(t, err)
 		assert.Nil(t, results)
 	})

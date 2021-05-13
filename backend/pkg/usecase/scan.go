@@ -25,10 +25,10 @@ type parser struct {
 }
 
 var parserMap = map[string]parser{
-	"Gemfile.lock":      {Parse: bundler.Parse, PkgType: model.PkgBundler},
+	"Gemfile.lock":      {Parse: bundler.Parse, PkgType: model.PkgRubyGems},
 	"go.sum":            {Parse: gomod.Parse, PkgType: model.PkgGoModule},
-	"Pipfile.lock":      {Parse: pipenv.Parse, PkgType: model.PkgPipenv},
-	"yarn.lock":         {Parse: yarn.Parse, PkgType: model.PkgYarn},
+	"Pipfile.lock":      {Parse: pipenv.Parse, PkgType: model.PkgPyPI},
+	"yarn.lock":         {Parse: yarn.Parse, PkgType: model.PkgNPM},
 	"package-lock.json": {Parse: npm.Parse, PkgType: model.PkgNPM},
 }
 

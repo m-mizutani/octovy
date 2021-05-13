@@ -62,7 +62,7 @@ func TestScanRepository(t *testing.T) {
 
 		uc := usecase.New()
 		require.NoError(t, uc.ScanRepository(svc, req))
-		rackPkgs1, err := dbClient.FindPackageRecordsByName(model.PkgBundler, "rack")
+		rackPkgs1, err := dbClient.FindPackageRecordsByName(model.PkgRubyGems, "rack")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rackPkgs1))
 		assert.Equal(t, 1, len(rackPkgs1[0].Package.Vulnerabilities))
@@ -89,7 +89,7 @@ func TestScanRepository(t *testing.T) {
 
 		// Scan again
 		require.NoError(t, uc.ScanRepository(svc, req))
-		rackPkgs2, err := dbClient.FindPackageRecordsByName(model.PkgBundler, "rack")
+		rackPkgs2, err := dbClient.FindPackageRecordsByName(model.PkgRubyGems, "rack")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rackPkgs2))
 		assert.Equal(t, 2, len(rackPkgs2[0].Package.Vulnerabilities))
@@ -147,7 +147,7 @@ func TestScanBundler(t *testing.T) {
 	require.Equal(t, 1, len(vulns))
 	assert.Equal(t, "CVE-2020-8161", vulns[0].VulnID)
 
-	rackPkgs, err := dbClient.FindPackageRecordsByName(model.PkgBundler, "rack")
+	rackPkgs, err := dbClient.FindPackageRecordsByName(model.PkgRubyGems, "rack")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(rackPkgs))
 	assert.Equal(t, "rack", rackPkgs[0].Package.Name)

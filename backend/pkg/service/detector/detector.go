@@ -25,7 +25,7 @@ var pkgTypeSourceMap map[model.PkgType]map[string]isVulnerableFunc
 func init() {
 	pkgTypeSourceMap = make(map[model.PkgType]map[string]isVulnerableFunc)
 
-	pkgTypeSourceMap[model.PkgBundler] = map[string]isVulnerableFunc{
+	pkgTypeSourceMap[model.PkgRubyGems] = map[string]isVulnerableFunc{
 		"ruby-advisory-db":                  isVulnerableBundlerRubyAdv,
 		"GitHub Security Advisory Rubygems": isVulnerableBundlerGHSA,
 	}
@@ -38,9 +38,8 @@ func init() {
 		"nodejs-security-wg":           isVulnerableNodeSecurityWG,
 		"GitHub Security Advisory Npm": isVulnerableNodeGHSA,
 	}
-	pkgTypeSourceMap[model.PkgYarn] = pkgTypeSourceMap[model.PkgNPM]
 
-	pkgTypeSourceMap[model.PkgPipenv] = map[string]isVulnerableFunc{
+	pkgTypeSourceMap[model.PkgPyPI] = map[string]isVulnerableFunc{
 		"GitHub Security Advisory Pip": isVulnerablePythonGHSA,
 		"python-safety-db":             isVulnerablePython,
 	}

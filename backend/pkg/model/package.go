@@ -5,11 +5,10 @@ import "github.com/aquasecurity/trivy-db/pkg/types"
 type PkgType string
 
 const (
-	PkgBundler  PkgType = "bundler"
+	PkgRubyGems PkgType = "rubygems"
 	PkgNPM      PkgType = "npm"
-	PkgYarn     PkgType = "yarn"
 	PkgGoModule PkgType = "gomod"
-	PkgPipenv   PkgType = "pipenv"
+	PkgPyPI     PkgType = "pypi"
 )
 
 type PackageRecord struct {
