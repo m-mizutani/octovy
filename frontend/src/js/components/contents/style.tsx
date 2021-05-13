@@ -27,6 +27,10 @@ const useStyles = makeStyles((theme: Theme) =>
       fontWeight: "bold",
     },
 
+    pkgChip: {
+      marginLeft: theme.spacing(1),
+    },
+
     progressIcon: {
       marginTop: "2px",
       marginLeft: "15px",

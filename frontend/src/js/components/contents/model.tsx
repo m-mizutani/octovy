@@ -45,6 +45,28 @@ export interface packageRecord {
   Vulnerabilities: string[];
 }
 
+export interface repository {
+  Owner: string;
+  RepoName: string;
+  URL: string;
+  DefaultBranch: string;
+  Branch: branch;
+}
+
+interface branch {
+  Branch: string;
+  LastScannedAt: number;
+  ReportSummary: scanReportSummary;
+}
+
+interface scanReportSummary {
+  ReportID: string;
+  PkgTypes: string[];
+  PkgCount: number;
+  VulnCount: number;
+  VulnPkgCount: number;
+}
+
 export interface cvss {
   V2Vector: string;
   V3Vector: string;

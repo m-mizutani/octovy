@@ -13,7 +13,6 @@ import { useParams } from "react-router-dom";
 import useStyles from "./style";
 import { Redirect, useLocation } from "react-router-dom";
 
-import * as model from "./model";
 import * as scan from "./scan";
 
 type repoStatus = {

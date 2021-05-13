@@ -17,6 +17,8 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Alert from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import Link from "@material-ui/core/Link";
+import Chip from "@material-ui/core/Chip";
 
 import Typography from "@material-ui/core/Typography";
 import { useParams } from "react-router-dom";
@@ -29,7 +31,11 @@ import ListItemText from "@material-ui/core/ListItemText";
 import FolderIcon from "@material-ui/icons/Folder";
 import Divider from "@material-ui/core/Divider";
 
+import strftime from "strftime";
+
 import useStyles from "./style";
+import * as model from "./model";
+import { ClassNameMap } from "@material-ui/styles";
 
 interface errorResponse {
   Error: string;
@@ -38,15 +44,8 @@ interface errorResponse {
 interface repoState {
   error?: errorResponse;
   isLoaded?: boolean;
-  items?: repoInfo[];
-  allItems?: repoInfo[];
-}
-
-interface repoInfo {
-  Owner: string;
-  RepoName: string;
-  Branches?: string[];
-  URL: string;
+  items?: model.repository[];
+  allItems?: model.repository[];
 }
 
 function Owners() {
@@ -217,7 +216,11 @@ function Repositories(props: RepositoriesProps) {
               <TableHead>
                 <TableRow>
                   <TableCell>Repository</TableCell>
-                  <TableCell align="right">Branches</TableCell>
+                  <TableCell align="right">Default branch</TableCell>
+                  <TableCell align="right">Last scanned at</TableCell>
+                  <TableCell align="right">Package types</TableCell>
+                  <TableCell align="right">Packages</TableCell>
+                  <TableCell align="right">Vulnerabilities</TableCell>
                   <TableCell align="right">Link</TableCell>
                 </TableRow>
               </TableHead>
@@ -231,9 +234,24 @@ function Repositories(props: RepositoriesProps) {
                         {item.Owner + "/" + item.RepoName}
                       </RouterLink>
                     </TableCell>
-                    <TableCell align="right">{item.Branches}</TableCell>
+                    <TableCell align="right">{item.DefaultBranch}</TableCell>
                     <TableCell align="right">
-                      <RouterLink to={item.URL}>github</RouterLink>
+                      {renderUnixTime(item.Branch.LastScannedAt)}
+                    </TableCell>
+                    <TableCell align="right">
+                      {renderPackageTypes(
+                        item.Branch.ReportSummary.PkgTypes,
+                        classes
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      {item.Branch.ReportSummary.PkgCount}
+                    </TableCell>
+                    <TableCell align="right">
+                      {item.Branch.ReportSummary.VulnCount}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Link href={item.URL}>github</Link>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -278,5 +296,31 @@ export default function RepositoryList() {
         </Grid>
       </Grid>
     </Grid>
+  );
+}
+
+function renderUnixTime(ts: number) {
+  if (ts === 0) {
+    return <div>N/A</div>;
+  }
+
+  const dt = new Date(ts * 1000);
+  return <div>{strftime("%F %T", dt)}</div>;
+}
+
+function renderPackageTypes(pkgTypes: string[], classes: ClassNameMap) {
+  if (pkgTypes.length === 0) {
+    return;
+  }
+  console.log({ pkgTypes });
+
+  return (
+    <div>
+      {pkgTypes.map((t, i) => {
+        return (
+          <Chip key={i} label={t} size="small" className={classes.pkgChip} />
+        );
+      })}
+    </div>
   );
 }
