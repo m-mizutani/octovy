@@ -1,12 +1,10 @@
 {
   "name": "octovy",
   "version": "0.1.0",
-  "bin": {
-    "octovy": "bin/octovy.js"
-  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm --prefix ./frontend install",
     "watch": "tsc -w",
+    "prepare": "npm run build",
     "cdk": "cdk"
   },
   "devDependencies": {
