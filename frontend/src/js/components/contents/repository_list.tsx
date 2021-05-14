@@ -280,7 +280,7 @@ export default function RepositoryList() {
   return (
     <Grid item xs={12}>
       <Grid container spacing={4}>
-        <Grid item xs={3}>
+        <Grid item className={classes.ownerListGrid}>
           <Paper elevation={3} square className={classes.paper}>
             <Grid className={classes.contentWrapper}>
               <Owners />

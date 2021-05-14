@@ -27,6 +27,9 @@ const useStyles = makeStyles((theme: Theme) =>
       fontWeight: "bold",
     },
 
+    ownerListGrid: {
+      minWidth: "300px",
+    },
     pkgChip: {
       marginLeft: theme.spacing(1),
     },
@@ -51,13 +54,15 @@ const useStyles = makeStyles((theme: Theme) =>
       background: "#ddd",
     },
     packageTableNameRow: {
-      width: "50%",
+      width: "30%",
+      position: "static",
     },
     packageTableVersionRow: {
       width: "30%",
+      position: "static",
     },
     packageTableVulnRow: {
-      width: "20%",
+      width: "40%",
     },
     packageTableVulnCell: {
       "& > *": {
