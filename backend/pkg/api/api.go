@@ -97,6 +97,7 @@ func New(cfg *Config) *gin.Engine {
 
 	engine.GET("/", getIndex)
 	engine.GET("/bundle.js", getBundleJS)
+	engine.POST("/webhook/github", postWebhookGitHub)
 
 	r := engine.Group("/api/v1")
 	r.POST("/webhook/github", postWebhookGitHub)

@@ -29,6 +29,7 @@ interface OctovyProps extends cdk.StackProps {
   readonly lambdaRoleARN?: string;
   readonly githubEndpoint?: string;
   readonly vpcConfig?: vpcConfig;
+  readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
 
   readonly sentryDSN?: string;
@@ -155,7 +156,30 @@ export class OctovyStack extends cdk.Stack {
     rule.addTarget(new targets.LambdaFunction(updateDB));
 
     // API gateway
-    const gw = new apigateway.LambdaRestApi(this, "api", {
+    /// Webhook endpoint
+    const webhookGW = new apigateway.LambdaRestApi(this, "octovy-webhook", {
+      handler: apiHandler,
+      proxy: false,
+      cloudWatchRole: false,
+      endpointTypes: props.webhookEndpointTypes || defaultEndpointTypes,
+      policy: new iam.PolicyDocument({
+        statements: [
+          new iam.PolicyStatement({
+            actions: ["execute-api:Invoke"],
+            resources: ["execute-api:/*/*"],
+            effect: iam.Effect.ALLOW,
+            principals: [new iam.AnyPrincipal()],
+          }),
+        ],
+      }),
+    });
+    webhookGW.root
+      .addResource("webhook")
+      .addResource("github")
+      .addMethod("POST");
+
+    /// API endpoint
+    const apiGW = new apigateway.LambdaRestApi(this, "octovy-api", {
       handler: apiHandler,
       proxy: false,
       cloudWatchRole: false,
@@ -172,11 +196,10 @@ export class OctovyStack extends cdk.Stack {
       }),
     });
 
-    gw.root.addMethod("GET");
-    gw.root.addResource("bundle.js").addMethod("GET");
+    apiGW.root.addMethod("GET");
+    apiGW.root.addResource("bundle.js").addMethod("GET");
 
-    const apiRoot = gw.root.addResource("api").addResource("v1");
-    apiRoot.addResource("webhook").addResource("github").addMethod("POST");
+    const apiRoot = apiGW.root.addResource("api").addResource("v1");
 
     // Repo
     const apiRepo = apiRoot.addResource("repo");
