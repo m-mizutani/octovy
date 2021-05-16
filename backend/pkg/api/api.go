@@ -38,19 +38,21 @@ type errorResponse struct {
 func errResp(c *gin.Context, code int, err error) {
 	var wErr *golambda.Error
 	var gErr *goerr.Error
-	if errors.As(err, &wErr) {
-		logger.With("error", wErr).Error("Failed with golambda.Error")
+
+	switch {
+	case errors.As(err, &wErr):
+		logger.With("stack", wErr.Stacks()).With("values", wErr.Values()).With("msg", wErr.Error()).Error("Failed with golambda.Error")
 		c.JSON(code, &errorResponse{
 			Error:  wErr.Error(),
 			Values: wErr.Values(),
 		})
-	} else if errors.As(err, &gErr) {
-		logger.With("error", gErr).Error("Failed with goerr.Error")
+	case errors.As(err, &gErr):
+		logger.With("stack", gErr.Stacks()).With("values", gErr.Values()).With("msg", gErr.Error()).Error("Failed with goerr.Error")
 		c.JSON(code, &errorResponse{
 			Error:  gErr.Error(),
 			Values: gErr.Values(),
 		})
-	} else {
+	default:
 		logger.With("error", wErr).Error("Failed with normal Error")
 		c.JSON(code, &errorResponse{
 			Error: err.Error(),
