@@ -10,6 +10,10 @@ import * as events from "@aws-cdk/aws-events";
 import * as targets from "@aws-cdk/aws-events-targets";
 
 import * as apigateway from "@aws-cdk/aws-apigateway";
+import * as acm from "@aws-cdk/aws-certificatemanager";
+import * as route53 from "@aws-cdk/aws-route53";
+import * as alias from "@aws-cdk/aws-route53-targets";
+
 import { SqsEventSource } from "@aws-cdk/aws-lambda-event-sources";
 import * as path from "path";
 
@@ -17,6 +21,12 @@ export interface vpcConfig {
   vpcId: string;
   securityGroupIds: string[];
   subnetIds: string[];
+}
+
+export interface domainConfig {
+  domainName: string;
+  hostedZoneID: string;
+  certARN: string;
 }
 
 interface OctovyProps extends cdk.StackProps {
@@ -29,6 +39,8 @@ interface OctovyProps extends cdk.StackProps {
   readonly lambdaRoleARN?: string;
   readonly githubEndpoint?: string;
   readonly vpcConfig?: vpcConfig;
+  readonly domainConfig?: domainConfig;
+
   readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
 
@@ -229,6 +241,7 @@ export class OctovyStack extends cdk.Stack {
       .addResource("{report_id}");
     apiScanReport.addMethod("GET");
 
+    // Configure lambda permission if lambdaRole is not set
     if (props.lambdaRoleARN === undefined) {
       this.metaTable.grantFullAccess(apiHandler);
       this.metaTable.grantFullAccess(scanRepo);
@@ -250,5 +263,45 @@ export class OctovyStack extends cdk.Stack {
       bucket.grantReadWrite(updateDB);
       bucket.grantRead(scanRepo);
     }
+
+    // Configure original domain name
+    if (props.domainConfig) {
+      configureCustomDomainName(this, props.domainConfig, apiGW);
+    }
   }
+}
+
+function configureCustomDomainName(
+  stack: cdk.Stack,
+  domainCfg: domainConfig,
+  apiGW: apigateway.LambdaRestApi
+) {
+  const customDomain = new apigateway.DomainName(stack, "CustomDomain", {
+    certificate: acm.Certificate.fromCertificateArn(
+      stack,
+      "Certificate",
+      domainCfg.certARN
+    ),
+    domainName: domainCfg.domainName,
+    endpointType: apigateway.EndpointType.REGIONAL,
+  });
+
+  customDomain.addBasePathMapping(apiGW);
+
+  const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
+    stack,
+    "customDomainHostedZone",
+    {
+      hostedZoneId: domainCfg.hostedZoneID,
+      zoneName: domainCfg.domainName,
+    }
+  );
+
+  new route53.ARecord(stack, "EndpointAlias", {
+    zone: hostedZone,
+    recordName: domainCfg.domainName,
+    target: route53.RecordTarget.fromAlias(
+      new alias.ApiGatewayDomain(customDomain)
+    ),
+  });
 }
