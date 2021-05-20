@@ -203,16 +203,18 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	}
 
 	scanLog := report.ToLog()
-	branch := &model.Branch{
-		GitHubBranch:  req.GitHubBranch,
-		LastScannedAt: report.ScannedAt,
-		ReportSummary: scanLog.Summary,
-	}
-	if err := svc.DB().UpdateBranch(branch); err != nil {
-		return err
-	}
-	if err := svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
-		return err
+	if !req.IsPullRequest {
+		branch := &model.Branch{
+			GitHubBranch:  req.GitHubBranch,
+			LastScannedAt: report.ScannedAt,
+			ReportSummary: scanLog.Summary,
+		}
+		if err := svc.DB().UpdateBranch(branch); err != nil {
+			return err
+		}
+		if err := svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
+			return err
+		}
 	}
 
 	for _, vuln := range detectedVulnMap {

@@ -167,13 +167,14 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 		event.Repo.DefaultBranch == nil ||
 		event.Repo.Name == nil ||
 		event.Repo.Owner == nil ||
-		event.Repo.Owner.Name == nil ||
+		event.Repo.Owner.Login == nil ||
 		event.PullRequest == nil ||
 		event.PullRequest.Head == nil ||
 		event.PullRequest.Head.SHA == nil ||
+		event.PullRequest.Head.Label == nil ||
 		event.PullRequest.Base == nil ||
 		event.PullRequest.Base.Ref == nil ||
-		event.PullRequest.ClosedAt == nil ||
+		event.PullRequest.CreatedAt == nil ||
 		event.Installation == nil ||
 		event.Installation.ID == nil {
 		return goerr.Wrap(errInvalidWebhookData, "Not enough fields").With("event", event)
@@ -189,13 +190,14 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    *event.Repo.Owner.Name,
+					Owner:    *event.Repo.Owner.Login,
 					RepoName: *event.Repo.Name,
 				},
-				Branch: *event.PullRequest.Head.SHA,
+				Branch: *event.PullRequest.Head.Label,
 			},
-			CommitID:  *event.PullRequest.Head.SHA,
-			UpdatedAt: event.PullRequest.CreatedAt.Unix(),
+			CommitID:      *event.PullRequest.Head.SHA,
+			UpdatedAt:     event.PullRequest.CreatedAt.Unix(),
+			IsPullRequest: true,
 		},
 		InstallID: *event.Installation.ID,
 	}
