@@ -38,13 +38,12 @@ func postWebhookGitHub(c *gin.Context) {
 			return
 		}
 
-		/*
-			case *github.CheckSuiteEvent:
-				if err := handleCheckSuiteEvent(cfg, event); err != nil {
-					_ = c.Error(err)
-					return
-				}
-		*/
+	case *github.PullRequestEvent:
+		if err := handlePullRequestEvent(cfg, event); err != nil {
+			_ = c.Error(err)
+			return
+		}
+
 	case *github.InstallationEvent:
 		if err := handleInstallationEvent(cfg, event); err != nil {
 			_ = c.Error(err)
@@ -139,6 +138,64 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 			},
 			CommitID:  *commit.ID,
 			UpdatedAt: commit.Timestamp.Unix(),
+		},
+		InstallID: *event.Installation.ID,
+	}
+
+	if err := cfg.Usecase.SendScanRequest(cfg.Service, &req); err != nil {
+		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
+	}
+
+	repo := &model.Repository{
+		GitHubRepo:    req.GitHubRepo,
+		URL:           *event.Repo.HTMLURL,
+		DefaultBranch: *event.Repo.DefaultBranch,
+		InstallID:     *event.Installation.ID,
+	}
+	if err := cfg.Usecase.RegisterRepository(cfg.Service, repo); err != nil {
+		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
+	}
+
+	logger.With("event", event).Info("Recv github push event")
+	return nil
+}
+
+func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
+	if event == nil ||
+		event.Repo == nil ||
+		event.Repo.HTMLURL == nil ||
+		event.Repo.DefaultBranch == nil ||
+		event.Repo.Name == nil ||
+		event.Repo.Owner == nil ||
+		event.Repo.Owner.Name == nil ||
+		event.PullRequest == nil ||
+		event.PullRequest.Head == nil ||
+		event.PullRequest.Head.SHA == nil ||
+		event.PullRequest.Base == nil ||
+		event.PullRequest.Base.Ref == nil ||
+		event.PullRequest.ClosedAt == nil ||
+		event.Installation == nil ||
+		event.Installation.ID == nil {
+		return goerr.Wrap(errInvalidWebhookData, "Not enough fields").With("event", event)
+	}
+
+	// Do not scan private repository
+	if event.Repo.Private != nil && *event.Repo.Private {
+		logger.With("repo", event.Repo).Info("Skip private repository")
+		return nil
+	}
+
+	req := model.ScanRepositoryRequest{
+		ScanTarget: model.ScanTarget{
+			GitHubBranch: model.GitHubBranch{
+				GitHubRepo: model.GitHubRepo{
+					Owner:    *event.Repo.Owner.Name,
+					RepoName: *event.Repo.Name,
+				},
+				Branch: *event.PullRequest.Head.SHA,
+			},
+			CommitID:  *event.PullRequest.Head.SHA,
+			UpdatedAt: event.PullRequest.CreatedAt.Unix(),
 		},
 		InstallID: *event.Installation.ID,
 	}
