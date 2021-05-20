@@ -162,6 +162,7 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 
 func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 	if event == nil ||
+		event.Action == nil ||
 		event.Repo == nil ||
 		event.Repo.HTMLURL == nil ||
 		event.Repo.DefaultBranch == nil ||
@@ -178,6 +179,11 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 		event.Installation == nil ||
 		event.Installation.ID == nil {
 		return goerr.Wrap(errInvalidWebhookData, "Not enough fields").With("event", event)
+	}
+
+	// Check only PR opened and synchronize
+	if *event.Action != "opened" && *event.Action != "synchronize" {
+		return nil
 	}
 
 	// Do not scan private repository
