@@ -13,10 +13,10 @@ import TableRow from "@material-ui/core/TableRow";
 
 import Chip from "@material-ui/core/Chip";
 
-import useStyles from "./style";
 import { Link as RouterLink } from "react-router-dom";
 
-import * as model from "./model";
+import useStyles from "./Style";
+import * as model from "./Model";
 
 type reportProps = {
   reportID?: string;

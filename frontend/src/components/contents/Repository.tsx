@@ -2,25 +2,22 @@ import React from "react";
 
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
-import Tooltip from "@material-ui/core/Tooltip";
 import AppBar from "@material-ui/core/AppBar";
 import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
-import RefreshIcon from "@material-ui/icons/Refresh";
 import TextField from "@material-ui/core/TextField";
 
 import { useParams } from "react-router-dom";
-import useStyles from "./style";
 import { Redirect, useLocation } from "react-router-dom";
 
-import * as scan from "./scan";
+import * as scan from "./Scan";
+import useStyles from "./Style";
 
 type repoStatus = {
   err?: any;
   reportID?: string;
 };
 
-export default function Repository() {
+export function Content() {
   const classes = useStyles();
 
   const { owner, repoName, branch } = useParams();

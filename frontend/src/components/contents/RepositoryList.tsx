@@ -19,6 +19,7 @@ import Alert from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Link from "@material-ui/core/Link";
 import Chip from "@material-ui/core/Chip";
+import { DataGrid } from "@material-ui/data-grid";
 
 import Typography from "@material-ui/core/Typography";
 import { useParams } from "react-router-dom";
@@ -33,8 +34,8 @@ import Divider from "@material-ui/core/Divider";
 
 import strftime from "strftime";
 
-import useStyles from "./style";
-import * as model from "./model";
+import useStyles from "./Style";
+import * as model from "./Model";
 import { ClassNameMap } from "@material-ui/styles";
 
 interface errorResponse {
@@ -101,7 +102,7 @@ function Owners() {
             {status.owners.map((owner, idx) => {
               return (
                 <ListItem key={`owner-${idx}`}>
-                  <ListItemIcon>
+                  <ListItemIcon className={classes.ownerItemIcon}>
                     <FolderIcon />
                   </ListItemIcon>
                   <RouterLink to={`/repository/${owner.Name}`}>
@@ -216,12 +217,10 @@ function Repositories(props: RepositoriesProps) {
               <TableHead>
                 <TableRow>
                   <TableCell>Repository</TableCell>
-                  <TableCell align="right">Default branch</TableCell>
-                  <TableCell align="right">Last scanned at</TableCell>
+                  <TableCell align="right">Last scanned</TableCell>
                   <TableCell align="right">Package types</TableCell>
                   <TableCell align="right">Packages</TableCell>
                   <TableCell align="right">Vulnerabilities</TableCell>
-                  <TableCell align="right">Link</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -232,9 +231,9 @@ function Repositories(props: RepositoriesProps) {
                         to={`/repository/${item.Owner}/${item.RepoName}`}
                         style={{ textDecoration: "none" }}>
                         {item.Owner + "/" + item.RepoName}
-                      </RouterLink>
+                      </RouterLink>{" "}
+                      (<Link href={item.URL}>github</Link>)
                     </TableCell>
-                    <TableCell align="right">{item.DefaultBranch}</TableCell>
                     <TableCell align="right">
                       {renderUnixTime(item.Branch.LastScannedAt)}
                     </TableCell>
@@ -245,13 +244,14 @@ function Repositories(props: RepositoriesProps) {
                       )}
                     </TableCell>
                     <TableCell align="right">
-                      {item.Branch.ReportSummary.PkgCount}
+                      {item.Branch.LastScannedAt
+                        ? item.Branch.ReportSummary.PkgCount
+                        : undefined}
                     </TableCell>
                     <TableCell align="right">
-                      {item.Branch.ReportSummary.VulnCount}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Link href={item.URL}>github</Link>
+                      {item.Branch.LastScannedAt
+                        ? item.Branch.ReportSummary.VulnCount
+                        : undefined}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -273,7 +273,7 @@ function Repositories(props: RepositoriesProps) {
   );
 }
 
-export default function RepositoryList() {
+export function Content() {
   const classes = useStyles();
   const { owner } = useParams();
 

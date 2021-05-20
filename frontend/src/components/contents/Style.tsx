@@ -28,10 +28,15 @@ const useStyles = makeStyles((theme: Theme) =>
     },
 
     ownerListGrid: {
-      minWidth: "300px",
+      minWidth: "256px",
+    },
+    ownerItemIcon: {
+      minWidth: "auto",
+      marginRight: theme.spacing(2),
     },
     pkgChip: {
       marginLeft: theme.spacing(1),
+      marginBottom: theme.spacing(1),
     },
 
     progressIcon: {

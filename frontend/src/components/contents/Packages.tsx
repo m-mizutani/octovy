@@ -22,8 +22,8 @@ import TableRow from "@material-ui/core/TableRow";
 
 import { Redirect, useLocation } from "react-router-dom";
 
-import useStyles from "./style";
-import * as model from "./model";
+import useStyles from "./Style";
+import * as model from "./Model";
 
 interface errorResponse {
   Error: string;
@@ -35,7 +35,7 @@ interface packageState {
   items?: model.packageRecord[];
 }
 
-export default function Package() {
+export function Content() {
   const classes = useStyles();
   const [pkgType, setPkgType] = React.useState("bundler");
   const [pkgName, setPkgName] = React.useState("");
