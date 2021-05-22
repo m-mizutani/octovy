@@ -38,6 +38,12 @@ let theme = createMuiTheme({
     },
   },
   typography: {
+    h1: {
+      fontWeight: "bold",
+      fontSize: 48,
+      letterSpacing: 0.5,
+      fontFamily: ["Kanit"].join(","),
+    },
     h5: {
       fontWeight: 500,
       fontSize: 26,
@@ -171,6 +177,7 @@ const useStyle = makeStyles((theme: Theme) =>
 );
 
 type octovyProps = {
+  hasNavigator?: boolean;
   children?: React.ReactNode;
 };
 
@@ -182,24 +189,34 @@ export function Frame(props: octovyProps) {
     setMobileOpen(!mobileOpen);
   };
 
+  const renderNavigator = () => {
+    if (!props.hasNavigator) {
+      return;
+    }
+
+    return (
+      <nav className={classes.drawer}>
+        <Hidden smUp implementation="js">
+          <Navigator
+            PaperProps={{ style: { width: drawerWidth } }}
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+          />
+        </Hidden>
+        <Hidden xsDown implementation="css">
+          <Navigator PaperProps={{ style: { width: drawerWidth } }} />
+        </Hidden>
+      </nav>
+    );
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <div className={classes.root}>
         <Router>
           <CssBaseline />
-          <nav className={classes.drawer}>
-            <Hidden smUp implementation="js">
-              <Navigator
-                PaperProps={{ style: { width: drawerWidth } }}
-                variant="temporary"
-                open={mobileOpen}
-                onClose={handleDrawerToggle}
-              />
-            </Hidden>
-            <Hidden xsDown implementation="css">
-              <Navigator PaperProps={{ style: { width: drawerWidth } }} />
-            </Hidden>
-          </nav>
+          {renderNavigator()}
           <div className={classes.app}>
             <Header onDrawerToggle={handleDrawerToggle} />
             <main className={classes.main}>{props.children}</main>

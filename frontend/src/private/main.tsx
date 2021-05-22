@@ -16,7 +16,7 @@ import * as vulnerability from "../components/contents/Vulnerability";
 
 function App() {
   return (
-    <octovy.Frame>
+    <octovy.Frame hasNavigator={true}>
       <Switch>
         <Route path="/repository/:owner/:repoName/:branch">
           <repository.Content />
@@ -25,10 +25,10 @@ function App() {
           <repository.Content />
         </Route>
         <Route path="/repository/:owner">
-          <repositoryList.Content />
+          <repositoryList.Content ownerList={true} />
         </Route>
         <Route path="/repository">
-          <repositoryList.Content />
+          <repositoryList.Content ownerList={true} />
         </Route>
         <Route path="/package">
           <packages.Content />

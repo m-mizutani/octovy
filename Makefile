@@ -19,4 +19,4 @@ FRONTEND_DIR = $(ROOT)/frontend
 
 asset: lambda
 	cp build/* $(ASSET_OUTPUT)
-	cp -r $(FRONTEND_DIR)/dist $(ASSET_OUTPUT)/assets
+	cp -r $(FRONTEND_DIR)/dist/${STAGE} $(ASSET_OUTPUT)/assets

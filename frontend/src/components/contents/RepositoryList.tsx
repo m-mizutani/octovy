@@ -7,7 +7,6 @@ import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Tooltip from "@material-ui/core/Tooltip";
 import IconButton from "@material-ui/core/IconButton";
-import SearchIcon from "@material-ui/icons/Search";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -19,7 +18,7 @@ import Alert from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Link from "@material-ui/core/Link";
 import Chip from "@material-ui/core/Chip";
-import { DataGrid } from "@material-ui/data-grid";
+import { Redirect, useLocation } from "react-router-dom";
 
 import Typography from "@material-ui/core/Typography";
 import { useParams } from "react-router-dom";
@@ -34,9 +33,39 @@ import Divider from "@material-ui/core/Divider";
 
 import strftime from "strftime";
 
-import useStyles from "./Style";
 import * as model from "./Model";
+import useStyles from "./Style";
+
 import { ClassNameMap } from "@material-ui/styles";
+import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
+
+const repoStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    ownerListGrid: {
+      minWidth: "256px",
+    },
+    ownerItemIcon: {
+      minWidth: "auto",
+      marginRight: theme.spacing(2),
+    },
+    ownerSearchBoxToolBar: {
+      minHeight: "94px",
+    },
+    repositoryListGrid: {
+      maxWidth: "1280px",
+    },
+    repositoryListTable: {
+      marginTop: "30px",
+    },
+    pkgChip: {
+      marginLeft: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    },
+    tgNoData: {
+      margin: theme.spacing(10),
+    },
+  })
+);
 
 interface errorResponse {
   Error: string;
@@ -50,7 +79,8 @@ interface repoState {
 }
 
 function Owners() {
-  const classes = useStyles();
+  const classes = repoStyles();
+  const common = useStyles();
 
   interface owner {
     Name: string;
@@ -89,7 +119,7 @@ function Owners() {
       return (
         <Alert severity="info">
           Loading...
-          <CircularProgress size={16} className={classes.progressIcon} />
+          <CircularProgress size={16} className={common.progressIcon} />
         </Alert>
       );
     } else if (status.error) {
@@ -121,7 +151,7 @@ function Owners() {
 
   return (
     <div>
-      <Typography variant="h6" className={classes.typographyTitle}>
+      <Typography variant="h6" className={common.typographyTitle}>
         Owners
       </Typography>
       {renderOwners()}
@@ -129,20 +159,28 @@ function Owners() {
   );
 }
 
-type RepositoriesProps = {
-  owner?: string;
-};
+function Repositories() {
+  const common = useStyles();
+  const classes = repoStyles();
 
-function Repositories(props: RepositoriesProps) {
-  const classes = useStyles();
-
+  const { owner } = useParams();
+  const [inputOwner, setInputOwner] = React.useState<string>("");
+  const [redirectTo, setRedirectTo] = React.useState<string>();
   const [repoState, setRepoState] = React.useState<repoState>({});
+
+  const doRedirect = () => {
+    if (redirectTo) {
+      return <Redirect to={`/repository/${redirectTo}`} />;
+    }
+  };
+
   const reloadRepoState = () => {
-    if (!props.owner) {
+    if (!owner) {
       return;
     }
+    setInputOwner(owner);
 
-    fetch(`api/v1/repo/${props.owner}`)
+    fetch(`api/v1/repo/${owner}`)
       .then((res) => res.json())
       .then(
         (result) => {
@@ -162,57 +200,66 @@ function Repositories(props: RepositoriesProps) {
       );
   };
 
-  React.useEffect(reloadRepoState, [props.owner]);
+  React.useEffect(reloadRepoState, [owner]);
+
+  const renderSearchBox = () => {
+    return (
+      <AppBar position="static" elevation={0} color="inherit">
+        <Toolbar className={classes.ownerSearchBoxToolBar}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs>
+              <TextField
+                label="User / Organization"
+                fullWidth
+                value={inputOwner}
+                onChange={(e) => {
+                  setInputOwner(e.target.value as string);
+                }}
+                onKeyPress={(e) => {
+                  if (e.code === "Enter") {
+                    setRedirectTo(inputOwner);
+                  }
+                }}
+                variant="outlined"
+              />
+            </Grid>
+            <Grid item>
+              <Tooltip title="Reload">
+                <IconButton
+                  onClick={(e) => {
+                    setRedirectTo(inputOwner);
+                  }}>
+                  <RefreshIcon color="inherit" />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          </Grid>
+        </Toolbar>
+      </AppBar>
+    );
+  };
 
   const renderRepositories = () => {
-    if (!props.owner) {
-      return <Alert severity="info">Choose owner</Alert>;
+    if (!owner) {
+      return;
     } else if (repoState.error) {
       return <div>Error: {repoState.error.Error}</div>;
     } else if (!repoState.isLoaded) {
       return <Alert severity="info">Loading...</Alert>;
+    } else if (repoState.items.length === 0) {
+      return (
+        <div className={classes.tgNoData}>
+          <Typography variant="h4" align="center">
+            No Data
+          </Typography>
+        </div>
+      );
     } else {
-      const onChange = (e: any) => {
-        setRepoState({
-          isLoaded: true,
-          items: repoState.allItems.filter((item) => {
-            const key = item.Owner + "/" + item.RepoName;
-            return key.includes(e.target.value);
-          }),
-          allItems: repoState.allItems,
-        });
-      };
-
       return (
         <div>
-          <AppBar position="static" color="default" elevation={0}>
-            <Toolbar>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item>
-                  <SearchIcon color="inherit" />
-                </Grid>
-                <Grid item xs>
-                  <TextField
-                    fullWidth
-                    placeholder="filter"
-                    onChange={onChange}
-                    InputProps={{
-                      disableUnderline: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item>
-                  <Tooltip title="Reload">
-                    <IconButton>
-                      <RefreshIcon color="inherit" />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              </Grid>
-            </Toolbar>
-          </AppBar>
-
-          <TableContainer component={Paper}>
+          <TableContainer
+            component={Paper}
+            className={classes.repositoryListTable}>
             <Table aria-label="repo table" size="small">
               <TableHead>
                 <TableRow>
@@ -265,36 +312,59 @@ function Repositories(props: RepositoriesProps) {
 
   return (
     <div>
-      <Typography variant="h6" className={classes.typographyTitle}>
-        Repositories
-      </Typography>
+      {doRedirect()}
+      {renderSearchBox()}
       {renderRepositories()}
     </div>
   );
 }
 
-export function Content() {
-  const classes = useStyles();
-  const { owner } = useParams();
+type ContentProps = {
+  ownerList?: boolean;
+};
+
+export function Content(props: ContentProps) {
+  const common = useStyles();
+  const classes = repoStyles();
+
+  const renderContent = () => {
+    if (props.ownerList) {
+      return (
+        <Grid container spacing={4}>
+          <Grid item className={classes.ownerListGrid}>
+            <Paper elevation={3} square className={common.paper}>
+              <Grid className={common.contentWrapper}>
+                <Owners />
+              </Grid>
+            </Paper>
+          </Grid>
+          <Grid item xs className={classes.repositoryListGrid}>
+            <Paper elevation={3} square className={common.paper}>
+              <Grid className={common.contentWrapper}>
+                <Repositories />
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+      );
+    } else {
+      return (
+        <Grid container spacing={4} alignItems="center" justify="center">
+          <Grid item xs className={classes.repositoryListGrid}>
+            <Paper elevation={3} square className={common.paper}>
+              <Grid className={common.contentWrapper}>
+                <Repositories />
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+      );
+    }
+  };
 
   return (
     <Grid item xs={12}>
-      <Grid container spacing={4}>
-        <Grid item className={classes.ownerListGrid}>
-          <Paper elevation={3} square className={classes.paper}>
-            <Grid className={classes.contentWrapper}>
-              <Owners />
-            </Grid>
-          </Paper>
-        </Grid>
-        <Grid item xs={9}>
-          <Paper elevation={3} square className={classes.paper}>
-            <Grid className={classes.contentWrapper}>
-              <Repositories owner={owner} />
-            </Grid>
-          </Paper>
-        </Grid>
-      </Grid>
+      {renderContent()}
     </Grid>
   );
 }

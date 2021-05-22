@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev-public": "./node_modules/.bin/webpack serve --config-name public",
+    "dev-private": "./node_modules/.bin/webpack serve --config-name private",
     "build": "npm exec webpack",
     "prepare": "npm exec webpack"
   },

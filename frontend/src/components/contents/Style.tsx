@@ -3,7 +3,6 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     paper: {
-      // maxWidth: 936,
       margin: "auto",
       overflow: "hidden",
     },
@@ -25,18 +24,6 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: theme.spacing(0),
       marginBottom: theme.spacing(1),
       fontWeight: "bold",
-    },
-
-    ownerListGrid: {
-      minWidth: "256px",
-    },
-    ownerItemIcon: {
-      minWidth: "auto",
-      marginRight: theme.spacing(2),
-    },
-    pkgChip: {
-      marginLeft: theme.spacing(1),
-      marginBottom: theme.spacing(1),
     },
 
     progressIcon: {

@@ -29,7 +29,11 @@ export interface domainConfig {
   certARN: string;
 }
 
+type Stage = "private" | "public";
+
 interface OctovyProps extends cdk.StackProps {
+  readonly stage: Stage;
+
   readonly secretsARN: string;
 
   readonly s3Region: string;
@@ -101,6 +105,7 @@ export class OctovyStack extends cdk.Stack {
         environment: {
           GOARCH: "amd64",
           GOOS: "linux",
+          STAGE: props.stage,
         },
       },
     });
@@ -215,7 +220,9 @@ export class OctovyStack extends cdk.Stack {
 
     // Repo
     const apiRepo = apiRoot.addResource("repo");
-    apiRepo.addMethod("GET");
+    if (props.stage === "private") {
+      apiRepo.addMethod("GET");
+    }
 
     const apiRepoOwner = apiRepo.addResource("{owner}");
     apiRepoOwner.addMethod("GET");
@@ -227,8 +234,10 @@ export class OctovyStack extends cdk.Stack {
     apiRepoOwnerNameBranch.addMethod("GET");
 
     // Package
-    const apiPackage = apiRoot.addResource("package");
-    apiPackage.addMethod("GET");
+    if (props.stage === "private") {
+      const apiPackage = apiRoot.addResource("package");
+      apiPackage.addMethod("GET");
+    }
 
     // Vulnerability
     const apiVuln = apiRoot.addResource("vuln");
