@@ -20,10 +20,11 @@ func (x *ScanRepositoryRequest) IsValid() error {
 
 type ScanTarget struct {
 	GitHubBranch
-	CommitID      string
-	UpdatedAt     int64
-	RequestedAt   int64
-	IsPullRequest bool
+	CommitID       string
+	UpdatedAt      int64
+	RequestedAt    int64
+	IsPullRequest  bool
+	IsTargetBranch bool
 }
 
 func (x *ScanTarget) IsValid() error {

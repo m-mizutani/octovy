@@ -64,9 +64,6 @@ function App() {
         <Route path="/repository">
           <repositoryList.Content />
         </Route>
-        <Route path="/package">
-          <packages.Content />
-        </Route>
         <Route path="/vuln" exact>
           <vulnerability.Content />
         </Route>

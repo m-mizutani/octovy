@@ -20,6 +20,7 @@ import * as model from "./Model";
 
 type reportProps = {
   reportID?: string;
+  packageLink?: boolean;
 };
 
 type reportStatus = {
@@ -99,6 +100,18 @@ export function Report(props: reportProps) {
     setVulnFilter(event.target.checked);
   };
 
+  const renderPackageName = (pkgType: string, pkgName: string) => {
+    if (props.packageLink) {
+      return (
+        <RouterLink to={`/package?name=${pkgName}&type=${pkgType}`}>
+          {pkgName}
+        </RouterLink>
+      );
+    } else {
+      return pkgName;
+    }
+  };
+
   const packageView = () => {
     if (!props.reportID) {
       return <div></div>;
@@ -148,10 +161,7 @@ export function Report(props: reportProps) {
                       {src.Packages.map((pkg, idx) => (
                         <TableRow key={idx}>
                           <TableCell component="th" scope="row">
-                            <RouterLink
-                              to={`/package?name=${pkg.Name}&type=${pkg.Type}`}>
-                              {pkg.Name}
-                            </RouterLink>
+                            {renderPackageName(pkg.Type, pkg.Name)}
                           </TableCell>
                           <TableCell>{pkg.Version}</TableCell>
                           <TableCell className={classes.packageTableVulnCell}>

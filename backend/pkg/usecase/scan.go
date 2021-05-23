@@ -177,7 +177,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		newPkgs = append(newPkgs, parsed...)
 	}
 
-	if len(newPkgs) > 0 {
+	if len(newPkgs) > 0 && req.IsTargetBranch {
 		if err := putPackageRecords(svc, &req.GitHubBranch, newPkgs); err != nil {
 			return err
 		}

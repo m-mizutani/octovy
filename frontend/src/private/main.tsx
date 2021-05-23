@@ -19,10 +19,10 @@ function App() {
     <octovy.Frame hasNavigator={true}>
       <Switch>
         <Route path="/repository/:owner/:repoName/:branch">
-          <repository.Content />
+          <repository.Content enablePackageLink={true} />
         </Route>
         <Route path="/repository/:owner/:repoName">
-          <repository.Content />
+          <repository.Content enablePackageLink={true} />
         </Route>
         <Route path="/repository/:owner">
           <repositoryList.Content ownerList={true} />

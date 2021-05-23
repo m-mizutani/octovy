@@ -17,7 +17,11 @@ type repoStatus = {
   reportID?: string;
 };
 
-export function Content() {
+type repoProps = {
+  enablePackageLink?: boolean;
+};
+
+export function Content(props: repoProps) {
   const classes = useStyles();
 
   const { owner, repoName, branch } = useParams();
@@ -102,7 +106,10 @@ export function Content() {
         </Toolbar>
       </AppBar>
 
-      <scan.Report reportID={status.reportID} />
+      <scan.Report
+        reportID={status.reportID}
+        packageLink={props.enablePackageLink}
+      />
     </Paper>
   );
 }

@@ -34,10 +34,7 @@ module.exports = [
       },
       devServer: {
         ...devServer,
-        ...{
-          contentBase: "dist/public",
-          port: 8080,
-        },
+        ...{ contentBase: "dist/public" },
       },
     },
   },
@@ -52,10 +49,7 @@ module.exports = [
       },
       devServer: {
         ...devServer,
-        ...{
-          contentBase: "dist/private",
-          port: 8081,
-        },
+        ...{ contentBase: "dist/private" },
       },
     },
   },
