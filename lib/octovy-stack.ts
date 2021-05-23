@@ -44,6 +44,7 @@ interface OctovyProps extends cdk.StackProps {
   readonly githubEndpoint?: string;
   readonly vpcConfig?: vpcConfig;
   readonly domainConfig?: domainConfig;
+  readonly dynamoPITR?: boolean;
 
   readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
@@ -66,6 +67,7 @@ export class OctovyStack extends cdk.Stack {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       timeToLiveAttribute: "expires_at",
+      pointInTimeRecovery: props.dynamoPITR || false,
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
     this.metaTable.addGlobalSecondaryIndex({
