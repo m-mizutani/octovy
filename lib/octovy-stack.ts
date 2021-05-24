@@ -135,12 +135,12 @@ export class OctovyStack extends cdk.Stack {
 
     const apiHandler = new lambda.Function(this, "apiHandler", {
       runtime: lambda.Runtime.GO_1_X,
-      handler: "apiHandler",
+      handler: "handler",
       role: lambdaRole,
       code: asset,
       timeout: cdk.Duration.seconds(30),
       memorySize: 128,
-      environment: envVars,
+      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "apiHandler" } },
 
       vpc,
       securityGroups,
@@ -148,12 +148,12 @@ export class OctovyStack extends cdk.Stack {
 
     const scanRepo = new lambda.Function(this, "scanRepo", {
       runtime: lambda.Runtime.GO_1_X,
-      handler: "scanRepo",
+      handler: "handler",
       role: lambdaRole,
       code: asset,
       timeout: cdk.Duration.seconds(300),
       memorySize: 1024,
-      environment: envVars,
+      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "scanRepo" } },
       events: [new SqsEventSource(this.scanRequestQueue)],
 
       vpc,
@@ -162,12 +162,12 @@ export class OctovyStack extends cdk.Stack {
 
     const updateDB = new lambda.Function(this, "updateDB", {
       runtime: lambda.Runtime.GO_1_X,
-      handler: "updateDB",
+      handler: "handler",
       role: lambdaRole,
       code: asset,
       timeout: cdk.Duration.seconds(300),
       memorySize: 1024,
-      environment: envVars,
+      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "updateDB" } },
     });
     const rule = new events.Rule(this, "PeriodicUpdateDB", {
       schedule: events.Schedule.rate(cdk.Duration.hours(1)),
