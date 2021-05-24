@@ -14,6 +14,7 @@ import (
 	"github.com/aquasecurity/go-dep-parser/pkg/yarn"
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/m-mizutani/octovy/backend/pkg/service/detector"
@@ -161,7 +162,7 @@ func (x *Default) detectPackages(req *model.ScanRepositoryRequest) ([]*model.Pac
 	return newPkgs, nil
 }
 
-func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, seenAt int64) (map[string]*model.Vulnerability, error) {
+func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, seenAt int64, db interfaces.DBClient) error {
 	detectedVulnMap := map[string]*model.Vulnerability{}
 	sourcePkgMap := map[string][]*model.Package{}
 
@@ -170,7 +171,7 @@ func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, s
 
 		vulns, err := dt.Detect(pkgs[i].Type, pkgs[i].Name, pkgs[i].Version)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		var vulnIDs []string
@@ -185,7 +186,13 @@ func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, s
 		pkgs[i].Vulnerabilities = vulnIDs
 	}
 
-	return detectedVulnMap, nil
+	for _, vuln := range detectedVulnMap {
+		if err := db.InsertVulnerability(vuln); err != nil {
+			return goerr.Wrap(err).With("vuln", vuln)
+		}
+	}
+
+	return nil
 }
 
 func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
@@ -200,8 +207,7 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 	if err != nil {
 		return err
 	}
-	detectedVulnMap, err := annotateVulnerability(dt, pkgs, scannedAt.Unix())
-	if err != nil {
+	if err := annotateVulnerability(dt, pkgs, scannedAt.Unix(), x.svc.DB()); err != nil {
 		return err
 	}
 
@@ -253,12 +259,6 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 		}
 		if err := x.svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
 			return err
-		}
-	}
-
-	for _, vuln := range detectedVulnMap {
-		if err := x.svc.DB().InsertVulnerability(vuln); err != nil {
-			return goerr.Wrap(err).With("vuln", vuln)
 		}
 	}
 
