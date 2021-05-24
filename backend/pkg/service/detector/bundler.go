@@ -5,7 +5,7 @@ import (
 	"github.com/aquasecurity/trivy-db/pkg/vulnsrc/bundler"
 	"github.com/aquasecurity/trivy-db/pkg/vulnsrc/ghsa"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func matchBundler(constraints, version string) (bool, error) {

@@ -3,7 +3,7 @@ package detector
 import (
 	"github.com/aquasecurity/go-version/pkg/semver"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 type gomodAdvisory struct {

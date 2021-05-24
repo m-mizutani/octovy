@@ -36,7 +36,7 @@ func (x *Service) Detector() (*detector.Detector, error) {
 		return nil, goerr.Wrap(err).With("path", x.trivyDBPath)
 	}
 
-	db, err := x.NewTrivyDB(x.trivyDBPath)
+	db, err := x.Infra.NewTrivyDB(x.trivyDBPath)
 	if err != nil {
 		return nil, err
 	}

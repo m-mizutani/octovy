@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"testing"
 
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/stretchr/testify/assert"
@@ -22,11 +23,11 @@ d1ep3G0Q4l/96zDQDiTJ6MjS1QmPAfgZ5wfNDWIFMae6W6EgkBnTWg==
 	mockSM.OutData[secretsARN] = map[string]string{
 		"github_app_private_key": encodedSecret,
 	}
-	cfg := &service.Config{
+	cfg := &model.Config{
 		SecretsARN: secretsARN,
 	}
 	svc := service.New(cfg)
-	svc.NewSecretManager = newSM
+	svc.Infra.NewSecretManager = newSM
 
 	secrets, err := svc.GetSecrets()
 	require.NoError(t, err)

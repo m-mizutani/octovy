@@ -18,7 +18,7 @@ const (
 )
 
 func downloadLatestTrivyDB(svc *service.Service, releases []*github.RepositoryRelease) (io.ReadCloser, error) {
-	client := svc.NewGitHub()
+	client := svc.Infra.NewGitHub()
 	dbNamePrefix := trivyDBSchemaVer + "-"
 
 	for _, release := range releases {
@@ -44,15 +44,15 @@ func downloadLatestTrivyDB(svc *service.Service, releases []*github.RepositoryRe
 	return nil, goerr.New("No available trivy-db asset")
 }
 
-func UpdateTrivyDB(svc *service.Service) error {
-	client := svc.NewGitHub()
+func (x *Default) UpdateTrivyDB() error {
+	client := x.svc.Infra.NewGitHub()
 
 	releases, err := client.ListReleases(trivyDBOwner, trivyDBRepo)
 	if err != nil {
 		return goerr.Wrap(err, "ListRelease error")
 	}
 
-	dbReader, err := downloadLatestTrivyDB(svc, releases)
+	dbReader, err := downloadLatestTrivyDB(x.svc, releases)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func UpdateTrivyDB(svc *service.Service) error {
 		return goerr.Wrap(err)
 	}
 
-	if err := svc.UploadTrivyDB(temp); err != nil {
+	if err := x.svc.UploadTrivyDB(temp); err != nil {
 		return err
 	}
 

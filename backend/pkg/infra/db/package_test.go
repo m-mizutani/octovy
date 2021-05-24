@@ -3,7 +3,7 @@ package db_test
 import (
 	"testing"
 
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -17,11 +17,10 @@ import (
 	"time"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,8 +29,9 @@ import (
 func TestScanRepository(t *testing.T) {
 	t.Run("Append a new vulnerability", func(t *testing.T) {
 		now := time.Unix(10000, 0)
-		svc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
-		svc.Utils.TimeNow = func() time.Time { return now }
+		uc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
+		svc := usecase.ExposeService(uc)
+		svc.Infra.Utils.TimeNow = func() time.Time { return now }
 
 		trivyDBMock.AdvisoryMap["ruby-advisory-db"] = map[string][]*model.AdvisoryData{
 			"rack": {
@@ -61,8 +61,7 @@ func TestScanRepository(t *testing.T) {
 			InstallID: 999,
 		}
 
-		uc := usecase.New()
-		require.NoError(t, uc.ScanRepository(svc, req))
+		require.NoError(t, uc.ScanRepository(req))
 		rackPkgs1, err := dbClient.FindPackageRecordsByName(model.PkgRubyGems, "rack")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rackPkgs1))
@@ -86,10 +85,10 @@ func TestScanRepository(t *testing.T) {
 			Title: "test vuln 2",
 		}
 
-		svc.Utils.TimeNow = func() time.Time { return now.Add(time.Second) }
+		svc.Infra.Utils.TimeNow = func() time.Time { return now.Add(time.Second) }
 
 		// Scan again
-		require.NoError(t, uc.ScanRepository(svc, req))
+		require.NoError(t, uc.ScanRepository(req))
 		rackPkgs2, err := dbClient.FindPackageRecordsByName(model.PkgRubyGems, "rack")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rackPkgs2))
@@ -106,7 +105,7 @@ func TestScanRepository(t *testing.T) {
 }
 
 func TestScanBundler(t *testing.T) {
-	svc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
+	uc, dbClient, trivyDBMock := setupScanRepositoryService(t, "../testdata/src/bundler.zip")
 
 	trivyDBMock.AdvisoryMap["ruby-advisory-db"] = map[string][]*model.AdvisoryData{
 		"rack": {
@@ -137,8 +136,7 @@ func TestScanBundler(t *testing.T) {
 		InstallID: 999,
 	}
 
-	uc := usecase.New()
-	require.NoError(t, uc.ScanRepository(svc, req))
+	require.NoError(t, uc.ScanRepository(req))
 
 	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
 	require.NoError(t, err)
@@ -157,7 +155,7 @@ func TestScanBundler(t *testing.T) {
 }
 
 func TestScanGoModule(t *testing.T) {
-	svc, dbClient, _ := setupScanRepositoryService(t, "../testdata/src/go_mod.zip")
+	uc, dbClient, _ := setupScanRepositoryService(t, "../testdata/src/go_mod.zip")
 
 	req := &model.ScanRepositoryRequest{
 		ScanTarget: model.ScanTarget{
@@ -175,8 +173,7 @@ func TestScanGoModule(t *testing.T) {
 		InstallID: 999,
 	}
 
-	uc := usecase.New()
-	require.NoError(t, uc.ScanRepository(svc, req))
+	require.NoError(t, uc.ScanRepository(req))
 
 	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
 	require.NoError(t, err)
@@ -184,7 +181,7 @@ func TestScanGoModule(t *testing.T) {
 }
 
 func TestScanNPM(t *testing.T) {
-	svc, dbClient, _ := setupScanRepositoryService(t, "../testdata/src/npm.zip")
+	uc, dbClient, _ := setupScanRepositoryService(t, "../testdata/src/npm.zip")
 
 	req := &model.ScanRepositoryRequest{
 		ScanTarget: model.ScanTarget{
@@ -202,8 +199,7 @@ func TestScanNPM(t *testing.T) {
 		InstallID: 999,
 	}
 
-	uc := usecase.New()
-	require.NoError(t, uc.ScanRepository(svc, req))
+	require.NoError(t, uc.ScanRepository(req))
 
 	packages, err := dbClient.FindPackageRecordsByBranch(&req.GitHubBranch)
 	require.NoError(t, err)
@@ -234,7 +230,7 @@ func (x *httpMock) RoundTrip(req *http.Request) (*http.Response, error) {
 	return x.handler(req)
 }
 
-func newHTTPMockFactory(handler func(req *http.Request) (*http.Response, error)) infra.NewHTTPClient {
+func newHTTPMockFactory(handler func(req *http.Request) (*http.Response, error)) interfaces.NewHTTPClient {
 	return func(rt http.RoundTripper) *http.Client {
 		return &http.Client{Transport: &httpMock{
 			handler: handler,
@@ -260,7 +256,7 @@ func newResp(code int, body interface{}) *http.Response {
 	}
 }
 
-func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*service.Service, infra.DBClient, *trivydb.TrivyDBMock) {
+func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interfaces.Usecases, interfaces.DBClient, *trivydb.TrivyDBMock) {
 	pem := genRSAKey(t)
 	base64PEM := base64.StdEncoding.EncodeToString(pem)
 	const (
@@ -286,28 +282,30 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 		"github_app_id":          "123",
 	}
 
-	cfg := service.NewConfig()
-	cfg.SecretsARN = secretsARN
-	cfg.GitHubEndpoint = "https://ghe.example.org/api/v3"
-	cfg.TableName = dbClient.TableName()
-	cfg.S3Region = "ap-northeast-0"
-	cfg.S3Bucket = "my-db-bucket"
-	cfg.S3Prefix = "test-prefix/"
+	cfg := &model.Config{
+		SecretsARN:     secretsARN,
+		GitHubEndpoint: "https://ghe.example.org/api/v3",
+		TableName:      dbClient.TableName(),
+		S3Region:       "ap-northeast-0",
+		S3Bucket:       "my-db-bucket",
+		S3Prefix:       "test-prefix/",
+	}
 
 	// Build service and injects mocks
-	svc := service.New(cfg)
-	svc.NewSecretManager = newSM
-	svc.NewDB = func(region, tableName string) (infra.DBClient, error) {
+	uc := usecase.New(cfg)
+	svc := usecase.ExposeService(uc)
+	svc.Infra.NewSecretManager = newSM
+	svc.Infra.NewDB = func(region, tableName string) (interfaces.DBClient, error) {
 		return dbClient, nil
 	}
 
 	// Build trivy mock
 	newTrivyDBMock, trivyDBMock := trivydb.NewMock()
-	svc.NewTrivyDB = newTrivyDBMock
+	svc.Infra.NewTrivyDB = newTrivyDBMock
 
 	// Setup S3 mock
 	newS3Mock, s3Mock := aws.NewMockS3()
-	svc.NewS3 = newS3Mock
+	svc.Infra.NewS3 = newS3Mock
 	s3Mock.Objects["my-db-bucket"] = map[string][]byte{
 		"test-prefix/db/trivy.db.gz": []byte("boom!"),
 	}
@@ -315,7 +313,7 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 	// Setup trivy DB
 
 	var calledGetArchiveLink, calledDownloadArchive int
-	svc.NewHTTP = newHTTPMockFactory(func(req *http.Request) (*http.Response, error) {
+	svc.Infra.NewHTTP = newHTTPMockFactory(func(req *http.Request) (*http.Response, error) {
 		assert.Equal(t, "ghe.example.org", req.URL.Host)
 		switch req.URL.Path {
 		case "/api/v3/repos/five/blue/zipball/beefcafe":
@@ -356,5 +354,5 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (*servi
 		assert.Equal(t, "test-prefix/db/trivy.db.gz", *s3Mock.GetInput[0].Key)
 	})
 
-	return svc, dbClient, trivyDBMock
+	return uc, dbClient, trivyDBMock
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/octovy/backend/pkg/api"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/rs/zerolog"
 	"github.com/urfave/cli/v2"
 )
@@ -140,13 +139,11 @@ func newAPICommand(ctrl *Controller) *cli.Command {
 }
 
 func apiCommand(c *cli.Context, config *apiCommandConfig) error {
-	svc := service.New(&service.Config{
-		AwsRegion:  config.AWSRegion,
-		TableName:  config.TableName,
-		SecretsARN: config.SecretARN,
-	})
+	config.ctrl.Config.AwsRegion = config.AWSRegion
+	config.ctrl.Config.TableName = config.TableName
+	config.ctrl.Config.SecretsARN = config.SecretARN
+
 	engine := api.New(&api.Config{
-		Service:  svc,
 		Usecase:  config.ctrl.Usecase,
 		AssetDir: config.AssetDir,
 	})

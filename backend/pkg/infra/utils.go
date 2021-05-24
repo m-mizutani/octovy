@@ -5,17 +5,12 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 )
 
-type Utils struct {
-	TimeNow  TimeNow
-	TempFile TempFile
-	OpenZip  OpenZip
-	Remove   Remove
-}
-
-func DefaultUtils() Utils {
-	return Utils{
+func DefaultUtils() interfaces.Utils {
+	return interfaces.Utils{
 		TimeNow: func() time.Time {
 			return time.Now().UTC()
 		},

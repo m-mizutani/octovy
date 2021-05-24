@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func postWebhookGitHub(c *gin.Context) {
@@ -90,7 +90,7 @@ func handleInstallationEvent(cfg *Config, event *github.InstallationEvent) error
 			InstallID:     *event.Installation.ID,
 		}
 
-		if err := cfg.Usecase.RegisterRepository(cfg.Service, newRepo); err != nil {
+		if err := cfg.Usecase.RegisterRepository(newRepo); err != nil {
 			return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 		}
 	}
@@ -144,7 +144,7 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 		InstallID: *event.Installation.ID,
 	}
 
-	if err := cfg.Usecase.SendScanRequest(cfg.Service, &req); err != nil {
+	if err := cfg.Usecase.SendScanRequest(&req); err != nil {
 		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
 	}
 
@@ -154,7 +154,7 @@ func handlePushEvent(cfg *Config, event *github.PushEvent) error {
 		DefaultBranch: *event.Repo.DefaultBranch,
 		InstallID:     *event.Installation.ID,
 	}
-	if err := cfg.Usecase.RegisterRepository(cfg.Service, repo); err != nil {
+	if err := cfg.Usecase.RegisterRepository(repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 	}
 
@@ -211,7 +211,7 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 		InstallID: *event.Installation.ID,
 	}
 
-	if err := cfg.Usecase.SendScanRequest(cfg.Service, &req); err != nil {
+	if err := cfg.Usecase.SendScanRequest(&req); err != nil {
 		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
 	}
 
@@ -221,7 +221,7 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 		DefaultBranch: *event.Repo.DefaultBranch,
 		InstallID:     *event.Installation.ID,
 	}
-	if err := cfg.Usecase.RegisterRepository(cfg.Service, repo); err != nil {
+	if err := cfg.Usecase.RegisterRepository(repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 	}
 

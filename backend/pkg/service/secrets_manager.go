@@ -6,7 +6,7 @@ import (
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 type secretValues struct {
@@ -33,7 +33,7 @@ func (x *secretValues) GetGitHubAppID() (int64, error) {
 func (x *Service) GetSecrets() (*secretValues, error) {
 	var values secretValues
 	if err := golambda.GetSecretValuesWithFactory(x.config.SecretsARN, &values, func(region string) (golambda.SecretsManagerClient, error) {
-		return x.NewSecretManager(region)
+		return x.Infra.NewSecretManager(region)
 	}); err != nil {
 		return nil, err
 	}

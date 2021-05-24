@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 )
 
 // This package is used to download trivy database, not used by GitHub App.
@@ -16,7 +16,7 @@ type Client struct {
 	client *github.Client
 }
 
-func New() infra.GitHubClient {
+func New() interfaces.GitHubClient {
 	return &Client{
 		client: github.NewClient(&http.Client{}),
 	}

@@ -2,45 +2,31 @@ package service
 
 import (
 	"github.com/m-mizutani/golambda"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/db"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/github"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/net"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
 )
 
 var logger = golambda.Logger
 
 type Service struct {
-	config *Config
-	infra.Interfaces
+	config *model.Config
+	Infra  *interfaces.Infra
 
 	trivyDBPath string
-	dbClient    infra.DBClient
+	dbClient    interfaces.DBClient
 }
 
-var defaultInfra = infra.Interfaces{
-	NewDB:            db.NewDynamoClient,
-	NewTrivyDB:       trivydb.New,
-	NewSecretManager: aws.NewSecretsManager,
-	NewSQS:           aws.NewSQS,
-	NewS3:            aws.NewS3,
-	NewHTTP:          net.NewHTTP,
-	NewGitHub:        github.New,
-	Utils:            infra.DefaultUtils(),
-}
-
-func New(config *Config) *Service {
+func New(config *model.Config) *Service {
 	return &Service{
-		Interfaces: defaultInfra,
-		config:     config,
+		Infra:  infra.New(),
+		config: config,
 	}
 }
 
-func (x *Service) DB() infra.DBClient {
+func (x *Service) DB() interfaces.DBClient {
 	if x.dbClient == nil {
-		client, err := x.NewDB(x.config.AwsRegion, x.config.TableName)
+		client, err := x.Infra.NewDB(x.config.AwsRegion, x.config.TableName)
 		if err != nil {
 			panic("Failed NewDB: " + err.Error())
 		}

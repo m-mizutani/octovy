@@ -16,7 +16,7 @@ func trivyDBObjectKey(prefix string) string {
 }
 
 func (x *Service) UploadTrivyDB(rs io.ReadSeeker) error {
-	s3Client, err := x.NewS3(x.config.S3Region)
+	s3Client, err := x.Infra.NewS3(x.config.S3Region)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (x *Service) UploadTrivyDB(rs io.ReadSeeker) error {
 }
 
 func (x *Service) downloadTrivyDB(w io.Writer) error {
-	s3Client, err := x.NewS3(x.config.S3Region)
+	s3Client, err := x.Infra.NewS3(x.config.S3Region)
 	if err != nil {
 		return err
 	}

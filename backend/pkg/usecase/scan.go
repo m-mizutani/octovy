@@ -15,7 +15,7 @@ import (
 	"github.com/aquasecurity/go-dep-parser/pkg/yarn"
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
 )
 
@@ -51,7 +51,7 @@ func stepDownDirectory(fpath string) string {
 	return filepath.Join(arr...)
 }
 
-func putScanResult(svc *service.Service, scannedAt time.Time, target *model.ScanTarget, pkgs []*model.PackageRecord) error {
+func putScanResult(scannedAt time.Time, target *model.ScanTarget, pkgs []*model.PackageRecord) error {
 
 	return nil
 }
@@ -87,16 +87,16 @@ func putPackageRecords(svc *service.Service, branch *model.GitHubBranch, newPkgs
 	return nil
 }
 
-func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepositoryRequest) error {
-	tmp, err := svc.Utils.TempFile("", "*.zip")
+func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
+	tmp, err := x.svc.Infra.Utils.TempFile("", "*.zip")
 	if err != nil {
 		return goerr.Wrap(err)
 	}
-	if err := svc.GetCodeZip(&req.GitHubRepo, req.CommitID, req.InstallID, tmp); err != nil {
+	if err := x.svc.GetCodeZip(&req.GitHubRepo, req.CommitID, req.InstallID, tmp); err != nil {
 		return err
 	}
 
-	zipFile, err := svc.Utils.OpenZip(tmp.Name())
+	zipFile, err := x.svc.Infra.Utils.OpenZip(tmp.Name())
 	if err != nil {
 		return goerr.Wrap(err).With("file", tmp.Name())
 	}
@@ -104,12 +104,12 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		if err := zipFile.Close(); err != nil {
 			logger.With("zip", zipFile).With("error", err).Error("Failed to close zip file")
 		}
-		if err := svc.Utils.Remove(tmp.Name()); err != nil {
+		if err := x.svc.Infra.Utils.Remove(tmp.Name()); err != nil {
 			logger.With("filename", tmp.Name()).Error("Failed to remove zip file")
 		}
 	}()
 
-	dt, err := svc.Detector()
+	dt, err := x.svc.Detector()
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	detectedVulnMap := map[string]*model.Vulnerability{}
 	sourcePkgMap := map[string][]*model.Package{}
 
-	scannedAt := svc.Utils.TimeNow()
+	scannedAt := x.svc.Infra.Utils.TimeNow()
 	for _, f := range zipFile.File {
 		psr, ok := parserMap[filepath.Base(f.Name)]
 		if !ok {
@@ -178,7 +178,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 	}
 
 	if len(newPkgs) > 0 && req.IsTargetBranch {
-		if err := putPackageRecords(svc, &req.GitHubBranch, newPkgs); err != nil {
+		if err := putPackageRecords(x.svc, &req.GitHubBranch, newPkgs); err != nil {
 			return err
 		}
 	}
@@ -198,7 +198,7 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 		ScannedAt:   scannedAt.Unix(),
 		TrivyDBMeta: *trivyDBMeta,
 	}
-	if err := svc.DB().InsertScanReport(report); err != nil {
+	if err := x.svc.DB().InsertScanReport(report); err != nil {
 		return err
 	}
 
@@ -209,16 +209,16 @@ func (x *Default) ScanRepository(svc *service.Service, req *model.ScanRepository
 			LastScannedAt: report.ScannedAt,
 			ReportSummary: scanLog.Summary,
 		}
-		if err := svc.DB().UpdateBranch(branch); err != nil {
+		if err := x.svc.DB().UpdateBranch(branch); err != nil {
 			return err
 		}
-		if err := svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
+		if err := x.svc.DB().UpdateBranchIfDefault(&req.GitHubRepo, branch); err != nil {
 			return err
 		}
 	}
 
 	for _, vuln := range detectedVulnMap {
-		if err := svc.DB().InsertVulnerability(vuln); err != nil {
+		if err := x.svc.DB().InsertVulnerability(vuln); err != nil {
 			return goerr.Wrap(err).With("vuln", vuln)
 		}
 	}
@@ -283,4 +283,16 @@ func diffPackageList(oldPkgs, newPkgs []*model.PackageRecord) (addPkgs, modPkgs,
 	}
 
 	return
+}
+
+func (x *Default) LookupScanReport(reportID string) (*model.ScanReport, error) {
+	return x.svc.DB().LookupScanReport(reportID)
+}
+
+func (x *Default) FindPackageRecordsByBranch(branch *model.GitHubBranch) ([]*model.PackageRecord, error) {
+	return x.svc.DB().FindPackageRecordsByBranch(branch)
+}
+
+func (x *Default) FindPackageRecordsByName(pkgType model.PkgType, pkgName string) ([]*model.PackageRecord, error) {
+	return x.svc.DB().FindPackageRecordsByName(pkgType, pkgName)
 }

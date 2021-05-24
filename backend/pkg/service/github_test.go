@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/Netflix/go-env"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/stretchr/testify/require"
 )
@@ -56,11 +56,11 @@ func TestGitHubDownload(t *testing.T) {
 		"github_app_id":          props.GITHUB_APP_ID,
 	}
 
-	cfg := service.NewConfig()
+	cfg := model.NewConfig()
 	cfg.SecretsARN = "arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"
 	cfg.GitHubEndpoint = props.GITHUB_ENDPOINT
 	svc := service.New(cfg)
-	svc.NewSecretManager = newSM
+	svc.Infra.NewSecretManager = newSM
 
 	buf := &WriteBuffer{}
 	repo := &model.GitHubRepo{

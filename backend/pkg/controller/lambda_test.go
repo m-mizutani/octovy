@@ -10,8 +10,7 @@ import (
 	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/backend/pkg/controller"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,16 +18,16 @@ import (
 
 type MockUsecase struct {
 	usecase.Default
-	sendScanRequest    func(svc *service.Service, r *model.ScanRepositoryRequest) error
-	registerRepository func(svc *service.Service, repo *model.Repository) error
+	sendScanRequest    func(r *model.ScanRepositoryRequest) error
+	registerRepository func(repo *model.Repository) error
 }
 
-func (x *MockUsecase) SendScanRequest(svc *service.Service, r *model.ScanRepositoryRequest) error {
-	return x.sendScanRequest(svc, r)
+func (x *MockUsecase) SendScanRequest(r *model.ScanRepositoryRequest) error {
+	return x.sendScanRequest(r)
 }
 
-func (x *MockUsecase) RegisterRepository(svc *service.Service, repo *model.Repository) error {
-	return x.registerRepository(svc, repo)
+func (x *MockUsecase) RegisterRepository(repo *model.Repository) error {
+	return x.registerRepository(repo)
 }
 
 func TestLambdaAPI(t *testing.T) {
@@ -38,11 +37,11 @@ func TestLambdaAPI(t *testing.T) {
 		var repo *model.Repository
 		ctrl := controller.New()
 		ctrl.Usecase = &MockUsecase{
-			sendScanRequest: func(svc *service.Service, r *model.ScanRepositoryRequest) error {
+			sendScanRequest: func(r *model.ScanRepositoryRequest) error {
 				req = r
 				return nil
 			},
-			registerRepository: func(svc *service.Service, r *model.Repository) error {
+			registerRepository: func(r *model.Repository) error {
 				repo = r
 				return nil
 			},

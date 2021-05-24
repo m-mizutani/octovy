@@ -4,14 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupDB(t *testing.T) infra.TrivyDBClient {
+func setupDB(t *testing.T) interfaces.TrivyDBClient {
 	dbPath := os.Getenv("TRIVY_DB_PATH")
 	if dbPath == "" {
 		t.Skip("TRIVY_DB_PATH is not set")

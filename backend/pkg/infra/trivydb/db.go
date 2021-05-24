@@ -7,8 +7,8 @@ import (
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -21,7 +21,7 @@ const (
 	trivyBucketName     = "trivy"
 )
 
-func New(dbPath string) (infra.TrivyDBClient, error) {
+func New(dbPath string) (interfaces.TrivyDBClient, error) {
 	db, err := bolt.Open(dbPath, 0600, &bolt.Options{
 		ReadOnly: true,
 	})
@@ -153,7 +153,7 @@ type TrivyDBMock struct {
 	DBMeta           *model.TrivyDBMeta
 }
 
-func NewMock() (infra.NewTrivyDB, *TrivyDBMock) {
+func NewMock() (interfaces.NewTrivyDB, *TrivyDBMock) {
 	mock := &TrivyDBMock{
 		AdvisoryMap: map[string]map[string][]*model.AdvisoryData{
 			"GitHub Security Advisory Rubygems": make(map[string][]*model.AdvisoryData),
@@ -167,7 +167,7 @@ func NewMock() (infra.NewTrivyDB, *TrivyDBMock) {
 		VulnerabilityMap: make(map[string]*types.Vulnerability),
 	}
 
-	return func(dbPath string) (infra.TrivyDBClient, error) {
+	return func(dbPath string) (interfaces.TrivyDBClient, error) {
 		mock.DBPath = dbPath
 		return mock, nil
 	}, mock

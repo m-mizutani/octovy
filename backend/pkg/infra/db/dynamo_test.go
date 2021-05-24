@@ -3,11 +3,11 @@ package db_test
 import (
 	"testing"
 
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/db"
 )
 
-func newTestTable(t *testing.T) infra.DBClient {
+func newTestTable(t *testing.T) interfaces.DBClient {
 	tableName := "dynamodb-test"
 
 	client, err := db.NewDynamoClientLocal("ap-northeast-1", tableName)

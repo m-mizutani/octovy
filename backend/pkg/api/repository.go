@@ -5,12 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func getOwners(c *gin.Context) {
 	cfg := getConfig(c)
-	owners, err := cfg.Service.DB().FindOwners()
+	owners, err := cfg.Usecase.FindOwners()
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -22,7 +22,7 @@ func getOwners(c *gin.Context) {
 func getReposByOwner(c *gin.Context) {
 	cfg := getConfig(c)
 	owner := c.Param("owner")
-	repos, err := cfg.Service.DB().FindRepoByOwner(owner)
+	repos, err := cfg.Usecase.FindReposByOwner(owner)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -35,7 +35,7 @@ func getRepoInfo(c *gin.Context) {
 	cfg := getConfig(c)
 	owner := c.Param("owner")
 	name := c.Param("name")
-	repo, err := cfg.Service.DB().FindRepoByFullName(owner, name)
+	repo, err := cfg.Usecase.FindReposByFullName(owner, name)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -50,7 +50,7 @@ func getBranchInfo(c *gin.Context) {
 	name := c.Param("name")
 	branch := c.Param("branch")
 
-	resp, err := cfg.Service.DB().LookupBranch(&model.GitHubBranch{
+	resp, err := cfg.Usecase.LookupBranch(&model.GitHubBranch{
 		GitHubRepo: model.GitHubRepo{
 			Owner:    owner,
 			RepoName: name,
@@ -84,7 +84,7 @@ func getLatestScanResult(c *gin.Context) {
 			CommitID: ref,
 		}
 
-		result, err := cfg.Service.DB().FindScanResult(commit)
+		result, err := cfg.Usecase.FindScanResult(commit)
 		if err != nil {
 			_ = c.Error(err)
 			return
@@ -99,7 +99,7 @@ func getLatestScanResult(c *gin.Context) {
 			},
 			Branch: ref,
 		}
-		results, err := cfg.Service.DB().FindLatestScanResults(branch, 1)
+		results, err := cfg.Usecase.FindLatestScanResults(branch, 1)
 		if err != nil {
 			_ = c.Error(err)
 			return
@@ -118,7 +118,7 @@ func getPackage(c *gin.Context) {
 	cfg := getConfig(c)
 	pkgType := c.Query("type")
 	pkgName := c.Query("name")
-	packages, err := cfg.Service.DB().FindPackageRecordsByName(model.PkgType(pkgType), pkgName)
+	packages, err := cfg.Usecase.FindPackageRecordsByName(model.PkgType(pkgType), pkgName)
 	if err != nil {
 		_ = c.Error(err)
 		return

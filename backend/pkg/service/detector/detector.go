@@ -2,17 +2,17 @@ package detector
 
 import (
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 var logger = golambda.Logger
 
 type Detector struct {
-	trivyDB infra.TrivyDBClient
+	trivyDB interfaces.TrivyDBClient
 }
 
-func New(db infra.TrivyDBClient) *Detector {
+func New(db interfaces.TrivyDBClient) *Detector {
 	return &Detector{
 		trivyDB: db,
 	}

@@ -8,10 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 )
 
-func NewS3(region string) (infra.S3Client, error) {
+func NewS3(region string) (interfaces.S3Client, error) {
 	ssn, err := session.NewSession(&aws.Config{
 		Region: aws.String(region),
 	})
@@ -60,11 +60,11 @@ func (x *MockS3) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error
 	return &s3.PutObjectOutput{}, nil
 }
 
-func NewMockS3() (infra.NewS3, *MockS3) {
+func NewMockS3() (interfaces.NewS3, *MockS3) {
 	mock := &MockS3{
 		Objects: make(map[string]map[string][]byte),
 	}
-	return func(region string) (infra.S3Client, error) {
+	return func(region string) (interfaces.S3Client, error) {
 		mock.Region = region
 		return mock, nil
 	}, mock

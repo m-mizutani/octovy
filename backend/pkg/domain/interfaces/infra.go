@@ -1,4 +1,4 @@
-package infra
+package interfaces
 
 import (
 	"archive/zip"
@@ -12,10 +12,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/go-github/v29/github"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-type Interfaces struct {
+type Infra struct {
 	// Factories
 	NewDB            NewDB
 	NewTrivyDB       NewTrivyDB
@@ -105,3 +105,10 @@ type WriteFile func(r io.Reader, path string) error
 type OpenZip func(path string) (*zip.ReadCloser, error)
 type TempFile func(dir, pattern string) (f *os.File, err error)
 type Remove func(name string) error
+
+type Utils struct {
+	TimeNow  TimeNow
+	TempFile TempFile
+	OpenZip  OpenZip
+	Remove   Remove
+}

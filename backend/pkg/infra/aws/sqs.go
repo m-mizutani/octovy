@@ -6,10 +6,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 )
 
-func NewSQS(region string) (infra.SQSClient, error) {
+func NewSQS(region string) (interfaces.SQSClient, error) {
 	ssn, err := session.NewSession(&aws.Config{
 		Region: aws.String(region),
 	})
@@ -32,9 +32,9 @@ func (x *MockSQS) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutp
 	}, nil
 }
 
-func NewMockSQSSet() (infra.NewSQS, *MockSQS) {
+func NewMockSQSSet() (interfaces.NewSQS, *MockSQS) {
 	mock := &MockSQS{}
-	return func(region string) (infra.SQSClient, error) {
+	return func(region string) (interfaces.SQSClient, error) {
 		mock.Region = region
 		return mock, nil
 	}, nil

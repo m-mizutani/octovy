@@ -10,7 +10,7 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID int64, w io.WriteCloser) error {
@@ -38,14 +38,14 @@ func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID 
 	}
 
 	endpoint := strings.TrimLeft(x.config.GitHubEndpoint, "/")
-	githubHTTP := x.NewHTTP(itr)
+	githubHTTP := x.Infra.NewHTTP(itr)
 
 	var client *github.Client
 	if endpoint == "" {
 		client = github.NewClient(githubHTTP)
 	} else {
 		itr.BaseURL = endpoint
-		httpClient := x.NewHTTP(itr)
+		httpClient := x.Infra.NewHTTP(itr)
 		client, err = github.NewEnterpriseClient(endpoint, endpoint, httpClient)
 		if err != nil {
 			return goerr.Wrap(err).With("endpoint", endpoint)
@@ -78,7 +78,7 @@ func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID 
 		return goerr.Wrap(err)
 	}
 
-	httpClient := x.NewHTTP(nil)
+	httpClient := x.Infra.NewHTTP(nil)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return goerr.Wrap(err)

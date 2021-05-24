@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
@@ -22,7 +22,7 @@ func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
 		return goerr.Wrap(model.ErrInvalidInputValues, err.Error())
 	}
 
-	client, err := x.NewSQS(x.config.AwsRegion)
+	client, err := x.Infra.NewSQS(x.config.AwsRegion)
 	if err != nil {
 		return goerr.Wrap(model.ErrSystem, err.Error())
 	}

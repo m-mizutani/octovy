@@ -11,7 +11,7 @@ func getScanReport(c *gin.Context) {
 	cfg := getConfig(c)
 	reportID := c.Param("report_id")
 
-	report, err := cfg.Service.DB().LookupScanReport(reportID)
+	report, err := cfg.Usecase.LookupScanReport(reportID)
 	if err != nil {
 		_ = c.Error(err)
 		return

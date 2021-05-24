@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v29/github"
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,14 +28,15 @@ func (x *githubMock) DownloadReleaseAsset(owner string, repo string, assetID int
 }
 
 func TestUpdateTrivyDB(t *testing.T) {
-	svc := service.New(&service.Config{
+	uc := usecase.New(&model.Config{
 		S3Region: "ap-northeast-0",
 		S3Bucket: "blue-bucket",
 		S3Prefix: "five/",
 	})
+	svc := usecase.ExposeService(uc)
 
 	newS3Mock, s3Mock := aws.NewMockS3()
-	svc.NewS3 = newS3Mock
+	svc.Infra.NewS3 = newS3Mock
 
 	calledListReleasesMock, calledDownloadReleaseAssetMock := 0, 0
 
@@ -72,9 +73,9 @@ func TestUpdateTrivyDB(t *testing.T) {
 		},
 	}
 
-	svc.NewGitHub = func() infra.GitHubClient { return ghMock }
+	svc.Infra.NewGitHub = func() interfaces.GitHubClient { return ghMock }
 
-	err := usecase.UpdateTrivyDB(svc)
+	err := uc.UpdateTrivyDB()
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, calledListReleasesMock)

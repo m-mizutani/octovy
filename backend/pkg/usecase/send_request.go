@@ -1,10 +1,9 @@
 package usecase
 
 import (
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-func (x *Default) SendScanRequest(svc *service.Service, req *model.ScanRepositoryRequest) error {
-	return svc.SendScanRequest(req)
+func (x *Default) SendScanRequest(req *model.ScanRepositoryRequest) error {
+	return x.svc.SendScanRequest(req)
 }
