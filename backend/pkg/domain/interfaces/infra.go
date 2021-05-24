@@ -3,7 +3,6 @@ package interfaces
 import (
 	"archive/zip"
 	"io"
-	"net/http"
 	"os"
 	"time"
 
@@ -23,7 +22,7 @@ type Infra struct {
 	NewSQS           NewSQS
 	NewS3            NewS3
 	NewGitHub        NewGitHub
-	NewHTTP          NewHTTPClient // Interface set
+	NewGitHubApp     NewGitHubApp
 	Utils            Utils
 }
 
@@ -81,14 +80,17 @@ type DBClient interface {
 	Close() error
 }
 
-// HTTP
-type NewHTTPClient func(http.RoundTripper) *http.Client
-
 // GitHub
 type NewGitHub func() GitHubClient
 type GitHubClient interface {
 	ListReleases(owner, repo string) ([]*github.RepositoryRelease, error)
 	DownloadReleaseAsset(owner, repo string, assetID int64) (io.ReadCloser, error)
+}
+
+// GitHubApp
+type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitHubApp
+type GitHubApp interface {
+	GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
 }
 
 // Trivy DB

@@ -92,7 +92,21 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 	if err != nil {
 		return goerr.Wrap(err)
 	}
-	if err := x.svc.GetCodeZip(&req.GitHubRepo, req.CommitID, req.InstallID, tmp); err != nil {
+
+	secrets, err := x.svc.GetSecrets()
+	if err != nil {
+		return err
+	}
+	pem, err := secrets.GithubAppPEM()
+	if err != nil {
+		return err
+	}
+	appID, err := secrets.GetGitHubAppID()
+	if err != nil {
+		return err
+	}
+	gitHubApp := x.svc.Infra.NewGitHubApp(appID, req.InstallID, pem, x.config.GitHubEndpoint)
+	if err := gitHubApp.GetCodeZip(&req.GitHubRepo, req.CommitID, tmp); err != nil {
 		return err
 	}
 

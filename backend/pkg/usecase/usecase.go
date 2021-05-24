@@ -10,11 +10,13 @@ import (
 var logger = golambda.Logger
 
 type Default struct {
-	svc *service.Service
+	config *model.Config
+	svc    *service.Service
 }
 
 func New(cfg *model.Config) interfaces.Usecases {
 	return &Default{
-		svc: service.New(cfg),
+		config: cfg,
+		svc:    service.New(cfg),
 	}
 }

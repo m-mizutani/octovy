@@ -1,4 +1,4 @@
-package service
+package githubapp
 
 import (
 	"context"
@@ -10,46 +10,63 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/golambda"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID int64, w io.WriteCloser) error {
-	defer w.Close()
+var logger = golambda.Logger
 
-	secrets, err := x.GetSecrets()
-	if err != nil {
-		return err
+type GitHubApp struct {
+	appID     int64
+	installID int64
+	pem       []byte
+	endpoint  string
+
+	client *github.Client
+}
+
+func New(appID, installID int64, pem []byte, endpoint string) interfaces.GitHubApp {
+	return &GitHubApp{
+		appID:     appID,
+		installID: installID,
+		pem:       pem,
+		endpoint:  endpoint,
+	}
+}
+
+func (x *GitHubApp) githubClient() (*github.Client, error) {
+	if x.client != nil {
+		return x.client, nil
 	}
 
 	tr := http.DefaultTransport
-	pem, err := secrets.GithubAppPEM()
-	if err != nil {
-		return err
-	}
-	appID, err := secrets.GetGitHubAppID()
-	if err != nil {
-		return err
-	}
-
-	itr, err := ghinstallation.New(tr, appID, installID, pem)
+	itr, err := ghinstallation.New(tr, x.appID, x.installID, x.pem)
 
 	if err != nil {
-		return goerr.Wrap(err)
+		return nil, goerr.Wrap(err)
 	}
 
-	endpoint := strings.TrimLeft(x.config.GitHubEndpoint, "/")
-	githubHTTP := x.Infra.NewHTTP(itr)
+	endpoint := strings.TrimLeft(x.endpoint, "/")
 
-	var client *github.Client
 	if endpoint == "" {
-		client = github.NewClient(githubHTTP)
+		x.client = github.NewClient(&http.Client{Transport: itr})
 	} else {
 		itr.BaseURL = endpoint
-		httpClient := x.Infra.NewHTTP(itr)
-		client, err = github.NewEnterpriseClient(endpoint, endpoint, httpClient)
+		httpClient := &http.Client{Transport: itr}
+		x.client, err = github.NewEnterpriseClient(endpoint, endpoint, httpClient)
 		if err != nil {
-			return goerr.Wrap(err).With("endpoint", endpoint)
+			return nil, goerr.Wrap(err).With("endpoint", endpoint)
 		}
+	}
+
+	return x.client, nil
+}
+
+func (x *GitHubApp) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
+	client, err := x.githubClient()
+	if err != nil {
+		return err
 	}
 
 	opt := &github.RepositoryContentGetOptions{
@@ -58,11 +75,11 @@ func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID 
 	ctx := context.Background()
 
 	logger.
-		With("appID", appID).
+		With("appID", x.appID).
 		With("repo", repo).
-		With("installID", installID).
-		With("endpoint", endpoint).
-		With("privateKey.length", len(secrets.GitHubAppPrivateKey)).
+		With("installID", x.installID).
+		With("endpoint", x.endpoint).
+		With("privateKey.length", len(x.pem)).
 		Debug("Sending GetArchiveLink request")
 
 	// https://docs.github.com/en/rest/reference/repos#downloads
@@ -78,7 +95,7 @@ func (x *Service) GetCodeZip(repo *model.GitHubRepo, commitID string, installID 
 		return goerr.Wrap(err)
 	}
 
-	httpClient := x.Infra.NewHTTP(nil)
+	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return goerr.Wrap(err)
