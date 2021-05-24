@@ -6,7 +6,7 @@ import (
 
 	"github.com/guregu/dynamo"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 const scanLogTimeKey = "2006-01-02T15:04:05"

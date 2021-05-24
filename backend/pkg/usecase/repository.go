@@ -1,42 +1,45 @@
 package usecase
 
 import (
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-func (x *Default) RegisterRepository(svc *service.Service, repo *model.Repository) error {
-	inserted, err := x.PutNewRepository(svc, repo)
+func (x *Default) RegisterRepository(repo *model.Repository) error {
+	inserted, err := x.PutNewRepository(repo)
 	if err != nil {
 		return err
 	}
 
 	if !inserted {
-		if err := x.UpdateRepositoryDefaultBranch(svc, &repo.GitHubRepo, repo.DefaultBranch); err != nil {
+		if err := x.UpdateRepositoryDefaultBranch(&repo.GitHubRepo, repo.DefaultBranch); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (x *Default) PutNewRepository(svc *service.Service, repo *model.Repository) (bool, error) {
-	return svc.DB().InsertRepo(repo)
+func (x *Default) PutNewRepository(repo *model.Repository) (bool, error) {
+	return x.svc.DB().InsertRepo(repo)
 }
 
-func (x *Default) UpdateRepositoryDefaultBranch(svc *service.Service, repo *model.GitHubRepo, branch string) error {
-	return svc.DB().SetRepoDefaultBranchName(repo, branch)
+func (x *Default) UpdateRepositoryDefaultBranch(repo *model.GitHubRepo, branch string) error {
+	return x.svc.DB().SetRepoDefaultBranchName(repo, branch)
 }
 
-func (x *Default) FindRepos(svc *service.Service) ([]*model.Repository, error) {
-	return svc.DB().FindRepo()
+func (x *Default) FindOwners() ([]*model.Owner, error) {
+	return x.svc.DB().FindOwners()
 }
 
-func (x *Default) FindReposByOwner(svc *service.Service, owner string) ([]*model.Repository, error) {
-	return svc.DB().FindRepoByOwner(owner)
+func (x *Default) FindRepos() ([]*model.Repository, error) {
+	return x.svc.DB().FindRepo()
 }
 
-func (x *Default) FindReposByFullName(svc *service.Service, owner string, name string) (*model.Repository, error) {
-	repos, err := svc.DB().FindRepoByOwner(owner)
+func (x *Default) FindReposByOwner(owner string) ([]*model.Repository, error) {
+	return x.svc.DB().FindRepoByOwner(owner)
+}
+
+func (x *Default) FindReposByFullName(owner string, name string) (*model.Repository, error) {
+	repos, err := x.svc.DB().FindRepoByOwner(owner)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +52,14 @@ func (x *Default) FindReposByFullName(svc *service.Service, owner string, name s
 	return nil, nil
 }
 
-func (x *Default) FindPkgs(svc *service.Service, pkgType model.PkgType, name string) ([]*model.PackageRecord, error) {
-	return svc.DB().FindPackageRecordsByName(pkgType, name)
+func (x *Default) LookupBranch(branch *model.GitHubBranch) (*model.Branch, error) {
+	return x.svc.DB().LookupBranch(branch)
 }
 
-func (x *Default) FindPkgsByRepo(svc *service.Service, branch *model.GitHubBranch) ([]*model.PackageRecord, error) {
-	return svc.DB().FindPackageRecordsByBranch(branch)
+func (x *Default) FindPkgs(pkgType model.PkgType, name string) ([]*model.PackageRecord, error) {
+	return x.svc.DB().FindPackageRecordsByName(pkgType, name)
+}
+
+func (x *Default) FindPkgsByRepo(branch *model.GitHubBranch) ([]*model.PackageRecord, error) {
+	return x.svc.DB().FindPackageRecordsByBranch(branch)
 }

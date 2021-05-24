@@ -7,9 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
-	"github.com/m-mizutani/octovy/backend/pkg/usecase"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/pkg/errors"
 )
 
@@ -21,8 +20,7 @@ const (
 )
 
 type Config struct {
-	Service  *service.Service
-	Usecase  usecase.Usecases
+	Usecase  interfaces.Usecases
 	AssetDir string
 }
 

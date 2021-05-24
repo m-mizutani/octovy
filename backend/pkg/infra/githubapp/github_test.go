@@ -1,16 +1,14 @@
-package service_test
+package githubapp_test
 
 import (
 	"bytes"
-	"encoding/base64"
 	"io/ioutil"
 	"strconv"
 	"testing"
 
 	"github.com/Netflix/go-env"
-	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/githubapp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,22 +48,15 @@ func TestGitHubDownload(t *testing.T) {
 	privateKey, err := ioutil.ReadFile(props.GITHUB_APP_PRIVATE_KEY)
 	require.NoError(t, err)
 
-	newSM, mockSM := aws.NewMockSecretsManagerSet()
-	mockSM.OutData["arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"] = map[string]string{
-		"github_app_private_key": base64.StdEncoding.EncodeToString(privateKey),
-		"github_app_id":          props.GITHUB_APP_ID,
-	}
+	appID, err := strconv.ParseInt(props.GITHUB_APP_ID, 10, 64)
+	require.NoError(t, err)
 
-	cfg := service.NewConfig()
-	cfg.SecretsARN = "arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"
-	cfg.GitHubEndpoint = props.GITHUB_ENDPOINT
-	svc := service.New(cfg)
-	svc.NewSecretManager = newSM
+	app := githubapp.New(appID, installID, privateKey, props.GITHUB_ENDPOINT)
 
 	buf := &WriteBuffer{}
 	repo := &model.GitHubRepo{
 		Owner:    props.GITHUB_ORG,
 		RepoName: props.GITHUB_REPO_NAME,
 	}
-	require.NoError(t, svc.GetCodeZip(repo, props.GITHUB_COMMIT, installID, buf))
+	require.NoError(t, app.GetCodeZip(repo, props.GITHUB_COMMIT, buf))
 }

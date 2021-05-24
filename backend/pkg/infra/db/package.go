@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func packageRecordPK(branch *model.GitHubBranch) string {

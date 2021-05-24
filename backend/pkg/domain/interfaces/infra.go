@@ -1,9 +1,8 @@
-package infra
+package interfaces
 
 import (
 	"archive/zip"
 	"io"
-	"net/http"
 	"os"
 	"time"
 
@@ -12,10 +11,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/go-github/v29/github"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-type Interfaces struct {
+type Infra struct {
 	// Factories
 	NewDB            NewDB
 	NewTrivyDB       NewTrivyDB
@@ -23,7 +22,7 @@ type Interfaces struct {
 	NewSQS           NewSQS
 	NewS3            NewS3
 	NewGitHub        NewGitHub
-	NewHTTP          NewHTTPClient // Interface set
+	NewGitHubApp     NewGitHubApp
 	Utils            Utils
 }
 
@@ -81,14 +80,17 @@ type DBClient interface {
 	Close() error
 }
 
-// HTTP
-type NewHTTPClient func(http.RoundTripper) *http.Client
-
 // GitHub
 type NewGitHub func() GitHubClient
 type GitHubClient interface {
 	ListReleases(owner, repo string) ([]*github.RepositoryRelease, error)
 	DownloadReleaseAsset(owner, repo string, assetID int64) (io.ReadCloser, error)
+}
+
+// GitHubApp
+type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitHubApp
+type GitHubApp interface {
+	GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
 }
 
 // Trivy DB
@@ -105,3 +107,10 @@ type WriteFile func(r io.Reader, path string) error
 type OpenZip func(path string) (*zip.ReadCloser, error)
 type TempFile func(dir, pattern string) (f *os.File, err error)
 type Remove func(name string) error
+
+type Utils struct {
+	TimeNow  TimeNow
+	TempFile TempFile
+	OpenZip  OpenZip
+	Remove   Remove
+}

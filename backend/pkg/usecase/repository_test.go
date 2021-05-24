@@ -3,29 +3,27 @@ package usecase_test
 import (
 	"testing"
 
-	"github.com/m-mizutani/octovy/backend/pkg/infra"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupPutNewRepository(t *testing.T) *service.Service {
+func setupPutNewRepository(t *testing.T) interfaces.Usecases {
 	dbClient := newTestTable(t)
 
-	cfg := service.NewConfig()
+	cfg := model.NewConfig()
 	cfg.TableName = dbClient.TableName()
-	svc := service.New(cfg)
-	svc.NewDB = func(region, tableName string) (infra.DBClient, error) {
-		return dbClient, nil
-	}
-	return svc
+
+	uc := usecase.New(cfg)
+	usecase.InjectDBClient(uc, dbClient)
+	return uc
 }
 
 func TestPutNewRepository(t *testing.T) {
 	t.Run("put repositories", func(t *testing.T) {
-		svc := setupPutNewRepository(t)
+		uc := setupPutNewRepository(t)
 		repo1 := &model.Repository{
 			GitHubRepo: model.GitHubRepo{
 				Owner:    "five",
@@ -63,7 +61,7 @@ func TestPutNewRepository(t *testing.T) {
 		}
 
 		testInsert := func(t *testing.T, repo *model.Repository) {
-			inserted, err := usecase.New().PutNewRepository(svc, repo)
+			inserted, err := uc.PutNewRepository(repo)
 			require.NoError(t, err)
 			assert.True(t, inserted)
 		}
@@ -71,7 +69,8 @@ func TestPutNewRepository(t *testing.T) {
 		testInsert(t, repo2)
 		testInsert(t, repo3)
 
-		result1, err := svc.DB().FindRepo()
+		db := usecase.EjectDBClient(uc)
+		result1, err := db.FindRepo()
 		require.NoError(t, err)
 		require.Equal(t, 3, len(result1))
 
@@ -89,7 +88,7 @@ func TestPutNewRepository(t *testing.T) {
 		assert.Equal(t, "main", r1.DefaultBranch)
 
 		// Find "five" owner repository
-		result2, err := svc.DB().FindRepoByOwner("five")
+		result2, err := db.FindRepoByOwner("five")
 		require.NoError(t, err)
 		assert.Contains(t, result2, repo1)
 		assert.Contains(t, result2, repo2)
@@ -97,7 +96,7 @@ func TestPutNewRepository(t *testing.T) {
 	})
 
 	t.Run("Change branches and default branch", func(t *testing.T) {
-		svc := setupPutNewRepository(t)
+		uc := setupPutNewRepository(t)
 		repo1 := &model.Repository{
 			GitHubRepo: model.GitHubRepo{
 				Owner:    "five",
@@ -113,11 +112,10 @@ func TestPutNewRepository(t *testing.T) {
 			DefaultBranch: "y",
 		}
 
-		uc := usecase.New()
-		require.NoError(t, uc.RegisterRepository(svc, repo1))
-		require.NoError(t, uc.RegisterRepository(svc, repo2))
+		require.NoError(t, uc.RegisterRepository(repo1))
+		require.NoError(t, uc.RegisterRepository(repo2))
 
-		result1, err := svc.DB().FindRepo()
+		result1, err := usecase.EjectDBClient(uc).FindRepo()
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result1))
 		assert.Equal(t, "y", result1[0].DefaultBranch)

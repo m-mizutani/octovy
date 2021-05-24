@@ -7,8 +7,7 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/backend/pkg/api"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
-	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 )
 
@@ -18,11 +17,8 @@ func (x *Controller) LambdaAPIHandler(event golambda.Event) (interface{}, error)
 		return nil, golambda.WrapError(err).With("event", event)
 	}
 
-	svc := service.New(x.Config)
-
 	gin.SetMode(gin.ReleaseMode)
 	engine := api.New(&api.Config{
-		Service:  svc,
 		Usecase:  x.Usecase,
 		AssetDir: "assets",
 	})
@@ -40,14 +36,14 @@ func (x *Controller) LambdaScanRepo(event golambda.Event) (interface{}, error) {
 
 	x.Config.TrivyDBPath = "/tmp/trivy.db"
 
-	svc := service.New(x.Config)
+	uc := usecase.New(x.Config)
 	for _, record := range records {
 		var req model.ScanRepositoryRequest
 		if err := record.Bind(&req); err != nil {
 			return nil, err
 		}
 
-		if err := x.Usecase.ScanRepository(svc, &req); err != nil {
+		if err := uc.ScanRepository(&req); err != nil {
 			return nil, err
 		}
 	}
@@ -56,9 +52,7 @@ func (x *Controller) LambdaScanRepo(event golambda.Event) (interface{}, error) {
 }
 
 func (x *Controller) LambdaUpdateDB() (interface{}, error) {
-	svc := service.New(x.Config)
-
-	if err := usecase.UpdateTrivyDB(svc); err != nil {
+	if err := usecase.New(x.Config).UpdateTrivyDB(); err != nil {
 		return nil, err
 	}
 	return nil, nil

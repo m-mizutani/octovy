@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
-	"github.com/m-mizutani/octovy/backend/pkg/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service/detector"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
