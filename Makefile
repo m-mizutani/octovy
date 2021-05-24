@@ -1,19 +1,12 @@
 ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ASSET_OUTPUT = /asset-output
 LAMBDA_SRC = backend/pkg/*/*.go backend/pkg/*/*/*.go
-LAMBDA_FUNCTIONS = \
-	build/apiHandler \
-	build/scanRepo \
-	build/updateDB
+LAMBDA_FUNCTIONS = build/handler
 
 lambda: $(LAMBDA_FUNCTIONS)
 
-build/apiHandler: backend/lambda/apiHandler/*.go $(LAMBDA_SRC)
-	go build -o build/apiHandler ./backend/lambda/apiHandler
-build/scanRepo: backend/lambda/scanRepo/*.go $(LAMBDA_SRC)
-	go build -o build/scanRepo ./backend/lambda/scanRepo
-build/updateDB: backend/lambda/updateDB/*.go $(LAMBDA_SRC)
-	go build -o build/updateDB ./backend/lambda/updateDB
+build/handler: backend/lambda/*.go $(LAMBDA_SRC)
+	go build -o build/handler ./backend/lambda
 
 FRONTEND_DIR = $(ROOT)/frontend
 
