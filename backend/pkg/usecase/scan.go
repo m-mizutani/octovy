@@ -5,7 +5,6 @@ import (
 	"io"
 	"path/filepath"
 	"sort"
-	"time"
 
 	"github.com/aquasecurity/go-dep-parser/pkg/bundler"
 	"github.com/aquasecurity/go-dep-parser/pkg/gomod"
@@ -17,6 +16,7 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/service"
+	"github.com/m-mizutani/octovy/backend/pkg/service/detector"
 )
 
 type parser struct {
@@ -51,11 +51,6 @@ func stepDownDirectory(fpath string) string {
 	return filepath.Join(arr...)
 }
 
-func putScanResult(scannedAt time.Time, target *model.ScanTarget, pkgs []*model.PackageRecord) error {
-
-	return nil
-}
-
 func putPackageRecords(svc *service.Service, branch *model.GitHubBranch, newPkgs []*model.PackageRecord) error {
 
 	oldPkgs, err := svc.DB().FindPackageRecordsByBranch(branch)
@@ -87,54 +82,45 @@ func putPackageRecords(svc *service.Service, branch *model.GitHubBranch, newPkgs
 	return nil
 }
 
-func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
+func (x *Default) detectPackages(req *model.ScanRepositoryRequest) ([]*model.PackageRecord, error) {
 	tmp, err := x.svc.Infra.Utils.TempFile("", "*.zip")
 	if err != nil {
-		return goerr.Wrap(err)
-	}
-
-	secrets, err := x.svc.GetSecrets()
-	if err != nil {
-		return err
-	}
-	pem, err := secrets.GithubAppPEM()
-	if err != nil {
-		return err
-	}
-	appID, err := secrets.GetGitHubAppID()
-	if err != nil {
-		return err
-	}
-	gitHubApp := x.svc.Infra.NewGitHubApp(appID, req.InstallID, pem, x.config.GitHubEndpoint)
-	if err := gitHubApp.GetCodeZip(&req.GitHubRepo, req.CommitID, tmp); err != nil {
-		return err
-	}
-
-	zipFile, err := x.svc.Infra.Utils.OpenZip(tmp.Name())
-	if err != nil {
-		return goerr.Wrap(err).With("file", tmp.Name())
+		return nil, goerr.Wrap(err)
 	}
 	defer func() {
-		if err := zipFile.Close(); err != nil {
-			logger.With("zip", zipFile).With("error", err).Error("Failed to close zip file")
-		}
 		if err := x.svc.Infra.Utils.Remove(tmp.Name()); err != nil {
 			logger.With("filename", tmp.Name()).Error("Failed to remove zip file")
 		}
 	}()
 
-	dt, err := x.svc.Detector()
+	secrets, err := x.svc.GetSecrets()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	trivyDBMeta, err := dt.TrivyDBMeta()
+	pem, err := secrets.GithubAppPEM()
 	if err != nil {
-		return err
+		return nil, err
+	}
+	appID, err := secrets.GetGitHubAppID()
+	if err != nil {
+		return nil, err
+	}
+	gitHubApp := x.svc.Infra.NewGitHubApp(appID, req.InstallID, pem, x.config.GitHubEndpoint)
+	if err := gitHubApp.GetCodeZip(&req.GitHubRepo, req.CommitID, tmp); err != nil {
+		return nil, err
 	}
 
+	zipFile, err := x.svc.Infra.Utils.OpenZip(tmp.Name())
+	if err != nil {
+		return nil, goerr.Wrap(err).With("file", tmp.Name())
+	}
+	defer func() {
+		if err := zipFile.Close(); err != nil {
+			logger.With("zip", zipFile).With("error", err).Error("Failed to close zip file")
+		}
+	}()
+
 	var newPkgs []*model.PackageRecord
-	detectedVulnMap := map[string]*model.Vulnerability{}
-	sourcePkgMap := map[string][]*model.Package{}
 
 	scannedAt := x.svc.Infra.Utils.TimeNow()
 	for _, f := range zipFile.File {
@@ -145,54 +131,87 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 
 		fd, err := f.Open()
 		if err != nil {
-			return goerr.Wrap(err)
+			return nil, goerr.Wrap(err)
 		}
 		defer fd.Close()
 
 		pkgs, err := psr.Parse(fd)
 		if err != nil {
-			return goerr.Wrap(err)
+			return nil, goerr.Wrap(err)
 		}
 
 		parsed := make([]*model.PackageRecord, len(pkgs))
 		for i := range pkgs {
-			vulns, err := dt.Detect(psr.PkgType, pkgs[i].Name, pkgs[i].Version)
-			if err != nil {
-				return err
-			}
-
-			var vulnIDs []string
-			for _, vuln := range vulns {
-				vulnIDs = append(vulnIDs, vuln.VulnID)
-				vuln.FirstSeenAt = scannedAt.Unix()
-				if vuln.Detail.LastModifiedDate != nil {
-					vuln.LastModifiedAt = vuln.Detail.LastModifiedDate.Unix()
-				}
-
-				detectedVulnMap[vuln.VulnID] = vuln
-			}
-
 			pkg := &model.PackageRecord{
 				Detected:  req.ScanTarget,
 				ScannedAt: scannedAt.Unix(),
 				Source:    stepDownDirectory(f.Name),
 				Package: model.Package{
-					Type:            psr.PkgType,
-					Name:            pkgs[i].Name,
-					Version:         pkgs[i].Version,
-					Vulnerabilities: vulnIDs,
+					Type:    psr.PkgType,
+					Name:    pkgs[i].Name,
+					Version: pkgs[i].Version,
 				},
 			}
 			parsed[i] = pkg
-
-			sourcePkgMap[pkg.Source] = append(sourcePkgMap[pkg.Source], &pkg.Package)
 		}
 
 		newPkgs = append(newPkgs, parsed...)
 	}
 
-	if len(newPkgs) > 0 && req.IsTargetBranch {
-		if err := putPackageRecords(x.svc, &req.GitHubBranch, newPkgs); err != nil {
+	return newPkgs, nil
+}
+
+func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, seenAt int64) (map[string]*model.Vulnerability, error) {
+	detectedVulnMap := map[string]*model.Vulnerability{}
+	sourcePkgMap := map[string][]*model.Package{}
+
+	for i := range pkgs {
+		sourcePkgMap[pkgs[i].Source] = append(sourcePkgMap[pkgs[i].Source], &pkgs[i].Package)
+
+		vulns, err := dt.Detect(pkgs[i].Type, pkgs[i].Name, pkgs[i].Version)
+		if err != nil {
+			return nil, err
+		}
+
+		var vulnIDs []string
+		for _, vuln := range vulns {
+			vulnIDs = append(vulnIDs, vuln.VulnID)
+			if vuln.Detail.LastModifiedDate != nil {
+				vuln.LastModifiedAt = vuln.Detail.LastModifiedDate.Unix()
+			}
+			vuln.FirstSeenAt = seenAt
+			detectedVulnMap[vuln.VulnID] = vuln
+		}
+		pkgs[i].Vulnerabilities = vulnIDs
+	}
+
+	return detectedVulnMap, nil
+}
+
+func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
+	scannedAt := x.svc.Infra.Utils.TimeNow()
+
+	pkgs, err := x.detectPackages(req)
+	if err != nil {
+		return err
+	}
+
+	dt, err := x.svc.Detector()
+	if err != nil {
+		return err
+	}
+	detectedVulnMap, err := annotateVulnerability(dt, pkgs, scannedAt.Unix())
+	if err != nil {
+		return err
+	}
+
+	sourcePkgMap := map[string][]*model.Package{}
+	for i := range pkgs {
+		sourcePkgMap[pkgs[i].Source] = append(sourcePkgMap[pkgs[i].Source], &pkgs[i].Package)
+	}
+
+	if len(pkgs) > 0 && req.IsTargetBranch {
+		if err := putPackageRecords(x.svc, &req.GitHubBranch, pkgs); err != nil {
 			return err
 		}
 	}
@@ -205,6 +224,12 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 			Packages: pkgs,
 		})
 	}
+
+	trivyDBMeta, err := dt.TrivyDBMeta()
+	if err != nil {
+		return err
+	}
+
 	report := &model.ScanReport{
 		ReportID:    uuid.New().String(),
 		Target:      req.ScanTarget,
