@@ -153,12 +153,8 @@ func TestLambdaAPIWebhook(t *testing.T) {
 				Body: string(raw),
 			},
 		}
-		resp, err := ctrl.LambdaAPIHandler(event)
+		_, err = ctrl.LambdaAPIHandler(event)
 		require.NoError(t, err)
-		assert.NotNil(t, resp)
-		httpResp, ok := resp.(events.APIGatewayProxyResponse)
-		require.True(t, ok)
-		assert.Equal(t, http.StatusOK, httpResp.StatusCode)
 		require.NotNil(t, req)
 		assert.True(t, req.IsTargetBranch)
 	})
@@ -178,30 +174,7 @@ func TestLambdaAPIWebhook(t *testing.T) {
 			},
 		}
 
-		pullReqEvent := github.PullRequestEvent{
-			Action: github.String("opened"),
-			Repo: &github.Repository{
-				Name: github.String("blue"),
-				Owner: &github.User{
-					Login: github.String("five"),
-				},
-				HTMLURL:       github.String("https://github-enterprise.example.com/blue/five"),
-				DefaultBranch: github.String("default"),
-			},
-			PullRequest: &github.PullRequest{
-				Head: &github.PullRequestBranch{
-					SHA:   github.String("xyz"),
-					Label: github.String("ao:1"),
-				},
-				Base: &github.PullRequestBranch{
-					Ref: github.String("master"),
-				},
-				CreatedAt: &ts,
-			},
-			Installation: &github.Installation{
-				ID: github.Int64(1234),
-			},
-		}
+		pullReqEvent := makePullRequestEvent(&ts)
 		raw, err := json.Marshal(pullReqEvent)
 		require.NoError(t, err)
 
@@ -237,4 +210,96 @@ func TestLambdaAPIWebhook(t *testing.T) {
 		assert.Equal(t, "five", repo.Owner)
 		assert.Equal(t, "blue", repo.RepoName)
 	})
+
+	t.Run("Pull request event of synchronize", func(t *testing.T) {
+		var req *model.ScanRepositoryRequest
+		ctrl := controller.New()
+		ctrl.Usecase = &MockUsecase{
+			sendScanRequest: func(r *model.ScanRepositoryRequest) error {
+				req = r
+				return nil
+			},
+			registerRepository: func(r *model.Repository) error { return nil },
+		}
+
+		pullReqEvent := makePullRequestEvent(&ts)
+		pullReqEvent.Action = github.String("synchronize")
+
+		raw, err := json.Marshal(pullReqEvent)
+		require.NoError(t, err)
+
+		event := golambda.Event{
+			Origin: events.APIGatewayProxyRequest{
+				HTTPMethod: "POST",
+				Path:       "/api/v1/webhook/github",
+				Headers: map[string]string{
+					"X-GitHub-Event": "pull_request",
+				},
+				Body: string(raw),
+			},
+		}
+
+		_, err = ctrl.LambdaAPIHandler(event)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+	})
+
+	t.Run("Ignore pull request event not opened or sync", func(t *testing.T) {
+		var req *model.ScanRepositoryRequest
+		ctrl := controller.New()
+		ctrl.Usecase = &MockUsecase{
+			sendScanRequest: func(r *model.ScanRepositoryRequest) error {
+				req = r
+				return nil
+			},
+			registerRepository: func(r *model.Repository) error { return nil },
+		}
+
+		pullReqEvent := makePullRequestEvent(&ts)
+		pullReqEvent.Action = github.String("ready_for_review")
+		raw, err := json.Marshal(pullReqEvent)
+		require.NoError(t, err)
+
+		event := golambda.Event{
+			Origin: events.APIGatewayProxyRequest{
+				HTTPMethod: "POST",
+				Path:       "/api/v1/webhook/github",
+				Headers: map[string]string{
+					"X-GitHub-Event": "pull_request",
+				},
+				Body: string(raw),
+			},
+		}
+
+		_, err = ctrl.LambdaAPIHandler(event)
+		require.NoError(t, err)
+		require.Nil(t, req)
+	})
+}
+
+func makePullRequestEvent(ts *time.Time) *github.PullRequestEvent {
+	return &github.PullRequestEvent{
+		Action: github.String("opened"),
+		Repo: &github.Repository{
+			Name: github.String("blue"),
+			Owner: &github.User{
+				Login: github.String("five"),
+			},
+			HTMLURL:       github.String("https://github-enterprise.example.com/blue/five"),
+			DefaultBranch: github.String("default"),
+		},
+		PullRequest: &github.PullRequest{
+			Head: &github.PullRequestBranch{
+				SHA:   github.String("xyz"),
+				Label: github.String("ao:1"),
+			},
+			Base: &github.PullRequestBranch{
+				Ref: github.String("master"),
+			},
+			CreatedAt: ts,
+		},
+		Installation: &github.Installation{
+			ID: github.Int64(1234),
+		},
+	}
 }
