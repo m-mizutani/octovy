@@ -180,7 +180,7 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 			remainCount[vuln.Source] = remainCount[vuln.Source] + 1
 		}
 
-		body += `### Remained vulnerable packages\n`
+		body += "### Remained vulnerable packages\n"
 		for src, count := range remainCount {
 			body += fmt.Sprintf("- %d packages in %s\n", count, src)
 		}
