@@ -5,12 +5,13 @@ import "github.com/m-mizutani/goerr"
 type ScanRepositoryRequest struct {
 	ScanTarget
 	InstallID int64
-	Feedback  FeedbackOptions
+	Feedback  *FeedbackOptions
 }
 
 type FeedbackOptions struct {
-	PullReqID    *int
-	CheckSuiteID *int
+	PullReqID     *int
+	PullReqBranch string
+	CheckSuiteID  *int
 }
 
 func (x *ScanRepositoryRequest) IsValid() error {

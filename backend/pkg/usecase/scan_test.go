@@ -64,7 +64,7 @@ func TestScanRepository(t *testing.T) {
 				IsTargetBranch: true,
 			},
 			InstallID: 999,
-			Feedback: model.FeedbackOptions{
+			Feedback: &model.FeedbackOptions{
 				PullReqID: model.Int(456),
 			},
 		}

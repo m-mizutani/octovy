@@ -210,8 +210,9 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 			IsTargetBranch: false,
 		},
 		InstallID: *event.Installation.ID,
-		Feedback: model.FeedbackOptions{
-			PullReqID: event.PullRequest.Number,
+		Feedback: &model.FeedbackOptions{
+			PullReqID:     event.PullRequest.Number,
+			PullReqBranch: *event.PullRequest.Base.Ref,
 		},
 	}
 

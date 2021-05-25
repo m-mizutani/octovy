@@ -262,13 +262,15 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 		}
 	}
 
-	feedbackReq := &model.FeedbackRequest{
-		ReportID:  report.ReportID,
-		InstallID: req.InstallID,
-		Options:   req.Feedback,
-	}
-	if err := x.svc.SendFeedbackRequest(feedbackReq); err != nil {
-		return err
+	if req.Feedback != nil {
+		feedbackReq := &model.FeedbackRequest{
+			ReportID:  report.ReportID,
+			InstallID: req.InstallID,
+			Options:   *req.Feedback,
+		}
+		if err := x.svc.SendFeedbackRequest(feedbackReq); err != nil {
+			return err
+		}
 	}
 
 	logger.With("log", scanLog).Info("Done repository scan")
