@@ -178,6 +178,7 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 		event.PullRequest.Base == nil ||
 		event.PullRequest.Base.Ref == nil ||
 		event.PullRequest.CreatedAt == nil ||
+		event.PullRequest.Number == nil ||
 		event.Installation == nil ||
 		event.Installation.ID == nil {
 		return goerr.Wrap(errInvalidWebhookData, "Not enough fields").With("event", event)
@@ -209,6 +210,9 @@ func handlePullRequestEvent(cfg *Config, event *github.PullRequestEvent) error {
 			IsTargetBranch: false,
 		},
 		InstallID: *event.Installation.ID,
+		Feedback: model.FeedbackOptions{
+			PullReqID: event.PullRequest.Number,
+		},
 	}
 
 	if err := cfg.Usecase.SendScanRequest(&req); err != nil {

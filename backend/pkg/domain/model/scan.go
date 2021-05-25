@@ -5,6 +5,12 @@ import "github.com/m-mizutani/goerr"
 type ScanRepositoryRequest struct {
 	ScanTarget
 	InstallID int64
+	Feedback  FeedbackOptions
+}
+
+type FeedbackOptions struct {
+	PullReqID    *int
+	CheckSuiteID *int
 }
 
 func (x *ScanRepositoryRequest) IsValid() error {
@@ -18,6 +24,12 @@ func (x *ScanRepositoryRequest) IsValid() error {
 	return nil
 }
 
+type FeedbackRequest struct {
+	ReportID  string
+	InstallID int64
+	Options   FeedbackOptions
+}
+
 type ScanTarget struct {
 	GitHubBranch
 	CommitID       string
@@ -26,6 +38,9 @@ type ScanTarget struct {
 	IsPullRequest  bool
 	IsTargetBranch bool
 }
+
+// Value to pointer conversion
+func Int64(v int64) *int64 { return &v }
 
 func (x *ScanTarget) IsValid() error {
 	if x.Branch == "" {

@@ -104,7 +104,8 @@ func TestLambdaAPIWebhook(t *testing.T) {
 		assert.Equal(t, ts.Add(time.Minute).Unix(), req.UpdatedAt)
 		assert.False(t, req.IsPullRequest)
 		assert.False(t, req.IsTargetBranch)
-
+		assert.Nil(t, req.Feedback.PullReqID)
+		assert.Nil(t, req.Feedback.CheckSuiteID)
 		require.NotNil(t, repo)
 	})
 
@@ -206,6 +207,10 @@ func TestLambdaAPIWebhook(t *testing.T) {
 		assert.True(t, req.IsPullRequest)
 		assert.False(t, req.IsTargetBranch)
 
+		assert.Nil(t, req.Feedback.CheckSuiteID)
+		require.NotNil(t, req.Feedback.PullReqID)
+		assert.Equal(t, 875, *req.Feedback.PullReqID)
+
 		require.NotNil(t, repo)
 		assert.Equal(t, "five", repo.Owner)
 		assert.Equal(t, "blue", repo.RepoName)
@@ -297,6 +302,7 @@ func makePullRequestEvent(ts *time.Time) *github.PullRequestEvent {
 				Ref: github.String("master"),
 			},
 			CreatedAt: ts,
+			Number:    github.Int(875),
 		},
 		Installation: &github.Installation{
 			ID: github.Int64(1234),
