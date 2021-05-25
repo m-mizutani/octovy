@@ -91,6 +91,7 @@ type GitHubClient interface {
 type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitHubApp
 type GitHubApp interface {
 	GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
+	CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error
 }
 
 // Trivy DB

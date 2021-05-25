@@ -8,6 +8,8 @@ type Usecases interface {
 	ScanRepository(req *model.ScanRepositoryRequest) error
 	SendScanRequest(req *model.ScanRepositoryRequest) error
 
+	FeedbackScanResult(req *model.FeedbackRequest) error
+
 	RegisterRepository(repo *model.Repository) error
 	PutNewRepository(repo *model.Repository) (bool, error)
 	UpdateRepositoryDefaultBranch(repo *model.GitHubRepo, branch string) error

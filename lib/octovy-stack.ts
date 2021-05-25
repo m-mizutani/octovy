@@ -58,9 +58,11 @@ const defaultEndpointTypes = [apigateway.EndpointType.PRIVATE];
 export class OctovyStack extends cdk.Stack {
   readonly metaTable: dynamodb.Table;
   readonly scanRequestQueue: sqs.Queue;
+  readonly feedbackRequestQueue: sqs.Queue;
 
   readonly apiHandler: lambda.Function;
   readonly scanRepo: lambda.Function;
+  readonly feedback: lambda.Function;
   readonly updateDB: lambda.Function;
 
   constructor(scope: cdk.Construct, id: string, props: OctovyProps) {
@@ -86,7 +88,9 @@ export class OctovyStack extends cdk.Stack {
     this.scanRequestQueue = new sqs.Queue(this, "scanRequest", {
       visibilityTimeout: cdk.Duration.seconds(300),
     });
-
+    this.feedbackRequestQueue = new sqs.Queue(this, "feedbackRequest", {
+      visibilityTimeout: cdk.Duration.seconds(120),
+    });
     // VPC
     var securityGroups: ec2.ISecurityGroup[] | undefined = undefined;
     var vpc: ec2.IVpc | undefined = undefined;
@@ -128,6 +132,7 @@ export class OctovyStack extends cdk.Stack {
       TABLE_NAME: this.metaTable.tableName,
       SECRETS_ARN: props.secretsARN,
       SCAN_REQUEST_QUEUE: this.scanRequestQueue.queueUrl,
+      FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
 
       S3_REGION: props.s3Region,
@@ -157,6 +162,12 @@ export class OctovyStack extends cdk.Stack {
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
         events: [new SqsEventSource(this.scanRequestQueue)],
+      },
+      {
+        id: "feedback",
+        timeout: cdk.Duration.seconds(120),
+        memorySize: 1024,
+        events: [new SqsEventSource(this.feedbackRequestQueue)],
       },
       {
         id: "updateDB",

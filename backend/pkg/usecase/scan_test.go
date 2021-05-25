@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"io"
 	"os"
@@ -25,6 +26,7 @@ import (
 
 type mockSet struct {
 	db        interfaces.DBClient
+	sqs       *aws.MockSQS
 	trivy     *trivydb.TrivyDBMock
 	githubapp *githubapp.Mock
 }
@@ -62,6 +64,9 @@ func TestScanRepository(t *testing.T) {
 				IsTargetBranch: true,
 			},
 			InstallID: 999,
+			Feedback: model.FeedbackOptions{
+				PullReqID: model.Int(456),
+			},
 		}
 
 		require.NoError(t, uc.ScanRepository(req))
@@ -104,6 +109,18 @@ func TestScanRepository(t *testing.T) {
 		require.Equal(t, 2, len(vulns))
 		assert.Contains(t, []string{vulns[0].VulnID, vulns[1].VulnID}, "CVE-2020-8161")
 		assert.Contains(t, []string{vulns[0].VulnID, vulns[1].VulnID}, "CVE-2020-9999")
+
+		require.Equal(t, 2, len(mock.sqs.Input))
+		assert.NotNil(t, mock.sqs.Input[0].QueueUrl)
+		assert.Equal(t, "https://feedback.queue.url", *mock.sqs.Input[0].QueueUrl)
+
+		var feedbackReq model.FeedbackRequest
+		require.NoError(t, json.Unmarshal([]byte(*mock.sqs.Input[0].MessageBody), &feedbackReq))
+		require.NotNil(t, feedbackReq.Options.PullReqID)
+		require.Nil(t, feedbackReq.Options.CheckSuiteID)
+		assert.NotEmpty(t, feedbackReq.ReportID)
+		assert.Equal(t, int64(999), feedbackReq.InstallID)
+		assert.Equal(t, 456, *feedbackReq.Options.PullReqID)
 	})
 }
 
@@ -249,13 +266,17 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interf
 		"github_app_id":          "123",
 	}
 
+	// mocking SQS
+	newSQS, mockSQS := aws.NewMockSQSSet()
+
 	cfg := &model.Config{
-		SecretsARN:     secretsARN,
-		GitHubEndpoint: "https://ghe.example.org/api/v3",
-		TableName:      dbClient.TableName(),
-		S3Region:       "ap-northeast-0",
-		S3Bucket:       "my-db-bucket",
-		S3Prefix:       "test-prefix/",
+		SecretsARN:           secretsARN,
+		GitHubEndpoint:       "https://ghe.example.org/api/v3",
+		FeedbackRequestQueue: "https://feedback.queue.url",
+		TableName:            dbClient.TableName(),
+		S3Region:             "ap-northeast-0",
+		S3Bucket:             "my-db-bucket",
+		S3Prefix:             "test-prefix/",
 	}
 
 	// Build service and injects mocks
@@ -265,6 +286,7 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interf
 	svc.Infra.NewDB = func(region, tableName string) (interfaces.DBClient, error) {
 		return dbClient, nil
 	}
+	svc.Infra.NewSQS = newSQS
 
 	// Build trivy mock
 	newTrivyDBMock, trivyDBMock := trivydb.NewMock()
@@ -298,6 +320,7 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interf
 
 	return uc, &mockSet{
 		db:        dbClient,
+		sqs:       mockSQS,
 		trivy:     trivyDBMock,
 		githubapp: gitHubAppMock,
 	}

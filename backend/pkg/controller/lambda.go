@@ -8,7 +8,6 @@ import (
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/backend/pkg/api"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
-	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 )
 
 func (x *Controller) LambdaAPIHandler(event golambda.Event) (interface{}, error) {
@@ -36,14 +35,13 @@ func (x *Controller) LambdaScanRepo(event golambda.Event) (interface{}, error) {
 
 	x.Config.TrivyDBPath = "/tmp/trivy.db"
 
-	uc := usecase.New(x.Config)
 	for _, record := range records {
 		var req model.ScanRepositoryRequest
 		if err := record.Bind(&req); err != nil {
 			return nil, err
 		}
 
-		if err := uc.ScanRepository(&req); err != nil {
+		if err := x.Usecase.ScanRepository(&req); err != nil {
 			return nil, err
 		}
 	}
@@ -52,8 +50,28 @@ func (x *Controller) LambdaScanRepo(event golambda.Event) (interface{}, error) {
 }
 
 func (x *Controller) LambdaUpdateDB() (interface{}, error) {
-	if err := usecase.New(x.Config).UpdateTrivyDB(); err != nil {
+	if err := x.Usecase.UpdateTrivyDB(); err != nil {
 		return nil, err
 	}
+	return nil, nil
+}
+
+func (x *Controller) LambdaFeedback(event golambda.Event) (interface{}, error) {
+	records, err := event.DecapSQSBody()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range records {
+		var req model.FeedbackRequest
+		if err := record.Bind(&req); err != nil {
+			return nil, err
+		}
+
+		if err := x.Usecase.FeedbackScanResult(&req); err != nil {
+			return nil, err
+		}
+	}
+
 	return nil, nil
 }

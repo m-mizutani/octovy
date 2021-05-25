@@ -30,6 +30,20 @@ type FeedbackRequest struct {
 	Options   FeedbackOptions
 }
 
+func (x *FeedbackRequest) IsValid() error {
+	if x.ReportID == "" {
+		return goerr.Wrap(ErrInvalidInputValues, "ReportID must not be empty")
+	}
+	if x.InstallID == 0 {
+		return goerr.Wrap(ErrInvalidInputValues, "InstallID must not be 0")
+	}
+	if x.Options.PullReqID == nil && x.Options.CheckSuiteID == nil {
+		return goerr.Wrap(ErrInvalidInputValues, "Either one of PullReqID and CheckSuiteID is required")
+	}
+
+	return nil
+}
+
 type ScanTarget struct {
 	GitHubBranch
 	CommitID       string
@@ -41,6 +55,7 @@ type ScanTarget struct {
 
 // Value to pointer conversion
 func Int64(v int64) *int64 { return &v }
+func Int(v int) *int       { return &v }
 
 func (x *ScanTarget) IsValid() error {
 	if x.Branch == "" {

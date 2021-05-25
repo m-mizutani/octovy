@@ -19,6 +19,8 @@ func main() {
 			return ctrl.LambdaAPIHandler(event)
 		case "updateDB":
 			return ctrl.LambdaUpdateDB()
+		case "feedback":
+			return ctrl.LambdaFeedback(event)
 		case "scanRepo":
 			return ctrl.LambdaScanRepo(event)
 

@@ -37,5 +37,5 @@ func NewMockSQSSet() (interfaces.NewSQS, *MockSQS) {
 	return func(region string) (interfaces.SQSClient, error) {
 		mock.Region = region
 		return mock, nil
-	}, nil
+	}, mock
 }

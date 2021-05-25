@@ -8,11 +8,12 @@ import (
 )
 
 type Mock struct {
-	GetCodeZipMock func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
-	AppID          int64
-	InstallID      int64
-	PEM            []byte
-	Endpoint       string
+	GetCodeZipMock         func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
+	CreateIssueCommentMock func(repo *model.GitHubRepo, prID int, body string) error
+	AppID                  int64
+	InstallID              int64
+	PEM                    []byte
+	Endpoint               string
 }
 
 func NewMock() (interfaces.NewGitHubApp, *Mock) {
@@ -29,4 +30,7 @@ func NewMock() (interfaces.NewGitHubApp, *Mock) {
 
 func (x *Mock) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
 	return x.GetCodeZipMock(repo, commitID, w)
+}
+func (x *Mock) CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error {
+	return x.CreateIssueCommentMock(repo, prID, body)
 }

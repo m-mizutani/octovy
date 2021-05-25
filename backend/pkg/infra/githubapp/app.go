@@ -116,3 +116,24 @@ func (x *GitHubApp) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.Wri
 
 	return nil
 }
+
+func (x *GitHubApp) CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error {
+	client, err := x.githubClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	comment := &github.IssueComment{Body: &body}
+
+	ret, resp, err := client.Issues.CreateComment(ctx, repo.Owner, repo.RepoName, prID, comment)
+	if err != nil {
+		return goerr.Wrap(err, "Failed to create github comment").With("repo", repo).With("prID", prID).With("comment", comment)
+	}
+	if resp.StatusCode != http.StatusCreated {
+		return goerr.Wrap(err, "Failed to ")
+	}
+	logger.With("comment", ret).Info("Commented to PR")
+
+	return nil
+}
