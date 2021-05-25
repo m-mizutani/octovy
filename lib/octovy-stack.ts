@@ -59,8 +59,13 @@ export class OctovyStack extends cdk.Stack {
   readonly metaTable: dynamodb.Table;
   readonly scanRequestQueue: sqs.Queue;
 
+  readonly apiHandler: lambda.Function;
+  readonly scanRepo: lambda.Function;
+  readonly updateDB: lambda.Function;
+
   constructor(scope: cdk.Construct, id: string, props: OctovyProps) {
     super(scope, id, props);
+    const stack = this;
 
     // DynamoDB
     this.metaTable = new dynamodb.Table(this, "metaTable", {
@@ -133,51 +138,61 @@ export class OctovyStack extends cdk.Stack {
       SENTRY_ENV: props.sentryEnv || "",
     };
 
-    const apiHandler = new lambda.Function(this, "apiHandler", {
-      runtime: lambda.Runtime.GO_1_X,
-      handler: "handler",
-      role: lambdaRole,
-      code: asset,
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 128,
-      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "apiHandler" } },
+    type lambdaConfig = {
+      id: string;
+      timeout: cdk.Duration;
+      memorySize: number;
+      events?: lambda.IEventSource[];
+    };
+    const lambdaFunctions: { [key: string]: lambda.Function } = {};
 
-      vpc,
-      securityGroups,
+    const lambdaConfigs: lambdaConfig[] = [
+      {
+        id: "apiHandler",
+        timeout: cdk.Duration.seconds(30),
+        memorySize: 128,
+      },
+      {
+        id: "scanRepo",
+        timeout: cdk.Duration.seconds(300),
+        memorySize: 1024,
+        events: [new SqsEventSource(this.scanRequestQueue)],
+      },
+      {
+        id: "updateDB",
+        timeout: cdk.Duration.seconds(300),
+        memorySize: 1024,
+      },
+    ];
+
+    lambdaConfigs.forEach((cfg) => {
+      lambdaFunctions[cfg.id] = new lambda.Function(this, cfg.id, {
+        runtime: lambda.Runtime.GO_1_X,
+        handler: "handler",
+        role: lambdaRole,
+        code: asset,
+        timeout: cfg.timeout,
+        memorySize: cfg.memorySize,
+        environment: { ...envVars, ...{ LAMBDA_FUNC_ID: cfg.id } },
+        events: cfg.events,
+
+        vpc,
+        securityGroups,
+      });
     });
+    this.apiHandler = lambdaFunctions.apiHandler!;
+    this.scanRepo = lambdaFunctions.scanRepo!;
+    this.updateDB = lambdaFunctions.updateDB!;
 
-    const scanRepo = new lambda.Function(this, "scanRepo", {
-      runtime: lambda.Runtime.GO_1_X,
-      handler: "handler",
-      role: lambdaRole,
-      code: asset,
-      timeout: cdk.Duration.seconds(300),
-      memorySize: 1024,
-      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "scanRepo" } },
-      events: [new SqsEventSource(this.scanRequestQueue)],
-
-      vpc,
-      securityGroups,
-    });
-
-    const updateDB = new lambda.Function(this, "updateDB", {
-      runtime: lambda.Runtime.GO_1_X,
-      handler: "handler",
-      role: lambdaRole,
-      code: asset,
-      timeout: cdk.Duration.seconds(300),
-      memorySize: 1024,
-      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "updateDB" } },
-    });
     const rule = new events.Rule(this, "PeriodicUpdateDB", {
       schedule: events.Schedule.rate(cdk.Duration.hours(1)),
     });
-    rule.addTarget(new targets.LambdaFunction(updateDB));
+    rule.addTarget(new targets.LambdaFunction(this.updateDB));
 
     // API gateway
     /// Webhook endpoint
     const webhookGW = new apigateway.LambdaRestApi(this, "octovy-webhook", {
-      handler: apiHandler,
+      handler: this.apiHandler,
       proxy: false,
       cloudWatchRole: false,
       endpointTypes: props.webhookEndpointTypes || defaultEndpointTypes,
@@ -199,7 +214,7 @@ export class OctovyStack extends cdk.Stack {
 
     /// API endpoint
     const apiGW = new apigateway.LambdaRestApi(this, "octovy-api", {
-      handler: apiHandler,
+      handler: this.apiHandler,
       proxy: false,
       cloudWatchRole: false,
       endpointTypes: props.apiEndpointTypes || defaultEndpointTypes,
@@ -254,25 +269,25 @@ export class OctovyStack extends cdk.Stack {
 
     // Configure lambda permission if lambdaRole is not set
     if (props.lambdaRoleARN === undefined) {
-      this.metaTable.grantFullAccess(apiHandler);
-      this.metaTable.grantFullAccess(scanRepo);
+      this.metaTable.grantFullAccess(this.apiHandler);
+      this.metaTable.grantFullAccess(this.scanRepo);
 
-      this.scanRequestQueue.grantSendMessages(apiHandler);
+      this.scanRequestQueue.grantSendMessages(this.apiHandler);
 
       const secret = secretsmanager.Secret.fromSecretCompleteArn(
         this,
         "secret",
         props.secretsARN
       );
-      secret.grantRead(scanRepo);
+      secret.grantRead(this.scanRepo);
 
       const bucket = s3.Bucket.fromBucketName(
         this,
         "data-bucket",
         props.s3Bucket
       );
-      bucket.grantReadWrite(updateDB);
-      bucket.grantRead(scanRepo);
+      bucket.grantReadWrite(this.updateDB);
+      bucket.grantRead(this.scanRepo);
     }
 
     // Configure original domain name
