@@ -148,7 +148,7 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 
 	// New vulnerabilities
 	if len(newVuln) > 0 {
-		body += "### New vulnerabilities\n"
+		body += "### 🚨 New vulnerabilities\n"
 		for i := 0; i < len(newVuln) && i < listSize; i++ {
 			body += fmt.Sprintf("- %s: `%s` %s in %s\n",
 				newVuln[i].VulnID, newVuln[i].PkgName,
@@ -162,7 +162,7 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 
 	// Fixed vulnerabilities
 	if len(fixedVuln) > 0 {
-		body += "### Fixed vulnerabilities\n"
+		body += "### ✅ Fixed vulnerabilities\n"
 		for i := 0; i < len(fixedVuln) && i < listSize; i++ {
 			body += fmt.Sprintf("- %s: `%s` %s in %s\n",
 				fixedVuln[i].VulnID, fixedVuln[i].PkgName,
@@ -180,7 +180,7 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 			remainCount[vuln.Source] = remainCount[vuln.Source] + 1
 		}
 
-		body += "### Remained vulnerable packages\n"
+		body += "### ⚠️ Unfixed vulnerable packages\n"
 		for src, count := range remainCount {
 			body += fmt.Sprintf("- %d packages in %s\n", count, src)
 		}
