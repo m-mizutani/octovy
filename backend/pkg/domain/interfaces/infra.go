@@ -92,6 +92,9 @@ type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitH
 type GitHubApp interface {
 	GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
 	CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error
+	CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error)
+	UpdateCheckStatus(repo *model.GitHubRepo, checkID int64, status string) error
+	PutCheckResult(repo *model.GitHubRepo, checkID int64, conclusion string, completedAt time.Time, url string) error
 }
 
 // Trivy DB

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v29/github"
@@ -134,6 +135,79 @@ func (x *GitHubApp) CreateIssueComment(repo *model.GitHubRepo, prID int, body st
 		return goerr.Wrap(err, "Failed to ")
 	}
 	logger.With("comment", ret).Info("Commented to PR")
+
+	return nil
+}
+
+func (x *GitHubApp) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error) {
+	client, err := x.githubClient()
+	if err != nil {
+		return 0, err
+	}
+
+	ctx := context.Background()
+	opt := github.CreateCheckRunOptions{
+		Name:    "octovy: package vulnerability check",
+		HeadSHA: commit,
+	}
+
+	run, resp, err := client.Checks.CreateCheckRun(ctx, repo.Owner, repo.RepoName, opt)
+	if err != nil {
+		return 0, goerr.Wrap(err, "Failed to create check run").With("repo", repo).With("commit", commit)
+	}
+	if resp.StatusCode != http.StatusCreated {
+		return 0, goerr.Wrap(err, "Failed to ")
+	}
+	logger.With("run", run).Info("Created check run")
+
+	return *run.ID, nil
+}
+
+func (x *GitHubApp) UpdateCheckStatus(repo *model.GitHubRepo, checkID int64, status string) error {
+	client, err := x.githubClient()
+	if err != nil {
+		return err
+	}
+	opt := github.UpdateCheckRunOptions{
+		Status: &status,
+	}
+
+	ctx := context.Background()
+
+	_, resp, err := client.Checks.UpdateCheckRun(ctx, repo.Owner, repo.RepoName, checkID, opt)
+	if err != nil {
+		return goerr.Wrap(err, "Failed to update check status").With("repo", repo).With("id", checkID).With("status", status)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return goerr.Wrap(err, "Failed to update status")
+	}
+	logger.With("repo", repo).With("id", checkID).Info("Created check run")
+
+	return nil
+}
+
+func (x *GitHubApp) PutCheckResult(repo *model.GitHubRepo, checkID int64, conclusion string, completedAt time.Time, url string) error {
+	client, err := x.githubClient()
+	if err != nil {
+		return err
+	}
+	opt := github.UpdateCheckRunOptions{
+		Status:      github.String("completed"),
+		CompletedAt: &github.Timestamp{Time: completedAt},
+		Conclusion:  &conclusion,
+		DetailsURL:  &url,
+	}
+
+	ctx := context.Background()
+
+	_, resp, err := client.Checks.UpdateCheckRun(ctx, repo.Owner, repo.RepoName, checkID, opt)
+	if err != nil {
+		return goerr.Wrap(err, "Failed to update check status to complete").With("repo", repo).With("id", checkID).With("opt", opt)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return goerr.Wrap(err, "Failed to update status to complete")
+	}
+	logger.With("repo", repo).With("id", checkID).Info("Created check run")
 
 	return nil
 }

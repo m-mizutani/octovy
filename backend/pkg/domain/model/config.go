@@ -9,6 +9,7 @@ type Config struct {
 	ScanRequestQueue     string `env:"SCAN_REQUEST_QUEUE"`
 	FeedbackRequestQueue string `env:"FEEDBACK_REQUEST_QUEUE"`
 	GitHubEndpoint       string `env:"GITHUB_ENDPOINT"`
+	FrontendURL          string `env:"FRONTEND_URL"`
 
 	S3Region string `env:"S3_REGION"`
 	S3Bucket string `env:"S3_BUCKET"`
