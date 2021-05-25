@@ -32,7 +32,22 @@ func TestDiffReport(t *testing.T) {
 					{
 						Name:            "red",
 						Version:         "3.1",
-						Vulnerabilities: []string{"CVE-2999-0003"},
+						Vulnerabilities: []string{"CVE-2999-0003", "CVE-2999-0009"},
+					},
+					{
+						Name:            "clap",
+						Version:         "1.5",
+						Vulnerabilities: []string{"CVE-2999-0100"},
+					},
+
+					// Should be ignored
+					{
+						Name:    "remain-no-vuln",
+						Version: "1.5",
+					},
+					{
+						Name:    "fixed-no-vuln",
+						Version: "1.5",
 					},
 				},
 			},
@@ -54,9 +69,24 @@ func TestDiffReport(t *testing.T) {
 						Vulnerabilities: []string{"CVE-2999-0003"},
 					},
 					{
+						Name:            "clap",
+						Version:         "1.5",
+						Vulnerabilities: []string{"CVE-2999-0100"},
+					},
+					{
 						Name:            "timeless",
 						Version:         "5.0",
 						Vulnerabilities: []string{"CVE-2999-0005"},
+					},
+
+					// Should be ignored
+					{
+						Name:    "remain-no-vuln",
+						Version: "1.5",
+					},
+					{
+						Name:    "added-no-vuln",
+						Version: "1.5",
 					},
 				},
 			},
@@ -75,9 +105,10 @@ func TestDiffReport(t *testing.T) {
 
 	newVuln, fixedVuln, remainedVuln := diffReport(newReport, oldReport)
 	assert.Equal(t, 3, len(newVuln))
-	assert.Equal(t, 2, len(remainedVuln))
-	assert.Equal(t, 1, len(fixedVuln))
+	assert.Equal(t, 3, len(remainedVuln))
+	assert.Equal(t, 2, len(fixedVuln))
 
+	// Added
 	assert.Contains(t, newVuln, &vulnRecord{
 		Source:     "abc",
 		VulnID:     "CVE-2999-0011",
@@ -95,5 +126,39 @@ func TestDiffReport(t *testing.T) {
 		VulnID:     "CVE-2999-0003",
 		PkgName:    "red",
 		PkgVersion: "3.1",
+	})
+
+	// Remained
+	assert.Contains(t, remainedVuln, &vulnRecord{
+		Source:     "abc",
+		VulnID:     "CVE-2999-0003",
+		PkgName:    "red",
+		PkgVersion: "3.1",
+	})
+	assert.Contains(t, remainedVuln, &vulnRecord{
+		Source:     "abc",
+		VulnID:     "CVE-2999-0002",
+		PkgName:    "orange",
+		PkgVersion: "2.1",
+	})
+	assert.Contains(t, remainedVuln, &vulnRecord{
+		Source:     "abc",
+		VulnID:     "CVE-2999-0100",
+		PkgName:    "clap",
+		PkgVersion: "1.5",
+	})
+
+	// Fixed
+	assert.Contains(t, fixedVuln, &vulnRecord{
+		Source:     "abc",
+		VulnID:     "CVE-2999-0009",
+		PkgName:    "red",
+		PkgVersion: "3.1",
+	})
+	assert.Contains(t, fixedVuln, &vulnRecord{
+		Source:     "abc",
+		VulnID:     "CVE-2999-0001",
+		PkgName:    "blue",
+		PkgVersion: "1.1",
 	})
 }

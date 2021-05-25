@@ -104,8 +104,7 @@ func TestLambdaAPIWebhook(t *testing.T) {
 		assert.Equal(t, ts.Add(time.Minute).Unix(), req.UpdatedAt)
 		assert.False(t, req.IsPullRequest)
 		assert.False(t, req.IsTargetBranch)
-		assert.Nil(t, req.Feedback.PullReqID)
-		assert.Nil(t, req.Feedback.CheckSuiteID)
+		assert.Nil(t, req.Feedback)
 		require.NotNil(t, repo)
 	})
 
@@ -207,6 +206,7 @@ func TestLambdaAPIWebhook(t *testing.T) {
 		assert.True(t, req.IsPullRequest)
 		assert.False(t, req.IsTargetBranch)
 
+		assert.NotNil(t, req.Feedback)
 		assert.Nil(t, req.Feedback.CheckSuiteID)
 		require.NotNil(t, req.Feedback.PullReqID)
 		assert.Equal(t, 875, *req.Feedback.PullReqID)
