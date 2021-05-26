@@ -7,28 +7,16 @@ import (
 	"time"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
-	if err := x.feedbackPullRequest(req); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (x Default) feedbackPullRequest(req *model.FeedbackRequest) error {
 	logger.With("req", req).Info("Recv request")
 
 	const (
 		waitFactor = 1.2
 		maxRetry   = 10
-	)
-	var (
-		err        error
-		appID      int64
-		privateKey []byte
 	)
 
 	var report *model.ScanReport
@@ -60,28 +48,45 @@ func (x Default) feedbackPullRequest(req *model.FeedbackRequest) error {
 		return err
 	}
 
-	body := buildFeedbackComment(report, baseReport)
-
-	secrets, err := x.svc.GetSecrets()
+	app, err := x.buildGitHubApp(req.InstallID)
 	if err != nil {
 		return err
 	}
-	if appID, err = secrets.GetGitHubAppID(); err != nil {
+
+	if err := feedbackPullRequest(app, &req.Options, report, baseReport); err != nil {
 		return err
 	}
-	if privateKey, err = secrets.GithubAppPEM(); err != nil {
+
+	return nil
+}
+
+func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport) error {
+	if feedback.PullReqID == nil {
+		return nil
+	}
+
+	body := buildFeedbackComment(newReport, oldReport)
+
+	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
+
+	if err := app.CreateIssueComment(&newReport.Target.GitHubRepo, *feedback.PullReqID, body); err != nil {
 		return err
 	}
 
-	app := x.svc.Infra.NewGitHubApp(appID, req.InstallID, privateKey, x.config.GitHubEndpoint)
+	return nil
+}
 
-	if req.Options.PullReqID != nil {
-		logger.With("req", req).With("report", report).Info("Creating a PR comment")
-
-		if err := app.CreateIssueComment(&report.Target.GitHubRepo, *req.Options.PullReqID, body); err != nil {
-			return err
-		}
+func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport) error {
+	if feedback.CheckID == nil {
+		return nil
 	}
+
+	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
+
+	if err := app.PutCheckResult(&newReport.Target.GitHubRepo, *feedback.CheckID, "neutral", time.Unix(newReport.ScannedAt, 0), "https://example.com"); err != nil {
+		return err
+	}
+
 	return nil
 }
 

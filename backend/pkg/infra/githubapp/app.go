@@ -196,6 +196,11 @@ func (x *GitHubApp) PutCheckResult(repo *model.GitHubRepo, checkID int64, conclu
 		CompletedAt: &github.Timestamp{Time: completedAt},
 		Conclusion:  &conclusion,
 		DetailsURL:  &url,
+		Output: &github.CheckRunOutput{
+			Title:   github.String("testing"),
+			Summary: github.String("It's summary"),
+			Text:    github.String("This is just test"),
+		},
 	}
 
 	ctx := context.Background()
