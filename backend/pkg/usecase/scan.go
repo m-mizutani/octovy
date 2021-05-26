@@ -202,12 +202,30 @@ func (x *Default) buildGitHubApp(installID int64) (interfaces.GitHubApp, error) 
 }
 
 func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
-	scannedAt := x.svc.Infra.Utils.TimeNow()
-
 	app, err := x.buildGitHubApp(req.InstallID)
 	if err != nil {
 		return err
 	}
+
+	if err := x.scanProcedure(req, app); err != nil {
+		logger.With("error", err).Error("Failed to scan repo, try to cancel check run")
+		if req.Feedback != nil && req.Feedback.CheckID != nil {
+			opt := &github.UpdateCheckRunOptions{
+				Conclusion: github.String("cancelled"),
+				Status:     github.String("completed"),
+			}
+			if err := app.UpdateCheckRun(&req.GitHubRepo, *req.Feedback.CheckID, opt); err != nil {
+				return err
+			}
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (x *Default) scanProcedure(req *model.ScanRepositoryRequest, app interfaces.GitHubApp) error {
+	scannedAt := x.svc.Infra.Utils.TimeNow()
 	if req.Feedback != nil && req.Feedback.CheckID != nil {
 		opt := &github.UpdateCheckRunOptions{Status: github.String("in_progress")}
 		if err := app.UpdateCheckRun(&req.GitHubRepo, *req.Feedback.CheckID, opt); err != nil {
