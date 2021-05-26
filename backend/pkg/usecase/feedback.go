@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
@@ -53,16 +54,16 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		return err
 	}
 
-	if err := feedbackPullRequest(app, &req.Options, report, baseReport); err != nil {
+	if err := feedbackPullRequest(app, &req.Options, report, baseReport, x.config.FrontendURL); err != nil {
 		return err
 	}
-	if err := feedbackCheckRun(app, &req.Options, report, baseReport); err != nil {
+	if err := feedbackCheckRun(app, &req.Options, report, baseReport, x.config.FrontendURL); err != nil {
 		return err
 	}
 	return nil
 }
 
-func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport) error {
+func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport, frontendURL string) error {
 	if feedback.PullReqID == nil {
 		return nil
 	}
@@ -78,14 +79,37 @@ func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptio
 	return nil
 }
 
-func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport) error {
+func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport, frontendURL string) error {
 	if feedback.CheckID == nil {
 		return nil
 	}
 
 	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
 
-	if err := app.PutCheckResult(&newReport.Target.GitHubRepo, *feedback.CheckID, "neutral", time.Unix(newReport.ScannedAt, 0), "https://example.com"); err != nil {
+	changes := diffReport(newReport, oldReport)
+
+	// Default messages
+	conclusion := "neutral"
+	title := fmt.Sprintf("⚠️ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
+	body := buildFeedbackComment(newReport, oldReport)
+
+	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
+		conclusion = "success"
+		title = "🎉  No vulnerability detected"
+	}
+
+	opt := &github.UpdateCheckRunOptions{
+		Status:      github.String("completed"),
+		CompletedAt: &github.Timestamp{Time: time.Unix(newReport.ScannedAt, 0)},
+		Conclusion:  &conclusion,
+		DetailsURL:  github.String(frontendURL + "/#/scan/report/" + newReport.ReportID),
+		Output: &github.CheckRunOutput{
+			Title: &title,
+			Text:  &body,
+		},
+	}
+
+	if err := app.UpdateCheckRun(&newReport.Target.GitHubRepo, *feedback.CheckID, opt); err != nil {
 		return err
 	}
 
@@ -103,8 +127,13 @@ func (x *vulnRecord) key() string {
 	return strings.Join([]string{x.Source, x.VulnID, x.PkgName, x.PkgVersion}, "|")
 }
 
-func diffReport(newReport, oldReport *model.ScanReport) (news, fixed, remains []*vulnRecord) {
+type changeResult struct {
+	News    []*vulnRecord
+	Fixed   []*vulnRecord
+	Unfixed []*vulnRecord
+}
 
+func diffReport(newReport, oldReport *model.ScanReport) (res changeResult) {
 	reportToMap := func(report *model.ScanReport) map[string]*vulnRecord {
 		if report == nil {
 			return nil
@@ -133,7 +162,7 @@ func diffReport(newReport, oldReport *model.ScanReport) (news, fixed, remains []
 	// If no previous report
 	if oldMap == nil {
 		for _, n := range newMap {
-			remains = append(remains, n)
+			res.Unfixed = append(res.Unfixed, n)
 		}
 		return
 	}
@@ -141,17 +170,16 @@ func diffReport(newReport, oldReport *model.ScanReport) (news, fixed, remains []
 	// Compare with previous report
 	for _, n := range newMap {
 		if _, ok := oldMap[n.key()]; ok {
-			remains = append(remains, n)
+			res.Unfixed = append(res.Unfixed, n)
 		} else {
-			fixed = append(fixed, n)
+			res.Fixed = append(res.Fixed, n)
 		}
 	}
 	for _, o := range oldMap {
 		if _, ok := newMap[o.key()]; !ok {
-			news = append(news, o)
+			res.News = append(res.News, o)
 		}
 	}
-
 	return
 }
 
@@ -159,39 +187,39 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 	var body string
 	const listSize = 5
 
-	newVuln, fixedVuln, remainedVuln := diffReport(report, base)
+	changes := diffReport(report, base)
 
 	// New vulnerabilities
-	if len(newVuln) > 0 {
+	if len(changes.News) > 0 {
 		body += "### 🚨 New vulnerabilities\n"
-		for i := 0; i < len(newVuln) && i < listSize; i++ {
+		for i := 0; i < len(changes.News) && i < listSize; i++ {
+			v := changes.News[i]
 			body += fmt.Sprintf("- %s: `%s` %s in %s\n",
-				newVuln[i].VulnID, newVuln[i].PkgName,
-				newVuln[i].PkgVersion, newVuln[i].Source)
+				v.VulnID, v.PkgName, v.PkgVersion, v.Source)
 		}
-		if len(newVuln) > listSize {
-			body += fmt.Sprintf("... and more %d packages\n\n", len(newVuln)-listSize)
+		if len(changes.News) > listSize {
+			body += fmt.Sprintf("... and more %d packages\n\n", len(changes.News)-listSize)
 		}
 		body += "\n"
 	}
 
 	// Fixed vulnerabilities
-	if len(fixedVuln) > 0 {
+	if len(changes.Fixed) > 0 {
 		body += "### ✅ Fixed vulnerabilities\n"
-		for i := 0; i < len(fixedVuln) && i < listSize; i++ {
+		for i := 0; i < len(changes.Fixed) && i < listSize; i++ {
+			v := changes.Fixed[i]
 			body += fmt.Sprintf("- %s: `%s` %s in %s\n",
-				fixedVuln[i].VulnID, fixedVuln[i].PkgName,
-				fixedVuln[i].PkgVersion, fixedVuln[i].Source)
+				v.VulnID, v.PkgName, v.PkgVersion, v.Source)
 		}
-		if len(fixedVuln) > listSize {
-			body += fmt.Sprintf("... and more %d packages\n\n", len(fixedVuln)-listSize)
+		if len(changes.Fixed) > listSize {
+			body += fmt.Sprintf("... and more %d packages\n\n", len(changes.Fixed)-listSize)
 		}
 		body += "\n"
 	}
 
-	if len(remainedVuln) > 0 {
+	if len(changes.Unfixed) > 0 {
 		remainCount := map[string]int{}
-		for _, vuln := range remainedVuln {
+		for _, vuln := range changes.Unfixed {
 			remainCount[vuln.Source] = remainCount[vuln.Source] + 1
 		}
 

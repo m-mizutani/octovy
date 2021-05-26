@@ -103,7 +103,11 @@ func TestDiffReport(t *testing.T) {
 		},
 	}
 
-	newVuln, fixedVuln, remainedVuln := diffReport(newReport, oldReport)
+	changes := diffReport(newReport, oldReport)
+	newVuln := changes.News
+	fixedVuln := changes.Fixed
+	remainedVuln := changes.Unfixed
+
 	assert.Equal(t, 3, len(newVuln))
 	assert.Equal(t, 3, len(remainedVuln))
 	assert.Equal(t, 2, len(fixedVuln))

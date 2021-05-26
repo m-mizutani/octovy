@@ -12,6 +12,7 @@ import (
 	"github.com/aquasecurity/go-dep-parser/pkg/pipenv"
 	"github.com/aquasecurity/go-dep-parser/pkg/types"
 	"github.com/aquasecurity/go-dep-parser/pkg/yarn"
+	"github.com/google/go-github/v29/github"
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
@@ -208,7 +209,8 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 		return err
 	}
 	if req.Feedback != nil && req.Feedback.CheckID != nil {
-		if err := app.UpdateCheckStatus(&req.GitHubRepo, *req.Feedback.CheckID, "in_progress"); err != nil {
+		opt := &github.UpdateCheckRunOptions{Status: github.String("in_progress")}
+		if err := app.UpdateCheckRun(&req.GitHubRepo, *req.Feedback.CheckID, opt); err != nil {
 			return err
 		}
 	}

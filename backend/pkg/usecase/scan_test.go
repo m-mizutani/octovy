@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
@@ -311,7 +312,7 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interf
 	gitHubAppMock.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
 		return 555, nil
 	}
-	gitHubAppMock.PutCheckResultMock = func(repo *model.GitHubRepo, checkID int64, conclusion string, completedAt time.Time, url string) error {
+	gitHubAppMock.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
 		return nil
 	}
 

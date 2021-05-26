@@ -136,7 +136,6 @@ export class OctovyStack extends cdk.Stack {
       SCAN_REQUEST_QUEUE: this.scanRequestQueue.queueUrl,
       FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
-      FRONTEND_URL: props.frontendURL || "",
 
       S3_REGION: props.s3Region,
       S3_BUCKET: props.s3Bucket,
@@ -154,33 +153,8 @@ export class OctovyStack extends cdk.Stack {
     };
     const lambdaFunctions: { [key: string]: lambda.Function } = {};
 
-    const lambdaConfigs: lambdaConfig[] = [
-      {
-        id: "apiHandler",
-        timeout: cdk.Duration.seconds(30),
-        memorySize: 128,
-      },
-      {
-        id: "scanRepo",
-        timeout: cdk.Duration.seconds(300),
-        memorySize: 1024,
-        events: [new SqsEventSource(this.scanRequestQueue)],
-      },
-      {
-        id: "feedback",
-        timeout: cdk.Duration.seconds(120),
-        memorySize: 1024,
-        events: [new SqsEventSource(this.feedbackRequestQueue)],
-      },
-      {
-        id: "updateDB",
-        timeout: cdk.Duration.seconds(300),
-        memorySize: 1024,
-      },
-    ];
-
-    lambdaConfigs.forEach((cfg) => {
-      lambdaFunctions[cfg.id] = new lambda.Function(this, cfg.id, {
+    const newLambda = (cfg: lambdaConfig): lambda.Function => {
+      return new lambda.Function(this, cfg.id, {
         runtime: lambda.Runtime.GO_1_X,
         handler: "handler",
         role: lambdaRole,
@@ -193,10 +167,13 @@ export class OctovyStack extends cdk.Stack {
         vpc,
         securityGroups,
       });
+    };
+
+    this.apiHandler = newLambda({
+      id: "apiHandler",
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 128,
     });
-    this.apiHandler = lambdaFunctions.apiHandler!;
-    this.scanRepo = lambdaFunctions.scanRepo!;
-    this.updateDB = lambdaFunctions.updateDB!;
 
     const rule = new events.Rule(this, "PeriodicUpdateDB", {
       schedule: events.Schedule.rate(cdk.Duration.hours(1)),
@@ -280,6 +257,26 @@ export class OctovyStack extends cdk.Stack {
       .addResource("report")
       .addResource("{report_id}");
     apiScanReport.addMethod("GET");
+
+    envVars.FRONTEND_URL = props.frontendURL || apiGW.url;
+
+    this.scanRepo = newLambda({
+      id: "scanRepo",
+      timeout: cdk.Duration.seconds(300),
+      memorySize: 1024,
+      events: [new SqsEventSource(this.scanRequestQueue)],
+    });
+    this.feedback = newLambda({
+      id: "feedback",
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 1024,
+      events: [new SqsEventSource(this.feedbackRequestQueue)],
+    });
+    this.updateDB = newLambda({
+      id: "updateDB",
+      timeout: cdk.Duration.seconds(300),
+      memorySize: 1024,
+    });
 
     // Configure lambda permission if lambdaRole is not set
     if (props.lambdaRoleARN === undefined) {

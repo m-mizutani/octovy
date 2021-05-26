@@ -2,8 +2,8 @@ package githubapp
 
 import (
 	"io"
-	"time"
 
+	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
@@ -12,8 +12,7 @@ type Mock struct {
 	GetCodeZipMock         func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
 	CreateIssueCommentMock func(repo *model.GitHubRepo, prID int, body string) error
 	CreateCheckRunMock     func(repo *model.GitHubRepo, commit string) (int64, error)
-	UpdateCheckStatusMock  func(repo *model.GitHubRepo, checkID int64, status string) error
-	PutCheckResultMock     func(repo *model.GitHubRepo, checkID int64, conclusion string, completedAt time.Time, url string) error
+	UpdateCheckRunMock     func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error
 
 	AppID     int64
 	InstallID int64
@@ -42,9 +41,6 @@ func (x *Mock) CreateIssueComment(repo *model.GitHubRepo, prID int, body string)
 func (x *Mock) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error) {
 	return x.CreateCheckRunMock(repo, commit)
 }
-func (x *Mock) UpdateCheckStatus(repo *model.GitHubRepo, checkID int64, status string) error {
-	return x.UpdateCheckStatusMock(repo, checkID, status)
-}
-func (x *Mock) PutCheckResult(repo *model.GitHubRepo, checkID int64, conclusion string, completedAt time.Time, url string) error {
-	return x.PutCheckResultMock(repo, checkID, conclusion, completedAt, url)
+func (x *Mock) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+	return x.UpdateCheckRunMock(repo, checkID, opt)
 }
