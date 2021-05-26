@@ -37,16 +37,20 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		return goerr.New("Report is not found").With("req", req)
 	}
 
-	branch, err := x.LookupBranch(&model.GitHubBranch{
-		GitHubRepo: report.Target.GitHubRepo,
-		Branch:     req.Options.PullReqBranch,
-	})
-	if err != nil {
-		return err
-	}
-	baseReport, err := x.LookupScanReport(branch.ReportSummary.ReportID)
-	if err != nil {
-		return err
+	var baseReport *model.ScanReport
+	if req.Options.PullReqBranch != "" {
+		branch, err := x.LookupBranch(&model.GitHubBranch{
+			GitHubRepo: report.Target.GitHubRepo,
+			Branch:     req.Options.PullReqBranch,
+		})
+		if err != nil {
+			return err
+		}
+		r, err := x.LookupScanReport(branch.ReportSummary.ReportID)
+		if err != nil {
+			return err
+		}
+		baseReport = r
 	}
 
 	app, err := x.buildGitHubApp(req.InstallID)
