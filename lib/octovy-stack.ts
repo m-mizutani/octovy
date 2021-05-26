@@ -175,11 +175,6 @@ export class OctovyStack extends cdk.Stack {
       memorySize: 128,
     });
 
-    const rule = new events.Rule(this, "PeriodicUpdateDB", {
-      schedule: events.Schedule.rate(cdk.Duration.hours(1)),
-    });
-    rule.addTarget(new targets.LambdaFunction(this.updateDB));
-
     // API gateway
     /// Webhook endpoint
     const webhookGW = new apigateway.LambdaRestApi(this, "octovy-webhook", {
@@ -258,6 +253,7 @@ export class OctovyStack extends cdk.Stack {
       .addResource("{report_id}");
     apiScanReport.addMethod("GET");
 
+    // Lambda without API handler
     envVars.FRONTEND_URL = props.frontendURL || apiGW.url;
 
     this.scanRepo = newLambda({
@@ -277,6 +273,11 @@ export class OctovyStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(300),
       memorySize: 1024,
     });
+
+    const rule = new events.Rule(this, "PeriodicUpdateDB", {
+      schedule: events.Schedule.rate(cdk.Duration.hours(1)),
+    });
+    rule.addTarget(new targets.LambdaFunction(this.updateDB));
 
     // Configure lambda permission if lambdaRole is not set
     if (props.lambdaRoleARN === undefined) {

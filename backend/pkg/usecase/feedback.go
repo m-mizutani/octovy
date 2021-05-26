@@ -91,11 +91,13 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 	// Default messages
 	conclusion := "neutral"
 	title := fmt.Sprintf("⚠️ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
+	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
 	body := buildFeedbackComment(newReport, oldReport)
 
 	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
 		conclusion = "success"
 		title = "🎉  No vulnerability detected"
+		summary = "OK"
 	}
 
 	opt := &github.UpdateCheckRunOptions{
@@ -104,8 +106,9 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 		Conclusion:  &conclusion,
 		DetailsURL:  github.String(frontendURL + "/#/scan/report/" + newReport.ReportID),
 		Output: &github.CheckRunOutput{
-			Title: &title,
-			Text:  &body,
+			Title:   &title,
+			Summary: &summary,
+			Text:    &body,
 		},
 	}
 
