@@ -1,6 +1,7 @@
 package usecase_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 	"time"
@@ -9,13 +10,17 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/aws"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/githubapp"
 	"github.com/m-mizutani/octovy/backend/pkg/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func setupHandleGitHubEvent(t *testing.T) (interfaces.Usecases, *mockSet) {
+	const secretsARN = "arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"
+
 	cfg := &model.Config{
+		SecretsARN:       secretsARN,
 		ScanRequestQueue: "https://scanreq.queue.url",
 	}
 
@@ -32,9 +37,25 @@ func setupHandleGitHubEvent(t *testing.T) (interfaces.Usecases, *mockSet) {
 	newSQS, mockSQS := aws.NewMockSQSSet()
 	svc.Infra.NewSQS = newSQS
 
+	// SecretsManager
+	newSM, mockSM := aws.NewMockSecretsManagerSet()
+	mockSM.OutData[secretsARN] = map[string]string{
+		"github_app_private_key": base64.StdEncoding.EncodeToString([]byte("zatsu")),
+		"github_app_id":          "123",
+	}
+	svc.Infra.NewSecretManager = newSM
+
+	// GitHubApp
+	newApp, mockApp := githubapp.NewMock()
+	svc.Infra.NewGitHubApp = newApp
+	mockApp.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
+		return 503, nil
+	}
+
 	return uc, &mockSet{
-		sqs: mockSQS,
-		db:  dbClient,
+		sqs:       mockSQS,
+		db:        dbClient,
+		githubapp: mockApp,
 	}
 }
 
@@ -86,7 +107,8 @@ func TestHandleGitHubEvent(t *testing.T) {
 		assert.Equal(t, ts.Add(time.Minute).Unix(), req.UpdatedAt)
 		assert.False(t, req.IsPullRequest)
 		assert.False(t, req.IsTargetBranch)
-		assert.Nil(t, req.Feedback)
+		require.NotNil(t, req.Feedback)
+		assert.Equal(t, int64(503), *req.Feedback.CheckID)
 
 		repo, err := mock.db.FindRepoByFullName("five", "blue")
 		require.NoError(t, err)
@@ -143,7 +165,8 @@ func TestHandleGitHubEvent(t *testing.T) {
 		assert.False(t, req.IsTargetBranch)
 
 		assert.NotNil(t, req.Feedback)
-		assert.Nil(t, req.Feedback.CheckID)
+		require.NotNil(t, req.Feedback.CheckID)
+		assert.Equal(t, int64(503), *req.Feedback.CheckID)
 		require.NotNil(t, req.Feedback.PullReqID)
 		assert.Equal(t, 875, *req.Feedback.PullReqID)
 

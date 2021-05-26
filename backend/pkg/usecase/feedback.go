@@ -11,6 +11,14 @@ import (
 )
 
 func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
+	if err := x.feedbackPullRequest(req); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (x Default) feedbackPullRequest(req *model.FeedbackRequest) error {
 	logger.With("req", req).Info("Recv request")
 
 	const (

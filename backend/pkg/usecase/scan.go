@@ -207,6 +207,11 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 	if err != nil {
 		return err
 	}
+	if req.Feedback != nil && req.Feedback.CheckID != nil {
+		if err := app.UpdateCheckStatus(&req.GitHubRepo, *req.Feedback.CheckID, "in_progress"); err != nil {
+			return err
+		}
+	}
 
 	pkgs, err := x.detectPackages(req, app)
 	if err != nil {

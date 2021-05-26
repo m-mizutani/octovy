@@ -96,6 +96,16 @@ func (x *Default) HandleGitHubPushEvent(event *github.PushEvent) error {
 		InstallID: *event.Installation.ID,
 	}
 
+	app, err := x.buildGitHubApp(req.InstallID)
+	if err != nil {
+		return err
+	}
+	checkID, err := app.CreateCheckRun(&req.GitHubRepo, req.CommitID)
+	if err != nil {
+		return err
+	}
+	req.Feedback = &model.FeedbackOptions{CheckID: &checkID}
+
 	if err := x.SendScanRequest(&req); err != nil {
 		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
 	}
@@ -168,6 +178,16 @@ func (x *Default) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 			PullReqBranch: *event.PullRequest.Base.Ref,
 		},
 	}
+
+	app, err := x.buildGitHubApp(req.InstallID)
+	if err != nil {
+		return err
+	}
+	checkID, err := app.CreateCheckRun(&req.GitHubRepo, req.CommitID)
+	if err != nil {
+		return err
+	}
+	req.Feedback.CheckID = &checkID
 
 	if err := x.SendScanRequest(&req); err != nil {
 		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
