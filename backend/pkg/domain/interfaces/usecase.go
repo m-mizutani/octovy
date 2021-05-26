@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
@@ -28,4 +29,8 @@ type Usecases interface {
 	LookupScanReport(reportID string) (*model.ScanReport, error)
 
 	UpdateTrivyDB() error
+
+	HandleGitHubPushEvent(event *github.PushEvent) error
+	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
+	HandleGitHubInstallationEvent(event *github.InstallationEvent) error
 }

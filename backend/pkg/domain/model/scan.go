@@ -11,7 +11,7 @@ type ScanRepositoryRequest struct {
 type FeedbackOptions struct {
 	PullReqID     *int
 	PullReqBranch string
-	CheckSuiteID  *int
+	CheckID       *int64
 }
 
 func (x *ScanRepositoryRequest) IsValid() error {
@@ -38,7 +38,7 @@ func (x *FeedbackRequest) IsValid() error {
 	if x.InstallID == 0 {
 		return goerr.Wrap(ErrInvalidInputValues, "InstallID must not be 0")
 	}
-	if x.Options.PullReqID == nil && x.Options.CheckSuiteID == nil {
+	if x.Options.PullReqID == nil && x.Options.CheckID == nil {
 		return goerr.Wrap(ErrInvalidInputValues, "Either one of PullReqID and CheckSuiteID is required")
 	}
 

@@ -83,7 +83,7 @@ func putPackageRecords(svc *service.Service, branch *model.GitHubBranch, newPkgs
 	return nil
 }
 
-func (x *Default) detectPackages(req *model.ScanRepositoryRequest) ([]*model.PackageRecord, error) {
+func (x *Default) detectPackages(req *model.ScanRepositoryRequest, app interfaces.GitHubApp) ([]*model.PackageRecord, error) {
 	tmp, err := x.svc.Infra.Utils.TempFile("", "*.zip")
 	if err != nil {
 		return nil, goerr.Wrap(err)
@@ -94,20 +94,7 @@ func (x *Default) detectPackages(req *model.ScanRepositoryRequest) ([]*model.Pac
 		}
 	}()
 
-	secrets, err := x.svc.GetSecrets()
-	if err != nil {
-		return nil, err
-	}
-	pem, err := secrets.GithubAppPEM()
-	if err != nil {
-		return nil, err
-	}
-	appID, err := secrets.GetGitHubAppID()
-	if err != nil {
-		return nil, err
-	}
-	gitHubApp := x.svc.Infra.NewGitHubApp(appID, req.InstallID, pem, x.config.GitHubEndpoint)
-	if err := gitHubApp.GetCodeZip(&req.GitHubRepo, req.CommitID, tmp); err != nil {
+	if err := app.GetCodeZip(&req.GitHubRepo, req.CommitID, tmp); err != nil {
 		return nil, err
 	}
 
@@ -195,10 +182,33 @@ func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, s
 	return nil
 }
 
+func (x *Default) buildGitHubApp(installID int64) (interfaces.GitHubApp, error) {
+	secrets, err := x.svc.GetSecrets()
+	if err != nil {
+		return nil, err
+	}
+	pem, err := secrets.GithubAppPEM()
+	if err != nil {
+		return nil, err
+	}
+	appID, err := secrets.GetGitHubAppID()
+	if err != nil {
+		return nil, err
+	}
+	gitHubApp := x.svc.Infra.NewGitHubApp(appID, installID, pem, x.config.GitHubEndpoint)
+
+	return gitHubApp, nil
+}
+
 func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 	scannedAt := x.svc.Infra.Utils.TimeNow()
 
-	pkgs, err := x.detectPackages(req)
+	app, err := x.buildGitHubApp(req.InstallID)
+	if err != nil {
+		return err
+	}
+
+	pkgs, err := x.detectPackages(req, app)
 	if err != nil {
 		return err
 	}
@@ -272,7 +282,6 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 			return err
 		}
 	}
-
 	logger.With("log", scanLog).Info("Done repository scan")
 
 	return nil

@@ -11,4 +11,7 @@ var (
 
 	// Generic system error
 	ErrSystem = goerr.New("System error")
+
+	// API
+	ErrInvalidWebhookData = goerr.New("Invalid webhook data")
 )

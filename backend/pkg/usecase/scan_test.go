@@ -117,7 +117,7 @@ func TestScanRepository(t *testing.T) {
 		var feedbackReq model.FeedbackRequest
 		require.NoError(t, json.Unmarshal([]byte(*mock.sqs.Input[0].MessageBody), &feedbackReq))
 		require.NotNil(t, feedbackReq.Options.PullReqID)
-		require.Nil(t, feedbackReq.Options.CheckSuiteID)
+		require.Nil(t, feedbackReq.Options.CheckID)
 		assert.NotEmpty(t, feedbackReq.ReportID)
 		assert.Equal(t, int64(999), feedbackReq.InstallID)
 		assert.Equal(t, 456, *feedbackReq.Options.PullReqID)
@@ -299,6 +299,7 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interf
 		"test-prefix/db/trivy.db.gz": []byte("boom!"),
 	}
 
+	// Setup GitHubApp mock
 	newGitHubAppMock, gitHubAppMock := githubapp.NewMock()
 	gitHubAppMock.GetCodeZipMock = func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
 		r, err := os.Open(scannedArchivePath)
@@ -307,6 +308,13 @@ func setupScanRepositoryService(t *testing.T, scannedArchivePath string) (interf
 		require.NoError(t, err)
 		return nil
 	}
+	gitHubAppMock.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
+		return 555, nil
+	}
+	gitHubAppMock.PutCheckResultMock = func(repo *model.GitHubRepo, checkID int64, conclusion string, completedAt time.Time, url string) error {
+		return nil
+	}
+
 	svc.Infra.NewGitHubApp = newGitHubAppMock
 	// Setup trivy DB
 

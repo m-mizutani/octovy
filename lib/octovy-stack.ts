@@ -46,6 +46,8 @@ interface OctovyProps extends cdk.StackProps {
   readonly domainConfig?: domainConfig;
   readonly dynamoPITR?: boolean;
 
+  readonly frontendURL?: string;
+
   readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
 
@@ -134,6 +136,7 @@ export class OctovyStack extends cdk.Stack {
       SCAN_REQUEST_QUEUE: this.scanRequestQueue.queueUrl,
       FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
+      FRONTEND_URL: props.frontendURL || "",
 
       S3_REGION: props.s3Region,
       S3_BUCKET: props.s3Bucket,
