@@ -1,7 +1,6 @@
 package detector
 
 import (
-	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
@@ -62,7 +61,9 @@ func (x *Detector) Detect(pkgType model.PkgType, pkgName, version string) ([]*mo
 
 		for _, adv := range advisories {
 			if vulnerable, err := isVulnerable(adv, version); err != nil {
-				return nil, goerr.Wrap(err).With("adv", adv)
+				logger.With("err", err).With("pkg", pkgName).With("adv", adv).
+					Error("Failed to compare vulnerable version, but continuing")
+				continue
 			} else if vulnerable {
 				affected = append(affected, adv)
 			}
