@@ -90,7 +90,7 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 
 	// Default messages
 	conclusion := "neutral"
-	title := fmt.Sprintf("⚠️ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
+	title := fmt.Sprintf("❗ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
 	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
 	body := buildFeedbackComment(newReport, oldReport)
 
