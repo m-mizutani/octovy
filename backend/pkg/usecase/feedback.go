@@ -56,7 +56,9 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 	if err := feedbackPullRequest(app, &req.Options, report, baseReport); err != nil {
 		return err
 	}
-
+	if err := feedbackCheckRun(app, &req.Options, report, baseReport); err != nil {
+		return err
+	}
 	return nil
 }
 
