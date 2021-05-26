@@ -191,6 +191,9 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 	const listSize = 5
 
 	changes := diffReport(report, base)
+	if len(changes.News) == 0 && len(changes.Unfixed) == 0 {
+		body += "🎉 **No vulnerable packages**\n\n"
+	}
 
 	// New vulnerabilities
 	if len(changes.News) > 0 {

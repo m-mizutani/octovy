@@ -279,7 +279,7 @@ func (x *Default) ScanRepository(req *model.ScanRepositoryRequest) error {
 		}
 	}
 
-	if req.Feedback != nil {
+	if req.Feedback != nil && len(pkgs) > 0 {
 		feedbackReq := &model.FeedbackRequest{
 			ReportID:  report.ReportID,
 			InstallID: req.InstallID,
