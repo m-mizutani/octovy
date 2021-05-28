@@ -57,6 +57,7 @@ function Header(props: HeaderProps) {
                   <Route path="/repository">Repository</Route>
                   <Route path="/package">Package</Route>
                   <Route path="/vuln">Vulnerability</Route>
+                  <Route path="/scan/report/">Scan Report</Route>
                 </Switch>
               </Typography>
             </Grid>
