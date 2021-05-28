@@ -176,9 +176,12 @@ func (x *Default) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 		},
 		InstallID: *event.Installation.ID,
 		Feedback: &model.FeedbackOptions{
-			PullReqID:     event.PullRequest.Number,
 			PullReqBranch: *event.PullRequest.Base.Ref,
 		},
+	}
+
+	if *event.Action == "opened" {
+		req.Feedback.PullReqID = event.PullRequest.Number
 	}
 
 	app, err := x.buildGitHubApp(req.InstallID)
