@@ -50,6 +50,7 @@ type ScanTarget struct {
 	CommitID       string
 	UpdatedAt      int64
 	RequestedAt    int64
+	URL            string
 	IsPullRequest  bool
 	IsTargetBranch bool
 }

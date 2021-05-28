@@ -3,6 +3,7 @@ import React from "react";
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
 import Checkbox from "@material-ui/core/Checkbox";
+import Link from "@material-ui/core/Link";
 
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -11,9 +12,12 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 
+import Typography from "@material-ui/core/Typography";
 import Chip from "@material-ui/core/Chip";
 
 import { Link as RouterLink } from "react-router-dom";
+
+import strftime from "strftime";
 
 import useStyles from "./Style";
 import * as model from "./Model";
@@ -121,8 +125,59 @@ export function Report(props: reportProps) {
       return <div>No data</div>;
     } else {
       console.log({ status });
+
+      type metadata = {
+        title: string;
+        data: string;
+      };
+      const reportMeta: metadata[] = [
+        {
+          title: "Repository",
+          data:
+            status.report.Target.Owner + "/" + status.report.Target.RepoName,
+        },
+        {
+          title: "Scanned At",
+          data: strftime("%F %T", new Date(status.report.ScannedAt * 1000)),
+        },
+        {
+          title: "Branch",
+          data: status.report.Target.Branch,
+        },
+        {
+          title: "Commit",
+          data: (
+            <Link
+              href={
+                status.report.Target.URL +
+                "/commit/" +
+                status.report.Target.CommitID
+              }>
+              {status.report.Target.CommitID.substr(0, 7)}
+            </Link>
+          ),
+        },
+      ];
+
       return (
         <div>
+          <Grid item className={classes.reportMetaParagraph}>
+            <Grid container spacing={2}>
+              {reportMeta.map((meta, idx) => {
+                return (
+                  <Grid item xs={2} key={"report-meta-" + idx}>
+                    <Typography className={classes.typographyTitle}>
+                      {meta.title}
+                    </Typography>
+                    <Typography className={classes.typographyText}>
+                      {meta.data}
+                    </Typography>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Grid>
+
           <Grid item>
             <Checkbox
               checked={vulnFilter}

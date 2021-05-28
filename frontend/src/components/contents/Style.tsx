@@ -20,10 +20,17 @@ const useStyles = makeStyles((theme: Theme) =>
       margin: "40px 30px",
     },
 
+    reportMetaParagraph: {
+      marginBottom: theme.spacing(4),
+    },
     typographyTitle: {
       marginTop: theme.spacing(0),
       marginBottom: theme.spacing(1),
+      fontSize: "18px",
       fontWeight: "bold",
+    },
+    typographyText: {
+      fontSize: "14px",
     },
 
     progressIcon: {
