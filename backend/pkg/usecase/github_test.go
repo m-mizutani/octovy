@@ -184,6 +184,12 @@ func TestHandleGitHubEvent(t *testing.T) {
 		require.NoError(t, uc.HandleGitHubPullReqEvent(pullReqEvent))
 
 		require.Equal(t, 1, len(mock.sqs.Input))
+
+		t.Run("Not feedback to PR if action is sysynchronize", func(t *testing.T) {
+			var req model.ScanRepositoryRequest
+			require.NoError(t, json.Unmarshal([]byte(*mock.sqs.Input[0].MessageBody), &req))
+			assert.Nil(t, req.Feedback.PullReqID)
+		})
 	})
 
 	t.Run("Ignore pull request event not opened or sync", func(t *testing.T) {
