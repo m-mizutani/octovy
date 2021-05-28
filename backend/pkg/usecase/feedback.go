@@ -58,10 +58,10 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		return err
 	}
 
-	if err := feedbackPullRequest(app, &req.Options, report, baseReport, x.config.FrontendURL); err != nil {
+	if err := feedbackPullRequest(app, &req.Options, report, baseReport, x.config.FrontendBaseURL()); err != nil {
 		return err
 	}
-	if err := feedbackCheckRun(app, &req.Options, report, baseReport, x.config.FrontendURL); err != nil {
+	if err := feedbackCheckRun(app, &req.Options, report, baseReport, x.config.FrontendBaseURL()); err != nil {
 		return err
 	}
 	return nil
@@ -72,7 +72,7 @@ func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptio
 		return nil
 	}
 
-	body := buildFeedbackComment(newReport, oldReport)
+	body := buildFeedbackComment(newReport, oldReport, frontendURL)
 
 	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
 
@@ -96,7 +96,7 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 	conclusion := "neutral"
 	title := fmt.Sprintf("❗ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
 	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
-	body := buildFeedbackComment(newReport, oldReport)
+	body := buildFeedbackComment(newReport, oldReport, frontendURL)
 
 	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
 		conclusion = "success"
@@ -190,7 +190,7 @@ func diffReport(newReport, oldReport *model.ScanReport) (res changeResult) {
 	return
 }
 
-func buildFeedbackComment(report, base *model.ScanReport) string {
+func buildFeedbackComment(report, base *model.ScanReport, frontendURL string) string {
 	var body string
 	const listSize = 5
 
@@ -238,6 +238,8 @@ func buildFeedbackComment(report, base *model.ScanReport) string {
 			body += fmt.Sprintf("- %d packages in %s\n", count, src)
 		}
 	}
+
+	body += fmt.Sprintf("\nSee [report](%s/#/scan/report/%s) for more detail\n", frontendURL, report.ReportID)
 
 	return body
 }

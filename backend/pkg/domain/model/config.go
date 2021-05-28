@@ -1,6 +1,10 @@
 package model
 
-import "github.com/Netflix/go-env"
+import (
+	"strings"
+
+	"github.com/Netflix/go-env"
+)
 
 type Config struct {
 	AwsRegion            string `env:"AWS_REGION"`
@@ -24,4 +28,9 @@ func NewConfig() *Config {
 		panic("Failed UnmarshalFromEnviron to Config: " + err.Error())
 	}
 	return &config
+}
+
+// FrontendBaseURL returns frontend URL trimmed last slash
+func (x *Config) FrontendBaseURL() string {
+	return strings.TrimSuffix(x.FrontendURL, "/")
 }
