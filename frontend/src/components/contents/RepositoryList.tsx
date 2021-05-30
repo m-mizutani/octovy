@@ -446,7 +446,7 @@ function NoData(props: NoDataProps) {
   return (
     <div className={classes.tgNoData}>
       <Typography variant="h4" align="center">
-        No Data for "{props.owner}"
+        No Data of "{props.owner}"
       </Typography>
       <Typography align="center" className={classes.noDataDescr}>
         Try to install <Link href={meta ? meta.AppURL : ""}>octovy</Link> to
