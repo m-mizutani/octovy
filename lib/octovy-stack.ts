@@ -47,6 +47,8 @@ interface OctovyProps extends cdk.StackProps {
   readonly dynamoPITR?: boolean;
 
   readonly frontendURL?: string;
+  readonly githubAppURL?: string;
+  readonly homepageURL?: string;
 
   readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
@@ -136,6 +138,8 @@ export class OctovyStack extends cdk.Stack {
       SCAN_REQUEST_QUEUE: this.scanRequestQueue.queueUrl,
       FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
+      GITHUB_APP_URL: props.githubAppURL || "",
+      HOMEPAGE_URL: props.homepageURL || "",
 
       S3_REGION: props.s3Region,
       S3_BUCKET: props.s3Bucket,
@@ -253,6 +257,10 @@ export class OctovyStack extends cdk.Stack {
       .addResource("{report_id}");
     apiScanReport.addMethod("GET");
 
+    // Metadata
+    const apiMeta = apiRoot.addResource("meta");
+    apiMeta.addResource("octovy").addMethod("GET");
+
     // Lambda without API handler
     envVars.FRONTEND_URL = props.frontendURL || apiGW.url;
 
@@ -285,13 +293,16 @@ export class OctovyStack extends cdk.Stack {
       this.metaTable.grantFullAccess(this.scanRepo);
 
       this.scanRequestQueue.grantSendMessages(this.apiHandler);
+      this.feedbackRequestQueue.grantSendMessages(this.scanRepo);
 
       const secret = secretsmanager.Secret.fromSecretCompleteArn(
         this,
         "secret",
         props.secretsARN
       );
+      secret.grantRead(this.apiHandler);
       secret.grantRead(this.scanRepo);
+      secret.grantRead(this.feedback);
 
       const bucket = s3.Bucket.fromBucketName(
         this,

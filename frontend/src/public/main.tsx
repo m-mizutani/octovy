@@ -27,7 +27,11 @@ const useStyles = makeStyles((theme: Theme) =>
       fontWeight: "bold",
       fontSize: 48,
       letterSpacing: 0.5,
+      color: "#000",
       fontFamily: ["Kanit"].join(","),
+    },
+    logoTitleLink: {
+      textDecoration: "none",
     },
   })
 );
@@ -43,7 +47,9 @@ function App() {
         direction="column"
         className={classes.logoGrid}>
         <Grid>
-          <Typography className={classes.logoTitle}>Octovy</Typography>
+          <RouterLink className={classes.logoTitleLink} to="/">
+            <Typography className={classes.logoTitle}>Octovy</Typography>
+          </RouterLink>
         </Grid>
         <Grid>
           <Typography variant="h6">

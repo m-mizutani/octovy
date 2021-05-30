@@ -14,6 +14,8 @@ type Config struct {
 	FeedbackRequestQueue string `env:"FEEDBACK_REQUEST_QUEUE"`
 	GitHubEndpoint       string `env:"GITHUB_ENDPOINT"`
 	FrontendURL          string `env:"FRONTEND_URL"`
+	GitHubAppURL         string `env:"GITHUB_APP_URL"`
+	HomepageURL          string `env:"HOMEPAGE_URL"`
 
 	S3Region string `env:"S3_REGION"`
 	S3Bucket string `env:"S3_BUCKET"`

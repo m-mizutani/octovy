@@ -87,9 +87,11 @@ func New(cfg *Config) *gin.Engine {
 				case errors.Is(err, errResourceNotFound):
 					errResp(c, http.StatusNotFound, err)
 				default:
+					golambda.EmitError(err)
 					errResp(c, http.StatusInternalServerError, err)
 				}
 			} else {
+				golambda.EmitError(err)
 				errResp(c, http.StatusInternalServerError, ginError)
 			}
 		}
@@ -108,6 +110,7 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/scan/report/:report_id", getScanReport)
 	r.GET("/package", getPackage)
 	r.GET("/vuln/:vuln_id", getVulnerability)
+	r.GET("/meta/octovy", getOctovyMetadata)
 
 	return engine
 }

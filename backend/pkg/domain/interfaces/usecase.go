@@ -33,4 +33,6 @@ type Usecases interface {
 	HandleGitHubPushEvent(event *github.PushEvent) error
 	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 	HandleGitHubInstallationEvent(event *github.InstallationEvent) error
+
+	GetOctovyMetadata() *model.OctovyMetadata
 }

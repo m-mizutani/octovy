@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import Toolbar from "@material-ui/core/Toolbar";
 import Paper from "@material-ui/core/Paper";
@@ -30,6 +30,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import FolderIcon from "@material-ui/icons/Folder";
 import Divider from "@material-ui/core/Divider";
+import Checkbox from "@material-ui/core/Checkbox";
 
 import strftime from "strftime";
 
@@ -64,6 +65,10 @@ const repoStyles = makeStyles((theme: Theme) =>
     tgNoData: {
       margin: theme.spacing(10),
     },
+    noDataDescr: {
+      fontSize: "16px",
+      margin: theme.spacing(5),
+    },
   })
 );
 
@@ -74,7 +79,7 @@ interface errorResponse {
 interface repoState {
   error?: errorResponse;
   isLoaded?: boolean;
-  items?: model.repository[];
+  displayed?: model.repository[];
   allItems?: model.repository[];
 }
 
@@ -160,25 +165,36 @@ function Owners() {
 }
 
 function Repositories() {
-  const common = useStyles();
   const classes = repoStyles();
 
   const { owner } = useParams();
   const [inputOwner, setInputOwner] = React.useState<string>("");
   const [redirectTo, setRedirectTo] = React.useState<string>();
   const [repoState, setRepoState] = React.useState<repoState>({});
-
+  const [filterScan, setFilterScan] = React.useState<boolean>(true);
+  console.log("owner:", owner);
   const doRedirect = () => {
     if (redirectTo) {
       return <Redirect to={`/repository/${redirectTo}`} />;
     }
   };
 
+  const filterRepos = (repos: model.repository[]): model.repository[] => {
+    if (repos === undefined) {
+      return [];
+    }
+
+    return repos.filter((repo) => {
+      return !filterScan || repo.Branch.LastScannedAt > 0;
+    });
+  };
+
   const reloadRepoState = () => {
+    setRepoState({ isLoaded: false, allItems: undefined });
+    setInputOwner(owner || "");
     if (!owner) {
       return;
     }
-    setInputOwner(owner);
 
     fetch(`api/v1/repo/${owner}`)
       .then((res) => res.json())
@@ -187,7 +203,7 @@ function Repositories() {
           console.log(result);
           setRepoState({
             isLoaded: true,
-            items: result.data,
+            displayed: filterRepos(result.data),
             allItems: result.data,
           });
         },
@@ -201,6 +217,13 @@ function Repositories() {
   };
 
   React.useEffect(reloadRepoState, [owner]);
+  React.useEffect(() => {
+    setRepoState({
+      isLoaded: true,
+      displayed: filterRepos(repoState.allItems),
+      allItems: repoState.allItems,
+    });
+  }, [filterScan]);
 
   const renderSearchBox = () => {
     return (
@@ -225,10 +248,7 @@ function Repositories() {
             </Grid>
             <Grid item>
               <Tooltip title="Reload">
-                <IconButton
-                  onClick={(e) => {
-                    setRedirectTo(inputOwner);
-                  }}>
+                <IconButton onClick={reloadRepoState}>
                   <RefreshIcon color="inherit" />
                 </IconButton>
               </Tooltip>
@@ -246,17 +266,21 @@ function Repositories() {
       return <div>Error: {repoState.error.Error}</div>;
     } else if (!repoState.isLoaded) {
       return <Alert severity="info">Loading...</Alert>;
-    } else if (repoState.items.length === 0) {
-      return (
-        <div className={classes.tgNoData}>
-          <Typography variant="h4" align="center">
-            No Data
-          </Typography>
-        </div>
-      );
+    } else if (repoState.displayed.length === 0) {
+      return <NoData owner={owner} />;
     } else {
       return (
         <div>
+          <Grid>
+            <Checkbox
+              checked={filterScan}
+              onChange={(e) => {
+                setFilterScan(e.target.checked);
+              }}
+              color="primary"
+            />
+            Only scanned
+          </Grid>
           <TableContainer
             component={Paper}
             className={classes.repositoryListTable}>
@@ -271,7 +295,7 @@ function Repositories() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {repoState.items.map((item) => (
+                {repoState.displayed.map((item) => (
                   <TableRow key={item.Owner + "/" + item.RepoName}>
                     <TableCell component="th" scope="row">
                       <RouterLink
@@ -382,7 +406,6 @@ function renderPackageTypes(pkgTypes: string[], classes: ClassNameMap) {
   if (pkgTypes.length === 0) {
     return;
   }
-  console.log({ pkgTypes });
 
   return (
     <div>
@@ -391,6 +414,44 @@ function renderPackageTypes(pkgTypes: string[], classes: ClassNameMap) {
           <Chip key={i} label={t} size="small" className={classes.pkgChip} />
         );
       })}
+    </div>
+  );
+}
+
+type NoDataProps = {
+  owner: string;
+};
+
+function NoData(props: NoDataProps) {
+  const classes = repoStyles();
+  interface metaData {
+    AppURL: string;
+  }
+  const [meta, setMeta] = React.useState<metaData>();
+  const getMeta = () => {
+    fetch(`api/v1/meta/octovy`)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          console.log(result);
+          setMeta(result.data);
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+  };
+  useEffect(getMeta, []);
+
+  return (
+    <div className={classes.tgNoData}>
+      <Typography variant="h4" align="center">
+        No Data for "{props.owner}"
+      </Typography>
+      <Typography align="center" className={classes.noDataDescr}>
+        Try to install <Link href={meta ? meta.AppURL : ""}>octovy</Link> to
+        your repository
+      </Typography>
     </div>
   );
 }

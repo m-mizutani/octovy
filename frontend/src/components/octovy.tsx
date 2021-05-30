@@ -218,7 +218,7 @@ export function Frame(props: octovyProps) {
           <CssBaseline />
           {renderNavigator()}
           <div className={classes.app}>
-            <Header onDrawerToggle={handleDrawerToggle} />
+            <Header />
             <main className={classes.main}>{props.children}</main>
             <footer className={classes.footer}>
               <Copyright />
