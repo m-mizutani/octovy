@@ -289,8 +289,9 @@ export class OctovyStack extends cdk.Stack {
 
     // Configure lambda permission if lambdaRole is not set
     if (props.lambdaRoleARN === undefined) {
-      this.metaTable.grantFullAccess(this.apiHandler);
-      this.metaTable.grantFullAccess(this.scanRepo);
+      this.metaTable.grantReadWriteData(this.apiHandler);
+      this.metaTable.grantReadWriteData(this.scanRepo);
+      this.metaTable.grantReadWriteData(this.feedback);
 
       this.scanRequestQueue.grantSendMessages(this.apiHandler);
       this.feedbackRequestQueue.grantSendMessages(this.scanRepo);
