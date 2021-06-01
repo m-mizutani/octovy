@@ -297,7 +297,7 @@ func (x *Default) scanProcedure(req *model.ScanRepositoryRequest, app interfaces
 		}
 	}
 
-	if req.Feedback != nil && len(pkgs) > 0 {
+	if req.Feedback != nil {
 		feedbackReq := &model.FeedbackRequest{
 			ReportID:  report.ReportID,
 			InstallID: req.InstallID,
