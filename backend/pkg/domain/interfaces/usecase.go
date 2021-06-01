@@ -1,12 +1,15 @@
 package interfaces
 
 import (
+	"github.com/google/go-github/v29/github"
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 type Usecases interface {
 	ScanRepository(req *model.ScanRepositoryRequest) error
 	SendScanRequest(req *model.ScanRepositoryRequest) error
+
+	FeedbackScanResult(req *model.FeedbackRequest) error
 
 	RegisterRepository(repo *model.Repository) error
 	PutNewRepository(repo *model.Repository) (bool, error)
@@ -26,4 +29,10 @@ type Usecases interface {
 	LookupScanReport(reportID string) (*model.ScanReport, error)
 
 	UpdateTrivyDB() error
+
+	HandleGitHubPushEvent(event *github.PushEvent) error
+	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
+	HandleGitHubInstallationEvent(event *github.InstallationEvent) error
+
+	GetOctovyMetadata() *model.OctovyMetadata
 }

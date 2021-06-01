@@ -297,6 +297,8 @@ github.com/m-mizutani/goerr v0.1.0 h1:O/yFg9MmUUQ42UWrGZaGuonEEh0AjochmcxRq6SE3r
 github.com/m-mizutani/goerr v0.1.0/go.mod h1:Y6lwfp0wInyV8dYlRQ0ivo9KET851GovghP0rmxG1AU=
 github.com/m-mizutani/golambda v1.1.2 h1:XUs/0fzVUo7q4YRFX+0I8W3Uxfd+uxVHuV5rtIF2XL0=
 github.com/m-mizutani/golambda v1.1.2/go.mod h1:oNmVCcSDCNBMAciCZntWCdMHCbI5RsPH3nZPMJ5vQSE=
+github.com/m-mizutani/golambda v1.1.3 h1:64NlcirXbH0/sxALx2Q71dzlrqOoSbwQyhk1/Cp/zrw=
+github.com/m-mizutani/golambda v1.1.3/go.mod h1:oNmVCcSDCNBMAciCZntWCdMHCbI5RsPH3nZPMJ5vQSE=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
 github.com/mattn/go-colorable v0.1.2/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=

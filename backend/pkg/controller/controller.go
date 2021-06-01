@@ -16,6 +16,6 @@ func New() *Controller {
 		Config: model.NewConfig(),
 	}
 
-	ctrl.Usecase = usecase.New(model.NewConfig())
+	ctrl.Usecase = usecase.New(ctrl.Config)
 	return ctrl
 }

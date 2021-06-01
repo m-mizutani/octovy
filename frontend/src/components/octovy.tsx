@@ -45,9 +45,9 @@ let theme = createMuiTheme({
       fontFamily: ["Kanit"].join(","),
     },
     h5: {
-      fontWeight: 500,
-      fontSize: 26,
-      letterSpacing: 0.5,
+      fontWeight: "bold",
+      fontSize: 16,
+      letterSpacing: 0.1,
     },
   },
   shape: {
@@ -218,7 +218,7 @@ export function Frame(props: octovyProps) {
           <CssBaseline />
           {renderNavigator()}
           <div className={classes.app}>
-            <Header onDrawerToggle={handleDrawerToggle} />
+            <Header />
             <main className={classes.main}>{props.children}</main>
             <footer className={classes.footer}>
               <Copyright />

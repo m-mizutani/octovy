@@ -29,6 +29,13 @@ export interface domainConfig {
   certARN: string;
 }
 
+type PullReqEvent = "opened" | "synchronize" | "ready_for_review" | "reopened";
+
+type rules = {
+  PullReqCommentTriggers?: PullReqEvent[];
+  FailCheckIfVuln?: boolean;
+};
+
 type Stage = "private" | "public";
 
 interface OctovyProps extends cdk.StackProps {
@@ -46,6 +53,12 @@ interface OctovyProps extends cdk.StackProps {
   readonly domainConfig?: domainConfig;
   readonly dynamoPITR?: boolean;
 
+  readonly frontendURL?: string;
+  readonly githubAppURL?: string;
+  readonly homepageURL?: string;
+
+  readonly rules?: rules;
+
   readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
 
@@ -58,9 +71,16 @@ const defaultEndpointTypes = [apigateway.EndpointType.PRIVATE];
 export class OctovyStack extends cdk.Stack {
   readonly metaTable: dynamodb.Table;
   readonly scanRequestQueue: sqs.Queue;
+  readonly feedbackRequestQueue: sqs.Queue;
+
+  readonly apiHandler: lambda.Function;
+  readonly scanRepo: lambda.Function;
+  readonly feedback: lambda.Function;
+  readonly updateDB: lambda.Function;
 
   constructor(scope: cdk.Construct, id: string, props: OctovyProps) {
     super(scope, id, props);
+    const stack = this;
 
     // DynamoDB
     this.metaTable = new dynamodb.Table(this, "metaTable", {
@@ -81,7 +101,9 @@ export class OctovyStack extends cdk.Stack {
     this.scanRequestQueue = new sqs.Queue(this, "scanRequest", {
       visibilityTimeout: cdk.Duration.seconds(300),
     });
-
+    this.feedbackRequestQueue = new sqs.Queue(this, "feedbackRequest", {
+      visibilityTimeout: cdk.Duration.seconds(120),
+    });
     // VPC
     var securityGroups: ec2.ISecurityGroup[] | undefined = undefined;
     var vpc: ec2.IVpc | undefined = undefined;
@@ -119,11 +141,20 @@ export class OctovyStack extends cdk.Stack {
           })
         : undefined;
 
+    const rules = props.rules || {};
     const envVars: { [key: string]: string } = {
       TABLE_NAME: this.metaTable.tableName,
       SECRETS_ARN: props.secretsARN,
       SCAN_REQUEST_QUEUE: this.scanRequestQueue.queueUrl,
+      FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
+      GITHUB_APP_URL: props.githubAppURL || "",
+      HOMEPAGE_URL: props.homepageURL || "",
+
+      RULE_PR_COMMENT_TRIGGERS: rules.PullReqCommentTriggers
+        ? rules.PullReqCommentTriggers.join("|")
+        : "",
+      RULE_FAIL_CHECK_IF_VULN: rules.FailCheckIfVuln ? "YES" : "",
 
       S3_REGION: props.s3Region,
       S3_BUCKET: props.s3Bucket,
@@ -133,51 +164,40 @@ export class OctovyStack extends cdk.Stack {
       SENTRY_ENV: props.sentryEnv || "",
     };
 
-    const apiHandler = new lambda.Function(this, "apiHandler", {
-      runtime: lambda.Runtime.GO_1_X,
-      handler: "handler",
-      role: lambdaRole,
-      code: asset,
+    type lambdaConfig = {
+      id: string;
+      timeout: cdk.Duration;
+      memorySize: number;
+      events?: lambda.IEventSource[];
+    };
+    const lambdaFunctions: { [key: string]: lambda.Function } = {};
+
+    const newLambda = (cfg: lambdaConfig): lambda.Function => {
+      return new lambda.Function(this, cfg.id, {
+        runtime: lambda.Runtime.GO_1_X,
+        handler: "handler",
+        role: lambdaRole,
+        code: asset,
+        timeout: cfg.timeout,
+        memorySize: cfg.memorySize,
+        environment: { ...envVars, ...{ LAMBDA_FUNC_ID: cfg.id } },
+        events: cfg.events,
+
+        vpc,
+        securityGroups,
+      });
+    };
+
+    this.apiHandler = newLambda({
+      id: "apiHandler",
       timeout: cdk.Duration.seconds(30),
       memorySize: 128,
-      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "apiHandler" } },
-
-      vpc,
-      securityGroups,
     });
-
-    const scanRepo = new lambda.Function(this, "scanRepo", {
-      runtime: lambda.Runtime.GO_1_X,
-      handler: "handler",
-      role: lambdaRole,
-      code: asset,
-      timeout: cdk.Duration.seconds(300),
-      memorySize: 1024,
-      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "scanRepo" } },
-      events: [new SqsEventSource(this.scanRequestQueue)],
-
-      vpc,
-      securityGroups,
-    });
-
-    const updateDB = new lambda.Function(this, "updateDB", {
-      runtime: lambda.Runtime.GO_1_X,
-      handler: "handler",
-      role: lambdaRole,
-      code: asset,
-      timeout: cdk.Duration.seconds(300),
-      memorySize: 1024,
-      environment: { ...envVars, ...{ LAMBDA_FUNC_ID: "updateDB" } },
-    });
-    const rule = new events.Rule(this, "PeriodicUpdateDB", {
-      schedule: events.Schedule.rate(cdk.Duration.hours(1)),
-    });
-    rule.addTarget(new targets.LambdaFunction(updateDB));
 
     // API gateway
     /// Webhook endpoint
     const webhookGW = new apigateway.LambdaRestApi(this, "octovy-webhook", {
-      handler: apiHandler,
+      handler: this.apiHandler,
       proxy: false,
       cloudWatchRole: false,
       endpointTypes: props.webhookEndpointTypes || defaultEndpointTypes,
@@ -199,7 +219,7 @@ export class OctovyStack extends cdk.Stack {
 
     /// API endpoint
     const apiGW = new apigateway.LambdaRestApi(this, "octovy-api", {
-      handler: apiHandler,
+      handler: this.apiHandler,
       proxy: false,
       cloudWatchRole: false,
       endpointTypes: props.apiEndpointTypes || defaultEndpointTypes,
@@ -252,27 +272,61 @@ export class OctovyStack extends cdk.Stack {
       .addResource("{report_id}");
     apiScanReport.addMethod("GET");
 
+    // Metadata
+    const apiMeta = apiRoot.addResource("meta");
+    apiMeta.addResource("octovy").addMethod("GET");
+
+    // Lambda without API handler
+    envVars.FRONTEND_URL = props.frontendURL || apiGW.url;
+
+    this.scanRepo = newLambda({
+      id: "scanRepo",
+      timeout: cdk.Duration.seconds(300),
+      memorySize: 1024,
+      events: [new SqsEventSource(this.scanRequestQueue)],
+    });
+    this.feedback = newLambda({
+      id: "feedback",
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 1024,
+      events: [new SqsEventSource(this.feedbackRequestQueue)],
+    });
+    this.updateDB = newLambda({
+      id: "updateDB",
+      timeout: cdk.Duration.seconds(300),
+      memorySize: 1024,
+    });
+
+    const rule = new events.Rule(this, "PeriodicUpdateDB", {
+      schedule: events.Schedule.rate(cdk.Duration.hours(1)),
+    });
+    rule.addTarget(new targets.LambdaFunction(this.updateDB));
+
     // Configure lambda permission if lambdaRole is not set
     if (props.lambdaRoleARN === undefined) {
-      this.metaTable.grantFullAccess(apiHandler);
-      this.metaTable.grantFullAccess(scanRepo);
+      this.metaTable.grantReadWriteData(this.apiHandler);
+      this.metaTable.grantReadWriteData(this.scanRepo);
+      this.metaTable.grantReadWriteData(this.feedback);
 
-      this.scanRequestQueue.grantSendMessages(apiHandler);
+      this.scanRequestQueue.grantSendMessages(this.apiHandler);
+      this.feedbackRequestQueue.grantSendMessages(this.scanRepo);
 
       const secret = secretsmanager.Secret.fromSecretCompleteArn(
         this,
         "secret",
         props.secretsARN
       );
-      secret.grantRead(scanRepo);
+      secret.grantRead(this.apiHandler);
+      secret.grantRead(this.scanRepo);
+      secret.grantRead(this.feedback);
 
       const bucket = s3.Bucket.fromBucketName(
         this,
         "data-bucket",
         props.s3Bucket
       );
-      bucket.grantReadWrite(updateDB);
-      bucket.grantRead(scanRepo);
+      bucket.grantReadWrite(this.updateDB);
+      bucket.grantRead(this.scanRepo);
     }
 
     // Configure original domain name

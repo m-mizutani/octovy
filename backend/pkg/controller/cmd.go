@@ -74,6 +74,8 @@ type apiCommandConfig struct {
 	Addr      string
 	Port      int
 
+	GitHubAppURL string
+
 	ctrl *Controller
 }
 
@@ -131,6 +133,12 @@ func newAPICommand(ctrl *Controller) *cli.Command {
 				EnvVars:     []string{"OCTOVY_SECRET_ARN"},
 				Destination: &config.SecretARN,
 			},
+
+			&cli.StringFlag{
+				Name:        "github-app-url",
+				EnvVars:     []string{"OCTOVY_GITHUB_APP_URL"},
+				Destination: &config.GitHubAppURL,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			return apiCommand(c, config)
@@ -142,6 +150,7 @@ func apiCommand(c *cli.Context, config *apiCommandConfig) error {
 	config.ctrl.Config.AwsRegion = config.AWSRegion
 	config.ctrl.Config.TableName = config.TableName
 	config.ctrl.Config.SecretsARN = config.SecretARN
+	config.ctrl.Config.GitHubAppURL = config.GitHubAppURL
 
 	engine := api.New(&api.Config{
 		Usecase:  config.ctrl.Usecase,

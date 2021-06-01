@@ -25,6 +25,7 @@ interface scanTarget {
   CommitID: string;
   UpdatedAt: number;
   RequestedAt: number;
+  URL: string;
 }
 
 export interface scanReport {

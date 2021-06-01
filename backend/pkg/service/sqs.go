@@ -9,15 +9,8 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
-	if req == nil {
-		return goerr.New("req is not set")
-	}
-	if err := req.IsValid(); err != nil {
-		return err
-	}
-
-	raw, err := json.Marshal(req)
+func (x *Service) sendSQSMessage(msg interface{}, url string) error {
+	raw, err := json.Marshal(msg)
 	if err != nil {
 		return goerr.Wrap(model.ErrInvalidInputValues, err.Error())
 	}
@@ -28,7 +21,7 @@ func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
 	}
 
 	input := &sqs.SendMessageInput{
-		QueueUrl:    &x.config.ScanRequestQueue,
+		QueueUrl:    &url,
 		MessageBody: aws.String(string(raw)),
 	}
 	logger.With("input", input).Debug("Sending SQS")
@@ -39,4 +32,26 @@ func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
 	logger.With("output", output).Debug("Sent SQS")
 
 	return nil
+}
+
+func (x *Service) SendScanRequest(req *model.ScanRepositoryRequest) error {
+	if req == nil {
+		return goerr.New("req is not set")
+	}
+	if err := req.IsValid(); err != nil {
+		return err
+	}
+
+	return x.sendSQSMessage(req, x.config.ScanRequestQueue)
+}
+
+func (x *Service) SendFeedbackRequest(req *model.FeedbackRequest) error {
+	if req == nil {
+		return goerr.New("req is not set")
+	}
+	if err := req.IsValid(); err != nil {
+		return err
+	}
+
+	return x.sendSQSMessage(req, x.config.FeedbackRequestQueue)
 }

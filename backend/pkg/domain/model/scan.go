@@ -5,6 +5,13 @@ import "github.com/m-mizutani/goerr"
 type ScanRepositoryRequest struct {
 	ScanTarget
 	InstallID int64
+	Feedback  *FeedbackOptions
+}
+
+type FeedbackOptions struct {
+	PullReqID     *int
+	PullReqBranch string
+	CheckID       *int64
 }
 
 func (x *ScanRepositoryRequest) IsValid() error {
@@ -18,14 +25,39 @@ func (x *ScanRepositoryRequest) IsValid() error {
 	return nil
 }
 
+type FeedbackRequest struct {
+	ReportID  string
+	InstallID int64
+	Options   FeedbackOptions
+}
+
+func (x *FeedbackRequest) IsValid() error {
+	if x.ReportID == "" {
+		return goerr.Wrap(ErrInvalidInputValues, "ReportID must not be empty")
+	}
+	if x.InstallID == 0 {
+		return goerr.Wrap(ErrInvalidInputValues, "InstallID must not be 0")
+	}
+	if x.Options.PullReqID == nil && x.Options.CheckID == nil {
+		return goerr.Wrap(ErrInvalidInputValues, "Either one of PullReqID and CheckSuiteID is required")
+	}
+
+	return nil
+}
+
 type ScanTarget struct {
 	GitHubBranch
 	CommitID       string
 	UpdatedAt      int64
 	RequestedAt    int64
+	URL            string
 	IsPullRequest  bool
 	IsTargetBranch bool
 }
+
+// Value to pointer conversion
+func Int64(v int64) *int64 { return &v }
+func Int(v int) *int       { return &v }
 
 func (x *ScanTarget) IsValid() error {
 	if x.Branch == "" {
