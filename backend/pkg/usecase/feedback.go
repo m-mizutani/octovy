@@ -46,11 +46,13 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		if err != nil {
 			return err
 		}
-		r, err := x.LookupScanReport(branch.ReportSummary.ReportID)
-		if err != nil {
-			return err
+		if branch != nil && branch.ReportSummary.ReportID != "" {
+			r, err := x.LookupScanReport(branch.ReportSummary.ReportID)
+			if err != nil {
+				return err
+			}
+			baseReport = r
 		}
-		baseReport = r
 	}
 
 	app, err := x.buildGitHubApp(req.InstallID)
