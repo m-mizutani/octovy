@@ -22,6 +22,12 @@ func postWebhookGitHub(c *gin.Context) {
 		_ = c.Error(goerr.Wrap(err, "Failed to read github webhook event body"))
 		return
 	}
+
+	// github.com/google/go-github/v29/github have not support integration_installation
+	if githubEventType == "integration_installation" {
+		return
+	}
+
 	raw, err := github.ParseWebHook(githubEventType, eventBody)
 	if err != nil {
 		_ = c.Error(goerr.Wrap(err, "Failed to parse github webhook event body").With("body", string(eventBody)))

@@ -72,7 +72,10 @@ func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptio
 		return nil
 	}
 
-	body := buildFeedbackComment(newReport, oldReport, frontendURL)
+	body := buildFeedbackComment(newReport, oldReport, frontendURL, false)
+	if body == "" {
+		return nil
+	}
 
 	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
 
@@ -96,7 +99,7 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 	conclusion := "neutral"
 	title := fmt.Sprintf("❗ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
 	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
-	body := buildFeedbackComment(newReport, oldReport, frontendURL)
+	body := buildFeedbackComment(newReport, oldReport, frontendURL, true)
 
 	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
 		conclusion = "success"
@@ -181,18 +184,23 @@ func diffReport(newReport, oldReport *model.ScanReport) (res changeResult) {
 		if _, ok := oldMap[n.key()]; ok {
 			res.Unfixed = append(res.Unfixed, n)
 		} else {
-			res.Fixed = append(res.Fixed, n)
+			res.News = append(res.News, n)
 		}
 	}
 	for _, o := range oldMap {
 		if _, ok := newMap[o.key()]; !ok {
-			res.News = append(res.News, o)
+			res.Fixed = append(res.Fixed, o)
 		}
 	}
 	return
 }
 
-func buildFeedbackComment(report, base *model.ScanReport, frontendURL string) string {
+func feedbackCommentVulnRecord(v *vulnRecord, url string) string {
+	return fmt.Sprintf("- [%s](%s/#/vuln/%s): `%s` %s in [%s](%s)\n",
+		v.VulnID, url, v.VulnID, v.PkgName, v.PkgVersion, v.Source, v.Source)
+}
+
+func buildFeedbackComment(report, base *model.ScanReport, frontendURL string, showUnfix bool) string {
 	var body string
 	const listSize = 5
 
@@ -200,14 +208,16 @@ func buildFeedbackComment(report, base *model.ScanReport, frontendURL string) st
 	if len(changes.News) == 0 && len(changes.Unfixed) == 0 {
 		body += "🎉 **No vulnerable packages**\n\n"
 	}
+	if len(changes.News) == 0 && len(changes.Fixed) == 0 && !showUnfix {
+		return ""
+	}
 
 	// New vulnerabilities
 	if len(changes.News) > 0 {
 		body += "### 🚨 New vulnerabilities\n"
 		for i := 0; i < len(changes.News) && i < listSize; i++ {
 			v := changes.News[i]
-			body += fmt.Sprintf("- %s: `%s` %s in %s\n",
-				v.VulnID, v.PkgName, v.PkgVersion, v.Source)
+			body += feedbackCommentVulnRecord(v, frontendURL)
 		}
 		if len(changes.News) > listSize {
 			body += fmt.Sprintf("... and more %d packages\n\n", len(changes.News)-listSize)
@@ -220,8 +230,7 @@ func buildFeedbackComment(report, base *model.ScanReport, frontendURL string) st
 		body += "### ✅ Fixed vulnerabilities\n"
 		for i := 0; i < len(changes.Fixed) && i < listSize; i++ {
 			v := changes.Fixed[i]
-			body += fmt.Sprintf("- %s: `%s` %s in %s\n",
-				v.VulnID, v.PkgName, v.PkgVersion, v.Source)
+			body += feedbackCommentVulnRecord(v, frontendURL)
 		}
 		if len(changes.Fixed) > listSize {
 			body += fmt.Sprintf("... and more %d packages\n\n", len(changes.Fixed)-listSize)
@@ -229,7 +238,7 @@ func buildFeedbackComment(report, base *model.ScanReport, frontendURL string) st
 		body += "\n"
 	}
 
-	if len(changes.Unfixed) > 0 {
+	if showUnfix && len(changes.Unfixed) > 0 {
 		remainCount := map[string]int{}
 		for _, vuln := range changes.Unfixed {
 			remainCount[vuln.Source] = remainCount[vuln.Source] + 1
