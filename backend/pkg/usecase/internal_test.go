@@ -14,7 +14,7 @@ func TestStepDownDirectory(t *testing.T) {
 }
 
 func TestDiffReport(t *testing.T) {
-	newReport := &model.ScanReport{
+	oldReport := &model.ScanReport{
 		Sources: []*model.PackageSource{
 			{
 				Source: "abc",
@@ -53,7 +53,7 @@ func TestDiffReport(t *testing.T) {
 			},
 		},
 	}
-	oldReport := &model.ScanReport{
+	newReport := &model.ScanReport{
 		Sources: []*model.PackageSource{
 			{
 				Source: "abc",
