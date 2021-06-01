@@ -20,8 +20,9 @@ func setupHandleGitHubEvent(t *testing.T) (interfaces.Usecases, *mockSet) {
 	const secretsARN = "arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"
 
 	cfg := &model.Config{
-		SecretsARN:       secretsARN,
-		ScanRequestQueue: "https://scanreq.queue.url",
+		SecretsARN:                 secretsARN,
+		ScanRequestQueue:           "https://scanreq.queue.url",
+		RulePullReqCommentTriggers: "opened",
 	}
 
 	uc := usecase.New(cfg)

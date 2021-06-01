@@ -29,6 +29,13 @@ export interface domainConfig {
   certARN: string;
 }
 
+type PullReqEvent = "opened" | "synchronize" | "ready_for_review" | "reopened";
+
+type rules = {
+  PullReqCommentTriggers?: PullReqEvent[];
+  FailCheckIfVuln?: boolean;
+};
+
 type Stage = "private" | "public";
 
 interface OctovyProps extends cdk.StackProps {
@@ -49,6 +56,8 @@ interface OctovyProps extends cdk.StackProps {
   readonly frontendURL?: string;
   readonly githubAppURL?: string;
   readonly homepageURL?: string;
+
+  readonly rules?: rules;
 
   readonly webhookEndpointTypes?: apigateway.EndpointType[];
   readonly apiEndpointTypes?: apigateway.EndpointType[];
@@ -132,6 +141,7 @@ export class OctovyStack extends cdk.Stack {
           })
         : undefined;
 
+    const rules = props.rules || {};
     const envVars: { [key: string]: string } = {
       TABLE_NAME: this.metaTable.tableName,
       SECRETS_ARN: props.secretsARN,
@@ -140,6 +150,11 @@ export class OctovyStack extends cdk.Stack {
       GITHUB_ENDPOINT: props.githubEndpoint || "",
       GITHUB_APP_URL: props.githubAppURL || "",
       HOMEPAGE_URL: props.homepageURL || "",
+
+      RULE_PR_COMMENT_TRIGGERS: rules.PullReqCommentTriggers
+        ? rules.PullReqCommentTriggers.join("|")
+        : "",
+      RULE_FAIL_CHECK_IF_VULN: rules.FailCheckIfVuln ? "YES" : "",
 
       S3_REGION: props.s3Region,
       S3_BUCKET: props.s3Bucket,

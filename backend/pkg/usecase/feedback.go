@@ -61,7 +61,7 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 	if err := feedbackPullRequest(app, &req.Options, report, baseReport, x.config.FrontendBaseURL()); err != nil {
 		return err
 	}
-	if err := feedbackCheckRun(app, &req.Options, report, baseReport, x.config.FrontendBaseURL()); err != nil {
+	if err := feedbackCheckRun(app, &req.Options, report, baseReport, x.config.FrontendBaseURL(), x.config.ShouldFailIfVuln()); err != nil {
 		return err
 	}
 	return nil
@@ -83,7 +83,7 @@ func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptio
 	return nil
 }
 
-func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport, frontendURL string) error {
+func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport, frontendURL string, checkFail bool) error {
 	if feedback.CheckID == nil {
 		return nil
 	}
@@ -102,6 +102,8 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 		conclusion = "success"
 		title = "🎉  No vulnerability detected"
 		summary = "OK"
+	} else if checkFail {
+		conclusion = "failure"
 	}
 
 	opt := &github.UpdateCheckRunOptions{

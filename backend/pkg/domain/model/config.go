@@ -17,6 +17,9 @@ type Config struct {
 	GitHubAppURL         string `env:"GITHUB_APP_URL"`
 	HomepageURL          string `env:"HOMEPAGE_URL"`
 
+	RulePullReqCommentTriggers string `env:"RULE_PR_COMMENT_TRIGGERS"`
+	RuleFailCheckIfVuln        string `env:"RULE_FAIL_CHECK_IF_VULN"`
+
 	S3Region string `env:"S3_REGION"`
 	S3Bucket string `env:"S3_BUCKET"`
 	S3Prefix string `env:"S3_PREFIX"`
@@ -35,4 +38,17 @@ func NewConfig() *Config {
 // FrontendBaseURL returns frontend URL trimmed last slash
 func (x *Config) FrontendBaseURL() string {
 	return strings.TrimSuffix(x.FrontendURL, "/")
+}
+
+func (x *Config) ShouldCommentPR(event string) bool {
+	for _, trigger := range strings.Split(x.RulePullReqCommentTriggers, "|") {
+		if event == trigger {
+			return true
+		}
+	}
+	return false
+}
+
+func (x *Config) ShouldFailIfVuln() bool {
+	return x.RuleFailCheckIfVuln != ""
 }

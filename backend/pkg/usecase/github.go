@@ -180,7 +180,7 @@ func (x *Default) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 		},
 	}
 
-	if *event.Action == "opened" {
+	if x.config.ShouldCommentPR(*event.Action) {
 		req.Feedback.PullReqID = event.PullRequest.Number
 	}
 
