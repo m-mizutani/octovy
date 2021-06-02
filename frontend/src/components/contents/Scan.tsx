@@ -34,6 +34,18 @@ type reportStatus = {
   displayed: model.packageSource[];
 };
 
+function toCommitLink(target: model.scanTarget) {
+  if (target.URL) {
+    return (
+      <Link href={target.URL + "/commit/" + target.CommitID}>
+        {target.CommitID.substr(0, 7)}
+      </Link>
+    );
+  } else {
+    return target.CommitID.substr(0, 7);
+  }
+}
+
 export function Report(props: reportProps) {
   const classes = useStyles();
 
@@ -146,16 +158,7 @@ export function Report(props: reportProps) {
         },
         {
           title: "Commit",
-          data: (
-            <Link
-              href={
-                status.report.Target.URL +
-                "/commit/" +
-                status.report.Target.CommitID
-              }>
-              {status.report.Target.CommitID.substr(0, 7)}
-            </Link>
-          ),
+          data: toCommitLink(status.report.Target),
         },
       ];
 

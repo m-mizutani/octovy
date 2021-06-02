@@ -18,7 +18,7 @@ export interface packageSource {
   Packages: pkg[];
 }
 
-interface scanTarget {
+export interface scanTarget {
   Owner: string;
   RepoName: string;
   Branch: string;
