@@ -22,7 +22,7 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 
 	var report *model.ScanReport
 	for i := 0; i < maxRetry; i++ {
-		r, err := x.LookupScanReport(req.ReportID)
+		r, err := x.svc.DB().LookupScanReport(req.ReportID)
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 			return err
 		}
 		if branch != nil && branch.ReportSummary.ReportID != "" {
-			r, err := x.LookupScanReport(branch.ReportSummary.ReportID)
+			r, err := x.svc.DB().LookupScanReport(branch.ReportSummary.ReportID)
 			if err != nil {
 				return err
 			}
