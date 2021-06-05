@@ -340,7 +340,11 @@ export function Report(props: reportProps) {
             <Grid container spacing={2}>
               {reportMeta.map((meta, idx) => {
                 return (
-                  <Grid item xs={2} key={"report-meta-" + idx}>
+                  <Grid
+                    item
+                    xs={2}
+                    key={"report-meta-" + idx}
+                    className={classes.reportMetaGrid}>
                     <Typography className={classes.typographyTitle}>
                       {meta.title}
                     </Typography>

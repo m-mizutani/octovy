@@ -23,6 +23,10 @@ const useStyles = makeStyles((theme: Theme) =>
     reportMetaParagraph: {
       marginBottom: theme.spacing(4),
     },
+    reportMetaGrid: {
+      wordBreak: "break-all",
+      wordWrap: "break-word",
+    },
     typographyTitle: {
       marginTop: theme.spacing(0),
       marginBottom: theme.spacing(1),

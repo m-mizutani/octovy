@@ -12,8 +12,9 @@ import {
 
 import * as repositoryList from "../components/contents/RepositoryList";
 import * as repository from "../components/contents/Repository";
-import * as packages from "../components/contents/Packages";
 import * as vulnerability from "../components/contents/Vulnerability";
+import * as Report from "../components/contents/Report";
+
 import { Link, Typography } from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Link as RouterLink } from "react-router-dom";
@@ -75,6 +76,9 @@ function App() {
         </Route>
         <Route path="/vuln/:vulnID">
           <vulnerability.Content />
+        </Route>
+        <Route path="/scan/report/:reportID">
+          <Report.Content />
         </Route>
 
         <Route path="/" exact>
