@@ -146,7 +146,7 @@ func (x *GitHubApp) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64
 
 	ctx := context.Background()
 	opt := github.CreateCheckRunOptions{
-		Name:    "octovy: package vulnerability check",
+		Name:    "Octovy: package vulnerability check",
 		HeadSHA: commit,
 	}
 

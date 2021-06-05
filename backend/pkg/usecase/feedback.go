@@ -112,6 +112,7 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 	}
 
 	opt := &github.UpdateCheckRunOptions{
+		Name:        "Octovy: package vulnerability check",
 		Status:      github.String("completed"),
 		CompletedAt: &github.Timestamp{Time: time.Unix(newReport.ScannedAt, 0)},
 		Conclusion:  &conclusion,
