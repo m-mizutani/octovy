@@ -58,6 +58,7 @@ $ cd your-octovy-deploy
 $ cdk init --language=typescript
 $ npm i @aws-cdk/aws-apigateway@1.90.0
 $ git clone https://github.com/m-mizutani/octovy.git
+$ cd octovy && npm i && cd ..
 ```
 
 Edit a deployment configuration in `bin` directory (e.g. `bin/your-octovy-deploy.ts`)
