@@ -162,14 +162,18 @@ func annotateVulnerability(dt *detector.Detector, pkgs []*model.PackageRecord, s
 			return err
 		}
 
-		var vulnIDs []string
+		vulnMap := map[string]struct{}{}
 		for _, vuln := range vulns {
-			vulnIDs = append(vulnIDs, vuln.VulnID)
+			vulnMap[vuln.VulnID] = struct{}{}
 			if vuln.Detail.LastModifiedDate != nil {
 				vuln.LastModifiedAt = vuln.Detail.LastModifiedDate.Unix()
 			}
 			vuln.FirstSeenAt = seenAt
 			detectedVulnMap[vuln.VulnID] = vuln
+		}
+		var vulnIDs []string
+		for vulnID := range vulnMap {
+			vulnIDs = append(vulnIDs, vulnID)
 		}
 		pkgs[i].Vulnerabilities = vulnIDs
 	}
@@ -297,7 +301,7 @@ func (x *Default) scanProcedure(req *model.ScanRepositoryRequest, app interfaces
 		}
 	}
 
-	if req.Feedback != nil && len(pkgs) > 0 {
+	if req.Feedback != nil {
 		feedbackReq := &model.FeedbackRequest{
 			ReportID:  report.ReportID,
 			InstallID: req.InstallID,
@@ -369,8 +373,28 @@ func diffPackageList(oldPkgs, newPkgs []*model.PackageRecord) (addPkgs, modPkgs,
 	return
 }
 
-func (x *Default) LookupScanReport(reportID string) (*model.ScanReport, error) {
-	return x.svc.DB().LookupScanReport(reportID)
+func (x *Default) LookupScanReport(reportID string) (*model.ScanReportResponse, error) {
+	report, err := x.svc.DB().LookupScanReport(reportID)
+	if err != nil {
+		return nil, err
+	}
+	if report == nil {
+		return nil, nil
+	}
+
+	vulnSet, err := x.svc.DB().GetVulnerabilities(report.Vulnerabilities())
+	if err != nil {
+		return nil, err
+	}
+	vulnMap := map[string]*model.Vulnerability{}
+	for _, vuln := range vulnSet {
+		vulnMap[vuln.VulnID] = vuln
+	}
+
+	return &model.ScanReportResponse{
+		ScanReport:      *report,
+		Vulnerabilities: vulnMap,
+	}, nil
 }
 
 func (x *Default) FindPackageRecordsByBranch(branch *model.GitHubBranch) ([]*model.PackageRecord, error) {

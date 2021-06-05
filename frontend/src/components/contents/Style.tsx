@@ -33,56 +33,35 @@ const useStyles = makeStyles((theme: Theme) =>
       fontSize: "14px",
     },
 
+    formControl: {
+      margin: theme.spacing(1),
+      minWidth: 120,
+    },
+    packageTableHeader: {
+      background: "#ddd",
+    },
+
     progressIcon: {
       marginTop: "2px",
       marginLeft: "15px",
     },
 
-    formControl: {
-      margin: theme.spacing(1),
-      minWidth: 120,
-    },
-    selectEmpty: {
-      marginTop: theme.spacing(2),
-    },
-    packageList: {
-      marginTop: theme.spacing(2),
-    },
-    packageTable: {},
-    packageTableHeader: {
-      background: "#ddd",
-    },
-    packageTableNameRow: {
-      width: "30%",
-      position: "static",
-    },
-    packageTableVersionRow: {
-      width: "30%",
-      position: "static",
-    },
-    packageTableVulnRow: {
-      width: "40%",
-    },
-    packageTableVulnCell: {
-      "& > *": {
-        margin: theme.spacing(0.5),
-      },
-    },
-
-    vulnParagraph: {
-      marginBottom: theme.spacing(5),
-    },
-    vulnDetailItem: {
-      padding: theme.spacing(2),
-    },
-    vulnDetailItemTitle: {
-      fontWeight: "bold",
-      marginBottom: theme.spacing(1),
-    },
-
     pkgList: {
       height: "600px",
       width: "100%",
+    },
+
+    vulnParagraph: {
+      marginBottom: "30px",
+    },
+    vulnDetailItem: {
+      padding: "6px",
+      wordBreak: "break-all",
+      wordWrap: "break-word",
+    },
+    vulnDetailItemTitle: {
+      fontWeight: "bold",
+      marginBottom: "3px",
     },
   })
 );

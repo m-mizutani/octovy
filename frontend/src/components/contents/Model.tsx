@@ -18,7 +18,7 @@ export interface packageSource {
   Packages: pkg[];
 }
 
-interface scanTarget {
+export interface scanTarget {
   Owner: string;
   RepoName: string;
   Branch: string;
@@ -33,6 +33,7 @@ export interface scanReport {
   Target: scanTarget;
   ScannedAt: number;
   Sources: packageSource[];
+  Vulnerabilities: { [key: string]: vulnerability };
 }
 
 export interface packageRecord {

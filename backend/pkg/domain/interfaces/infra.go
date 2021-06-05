@@ -75,6 +75,7 @@ type DBClient interface {
 	InsertVulnerability(vuln *model.Vulnerability) error
 	FindVulnerability(vulnID string) (*model.Vulnerability, error)
 	FindLatestVulnerabilities(n int) ([]*model.Vulnerability, error)
+	GetVulnerabilities(vulnIDs []string) ([]*model.Vulnerability, error)
 
 	TableName() string
 	Close() error

@@ -1,6 +1,8 @@
 package model
 
-import "github.com/m-mizutani/goerr"
+import (
+	"github.com/m-mizutani/goerr"
+)
 
 type ScanRepositoryRequest struct {
 	ScanTarget
@@ -98,6 +100,12 @@ type ScanReport struct {
 	TrivyDBMeta TrivyDBMeta
 }
 
+// ScanReportResponse is for API response of /scan/report
+type ScanReportResponse struct {
+	ScanReport
+	Vulnerabilities map[string]*Vulnerability
+}
+
 func (x *ScanReport) IsValid() error {
 	if x.ReportID == "" {
 		return goerr.Wrap(ErrInvalidInputValues, "ID is not set")
@@ -138,4 +146,22 @@ func (x *ScanReport) ToLog() *ScanLog {
 		ScannedAt: x.ScannedAt,
 		Summary:   summary,
 	}
+}
+
+// Vulnerabilities returns VulnID set of in the report
+func (x *ScanReport) Vulnerabilities() []string {
+	vulnMap := map[string]struct{}{}
+	for s := range x.Sources {
+		for p := range x.Sources[s].Packages {
+			for _, vulnID := range x.Sources[s].Packages[p].Vulnerabilities {
+				vulnMap[vulnID] = struct{}{}
+			}
+		}
+	}
+
+	var vulnIDs []string
+	for vulnID := range vulnMap {
+		vulnIDs = append(vulnIDs, vulnID)
+	}
+	return vulnIDs
 }
