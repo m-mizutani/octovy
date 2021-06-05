@@ -33,6 +33,7 @@ export interface scanReport {
   Target: scanTarget;
   ScannedAt: number;
   Sources: packageSource[];
+  Vulnerabilities: { [key: string]: vulnerability };
 }
 
 export interface packageRecord {
