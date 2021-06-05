@@ -156,7 +156,7 @@ export function Report(props: reportProps) {
   };
 
   const renderVulnerabilities = () => {
-    const sources = status.report.Sources;
+    const sources = status.vulnSources;
     if (sources.length === 0) {
       return (
         <Typography className={classes.typographyText}>
