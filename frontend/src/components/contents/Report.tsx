@@ -20,7 +20,7 @@ export function Content(props: repoProps) {
   const { reportID } = useParams();
   return (
     <Paper className={classes.paper}>
-      <scan.Report reportID={reportID} packageLink={true} />
+      <scan.Report reportID={reportID} packageLink={props.enablePackageLink} />
     </Paper>
   );
 }
