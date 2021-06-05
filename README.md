@@ -1,7 +1,7 @@
 # Octovy
 
 ![SampleView](https://user-images.githubusercontent.com/605953/120887167-48f7eb80-c62c-11eb-877d-79f081367c81.png)
-https://ocotvy.io
+https://octovy.io
 
 `Octovy` is a GitHub App to scan vulnerability of package system (such as RubyGems, NPM, etc.) for GitHub repository. It detects a package lock file such as `Gemfile.lock` and checks if the package includes vulnerability based on package version. After that, Octovy stores scan report to database that can be accessed via Web UI and sends a result to [GitHub Check](https://docs.github.com/en/rest/reference/checks) as CI. A conclusion of GitHub Check is only `success` (No vulnerable packages) or `neutral` (Vulnerable package found) for now.
 
@@ -11,7 +11,7 @@ https://ocotvy.io
 
 Octovy provides 2 modes: Public or Private.
 
-1. Public mode is available at https://ocotvy.io and you can install GitHub App from https://github.com/apps/octovy
+1. Public mode is available at https://octovy.io and you can install GitHub App from https://github.com/apps/octovy
 2. Private mode can be deployed as your own AWS CDK stack. See [Deployment](#Deployment) section for installation step.
 
 Public mode feature is limited because of scalability and access control perspective. I recommend to deploy your own Octovy as Private mode if you want to control access to vulnerability information of your repository.
