@@ -1,0 +1,26 @@
+dist: bionic
+language: go
+sudo: false
+
+env: GO111MODULE=on
+
+os:
+  - osx
+  - linux
+
+go:
+  - 1.15.x
+  - 1.16.x
+
+git:
+  depth: 1
+
+notifications:
+  email: false
+
+before_script:
+  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+script:
+  - golangci-lint run ./backend/...
+  - go test ./backend/...
