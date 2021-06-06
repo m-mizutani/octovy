@@ -7,6 +7,8 @@ https://octovy.io
 
 ![GitHub Check](https://user-images.githubusercontent.com/605953/120887551-82c9f180-c62e-11eb-8049-1f5e448b4dc5.png)
 
+Basic idea of Octovy is based on [Trivy](https://github.com/aquasecurity/trivy).
+
 ## How to use
 
 Octovy provides 2 modes: Public or Private.
@@ -138,4 +140,4 @@ After invoking webpack dev server and API server, access to http://localhost:808
 
 ## Acknowledge
 
-`Octovy` is massively inspired by [trivy](https://github.com/aquasecurity/trivy) and has a similar mechanism with trivy to detect vulnerability. Additionally Octovy leverages [trivy-db](https://github.com/aquasecurity/trivy-db) as vulnerability/advisory database.
+`Octovy` is massively inspired by [Trivy](https://github.com/aquasecurity/trivy) and has a similar mechanism with trivy to detect vulnerability. Additionally Octovy leverages [trivy-db](https://github.com/aquasecurity/trivy-db) as vulnerability/advisory database. I appreciate trivy authors for publishing great OSS.
