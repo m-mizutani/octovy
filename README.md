@@ -1,4 +1,4 @@
-# Octovy [![Go Report Card](https://goreportcard.com/badge/github.com/m-mizutani/octovy)](https://goreportcard.com/report/github.com/m-mizutani/octovy)
+# Octovy [![Go Report Card](https://goreportcard.com/badge/github.com/m-mizutani/octovy)](https://goreportcard.com/report/github.com/m-mizutani/octovy) [![Build Status](https://travis-ci.com/m-mizutani/octovy.svg?branch=master)](https://travis-ci.com/m-mizutani/octovy)
 
 ![SampleView](https://user-images.githubusercontent.com/605953/120887167-48f7eb80-c62c-11eb-877d-79f081367c81.png)
 https://octovy.io
