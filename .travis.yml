@@ -1,6 +1,8 @@
 dist: bionic
 language: go
 sudo: false
+service:
+  - docker
 
 env: GO111MODULE=on
 
@@ -18,9 +20,9 @@ git:
 notifications:
   email: false
 
-before_script:
-  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
+before_install:
+  - docker run -d -p 127.0.0.1:8000:8000 amazon/dynamodb-local
 
 script:
-  - golangci-lint run ./backend/...
+  - go vet ./backend/...
   - go test ./backend/...
