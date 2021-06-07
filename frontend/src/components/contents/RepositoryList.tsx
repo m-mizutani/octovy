@@ -259,6 +259,16 @@ function Repositories() {
     );
   };
 
+  const renderRepoIcon = (repo: model.repository) => {
+    if (repo.Branch.ReportSummary.PkgCount === 0) {
+      return "☑️";
+    } else if (repo.Branch.ReportSummary.VulnCount === 0) {
+      return "✅";
+    } else {
+      return "⚠️";
+    }
+  };
+
   const renderRepositories = () => {
     if (!owner) {
       return;
@@ -298,6 +308,7 @@ function Repositories() {
                 {repoState.displayed.map((item) => (
                   <TableRow key={item.Owner + "/" + item.RepoName}>
                     <TableCell component="th" scope="row">
+                      {renderRepoIcon(item)}{" "}
                       <RouterLink
                         to={`/repository/${item.Owner}/${item.RepoName}`}
                         style={{ textDecoration: "none" }}>
