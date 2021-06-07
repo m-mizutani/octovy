@@ -164,3 +164,217 @@ func TestFeedbackScanResult(t *testing.T) {
 	assert.True(t, calledCreateIssueCommentMock)
 	assert.False(t, calledUpdateCheckRunMock)
 }
+
+func TestFeedbackScanResultPullReqComment(t *testing.T) {
+	srcBranch := model.GitHubBranch{
+		GitHubRepo: model.GitHubRepo{
+			Owner:    "clock",
+			RepoName: "tower",
+		},
+		Branch: "m-mizutani:pr",
+	}
+
+	originPkg := &model.Package{
+		Type:            model.PkgRubyGems,
+		Name:            "origin",
+		Version:         "1.1",
+		Vulnerabilities: []string{"CVE-2999-0002"},
+	}
+
+	firstReport := &model.ScanReport{
+		ReportID:  "first-report-id",
+		ScannedAt: 1234,
+		Target: model.ScanTarget{
+			GitHubBranch: srcBranch,
+			CommitID:     "xyz098",
+		},
+		Sources: []*model.PackageSource{
+			{
+				Source: "Gemfile.lock",
+				Packages: []*model.Package{
+					{
+						Type:            model.PkgRubyGems,
+						Name:            "orange",
+						Version:         "1.1",
+						Vulnerabilities: []string{"CVE-2999-0002"},
+					},
+					originPkg,
+				},
+			},
+		},
+	}
+	secondReport := &model.ScanReport{
+		ReportID:  "second-report-id",
+		ScannedAt: 2234,
+		Target: model.ScanTarget{
+			GitHubBranch: srcBranch,
+			CommitID:     "abc123",
+		},
+		Sources: []*model.PackageSource{
+			{
+				Source: "Gemfile.lock",
+				Packages: []*model.Package{
+					{
+						Type:            model.PkgRubyGems,
+						Name:            "orange",
+						Version:         "1.1",
+						Vulnerabilities: []string{"CVE-2999-0002"},
+					},
+					originPkg,
+				},
+			},
+		},
+	}
+	thirdReport := &model.ScanReport{
+		ReportID:  "third-report-id",
+		ScannedAt: 2234,
+		Target: model.ScanTarget{
+			GitHubBranch: srcBranch,
+			CommitID:     "ppp123",
+		},
+		Sources: []*model.PackageSource{
+			{
+				Source: "Gemfile.lock",
+				Packages: []*model.Package{
+					{
+						Type:            model.PkgRubyGems,
+						Name:            "blue",
+						Version:         "1.1",
+						Vulnerabilities: []string{"CVE-2999-0001"},
+					},
+					originPkg,
+				},
+			},
+		},
+	}
+
+	setup := func(t *testing.T) (interfaces.Usecases, *mockSet) {
+		uc, mock := setupFeedbackScanResult(t)
+
+		dstBranch := model.GitHubBranch{
+			GitHubRepo: model.GitHubRepo{
+				Owner:    "clock",
+				RepoName: "tower",
+			},
+			Branch: "main",
+		}
+
+		dstReport := &model.ScanReport{
+			ReportID:  "dst-report-id",
+			ScannedAt: 1234,
+			Target: model.ScanTarget{
+				GitHubBranch: srcBranch,
+				CommitID:     "xyz098",
+			},
+			Sources: []*model.PackageSource{
+				{
+					Source:   "Gemfile.lock",
+					Packages: []*model.Package{originPkg},
+				},
+			},
+		}
+
+		// Insert test data
+		require.NoError(t, mock.db.InsertScanReport(dstReport))
+		inserted, err := mock.db.InsertRepo(&model.Repository{
+			GitHubRepo:    dstBranch.GitHubRepo,
+			DefaultBranch: "main",
+		})
+		require.NoError(t, err)
+		require.True(t, inserted)
+		require.NoError(t, mock.db.UpdateBranch(&model.Branch{
+			GitHubBranch: dstBranch,
+			ReportSummary: model.ScanReportSummary{
+				ReportID: "dst-report-id",
+			},
+		}))
+
+		// Do not check UpdateCheckRun
+		mock.githubapp.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error { return nil }
+		return uc, mock
+	}
+
+	t.Run("comment new vuln by first report", func(t *testing.T) {
+		uc, mock := setup(t)
+		require.NoError(t, mock.db.InsertScanReport(firstReport))
+
+		calledCreateIssueCommentMock := false
+		mock.githubapp.CreateIssueCommentMock = func(repo *model.GitHubRepo, prID int, body string) error {
+			calledCreateIssueCommentMock = true
+			assert.Equal(t, "clock", repo.Owner)
+			assert.Equal(t, "tower", repo.RepoName)
+			assert.Equal(t, 666, prID)
+			assert.Contains(t, body, "🚨")
+			assert.NotContains(t, body, "✅")
+			assert.NotContains(t, body, "origin")
+			return nil
+		}
+
+		req := &model.FeedbackRequest{
+			ReportID:  "first-report-id",
+			InstallID: 123,
+			Options: model.FeedbackOptions{
+				PullReqID:     model.Int(666),
+				PullReqBranch: "main",
+			},
+		}
+
+		require.NoError(t, uc.FeedbackScanResult(req))
+		assert.True(t, calledCreateIssueCommentMock)
+	})
+
+	t.Run("do not comment by second report", func(t *testing.T) {
+		uc, mock := setup(t)
+		require.NoError(t, mock.db.InsertScanReport(firstReport))
+		require.NoError(t, mock.db.InsertScanReport(secondReport))
+
+		calledCreateIssueCommentMock := false
+		mock.githubapp.CreateIssueCommentMock = func(repo *model.GitHubRepo, prID int, body string) error {
+			calledCreateIssueCommentMock = true
+			return nil
+		}
+
+		req := &model.FeedbackRequest{
+			ReportID:  "second-report-id",
+			InstallID: 123,
+			Options: model.FeedbackOptions{
+				PullReqID:     model.Int(666),
+				PullReqBranch: "main",
+			},
+		}
+
+		require.NoError(t, uc.FeedbackScanResult(req))
+		assert.False(t, calledCreateIssueCommentMock)
+	})
+
+	t.Run("comment fix vuln by third report", func(t *testing.T) {
+		uc, mock := setup(t)
+		require.NoError(t, mock.db.InsertScanReport(firstReport))
+		require.NoError(t, mock.db.InsertScanReport(secondReport))
+		require.NoError(t, mock.db.InsertScanReport(thirdReport))
+
+		calledCreateIssueCommentMock := false
+		mock.githubapp.CreateIssueCommentMock = func(repo *model.GitHubRepo, prID int, body string) error {
+			calledCreateIssueCommentMock = true
+			assert.Equal(t, "clock", repo.Owner)
+			assert.Equal(t, "tower", repo.RepoName)
+			assert.Equal(t, 666, prID)
+			assert.Contains(t, body, "🚨")
+			assert.Contains(t, body, "✅")
+			assert.NotContains(t, body, "origin")
+			return nil
+		}
+
+		req := &model.FeedbackRequest{
+			ReportID:  "third-report-id",
+			InstallID: 123,
+			Options: model.FeedbackOptions{
+				PullReqID:     model.Int(666),
+				PullReqBranch: "main",
+			},
+		}
+
+		require.NoError(t, uc.FeedbackScanResult(req))
+		assert.True(t, calledCreateIssueCommentMock)
+	})
+}

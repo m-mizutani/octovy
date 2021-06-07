@@ -37,7 +37,8 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		return goerr.New("Report is not found").With("req", req)
 	}
 
-	var baseReport *model.ScanReport
+	// Destination branch of merge
+	var dstBranch *model.ScanReport
 	if req.Options.PullReqBranch != "" {
 		branch, err := x.LookupBranch(&model.GitHubBranch{
 			GitHubRepo: report.Target.GitHubRepo,
@@ -51,8 +52,24 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 			if err != nil {
 				return err
 			}
-			baseReport = r
+			dstBranch = r
 		}
+	}
+
+	var pullReqReport *model.ScanReport
+	lastScanLogs, err := x.svc.DB().FindScanLogsByBranch(&report.Target.GitHubBranch, 2)
+	if err != nil {
+		return err
+	}
+	if len(lastScanLogs) == 2 {
+		lastScanReport, err := x.svc.DB().LookupScanReport(lastScanLogs[1].Summary.ReportID)
+		if err != nil {
+			return err
+		}
+		pullReqReport = lastScanReport
+	}
+	if pullReqReport == nil {
+		pullReqReport = dstBranch
 	}
 
 	app, err := x.buildGitHubApp(req.InstallID)
@@ -60,10 +77,10 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		return err
 	}
 
-	if err := feedbackPullRequest(app, &req.Options, report, baseReport, x.config.FrontendBaseURL()); err != nil {
+	if err := feedbackPullRequest(app, &req.Options, report, pullReqReport, x.config.FrontendBaseURL()); err != nil {
 		return err
 	}
-	if err := feedbackCheckRun(app, &req.Options, report, baseReport, x.config.FrontendBaseURL(), x.config.ShouldFailIfVuln()); err != nil {
+	if err := feedbackCheckRun(app, &req.Options, report, dstBranch, x.config.FrontendBaseURL(), x.config.ShouldFailIfVuln()); err != nil {
 		return err
 	}
 	return nil
