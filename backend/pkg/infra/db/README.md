@@ -57,3 +57,8 @@ PK3 and SK3 are available while the package exists in the branch.
 - SK: `{VulnID}`
 - PK2: `list:vulnerability`
 - SK2: `{DetectedTimestamp}/{VulnID}`
+
+### VulnResponse
+
+- PK: `response:{Owner}/{RepoName}`
+- SK: `{PkgType}|{PkgName}|{VulnID}`
