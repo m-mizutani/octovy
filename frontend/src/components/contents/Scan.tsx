@@ -23,6 +23,8 @@ import Tooltip from "@material-ui/core/Tooltip";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
 
 import { Link as RouterLink } from "react-router-dom";
 
@@ -67,20 +69,6 @@ const scanStyles = makeStyles((theme: Theme) =>
       display: "flex",
       "& > *": {
         margin: theme.spacing(0.3),
-      },
-    },
-    snoozeButton: {
-      width: "80px",
-      "&:hover": {
-        backgroundColor: "#f50057",
-        color: "#ffffff",
-      },
-    },
-    unsnoozeButton: {
-      width: "80px",
-      "&:hover": {
-        backgroundColor: "#3f50b5",
-        color: "#ffffff",
       },
     },
   })
@@ -402,8 +390,19 @@ type PackageRowProps = {
 
 function PackageRow(props: PackageRowProps) {
   const scanClasses = scanStyles();
-  const [snoozeState, setSnoozeState] = useState<boolean>(
-    props.status && props.status.Status === "snoozed"
+  const [vulnStatus, setVulnStatus] = useState<model.vulnStatus>(
+    props.status || {
+      RepoName: props.repoName,
+      Owner: props.owner,
+      Comment: "",
+      CreatedAt: 0,
+      ExpiresAt: 0,
+      PkgName: props.pkg.Name,
+      PkgType: props.pkg.Type,
+      Source: props.src,
+      Status: "none",
+      VulnID: props.vulnID,
+    }
   );
 
   const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
@@ -458,13 +457,15 @@ function PackageRow(props: PackageRowProps) {
     ExpiresAt: number;
   };
 
-  const onClickSnooze = () => {
+  const onChangeStatus = (event: React.ChangeEvent<{ value: unknown }>) => {
     const now = new Date();
+    const newStatus = event.target.value as model.vulnStatusType;
     const req: vulnStatusRequest = {
-      Status: snoozeState ? "none" : "snoozed",
-      ExpiresAt: snoozeState
-        ? 0
-        : Math.floor(now.getTime() / 1000) + 86400 * 14,
+      Status: newStatus,
+      ExpiresAt:
+        newStatus !== "snoozed"
+          ? 0
+          : Math.floor(now.getTime() / 1000) + 86400 * 14,
       PkgName: props.pkg.Name,
       PkgType: props.pkg.Type,
       VulnID: props.vulnID,
@@ -479,11 +480,7 @@ function PackageRow(props: PackageRowProps) {
       .then(
         (result) => {
           console.log("status:", { result });
-          if (result.data.Status === "snoozed") {
-            setSnoozeState(true);
-          } else {
-            setSnoozeState(false);
-          }
+          setVulnStatus(result.data);
         },
         (error) => {
           console.log("Error:", error);
@@ -491,35 +488,18 @@ function PackageRow(props: PackageRowProps) {
       );
   };
 
-  const renderButton = () => {
-    if (snoozeState) {
-      return (
-        <Button
-          size="small"
-          className={scanClasses.unsnoozeButton}
-          onClick={onClickSnooze}
-          variant="outlined">
-          Unsnooze
-        </Button>
-      );
-    } else {
-      return (
-        <Button
-          size="small"
-          className={scanClasses.snoozeButton}
-          onClick={onClickSnooze}
-          variant="outlined">
-          Snooze
-        </Button>
-      );
-    }
-  };
-
   const renderStatus = (status?: model.vulnStatus) => {
-    if (!status) {
-      return;
+    if (vulnStatus.Status === "snoozed") {
+      const now = new Date();
+      const diff = vulnStatus.ExpiresAt - now.getTime() / 1000;
+      if (diff > 86400) {
+        return Math.floor(diff / 86000) + " days";
+      } else {
+        return Math.floor(diff / 3600) + " hours";
+      }
     }
-    return status.ExpiresAt;
+
+    return;
   };
 
   return (
@@ -541,16 +521,23 @@ function PackageRow(props: PackageRowProps) {
           to={"/vuln/" + props.vulnID}
           size="small"
           label={props.vulnID}
-          color={snoozeState ? "default" : "secondary"}
+          color={vulnStatus.Status === "none" ? "secondary" : "default"}
           clickable
         />
       </TableCell>
       <TableCell>{props.vuln.Title}</TableCell>
       <TableCell>{renderCVSS(props.vuln.CVSS)}</TableCell>
-      <TableCell>{renderStatus(props.status)}</TableCell>
       <TableCell>
-        <Grid container>{renderButton()}</Grid>
+        <Select
+          value={vulnStatus.Status}
+          onChange={onChangeStatus}
+          style={{ fontSize: "12px" }}>
+          <MenuItem value={"none"}>InProgress</MenuItem>
+          <MenuItem value={"snoozed"}>Snoozed</MenuItem>
+          <MenuItem value={"mitigated"}>Mitigated</MenuItem>
+        </Select>
       </TableCell>
+      <TableCell>{renderStatus()}</TableCell>
     </TableRow>
   );
 }
