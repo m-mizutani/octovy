@@ -77,9 +77,9 @@ type DBClient interface {
 	FindLatestVulnerabilities(n int) ([]*model.Vulnerability, error)
 	GetVulnerabilities(vulnIDs []string) ([]*model.Vulnerability, error)
 
-	PutVulnResponse(resp *model.VulnResponse) error
-	GetVulnResponses(repo *model.GitHubRepo, now int64) ([]*model.VulnResponse, error)
-	DeleteVulnResponse(resp *model.VulnResponse) error
+	PutVulnStatus(status *model.VulnStatus) error
+	GetVulnStatus(repo *model.GitHubRepo, now int64) ([]*model.VulnStatus, error)
+	GetVulnStatusLogs(repo *model.GitHubRepo, key *model.VulnPackageKey) ([]*model.VulnStatus, error)
 
 	TableName() string
 	Close() error

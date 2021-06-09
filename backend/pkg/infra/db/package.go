@@ -37,6 +37,24 @@ func (x *DynamoClient) InsertPackageRecord(pkg *model.PackageRecord) (bool, erro
 		return false, nil
 	}
 
+	for _, vulnID := range pkg.Vulnerabilities {
+		status := &model.VulnStatus{
+			GitHubRepo: pkg.Detected.GitHubRepo,
+			VulnPackageKey: model.VulnPackageKey{
+				Source:  pkg.Source,
+				PkgType: pkg.Type,
+				PkgName: pkg.Name,
+				VulnID:  vulnID,
+			},
+			Status:    model.StatusNone,
+			ExpiresAt: 0,
+			CreatedAt: pkg.ScannedAt,
+		}
+		if err := x.PutVulnStatus(status); err != nil {
+			return true, err
+		}
+	}
+
 	return true, nil
 }
 
@@ -53,6 +71,25 @@ func (x *DynamoClient) RemovePackageRecord(pkg *model.PackageRecord) error {
 	if err := q.Run(); err != nil {
 		if !isConditionalCheckErr(err) {
 			return goerr.Wrap(err).With("pkg", pkg).With("pk", pk).With("sk", sk)
+		}
+		return nil
+	}
+
+	for _, vulnID := range pkg.Vulnerabilities {
+		status := &model.VulnStatus{
+			GitHubRepo: pkg.Detected.GitHubRepo,
+			VulnPackageKey: model.VulnPackageKey{
+				Source:  pkg.Source,
+				PkgType: pkg.Type,
+				PkgName: pkg.Name,
+				VulnID:  vulnID,
+			},
+			Status:    model.StatusFixed,
+			ExpiresAt: 0,
+			CreatedAt: pkg.ScannedAt,
+		}
+		if err := x.PutVulnStatus(status); err != nil {
+			return err
 		}
 	}
 

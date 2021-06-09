@@ -32,8 +32,6 @@
 - PK2: `pkg:{PkgType}|{PkgName}`
 - SK2: `{Owner}/{RepoName}@{Branch}|{Version}`
 
-PK3 and SK3 are available while the package exists in the branch.
-
 ### ScanLog
 
 - PK: `scan_log:{Owner}/{RepoName}@{Branch}`
@@ -58,7 +56,12 @@ PK3 and SK3 are available while the package exists in the branch.
 - PK2: `list:vulnerability`
 - SK2: `{DetectedTimestamp}/{VulnID}`
 
-### VulnResponse
+### VulnStatus
 
-- PK: `response:{Owner}/{RepoName}`
-- SK: `{PkgType}|{PkgName}|{VulnID}`
+- PK: `vuln_status:{Owner}/{RepoName}`
+- SK: `{Source}|{PkgName}|{VulnID}`
+
+### VulnStatusLog
+
+- PK: `vuln_status_log:{Owner}/{RepoName}`
+- SK: `{Source}|{PkgName}|{VulnID}|{CreatedAt}`

@@ -6,7 +6,7 @@ export interface GitHubRepo {
   URL: string;
 }
 
-interface pkg {
+export interface pkg {
   Type: string;
   Name: string;
   Version: string;
@@ -76,7 +76,7 @@ export interface cvss {
   V3Score: number;
 }
 
-interface vulnDetail {
+export interface vulnDetail {
   Title: string;
   Description: string;
   Severity: string;

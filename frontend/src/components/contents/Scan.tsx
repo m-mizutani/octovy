@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
@@ -22,6 +22,7 @@ import Chip from "@material-ui/core/Chip";
 import Tooltip from "@material-ui/core/Tooltip";
 
 import Avatar from "@material-ui/core/Avatar";
+import Button from "@material-ui/core/Button";
 
 import { Link as RouterLink } from "react-router-dom";
 
@@ -30,6 +31,7 @@ import strftime from "strftime";
 import useStyles from "./Style";
 import * as model from "./Model";
 import { red, orange, pink } from "@material-ui/core/colors";
+import { TextField } from "@material-ui/core";
 
 const scanStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -115,6 +117,102 @@ function filterVulnerability(
     });
 }
 
+type PackageRowProps = {
+  idx: number;
+  pkg: model.pkg;
+  vulnID: string;
+  vuln: model.vulnDetail;
+};
+
+function PackageRow(props: PackageRowProps) {
+  const scanClasses = scanStyles();
+  const [snoozeState, setSnoozeState] = useState<boolean>();
+  const [selectedDate, setSelectedDate] = React.useState<Date | null>(
+    new Date("2014-08-18T21:11:54")
+  );
+
+  const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
+    const naMsg = "No CVSS";
+    if (!cvss) {
+      return naMsg;
+    }
+    const providers = ["nvd", "redhat"];
+    const results = providers
+      .map((provider) => cvss[provider])
+      .filter((v) => v !== undefined);
+    if (results.length === 0 || !results[0].V3Vector) {
+      return naMsg;
+    }
+
+    const vectors = {};
+    results[0].V3Vector.split("/").forEach((c) => {
+      const v = c.split(":");
+      vectors[v[0]] = v[1];
+    });
+    const metrics = {
+      C: "Confidentiality",
+      I: "Integrity",
+      A: "Availability",
+    };
+    const styles = {
+      C: { backgroundColor: red[600] },
+      I: { backgroundColor: pink[300] },
+      A: { backgroundColor: orange[300] },
+    };
+    return (
+      <div className={scanClasses.vulnImpactCell}>
+        {Object.keys(metrics).map((m, idx) => {
+          if (vectors[m] === "L" || vectors[m] === "H") {
+            return (
+              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
+                <Avatar style={styles[m]}>{m}</Avatar>
+              </Tooltip>
+            );
+          }
+        })}
+      </div>
+    );
+  };
+
+  const onClickSnooze = () => {
+    setSnoozeState(!snoozeState);
+  };
+
+  return (
+    <TableRow key={props.idx}>
+      <TableCell
+        component="th"
+        scope="row"
+        style={
+          props.idx < props.pkg.Vulnerabilities.length - 1
+            ? { borderBottom: "none" }
+            : {}
+        }>
+        {props.idx === 0 ? `${props.pkg.Name} (${props.pkg.Version})` : ""}
+      </TableCell>
+      <TableCell>
+        {" "}
+        <Chip
+          component={RouterLink}
+          to={"/vuln/" + props.vulnID}
+          size="small"
+          label={props.vulnID}
+          color={snoozeState ? "default" : "secondary"}
+          clickable
+        />
+      </TableCell>
+      <TableCell>{props.vuln.Title}</TableCell>
+      <TableCell>{renderCVSS(props.vuln.CVSS)}</TableCell>
+      <TableCell>
+        <Button onClick={onClickSnooze} variant="contained">
+          Snooze
+        </Button>
+        <Grid>hoge</Grid>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function Report(props: reportProps) {
   const classes = useStyles();
   const scanClasses = scanStyles();
@@ -165,89 +263,16 @@ export function Report(props: reportProps) {
       );
     }
 
-    const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
-      const naMsg = "No CVSS";
-      if (!cvss) {
-        return naMsg;
-      }
-      const providers = ["nvd", "redhat"];
-      const results = providers
-        .map((provider) => cvss[provider])
-        .filter((v) => v !== undefined);
-      if (results.length === 0 || !results[0].V3Vector) {
-        return naMsg;
-      }
-
-      const vectors = {};
-      results[0].V3Vector.split("/").forEach((c) => {
-        const v = c.split(":");
-        vectors[v[0]] = v[1];
-      });
-      const metrics = {
-        C: "Confidentiality",
-        I: "Integrity",
-        A: "Availability",
-      };
-      const styles = {
-        C: { backgroundColor: red[600] },
-        I: { backgroundColor: pink[300] },
-        A: { backgroundColor: orange[300] },
-      };
-      return (
-        <div className={scanClasses.vulnImpactCell}>
-          {Object.keys(metrics).map((m, idx) => {
-            if (vectors[m] === "L" || vectors[m] === "H") {
-              return (
-                <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
-                  <Avatar style={styles[m]}>{m}</Avatar>
-                </Tooltip>
-              );
-            }
-          })}
-        </div>
-      );
-    };
-
     const renderSource = (src) => {
       return src.Packages.map((pkg) => {
         return pkg.Vulnerabilities.map((vulnID, idx) => (
-          <TableRow key={idx}>
-            <TableCell
-              component="th"
-              scope="row"
-              style={
-                idx < pkg.Vulnerabilities.length - 1
-                  ? { borderBottom: "none" }
-                  : {}
-              }>
-              {idx === 0 ? pkg.Name : ""}
-            </TableCell>
-            <TableCell
-              style={
-                idx < pkg.Vulnerabilities.length - 1
-                  ? { borderBottom: "none" }
-                  : {}
-              }>
-              {idx === 0 ? pkg.Version : ""}
-            </TableCell>
-            <TableCell>
-              {" "}
-              <Chip
-                component={RouterLink}
-                to={"/vuln/" + vulnID}
-                size="small"
-                label={vulnID}
-                color="secondary"
-                clickable
-              />
-            </TableCell>
-            <TableCell>
-              {status.report.Vulnerabilities[vulnID].Detail.Title}
-            </TableCell>
-            <TableCell>
-              {renderCVSS(status.report.Vulnerabilities[vulnID].Detail.CVSS)}
-            </TableCell>
-          </TableRow>
+          <PackageRow
+            key={idx}
+            idx={idx}
+            vulnID={vulnID}
+            pkg={pkg}
+            vuln={status.report.Vulnerabilities[vulnID].Detail}
+          />
         ));
       }).reduce((p, c) => [...p, c]);
     };
@@ -272,11 +297,13 @@ export function Report(props: reportProps) {
               <Table size="small" aria-label="simple table">
                 <TableHead className={scanClasses.packageTableHeader}>
                   <TableRow>
-                    <TableCell style={{ width: "15%" }}>Package</TableCell>
-                    <TableCell style={{ width: "10%" }}>Version</TableCell>
+                    <TableCell style={{ width: "20%" }}>Package</TableCell>
                     <TableCell style={{ minWidth: "160px" }}>VulnID</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell style={{ minWidth: "160px" }}>Impact</TableCell>
+                    <TableCell style={{ minWidth: "160px" }}>
+                      Response
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>{renderSource(src)}</TableBody>

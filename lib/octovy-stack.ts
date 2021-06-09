@@ -265,6 +265,15 @@ export class OctovyStack extends cdk.Stack {
     const apiVuln = apiRoot.addResource("vuln");
     apiVuln.addResource("{vulnID}").addMethod("GET");
 
+    // Vulnerability response
+    if (props.stage === "private") {
+      const apiVulnResp = apiRoot.addResource("response");
+      apiVulnResp
+        .addResource("{owner}")
+        .addResource("{repoName}")
+        .addMethod("POST");
+    }
+
     // Scan
     const apiScan = apiRoot.addResource("scan");
     const apiScanReport = apiScan
