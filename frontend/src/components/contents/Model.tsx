@@ -46,14 +46,11 @@ export class vulnStatusDB {
       );
       this.vulnMap[key] = status;
     });
-    console.log({ map: this.vulnMap });
   }
 
-  getStatus(src: string, pkgName: string, vulnID: string): vulnStatusType {
+  getStatus(src: string, pkgName: string, vulnID: string): vulnStatus {
     const key = vulnStatusDB.toKey(src, pkgName, vulnID);
-    console.log("lookup", { key });
-    const status = this.vulnMap[key];
-    return status ? status.Status : undefined;
+    return this.vulnMap[key];
   }
 }
 

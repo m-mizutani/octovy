@@ -72,14 +72,14 @@ const scanStyles = makeStyles((theme: Theme) =>
     snoozeButton: {
       width: "80px",
       "&:hover": {
-        backgroundColor: "#3f50b5",
+        backgroundColor: "#f50057",
         color: "#ffffff",
       },
     },
     unsnoozeButton: {
       width: "80px",
       "&:hover": {
-        backgroundColor: "#f50057",
+        backgroundColor: "#3f50b5",
         color: "#ffffff",
       },
     },
@@ -129,164 +129,6 @@ function filterVulnerability(
     .filter((src) => {
       return src.Packages.length > 0;
     });
-}
-
-type PackageRowProps = {
-  idx: number;
-  pkg: model.pkg;
-  vulnID: string;
-  vuln: model.vulnDetail;
-  src: string;
-  owner: string;
-  repoName: string;
-  status?: model.vulnStatusType;
-};
-
-type vulnStatusRequest = {
-  Status: string;
-  Source: string;
-  PkgType: string;
-  PkgName: string;
-  VulnID: string;
-  ExpiresAt: number;
-};
-
-function PackageRow(props: PackageRowProps) {
-  const scanClasses = scanStyles();
-  const [snoozeState, setSnoozeState] = useState<boolean>(
-    props.status === "snoozed"
-  );
-
-  const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
-    const naMsg = "No CVSS";
-    if (!cvss) {
-      return naMsg;
-    }
-    const providers = ["nvd", "redhat"];
-    const results = providers
-      .map((provider) => cvss[provider])
-      .filter((v) => v !== undefined);
-    if (results.length === 0 || !results[0].V3Vector) {
-      return naMsg;
-    }
-
-    const vectors = {};
-    results[0].V3Vector.split("/").forEach((c) => {
-      const v = c.split(":");
-      vectors[v[0]] = v[1];
-    });
-    const metrics = {
-      C: "Confidentiality",
-      I: "Integrity",
-      A: "Availability",
-    };
-    const styles = {
-      C: { backgroundColor: red[600] },
-      I: { backgroundColor: pink[300] },
-      A: { backgroundColor: orange[300] },
-    };
-    return (
-      <div className={scanClasses.vulnImpactCell}>
-        {Object.keys(metrics).map((m, idx) => {
-          if (vectors[m] === "L" || vectors[m] === "H") {
-            return (
-              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
-                <Avatar style={styles[m]}>{m}</Avatar>
-              </Tooltip>
-            );
-          }
-        })}
-      </div>
-    );
-  };
-
-  const onClickSnooze = () => {
-    const now = new Date();
-    const req: vulnStatusRequest = {
-      Status: snoozeState ? "none" : "snoozed",
-      ExpiresAt: snoozeState
-        ? 0
-        : Math.floor(now.getTime() / 1000) + 86400 * 14,
-      PkgName: props.pkg.Name,
-      PkgType: props.pkg.Type,
-      VulnID: props.vulnID,
-      Source: props.src,
-    };
-
-    fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
-      method: "POST",
-      body: JSON.stringify(req),
-    })
-      .then((res) => res.json())
-      .then(
-        (result) => {
-          console.log("status:", { result });
-          if (result.data.Status === "snoozed") {
-            setSnoozeState(true);
-          } else {
-            setSnoozeState(false);
-          }
-        },
-        (error) => {
-          console.log("Error:", error);
-        }
-      );
-  };
-
-  const renderButton = () => {
-    if (snoozeState) {
-      return (
-        <Button
-          size="small"
-          className={scanClasses.unsnoozeButton}
-          onClick={onClickSnooze}
-          variant="outlined">
-          Unsnooze
-        </Button>
-      );
-    } else {
-      return (
-        <Button
-          size="small"
-          className={scanClasses.snoozeButton}
-          onClick={onClickSnooze}
-          variant="outlined">
-          Snooze
-        </Button>
-      );
-    }
-  };
-
-  return (
-    <TableRow key={props.idx}>
-      <TableCell
-        component="th"
-        scope="row"
-        style={
-          props.idx < props.pkg.Vulnerabilities.length - 1
-            ? { borderBottom: "none" }
-            : {}
-        }>
-        {props.idx === 0 ? `${props.pkg.Name} (${props.pkg.Version})` : ""}
-      </TableCell>
-      <TableCell>
-        {" "}
-        <Chip
-          component={RouterLink}
-          to={"/vuln/" + props.vulnID}
-          size="small"
-          label={props.vulnID}
-          color={snoozeState ? "default" : "secondary"}
-          clickable
-        />
-      </TableCell>
-      <TableCell>{props.vuln.Title}</TableCell>
-      <TableCell>{renderCVSS(props.vuln.CVSS)}</TableCell>
-      <TableCell>
-        <Grid container>{renderButton()}</Grid>
-      </TableCell>
-    </TableRow>
-  );
 }
 
 export function Report(props: reportProps) {
@@ -382,9 +224,8 @@ export function Report(props: reportProps) {
                     <TableCell style={{ minWidth: "160px" }}>VulnID</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell style={{ minWidth: "120px" }}>Impact</TableCell>
-                    <TableCell style={{ minWidth: "160px" }}>
-                      Response
-                    </TableCell>
+                    <TableCell style={{ minWidth: "120px" }}>Status</TableCell>
+                    <TableCell style={{ minWidth: "100px" }}></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>{renderSource(src)}</TableBody>
@@ -546,4 +387,170 @@ export function Report(props: reportProps) {
   React.useEffect(updatePackages, [props.reportID]);
 
   return <div className={classes.contentWrapper}>{packageView()}</div>;
+}
+
+type PackageRowProps = {
+  idx: number;
+  pkg: model.pkg;
+  vulnID: string;
+  vuln: model.vulnDetail;
+  src: string;
+  owner: string;
+  repoName: string;
+  status?: model.vulnStatus;
+};
+
+function PackageRow(props: PackageRowProps) {
+  const scanClasses = scanStyles();
+  const [snoozeState, setSnoozeState] = useState<boolean>(
+    props.status && props.status.Status === "snoozed"
+  );
+
+  const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
+    const naMsg = "No CVSS";
+    if (!cvss) {
+      return naMsg;
+    }
+    const providers = ["nvd", "redhat"];
+    const results = providers
+      .map((provider) => cvss[provider])
+      .filter((v) => v !== undefined);
+    if (results.length === 0 || !results[0].V3Vector) {
+      return naMsg;
+    }
+
+    const vectors = {};
+    results[0].V3Vector.split("/").forEach((c) => {
+      const v = c.split(":");
+      vectors[v[0]] = v[1];
+    });
+    const metrics = {
+      C: "Confidentiality",
+      I: "Integrity",
+      A: "Availability",
+    };
+    const styles = {
+      C: { backgroundColor: red[600] },
+      I: { backgroundColor: pink[300] },
+      A: { backgroundColor: orange[300] },
+    };
+    return (
+      <div className={scanClasses.vulnImpactCell}>
+        {Object.keys(metrics).map((m, idx) => {
+          if (vectors[m] === "L" || vectors[m] === "H") {
+            return (
+              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
+                <Avatar style={styles[m]}>{m}</Avatar>
+              </Tooltip>
+            );
+          }
+        })}
+      </div>
+    );
+  };
+
+  type vulnStatusRequest = {
+    Status: string;
+    Source: string;
+    PkgType: string;
+    PkgName: string;
+    VulnID: string;
+    ExpiresAt: number;
+  };
+
+  const onClickSnooze = () => {
+    const now = new Date();
+    const req: vulnStatusRequest = {
+      Status: snoozeState ? "none" : "snoozed",
+      ExpiresAt: snoozeState
+        ? 0
+        : Math.floor(now.getTime() / 1000) + 86400 * 14,
+      PkgName: props.pkg.Name,
+      PkgType: props.pkg.Type,
+      VulnID: props.vulnID,
+      Source: props.src,
+    };
+
+    fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
+      method: "POST",
+      body: JSON.stringify(req),
+    })
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          console.log("status:", { result });
+          if (result.data.Status === "snoozed") {
+            setSnoozeState(true);
+          } else {
+            setSnoozeState(false);
+          }
+        },
+        (error) => {
+          console.log("Error:", error);
+        }
+      );
+  };
+
+  const renderButton = () => {
+    if (snoozeState) {
+      return (
+        <Button
+          size="small"
+          className={scanClasses.unsnoozeButton}
+          onClick={onClickSnooze}
+          variant="outlined">
+          Unsnooze
+        </Button>
+      );
+    } else {
+      return (
+        <Button
+          size="small"
+          className={scanClasses.snoozeButton}
+          onClick={onClickSnooze}
+          variant="outlined">
+          Snooze
+        </Button>
+      );
+    }
+  };
+
+  const renderStatus = (status?: model.vulnStatus) => {
+    if (!status) {
+      return;
+    }
+    return status.ExpiresAt;
+  };
+
+  return (
+    <TableRow key={props.idx}>
+      <TableCell
+        component="th"
+        scope="row"
+        style={
+          props.idx < props.pkg.Vulnerabilities.length - 1
+            ? { borderBottom: "none" }
+            : {}
+        }>
+        {props.idx === 0 ? `${props.pkg.Name} (${props.pkg.Version})` : ""}
+      </TableCell>
+      <TableCell>
+        {" "}
+        <Chip
+          component={RouterLink}
+          to={"/vuln/" + props.vulnID}
+          size="small"
+          label={props.vulnID}
+          color={snoozeState ? "default" : "secondary"}
+          clickable
+        />
+      </TableCell>
+      <TableCell>{props.vuln.Title}</TableCell>
+      <TableCell>{renderCVSS(props.vuln.CVSS)}</TableCell>
+      <TableCell>{renderStatus(props.status)}</TableCell>
+      <TableCell>
+        <Grid container>{renderButton()}</Grid>
+      </TableCell>
+    </TableRow>
+  );
 }
