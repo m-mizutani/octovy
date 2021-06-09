@@ -31,7 +31,6 @@ import strftime from "strftime";
 import useStyles from "./Style";
 import * as model from "./Model";
 import { red, orange, pink } from "@material-ui/core/colors";
-import { TextField } from "@material-ui/core";
 
 const scanStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -70,6 +69,20 @@ const scanStyles = makeStyles((theme: Theme) =>
         margin: theme.spacing(0.3),
       },
     },
+    snoozeButton: {
+      width: "80px",
+      "&:hover": {
+        backgroundColor: "#3f50b5",
+        color: "#ffffff",
+      },
+    },
+    unsnoozeButton: {
+      width: "80px",
+      "&:hover": {
+        backgroundColor: "#f50057",
+        color: "#ffffff",
+      },
+    },
   })
 );
 
@@ -84,6 +97,7 @@ type reportStatus = {
   report?: model.scanReport;
   displayed: model.packageSource[];
   vulnSources: model.packageSource[];
+  statusDB?: model.vulnStatusDB;
 };
 
 function toCommitLink(target: model.scanTarget) {
@@ -122,13 +136,25 @@ type PackageRowProps = {
   pkg: model.pkg;
   vulnID: string;
   vuln: model.vulnDetail;
+  src: string;
+  owner: string;
+  repoName: string;
+  status?: model.vulnStatusType;
+};
+
+type vulnStatusRequest = {
+  Status: string;
+  Source: string;
+  PkgType: string;
+  PkgName: string;
+  VulnID: string;
+  ExpiresAt: number;
 };
 
 function PackageRow(props: PackageRowProps) {
   const scanClasses = scanStyles();
-  const [snoozeState, setSnoozeState] = useState<boolean>();
-  const [selectedDate, setSelectedDate] = React.useState<Date | null>(
-    new Date("2014-08-18T21:11:54")
+  const [snoozeState, setSnoozeState] = useState<boolean>(
+    props.status === "snoozed"
   );
 
   const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
@@ -175,7 +201,60 @@ function PackageRow(props: PackageRowProps) {
   };
 
   const onClickSnooze = () => {
-    setSnoozeState(!snoozeState);
+    const now = new Date();
+    const req: vulnStatusRequest = {
+      Status: snoozeState ? "none" : "snoozed",
+      ExpiresAt: snoozeState
+        ? 0
+        : Math.floor(now.getTime() / 1000) + 86400 * 14,
+      PkgName: props.pkg.Name,
+      PkgType: props.pkg.Type,
+      VulnID: props.vulnID,
+      Source: props.src,
+    };
+
+    fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
+      method: "POST",
+      body: JSON.stringify(req),
+    })
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          console.log("status:", { result });
+          if (result.data.Status === "snoozed") {
+            setSnoozeState(true);
+          } else {
+            setSnoozeState(false);
+          }
+        },
+        (error) => {
+          console.log("Error:", error);
+        }
+      );
+  };
+
+  const renderButton = () => {
+    if (snoozeState) {
+      return (
+        <Button
+          size="small"
+          className={scanClasses.unsnoozeButton}
+          onClick={onClickSnooze}
+          variant="outlined">
+          Unsnooze
+        </Button>
+      );
+    } else {
+      return (
+        <Button
+          size="small"
+          className={scanClasses.snoozeButton}
+          onClick={onClickSnooze}
+          variant="outlined">
+          Snooze
+        </Button>
+      );
+    }
   };
 
   return (
@@ -204,10 +283,7 @@ function PackageRow(props: PackageRowProps) {
       <TableCell>{props.vuln.Title}</TableCell>
       <TableCell>{renderCVSS(props.vuln.CVSS)}</TableCell>
       <TableCell>
-        <Button onClick={onClickSnooze} variant="contained">
-          Snooze
-        </Button>
-        <Grid>hoge</Grid>
+        <Grid container>{renderButton()}</Grid>
       </TableCell>
     </TableRow>
   );
@@ -222,8 +298,6 @@ export function Report(props: reportProps) {
     displayed: [],
     vulnSources: [],
   });
-
-  console.log({ props });
 
   const updatePackages = () => {
     if (!props.reportID) {
@@ -240,6 +314,7 @@ export function Report(props: reportProps) {
             report: result.data,
             displayed: result.data.Sources,
             vulnSources: filterVulnerability(result.data.Sources),
+            statusDB: new model.vulnStatusDB(result.data.VulnStatuses),
           });
         },
         (error) => {
@@ -263,18 +338,24 @@ export function Report(props: reportProps) {
       );
     }
 
-    const renderSource = (src) => {
+    const renderSource = (src: model.packageSource) => {
       return src.Packages.map((pkg) => {
-        return pkg.Vulnerabilities.map((vulnID, idx) => (
-          <PackageRow
-            key={idx}
-            idx={idx}
-            vulnID={vulnID}
-            pkg={pkg}
-            vuln={status.report.Vulnerabilities[vulnID].Detail}
-          />
-        ));
-      }).reduce((p, c) => [...p, c]);
+        return pkg.Vulnerabilities.map(
+          (vulnID, idx): JSX.Element => (
+            <PackageRow
+              key={`pkg-row-${pkg.Name}-${vulnID}-${idx}`}
+              idx={idx}
+              owner={status.report.Target.Owner}
+              repoName={status.report.Target.RepoName}
+              vulnID={vulnID}
+              pkg={pkg}
+              src={src.Source}
+              vuln={status.report.Vulnerabilities[vulnID].Detail}
+              status={status.statusDB.getStatus(src.Source, pkg.Name, vulnID)}
+            />
+          )
+        );
+      }).reduce((p, c) => [...p, ...c]);
     };
 
     return (
@@ -300,7 +381,7 @@ export function Report(props: reportProps) {
                     <TableCell style={{ width: "20%" }}>Package</TableCell>
                     <TableCell style={{ minWidth: "160px" }}>VulnID</TableCell>
                     <TableCell>Title</TableCell>
-                    <TableCell style={{ minWidth: "160px" }}>Impact</TableCell>
+                    <TableCell style={{ minWidth: "120px" }}>Impact</TableCell>
                     <TableCell style={{ minWidth: "160px" }}>
                       Response
                     </TableCell>
@@ -335,8 +416,6 @@ export function Report(props: reportProps) {
     } else if (Object.keys(status.displayed).length === 0) {
       return <div>No data</div>;
     } else {
-      console.log({ status });
-
       type metadata = {
         title: string;
         data: string;

@@ -391,9 +391,15 @@ func (x *Default) LookupScanReport(reportID string) (*model.ScanReportResponse, 
 		vulnMap[vuln.VulnID] = vuln
 	}
 
+	statues, err := x.svc.DB().GetVulnStatus(&report.Target.GitHubRepo, x.svc.Infra.Utils.TimeNow().Unix())
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.ScanReportResponse{
 		ScanReport:      *report,
 		Vulnerabilities: vulnMap,
+		VulnStatuses:    statues,
 	}, nil
 }
 
