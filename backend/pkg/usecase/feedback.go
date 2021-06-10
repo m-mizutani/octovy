@@ -12,9 +12,54 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
+type feedbackProps struct {
+	DB          interfaces.DBClient
+	App         interfaces.GitHubApp
+	NewReport   *model.ScanReport
+	OldReport   *model.ScanReport
+	Options     *model.FeedbackOptions
+	FrontendURL string
+	CheckFail   bool
+}
+
 func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 	logger.With("req", req).Info("Recv request")
 
+	newReport, err := getScanReport(x.svc.DB(), req.ReportID)
+	if err != nil {
+		return goerr.Wrap(err).With("req", req)
+	}
+
+	oldReport, err := getOldReport(x.svc.DB(), &newReport.Target.GitHubRepo, req.Options.PullReqBranch)
+	if err != nil {
+		return err
+	}
+
+	app, err := x.buildGitHubApp(req.InstallID)
+	if err != nil {
+		return err
+	}
+
+	props := feedbackProps{
+		DB:          x.svc.DB(),
+		App:         app,
+		NewReport:   newReport,
+		OldReport:   oldReport,
+		Options:     &req.Options,
+		FrontendURL: x.config.FrontendBaseURL(),
+		CheckFail:   x.config.ShouldFailIfVuln(),
+	}
+
+	if err := feedbackPullRequest(props); err != nil {
+		return err
+	}
+	if err := feedbackCheckRun(props); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getScanReport(db interfaces.DBClient, reportID string) (*model.ScanReport, error) {
 	const (
 		waitFactor = 1.2
 		maxRetry   = 10
@@ -22,9 +67,9 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 
 	var report *model.ScanReport
 	for i := 0; i < maxRetry; i++ {
-		r, err := x.svc.DB().LookupScanReport(req.ReportID)
+		r, err := db.LookupScanReport(reportID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if report = r; report != nil {
@@ -34,106 +79,99 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		time.Sleep(time.Millisecond * time.Duration(w*1000))
 	}
 	if report == nil {
-		return goerr.New("Report is not found").With("req", req)
+		return nil, goerr.New("Report is not found")
 	}
 
+	return report, nil
+}
+
+func getOldReport(db interfaces.DBClient, repo *model.GitHubRepo, branch string) (*model.ScanReport, error) {
 	// Destination branch of merge
-	var dstBranch *model.ScanReport
-	if req.Options.PullReqBranch != "" {
-		branch, err := x.LookupBranch(&model.GitHubBranch{
-			GitHubRepo: report.Target.GitHubRepo,
-			Branch:     req.Options.PullReqBranch,
+	if branch != "" {
+		branch, err := db.LookupBranch(&model.GitHubBranch{
+			GitHubRepo: *repo,
+			Branch:     branch,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if branch != nil && branch.ReportSummary.ReportID != "" {
-			r, err := x.svc.DB().LookupScanReport(branch.ReportSummary.ReportID)
+			r, err := db.LookupScanReport(branch.ReportSummary.ReportID)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			dstBranch = r
+
+			return r, nil
 		}
+	}
+
+	return nil, nil
+}
+
+func feedbackPullRequest(props feedbackProps) error {
+	if props.Options.PullReqID == nil {
+		return nil
 	}
 
 	var pullReqReport *model.ScanReport
-	lastScanLogs, err := x.svc.DB().FindScanLogsByBranch(&report.Target.GitHubBranch, 2)
+	lastScanLogs, err := props.DB.FindScanLogsByBranch(&props.NewReport.Target.GitHubBranch, 2)
 	if err != nil {
 		return err
 	}
 	if len(lastScanLogs) == 2 {
-		lastScanReport, err := x.svc.DB().LookupScanReport(lastScanLogs[1].Summary.ReportID)
+		lastScanReport, err := props.DB.LookupScanReport(lastScanLogs[1].Summary.ReportID)
 		if err != nil {
 			return err
 		}
 		pullReqReport = lastScanReport
 	}
 	if pullReqReport == nil {
-		pullReqReport = dstBranch
+		pullReqReport = props.OldReport
 	}
 
-	app, err := x.buildGitHubApp(req.InstallID)
-	if err != nil {
-		return err
-	}
-
-	if err := feedbackPullRequest(app, &req.Options, report, pullReqReport, x.config.FrontendBaseURL()); err != nil {
-		return err
-	}
-	if err := feedbackCheckRun(app, &req.Options, report, dstBranch, x.config.FrontendBaseURL(), x.config.ShouldFailIfVuln()); err != nil {
-		return err
-	}
-	return nil
-}
-
-func feedbackPullRequest(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport, frontendURL string) error {
-	if feedback.PullReqID == nil {
-		return nil
-	}
-
-	body := buildFeedbackComment(newReport, oldReport, frontendURL, false)
+	body := buildFeedbackComment(props.NewReport, pullReqReport, props.FrontendURL, false)
 	if body == "" {
 		return nil
 	}
 
-	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
+	logger.With("props", props).With("report", props.NewReport).Info("Creating a PR comment")
 
-	if err := app.CreateIssueComment(&newReport.Target.GitHubRepo, *feedback.PullReqID, body); err != nil {
+	if err := props.App.CreateIssueComment(&props.NewReport.Target.GitHubRepo, *props.Options.PullReqID, body); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions, newReport, oldReport *model.ScanReport, frontendURL string, checkFail bool) error {
-	if feedback.CheckID == nil {
+func feedbackCheckRun(props feedbackProps) error {
+	if props.Options.CheckID == nil {
 		return nil
 	}
 
-	logger.With("req", feedback).With("report", newReport).Info("Creating a PR comment")
+	logger.With("req", props.Options).With("report", props.NewReport).Info("Creating a PR comment")
 
-	changes := diffReport(newReport, oldReport)
+	changes := diffReport(props.NewReport, props.OldReport)
 
 	// Default messages
 	conclusion := "neutral"
 	title := fmt.Sprintf("❗ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
 	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
-	body := buildFeedbackComment(newReport, oldReport, frontendURL, true)
+	body := buildFeedbackComment(props.NewReport, props.OldReport, props.FrontendURL, true)
 
 	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
 		conclusion = "success"
 		title = "🎉  No vulnerability detected"
 		summary = "OK"
-	} else if checkFail {
+	} else if props.CheckFail {
 		conclusion = "failure"
 	}
 
 	opt := &github.UpdateCheckRunOptions{
 		Name:        "Octovy: package vulnerability check",
 		Status:      github.String("completed"),
-		CompletedAt: &github.Timestamp{Time: time.Unix(newReport.ScannedAt, 0)},
+		CompletedAt: &github.Timestamp{Time: time.Unix(props.NewReport.ScannedAt, 0)},
 		Conclusion:  &conclusion,
-		DetailsURL:  github.String(frontendURL + "/#/scan/report/" + newReport.ReportID),
+		DetailsURL:  github.String(props.FrontendURL + "/#/scan/report/" + props.NewReport.ReportID),
 		Output: &github.CheckRunOutput{
 			Title:   &title,
 			Summary: &summary,
@@ -141,7 +179,7 @@ func feedbackCheckRun(app interfaces.GitHubApp, feedback *model.FeedbackOptions,
 		},
 	}
 
-	if err := app.UpdateCheckRun(&newReport.Target.GitHubRepo, *feedback.CheckID, opt); err != nil {
+	if err := props.App.UpdateCheckRun(&props.NewReport.Target.GitHubRepo, *props.Options.CheckID, opt); err != nil {
 		return err
 	}
 
