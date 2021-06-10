@@ -20,11 +20,25 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import Typography from "@material-ui/core/Typography";
 import Chip from "@material-ui/core/Chip";
 import Tooltip from "@material-ui/core/Tooltip";
+import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 
 import Avatar from "@material-ui/core/Avatar";
-import Button from "@material-ui/core/Button";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+
+import ReportProblemIcon from "@material-ui/icons/ReportProblem";
+import AccessAlarmIcon from "@material-ui/icons/AccessAlarm";
+import BuildIcon from "@material-ui/icons/Build";
+
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
+import Slider from "@material-ui/core/Slider";
+import Alert from "@material-ui/lab/Alert";
 
 import { Link as RouterLink } from "react-router-dom";
 
@@ -70,6 +84,12 @@ const scanStyles = makeStyles((theme: Theme) =>
       "& > *": {
         margin: theme.spacing(0.3),
       },
+    },
+    vulnStatusIcon: {
+      marginTop: theme.spacing(0.4),
+      marginRight: theme.spacing(1),
+      marginLeft: "0px",
+      marginBottom: "0px",
     },
   })
 );
@@ -212,8 +232,8 @@ export function Report(props: reportProps) {
                     <TableCell style={{ minWidth: "160px" }}>VulnID</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell style={{ minWidth: "120px" }}>Impact</TableCell>
-                    <TableCell style={{ minWidth: "120px" }}>Status</TableCell>
-                    <TableCell style={{ minWidth: "100px" }}></TableCell>
+                    <TableCell style={{ minWidth: "160px" }}>Status</TableCell>
+                    <TableCell style={{ width: "20%" }}>Comment</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>{renderSource(src)}</TableBody>
@@ -390,6 +410,7 @@ type PackageRowProps = {
 
 function PackageRow(props: PackageRowProps) {
   const scanClasses = scanStyles();
+  const [inputDialog, setInputDialog] = useState<string | undefined>();
   const [vulnStatus, setVulnStatus] = useState<model.vulnStatus>(
     props.status || {
       RepoName: props.repoName,
@@ -404,9 +425,16 @@ function PackageRow(props: PackageRowProps) {
       VulnID: props.vulnID,
     }
   );
+  const [statusComment, setStatusComment] = useState<string>();
+  const [statusDuration, setStatusDuration] = useState<number>(0);
+  const [statusError, setStatusError] = useState<string>();
 
   const renderCVSS = (cvss?: { [key: string]: model.cvss }) => {
-    const naMsg = "No CVSS";
+    const naMsg = (
+      <Tooltip title="No CVSS">
+        <HelpOutlineIcon />
+      </Tooltip>
+    );
     if (!cvss) {
       return naMsg;
     }
@@ -432,7 +460,24 @@ function PackageRow(props: PackageRowProps) {
       C: { backgroundColor: red[600] },
       I: { backgroundColor: pink[300] },
       A: { backgroundColor: orange[300] },
+      NA: { backgroundColor: "#eeeeee" },
     };
+    return (
+      <div className={scanClasses.vulnImpactCell}>
+        {Object.keys(metrics).map((m, idx) => {
+          if (vectors[m] === "L" || vectors[m] === "H") {
+            return (
+              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
+                <Avatar style={styles[m]}>{m}</Avatar>
+              </Tooltip>
+            );
+          } else {
+            return <Avatar style={styles.NA}>{m}</Avatar>;
+          }
+        })}
+      </div>
+    );
+    /*
     return (
       <div className={scanClasses.vulnImpactCell}>
         {Object.keys(metrics).map((m, idx) => {
@@ -446,6 +491,7 @@ function PackageRow(props: PackageRowProps) {
         })}
       </div>
     );
+    */
   };
 
   type vulnStatusRequest = {
@@ -455,22 +501,39 @@ function PackageRow(props: PackageRowProps) {
     PkgName: string;
     VulnID: string;
     ExpiresAt: number;
+    Comment: string;
   };
 
   const onChangeStatus = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const now = new Date();
     const newStatus = event.target.value as model.vulnStatusType;
+    if (newStatus === "none") {
+      updateVulnStatus(newStatus);
+    } else {
+      if (newStatus === "snoozed") {
+        setStatusDuration(7);
+      }
+      setInputDialog(newStatus);
+    }
+  };
+
+  const updateVulnStatus = (newStatus: model.vulnStatusType) => {
+    const now = new Date();
+    const expiresAt =
+      statusDuration > 0
+        ? Math.floor(now.getTime() / 1000) + statusDuration * 86400
+        : 0;
     const req: vulnStatusRequest = {
       Status: newStatus,
-      ExpiresAt:
-        newStatus !== "snoozed"
-          ? 0
-          : Math.floor(now.getTime() / 1000) + 86400 * 14,
+      ExpiresAt: expiresAt,
       PkgName: props.pkg.Name,
       PkgType: props.pkg.Type,
       VulnID: props.vulnID,
       Source: props.src,
+      Comment: statusComment,
     };
+    setStatusError(undefined);
+    setStatusComment(undefined);
+    setStatusDuration(0);
 
     fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
       method: "POST",
@@ -493,14 +556,121 @@ function PackageRow(props: PackageRowProps) {
       const now = new Date();
       const diff = vulnStatus.ExpiresAt - now.getTime() / 1000;
       if (diff > 86400) {
-        return Math.floor(diff / 86000) + " days";
+        return " (" + Math.floor(diff / 86000) + " days)";
       } else {
-        return Math.floor(diff / 3600) + " hours";
+        return " (" + Math.floor(diff / 3600) + " hours)";
       }
     }
 
     return;
   };
+
+  const renderStatusIcon = () => {
+    switch (vulnStatus.Status) {
+      case "none":
+        return <ReportProblemIcon className={scanClasses.vulnStatusIcon} />;
+      case "mitigated":
+        return <BuildIcon className={scanClasses.vulnStatusIcon} />;
+      case "snoozed":
+        const now = new Date();
+        const diff = vulnStatus.ExpiresAt - now.getTime() / 1000;
+        const expiresIn =
+          diff > 86400
+            ? Math.floor(diff / 86000) + " days left"
+            : Math.floor(diff / 3600) + " hours left";
+
+        return (
+          <Tooltip title={expiresIn}>
+            <AccessAlarmIcon className={scanClasses.vulnStatusIcon} />
+          </Tooltip>
+        );
+    }
+    return;
+  };
+
+  const submitUpdate = () => {
+    console.log("comment:", statusComment);
+    if (!statusComment) {
+      setStatusError("Comment required");
+      return;
+    }
+    updateVulnStatus(inputDialog as model.vulnStatusType);
+    setInputDialog(undefined);
+  };
+
+  const dialogMessage = {
+    snoozed: "Describe a reason for pending to update version",
+    mitigated: "Describe how did you do to mitigate risk",
+  };
+  const renderDialog = () => (
+    <Dialog
+      open={inputDialog !== undefined}
+      maxWidth={"sm"}
+      fullWidth
+      onClose={() => {
+        setInputDialog(undefined);
+      }}>
+      <DialogTitle id="vuln-status-update-dialog-title">
+        Change status to {inputDialog}
+      </DialogTitle>
+      {statusError ? (
+        <Alert severity="error" onClose={() => setStatusError(undefined)}>
+          {statusError}
+        </Alert>
+      ) : undefined}
+      <DialogContent>
+        {inputDialog === "snoozed" ? (
+          <div>
+            <DialogContentText>
+              Snooze duration: {statusDuration} days
+            </DialogContentText>
+            <Slider
+              defaultValue={7}
+              valueLabelDisplay="auto"
+              onChange={(event: any, newValue: number) => {
+                setStatusDuration(newValue);
+              }}
+              step={1}
+              marks
+              min={1}
+              max={30}
+            />
+          </div>
+        ) : (
+          ""
+        )}
+
+        <DialogContentText>{dialogMessage[inputDialog]}</DialogContentText>
+        <TextField
+          autoFocus
+          margin="dense"
+          id="vuln-status-comment"
+          label="Comment"
+          onChange={(e) => {
+            setStatusComment(e.target.value as string);
+          }}
+          onKeyDown={(e) => {
+            if (e.code === "Enter") {
+              submitUpdate();
+            }
+          }}
+          fullWidth
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={() => {
+            setInputDialog(undefined);
+          }}
+          color="primary">
+          Cancel
+        </Button>
+        <Button onClick={submitUpdate} color="primary">
+          Update
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   return (
     <TableRow key={props.idx}>
@@ -513,6 +683,7 @@ function PackageRow(props: PackageRowProps) {
             : {}
         }>
         {props.idx === 0 ? `${props.pkg.Name} (${props.pkg.Version})` : ""}
+        {renderDialog()}
       </TableCell>
       <TableCell>
         {" "}
@@ -527,17 +698,18 @@ function PackageRow(props: PackageRowProps) {
       </TableCell>
       <TableCell>{props.vuln.Title}</TableCell>
       <TableCell>{renderCVSS(props.vuln.CVSS)}</TableCell>
-      <TableCell>
+      <TableCell style={{ fontSize: "12px" }}>
+        {renderStatusIcon()}
         <Select
           value={vulnStatus.Status}
           onChange={onChangeStatus}
           style={{ fontSize: "12px" }}>
-          <MenuItem value={"none"}>InProgress</MenuItem>
+          <MenuItem value={"none"}>To be fixed</MenuItem>
           <MenuItem value={"snoozed"}>Snoozed</MenuItem>
           <MenuItem value={"mitigated"}>Mitigated</MenuItem>
         </Select>
       </TableCell>
-      <TableCell>{renderStatus()}</TableCell>
+      <TableCell style={{ fontSize: "12px" }}>{vulnStatus.Comment}</TableCell>
     </TableRow>
   );
 }
