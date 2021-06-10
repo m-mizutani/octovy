@@ -467,12 +467,18 @@ function PackageRow(props: PackageRowProps) {
         {Object.keys(metrics).map((m, idx) => {
           if (vectors[m] === "L" || vectors[m] === "H") {
             return (
-              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
+              <Tooltip
+                title={`${metrics[m]} (${vectors[m]})`}
+                key={`impact-metrics-${idx}`}>
                 <Avatar style={styles[m]}>{m}</Avatar>
               </Tooltip>
             );
           } else {
-            return <Avatar style={styles.NA}>{m}</Avatar>;
+            return (
+              <Avatar key={`impact-metrics-${idx}`} style={styles.NA}>
+                {m}
+              </Avatar>
+            );
           }
         })}
       </div>
@@ -649,7 +655,7 @@ function PackageRow(props: PackageRowProps) {
           onChange={(e) => {
             setStatusComment(e.target.value as string);
           }}
-          onKeyDown={(e) => {
+          onKeyPress={(e) => {
             if (e.code === "Enter") {
               submitUpdate();
             }
