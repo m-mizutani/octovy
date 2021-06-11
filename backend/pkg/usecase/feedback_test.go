@@ -332,7 +332,7 @@ func TestFeedbackScanResultWithVulnStatus(t *testing.T) {
 			mock.githubapp.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
 				calledUpdateCheckRunMock = true
 				assert.NotContains(t, *opt.Output.Text, "🚨")
-				assert.NotContains(t, *opt.Output.Text, "✅")
+				assert.Contains(t, *opt.Output.Text, "✅") // Fixed is always notified
 				assert.Contains(t, *opt.Output.Text, "⚠️")
 				assert.Equal(t, "neutral", *opt.Conclusion)
 				return nil

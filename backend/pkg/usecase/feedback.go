@@ -300,7 +300,7 @@ func ignoreUnhandledVulnRecord(changes *changeSet, db *vulnStatusDB) *changeSet 
 
 	return &changeSet{
 		News:    filter(changes.News),
-		Fixed:   filter(changes.Fixed),
+		Fixed:   changes.Fixed, // Fixed vulnerability should be notified always
 		Unfixed: filter(changes.Unfixed),
 	}
 }
