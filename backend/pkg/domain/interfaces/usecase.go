@@ -26,6 +26,8 @@ type Usecases interface {
 	FindPackageRecordsByBranch(*model.GitHubBranch) ([]*model.PackageRecord, error)
 	FindPackageRecordsByName(pkgType model.PkgType, pkgName string) ([]*model.PackageRecord, error)
 
+	UpdateVulnStatus(response *model.VulnStatus) error
+
 	LookupScanReport(reportID string) (*model.ScanReportResponse, error)
 
 	UpdateTrivyDB() error

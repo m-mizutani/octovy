@@ -29,6 +29,8 @@ type dynamoRecord struct {
 	PK2 string `dynamo:"pk2,omitempty" index:"secondary,hash"`
 	SK2 string `dynamo:"sk2,omitempty" index:"secondary,range"`
 
+	ExpiresAt *int64 `dynamo:"expires_at,omitempty"`
+
 	Doc interface{} `dynamo:"doc"`
 }
 

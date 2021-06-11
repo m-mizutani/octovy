@@ -23,7 +23,7 @@ type Infra struct {
 	NewS3            NewS3
 	NewGitHub        NewGitHub
 	NewGitHubApp     NewGitHubApp
-	Utils            Utils
+	Utils            *Utils
 }
 
 // AWS
@@ -76,6 +76,10 @@ type DBClient interface {
 	FindVulnerability(vulnID string) (*model.Vulnerability, error)
 	FindLatestVulnerabilities(n int) ([]*model.Vulnerability, error)
 	GetVulnerabilities(vulnIDs []string) ([]*model.Vulnerability, error)
+
+	PutVulnStatus(status *model.VulnStatus) error
+	GetVulnStatus(repo *model.GitHubRepo, now int64) ([]*model.VulnStatus, error)
+	GetVulnStatusLogs(repo *model.GitHubRepo, key *model.VulnPackageKey) ([]*model.VulnStatus, error)
 
 	TableName() string
 	Close() error

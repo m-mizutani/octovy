@@ -104,6 +104,7 @@ type ScanReport struct {
 type ScanReportResponse struct {
 	ScanReport
 	Vulnerabilities map[string]*Vulnerability
+	VulnStatuses    []*VulnStatus
 }
 
 func (x *ScanReport) IsValid() error {

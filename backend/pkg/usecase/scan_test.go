@@ -30,6 +30,7 @@ type mockSet struct {
 	sqs       *aws.MockSQS
 	trivy     *trivydb.TrivyDBMock
 	githubapp *githubapp.Mock
+	utils     *interfaces.Utils
 }
 
 func TestScanRepository(t *testing.T) {

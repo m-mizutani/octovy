@@ -1,3 +1,5 @@
+import { ModalManager } from "@material-ui/core";
+
 export interface GitHubRepo {
   Owner: string;
   RepoName: string;
@@ -6,11 +8,50 @@ export interface GitHubRepo {
   URL: string;
 }
 
-interface pkg {
+export interface pkg {
   Type: string;
   Name: string;
   Version: string;
   Vulnerabilities: string[];
+}
+
+export type vulnStatusType = "none" | "snoozed" | "mitigated" | "fixed";
+
+export interface vulnStatus {
+  Comment: string;
+  CreatedAt: number;
+  ExpiresAt: number;
+  Owner: string;
+  PkgName: string;
+  PkgType: string;
+  RepoName: string;
+  Source: string;
+  Status: vulnStatusType;
+  VulnID: string;
+}
+
+export class vulnStatusDB {
+  readonly vulnMap: { [key: string]: vulnStatus };
+  static toKey(src: string, pkgName: string, vulnID: string): string {
+    return `${src}|${pkgName}|${vulnID}`;
+  }
+  constructor(status: vulnStatus[]) {
+    console.log({ status });
+    this.vulnMap = {};
+    status.forEach((status) => {
+      const key = vulnStatusDB.toKey(
+        status.Source,
+        status.PkgName,
+        status.VulnID
+      );
+      this.vulnMap[key] = status;
+    });
+  }
+
+  getStatus(src: string, pkgName: string, vulnID: string): vulnStatus {
+    const key = vulnStatusDB.toKey(src, pkgName, vulnID);
+    return this.vulnMap[key];
+  }
 }
 
 export interface packageSource {
@@ -34,6 +75,7 @@ export interface scanReport {
   ScannedAt: number;
   Sources: packageSource[];
   Vulnerabilities: { [key: string]: vulnerability };
+  VulnStatues: vulnStatus[];
 }
 
 export interface packageRecord {
@@ -76,7 +118,7 @@ export interface cvss {
   V3Score: number;
 }
 
-interface vulnDetail {
+export interface vulnDetail {
   Title: string;
   Description: string;
   Severity: string;

@@ -9,8 +9,8 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/interfaces"
 )
 
-func DefaultUtils() interfaces.Utils {
-	return interfaces.Utils{
+func DefaultUtils() *interfaces.Utils {
+	return &interfaces.Utils{
 		TimeNow: func() time.Time {
 			return time.Now().UTC()
 		},

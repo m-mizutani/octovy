@@ -110,6 +110,7 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/scan/report/:report_id", getScanReport)
 	r.GET("/package", getPackage)
 	r.GET("/vuln/:vuln_id", getVulnerability)
+	r.POST("/status/:owner/:repo_name", postVulnResponse)
 	r.GET("/meta/octovy", getOctovyMetadata)
 
 	return engine
