@@ -1,6 +1,10 @@
 package model
 
-import "github.com/m-mizutani/goerr"
+import (
+	"strings"
+
+	"github.com/m-mizutani/goerr"
+)
 
 type VulnStatusType string
 
@@ -34,6 +38,10 @@ type VulnPackageKey struct {
 	PkgType PkgType
 	PkgName string
 	VulnID  string
+}
+
+func (x *VulnPackageKey) Key() string {
+	return strings.Join([]string{x.Source, x.PkgName, x.VulnID}, "|")
 }
 
 type VulnStatus struct {

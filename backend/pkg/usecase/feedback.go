@@ -12,14 +12,33 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
+type vulnStatusDB struct {
+	db map[string]*model.VulnStatus
+}
+
+func newVulnStatusDB(statuses []*model.VulnStatus) *vulnStatusDB {
+	db := &vulnStatusDB{
+		db: make(map[string]*model.VulnStatus),
+	}
+	for _, status := range statuses {
+		db.db[status.Key()] = status
+	}
+	return db
+}
+
+func (x *vulnStatusDB) lookup(key *model.VulnPackageKey) *model.VulnStatus {
+	return x.db[key.Key()]
+}
+
 type feedbackProps struct {
-	DB          interfaces.DBClient
-	App         interfaces.GitHubApp
-	NewReport   *model.ScanReport
-	OldReport   *model.ScanReport
-	Options     *model.FeedbackOptions
-	FrontendURL string
-	CheckFail   bool
+	DB           interfaces.DBClient
+	App          interfaces.GitHubApp
+	NewReport    *model.ScanReport
+	OldReport    *model.ScanReport
+	Options      *model.FeedbackOptions
+	VulnStatusDB *vulnStatusDB
+	FrontendURL  string
+	CheckFail    bool
 }
 
 func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
@@ -30,7 +49,12 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 		return goerr.Wrap(err).With("req", req)
 	}
 
-	oldReport, err := getOldReport(x.svc.DB(), &newReport.Target.GitHubRepo, req.Options.PullReqBranch)
+	oldReport, err := getLatestBranchReport(x.svc.DB(), &newReport.Target.GitHubRepo, req.Options.PullReqBranch)
+	if err != nil {
+		return err
+	}
+
+	vulnStatuses, err := x.svc.DB().GetVulnStatus(&newReport.Target.GitHubRepo, x.svc.Infra.Utils.TimeNow().Unix())
 	if err != nil {
 		return err
 	}
@@ -41,13 +65,14 @@ func (x *Default) FeedbackScanResult(req *model.FeedbackRequest) error {
 	}
 
 	props := feedbackProps{
-		DB:          x.svc.DB(),
-		App:         app,
-		NewReport:   newReport,
-		OldReport:   oldReport,
-		Options:     &req.Options,
-		FrontendURL: x.config.FrontendBaseURL(),
-		CheckFail:   x.config.ShouldFailIfVuln(),
+		DB:           x.svc.DB(),
+		App:          app,
+		NewReport:    newReport,
+		OldReport:    oldReport,
+		Options:      &req.Options,
+		VulnStatusDB: newVulnStatusDB(vulnStatuses),
+		FrontendURL:  x.config.FrontendBaseURL(),
+		CheckFail:    x.config.ShouldFailIfVuln(),
 	}
 
 	if err := feedbackPullRequest(props); err != nil {
@@ -85,7 +110,7 @@ func getScanReport(db interfaces.DBClient, reportID string) (*model.ScanReport, 
 	return report, nil
 }
 
-func getOldReport(db interfaces.DBClient, repo *model.GitHubRepo, branch string) (*model.ScanReport, error) {
+func getLatestBranchReport(db interfaces.DBClient, repo *model.GitHubRepo, branch string) (*model.ScanReport, error) {
 	// Destination branch of merge
 	if branch != "" {
 		branch, err := db.LookupBranch(&model.GitHubBranch{
@@ -129,7 +154,10 @@ func feedbackPullRequest(props feedbackProps) error {
 		pullReqReport = props.OldReport
 	}
 
-	body := buildFeedbackComment(props.NewReport, pullReqReport, props.FrontendURL, false)
+	rawChanges := diffReport(props.NewReport, pullReqReport)
+	changes := ignoreUnhandledVulnRecord(&rawChanges, props.VulnStatusDB)
+
+	body := buildFeedbackComment(props.NewReport, changes, props.FrontendURL, false)
 	if body == "" {
 		return nil
 	}
@@ -150,17 +178,18 @@ func feedbackCheckRun(props feedbackProps) error {
 
 	logger.With("req", props.Options).With("report", props.NewReport).Info("Creating a PR comment")
 
-	changes := diffReport(props.NewReport, props.OldReport)
+	rawChanges := diffReport(props.NewReport, props.OldReport)
+	changes := ignoreUnhandledVulnRecord(&rawChanges, props.VulnStatusDB)
 
 	// Default messages
 	conclusion := "neutral"
 	title := fmt.Sprintf("❗ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
 	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
-	body := buildFeedbackComment(props.NewReport, props.OldReport, props.FrontendURL, true)
+	body := buildFeedbackComment(props.NewReport, changes, props.FrontendURL, true)
 
 	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
 		conclusion = "success"
-		title = "🎉  No vulnerability detected"
+		title = "✅ No vulnerability detected"
 		summary = "OK"
 	} else if props.CheckFail {
 		conclusion = "failure"
@@ -197,13 +226,13 @@ func (x *vulnRecord) key() string {
 	return strings.Join([]string{x.Source, x.VulnID, x.PkgName, x.PkgVersion}, "|")
 }
 
-type changeResult struct {
+type changeSet struct {
 	News    []*vulnRecord
 	Fixed   []*vulnRecord
 	Unfixed []*vulnRecord
 }
 
-func diffReport(newReport, oldReport *model.ScanReport) (res changeResult) {
+func diffReport(newReport, oldReport *model.ScanReport) (res changeSet) {
 	reportToMap := func(report *model.ScanReport) map[string]*vulnRecord {
 		if report == nil {
 			return nil
@@ -253,16 +282,38 @@ func diffReport(newReport, oldReport *model.ScanReport) (res changeResult) {
 	return
 }
 
+func ignoreUnhandledVulnRecord(changes *changeSet, db *vulnStatusDB) *changeSet {
+	filter := func(records []*vulnRecord) []*vulnRecord {
+		var res []*vulnRecord
+		for _, record := range records {
+			status := db.lookup(&model.VulnPackageKey{
+				Source:  record.Source,
+				PkgName: record.PkgName,
+				VulnID:  record.VulnID,
+			})
+			if status == nil || status.Status == model.StatusNone {
+				res = append(res, record)
+			}
+		}
+		return res
+	}
+
+	return &changeSet{
+		News:    filter(changes.News),
+		Fixed:   filter(changes.Fixed),
+		Unfixed: filter(changes.Unfixed),
+	}
+}
+
 func feedbackCommentVulnRecord(v *vulnRecord, url string) string {
 	return fmt.Sprintf("- [%s](%s/#/vuln/%s): `%s` %s in [%s](%s)\n",
 		v.VulnID, url, v.VulnID, v.PkgName, v.PkgVersion, v.Source, v.Source)
 }
 
-func buildFeedbackComment(report, base *model.ScanReport, frontendURL string, showUnfix bool) string {
+func buildFeedbackComment(report *model.ScanReport, changes *changeSet, frontendURL string, showUnfix bool) string {
 	var body string
 	const listSize = 5
 
-	changes := diffReport(report, base)
 	if len(changes.News) == 0 && len(changes.Unfixed) == 0 {
 		body += "🎉 **No vulnerable packages**\n\n"
 	}

@@ -23,7 +23,7 @@ type Infra struct {
 	NewS3            NewS3
 	NewGitHub        NewGitHub
 	NewGitHubApp     NewGitHubApp
-	Utils            Utils
+	Utils            *Utils
 }
 
 // AWS
