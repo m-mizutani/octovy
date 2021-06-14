@@ -15,6 +15,9 @@ import GitHubIcon from "@material-ui/icons/GitHub";
 import Alert from "@material-ui/lab/Alert";
 import Avatar from "@material-ui/core/Avatar";
 import IconButton from "@material-ui/core/IconButton";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import Link from "@material-ui/core/Link";
 
 import * as model from "./contents/Model";
 import { error } from "console";
@@ -48,6 +51,8 @@ function Header() {
   const classes = makeStyles(styles)();
   const [errMsg, setErrMsg] = useState<string>();
   const [user, setUser] = useState<model.user>();
+  const [menuAnchorEl, setMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
 
   useEffect(() => {
     const hashParts = window.location.hash.split("?");
@@ -89,13 +94,34 @@ function Header() {
     }
   };
 
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
   const renderLoginStatus = () => {
     if (user) {
-      console.log({ user });
       return (
-        <IconButton color="inherit" className={classes.iconButtonAvatar}>
-          <Avatar src={user.AvatarURL} alt={user.Name} />
-        </IconButton>
+        <div>
+          <IconButton
+            color="inherit"
+            onClick={handleMenuClick}
+            className={classes.iconButtonAvatar}>
+            <Avatar src={user.AvatarURL} alt={user.Name} />
+          </IconButton>
+          <Menu
+            id="simple-menu"
+            anchorEl={menuAnchorEl}
+            keepMounted
+            open={Boolean(menuAnchorEl)}
+            onClose={handleMenuClose}>
+            <MenuItem onClick={handleMenuClose}>
+              <Link href="auth/logout">Logout</Link>
+            </MenuItem>
+          </Menu>
+        </div>
       );
     } else {
       return (

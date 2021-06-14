@@ -69,3 +69,11 @@ func getAuthGitHubCallback(c *gin.Context) {
 	c.SetCookie(tokenCookieName, string(token), 86400, "", "/", true, true)
 	c.Redirect(http.StatusFound, meta.FrontendURL)
 }
+
+func getLogout(c *gin.Context) {
+	cfg := getConfig(c)
+	meta := cfg.Usecase.GetOctovyMetadata()
+	// TODO: revoke session
+	c.SetCookie(tokenCookieName, "", 0, "", "/", true, true)
+	c.Redirect(http.StatusFound, meta.FrontendURL)
+}

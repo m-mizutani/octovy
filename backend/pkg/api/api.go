@@ -105,6 +105,7 @@ func New(cfg *Config) *gin.Engine {
 	engine.GET("/bundle.js", getBundleJS)
 	engine.GET("/auth/github", getAuthGitHub)
 	engine.GET("/auth/github/callback", getAuthGitHubCallback)
+	engine.GET("/auth/logout", getLogout)
 	engine.POST("/webhook/github", postWebhookGitHub)
 
 	r := engine.Group("/api/v1")
