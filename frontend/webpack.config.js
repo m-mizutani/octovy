@@ -18,6 +18,7 @@ const devServer = {
   contentBase: "dist",
   proxy: {
     "/api": "http://localhost:9080",
+    "/auth": "http://localhost:9080",
   },
   hot: true,
 };

@@ -65,3 +65,19 @@
 
 - PK: `vuln_status_log:{Owner}/{RepoName}`
 - SK: `{Source}|{PkgName}|{VulnID}|{CreatedAt}`
+
+### GitHubAuthState
+
+- PK: `github_auth_state:{State}`
+- SK: `*`
+
+### GitHubToken
+
+- PK: `github_token:{UserID}`
+- SK: `*`
+
+### User
+
+- PK: `user:{UserID}`
+- SK: `*`
+

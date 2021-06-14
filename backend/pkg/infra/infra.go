@@ -6,6 +6,7 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/infra/db"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/github"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/githubauth"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
 )
 
@@ -18,6 +19,7 @@ func New() *interfaces.Infra {
 		NewS3:            aws.NewS3,
 		NewGitHubApp:     githubapp.New,
 		NewGitHub:        github.New,
+		NewGitHubAuth:    githubauth.New,
 		Utils:            DefaultUtils(),
 	}
 	return defaultInfra

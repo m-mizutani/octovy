@@ -135,3 +135,11 @@ export interface vulnerability {
   FirstSeenAt: number;
   LastModifiedAt: number;
 }
+
+export interface user {
+  UserID: string;
+  Login: string;
+  Name: string;
+  AvatarURL: string;
+  URL: string;
+}

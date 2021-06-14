@@ -6,6 +6,13 @@ import (
 	"github.com/Netflix/go-env"
 )
 
+type Metadata struct {
+	FrontendURL  string `env:"FRONTEND_URL"`
+	GitHubAppURL string `env:"GITHUB_APP_URL"`
+	GitHubWebURL string `env:"GITHUB_WEB_URL"`
+	HomepageURL  string `env:"HOMEPAGE_URL"`
+}
+
 type Config struct {
 	AwsRegion            string `env:"AWS_REGION"`
 	TableName            string `env:"TABLE_NAME"`
@@ -13,9 +20,8 @@ type Config struct {
 	ScanRequestQueue     string `env:"SCAN_REQUEST_QUEUE"`
 	FeedbackRequestQueue string `env:"FEEDBACK_REQUEST_QUEUE"`
 	GitHubEndpoint       string `env:"GITHUB_ENDPOINT"`
-	FrontendURL          string `env:"FRONTEND_URL"`
-	GitHubAppURL         string `env:"GITHUB_APP_URL"`
-	HomepageURL          string `env:"HOMEPAGE_URL"`
+
+	Metadata
 
 	RulePullReqCommentTriggers string `env:"RULE_PR_COMMENT_TRIGGERS"`
 	RuleFailCheckIfVuln        string `env:"RULE_FAIL_CHECK_IF_VULN"`

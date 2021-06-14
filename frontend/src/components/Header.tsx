@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AppBar from "@material-ui/core/AppBar";
 import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -7,10 +7,17 @@ import {
   createStyles,
   Theme,
   withStyles,
-  WithStyles,
+  makeStyles,
 } from "@material-ui/core/styles";
-
+import Button from "@material-ui/core/Button";
 import { Route, Switch, Link as RouterLink } from "react-router-dom";
+import GitHubIcon from "@material-ui/icons/GitHub";
+import Alert from "@material-ui/lab/Alert";
+import Avatar from "@material-ui/core/Avatar";
+import IconButton from "@material-ui/core/IconButton";
+
+import * as model from "./contents/Model";
+import { error } from "console";
 
 const lightColor = "rgba(255, 255, 255, 0.7)";
 
@@ -38,6 +45,71 @@ const styles = (theme: Theme) =>
   });
 
 function Header() {
+  const classes = makeStyles(styles)();
+  const [errMsg, setErrMsg] = useState<string>();
+  const [user, setUser] = useState<model.user>();
+
+  useEffect(() => {
+    const hashParts = window.location.hash.split("?");
+    if (hashParts.length === 2) {
+      const qs = new URLSearchParams(hashParts[1]);
+      const err = qs.get("login_error");
+      if (err) {
+        setErrMsg(err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch("api/v1/user")
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          setUser(result.data);
+        },
+        (error) => {
+          setErrMsg(error);
+        }
+      );
+  }, []);
+
+  const renderLoginErrorMessage = () => {
+    if (errMsg) {
+      return (
+        <Alert
+          severity="error"
+          onClose={() => {
+            setErrMsg(undefined);
+          }}>
+          {errMsg}
+        </Alert>
+      );
+    } else {
+      return;
+    }
+  };
+
+  const renderLoginStatus = () => {
+    if (user) {
+      console.log({ user });
+      return (
+        <IconButton color="inherit" className={classes.iconButtonAvatar}>
+          <Avatar src={user.AvatarURL} alt={user.Name} />
+        </IconButton>
+      );
+    } else {
+      return (
+        <Button
+          size="small"
+          variant="contained"
+          href="auth/github"
+          startIcon={<GitHubIcon />}>
+          Login with GitHub
+        </Button>
+      );
+    }
+  };
+
   return (
     <React.Fragment>
       <AppBar color="primary" position="sticky" elevation={0}>
@@ -53,9 +125,11 @@ function Header() {
                 </Switch>
               </Typography>
             </Grid>
+            <Grid item>{renderLoginStatus()}</Grid>
           </Grid>
         </Toolbar>
       </AppBar>
+      {renderLoginErrorMessage()}
     </React.Fragment>
   );
 }

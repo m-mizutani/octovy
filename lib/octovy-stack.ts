@@ -55,6 +55,7 @@ interface OctovyProps extends cdk.StackProps {
 
   readonly frontendURL?: string;
   readonly githubAppURL?: string;
+  readonly githubWebURL?: string;
   readonly homepageURL?: string;
 
   readonly rules?: rules;
@@ -149,6 +150,7 @@ export class OctovyStack extends cdk.Stack {
       FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
       GITHUB_APP_URL: props.githubAppURL || "",
+      GITHUB_WEB_URL: props.githubWebURL || "",
       HOMEPAGE_URL: props.homepageURL || "",
 
       RULE_PR_COMMENT_TRIGGERS: rules.PullReqCommentTriggers
