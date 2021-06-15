@@ -17,6 +17,8 @@ var logger = golambda.Logger
 const (
 	contextConfig       = "config"
 	contextRequestIDKey = "requestID"
+	cookieTokenName     = "token"
+	cookieReferrerName  = "referrer"
 )
 
 type Config struct {
@@ -137,10 +139,8 @@ func getConfig(c *gin.Context) *Config {
 
 }
 
-const tokenCookieName = "token"
-
 func isAuthenticated(c *gin.Context) (*model.Session, error) {
-	cookie, err := c.Cookie(tokenCookieName)
+	cookie, err := c.Cookie(cookieTokenName)
 	if err != nil {
 		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "No valid cookie")
 	}

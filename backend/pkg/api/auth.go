@@ -32,6 +32,8 @@ func getAuthGitHub(c *gin.Context) {
 	v.Set("state", state)
 
 	redirectTo := strings.TrimSuffix(meta.GitHubWebURL, "/") + "/login/oauth/authorize?" + v.Encode()
+
+	c.SetCookie(cookieReferrerName, c.Query("callback"), 60, "", "", true, true)
 	c.Redirect(http.StatusFound, redirectTo)
 }
 
@@ -66,14 +68,19 @@ func getAuthGitHubCallback(c *gin.Context) {
 		golambda.EmitError(err)
 	}
 
-	c.SetCookie(tokenCookieName, ssn.Token, 86400*7, "", "/", true, true)
-	c.Redirect(http.StatusFound, meta.FrontendURL)
+	c.SetCookie(cookieTokenName, ssn.Token, 86400*7, "", "", true, true)
+	redirectTo := meta.FrontendURL
+	if v, err := c.Cookie(cookieReferrerName); err == nil {
+		redirectTo = strings.TrimSuffix(redirectTo, "/") + "/#/" + v
+	}
+
+	c.Redirect(http.StatusFound, redirectTo)
 }
 
 func getLogout(c *gin.Context) {
 	cfg := getConfig(c)
 	meta := cfg.Usecase.GetOctovyMetadata()
 	// TODO: revoke session
-	c.SetCookie(tokenCookieName, "", 0, "", "/", true, true)
+	c.SetCookie(cookieTokenName, "", 0, "", "/", true, true)
 	c.Redirect(http.StatusFound, meta.FrontendURL)
 }

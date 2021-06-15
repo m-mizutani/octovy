@@ -18,6 +18,7 @@ import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Link from "@material-ui/core/Link";
+import { Redirect, useLocation } from "react-router-dom";
 
 import * as model from "./contents/Model";
 import { error } from "console";
@@ -53,6 +54,7 @@ function Header() {
   const [user, setUser] = useState<model.user>();
   const [menuAnchorEl, setMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
+  const [callback, setCallback] = useState<string>("");
 
   useEffect(() => {
     const hashParts = window.location.hash.split("?");
@@ -64,6 +66,10 @@ function Header() {
       }
     }
   }, []);
+  const routerLocation = useLocation();
+  useEffect(() => {
+    setCallback(location.hash.substr(2));
+  }, [routerLocation]);
 
   useEffect(() => {
     fetch("api/v1/user")
@@ -128,7 +134,7 @@ function Header() {
         <Button
           size="small"
           variant="contained"
-          href="auth/github"
+          href={`auth/github?callback=${callback}`}
           startIcon={<GitHubIcon />}>
           Login with GitHub
         </Button>

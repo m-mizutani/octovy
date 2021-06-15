@@ -60,7 +60,7 @@ func (x *GitHubAuthClient) GetAccessToken(code string) (*model.User, *model.GitH
 	if err != nil {
 		return nil, nil, goerr.Wrap(err, "Failed to encode authReq")
 	}
-	fmt.Println("auth", string(authReqBody))
+
 	url := fmt.Sprintf("%s/login/oauth/access_token", strings.TrimSuffix(x.WebEndpoint, "/"))
 	req, err := http.NewRequest("POST", url, bytes.NewReader(authReqBody))
 	if err != nil {
@@ -84,7 +84,7 @@ func (x *GitHubAuthClient) GetAccessToken(code string) (*model.User, *model.GitH
 
 	var token model.GitHubToken
 	// if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-	fmt.Println("body", string(body))
+
 	if err := json.Unmarshal(body, &token); err != nil {
 		return nil, nil, goerr.Wrap(err, "Failed to parse GitHub access token").With("url", url)
 	}
