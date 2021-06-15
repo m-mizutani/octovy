@@ -7,7 +7,7 @@ import (
 )
 
 func getUser(c *gin.Context) {
-	userID, err := isAuthenticated(c)
+	ssn, err := isAuthenticated(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -15,7 +15,7 @@ func getUser(c *gin.Context) {
 
 	cfg := getConfig(c)
 
-	user, err := cfg.Usecase.LookupUser(userID)
+	user, err := cfg.Usecase.LookupUser(ssn.UserID)
 	if err != nil {
 		c.Error(err)
 		return

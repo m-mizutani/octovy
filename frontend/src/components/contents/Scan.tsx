@@ -522,6 +522,13 @@ function PackageRow(props: PackageRowProps) {
     }
   };
 
+  const clearStatusDialog = () => {
+    setStatusError(undefined);
+    setStatusComment(undefined);
+    setStatusDuration(0);
+    setInputDialog(undefined);
+  };
+
   const updateVulnStatus = (newStatus: model.vulnStatusType) => {
     const now = new Date();
     const expiresAt =
@@ -537,9 +544,6 @@ function PackageRow(props: PackageRowProps) {
       Source: props.src,
       Comment: statusComment,
     };
-    setStatusError(undefined);
-    setStatusComment(undefined);
-    setStatusDuration(0);
 
     fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
       method: "POST",
@@ -549,26 +553,18 @@ function PackageRow(props: PackageRowProps) {
       .then(
         (result) => {
           console.log("status:", { result });
-          setVulnStatus(result.data);
+          if (result.error) {
+            setStatusError(result.error);
+          } else {
+            setVulnStatus(result.data);
+            clearStatusDialog();
+          }
         },
         (error) => {
-          console.log("Error:", error);
+          console.log({ error });
+          setStatusError(error);
         }
       );
-  };
-
-  const renderStatus = (status?: model.vulnStatus) => {
-    if (vulnStatus.Status === "snoozed") {
-      const now = new Date();
-      const diff = vulnStatus.ExpiresAt - now.getTime() / 1000;
-      if (diff > 86400) {
-        return " (" + Math.floor(diff / 86000) + " days)";
-      } else {
-        return " (" + Math.floor(diff / 3600) + " hours)";
-      }
-    }
-
-    return;
   };
 
   const renderStatusIcon = () => {
@@ -601,7 +597,6 @@ function PackageRow(props: PackageRowProps) {
       return;
     }
     updateVulnStatus(inputDialog as model.vulnStatusType);
-    setInputDialog(undefined);
   };
 
   const dialogMessage = {

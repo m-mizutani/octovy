@@ -40,8 +40,8 @@ type Usecases interface {
 	CreateAuthState() (string, error)
 	AuthGitHubUser(code, state string) (*model.User, error)
 	LookupUser(userID string) (*model.User, error)
-	CreateToken(user *model.User) ([]byte, error)
-	ValidateToken(token []byte) (string, error)
+	CreateSession(user *model.User) (*model.Session, error)
+	ValidateSession(token string) (*model.Session, error)
 
 	GetOctovyMetadata() *model.Metadata
 }

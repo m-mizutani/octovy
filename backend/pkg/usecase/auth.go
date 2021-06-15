@@ -7,6 +7,8 @@ import (
 )
 
 const authStateTimeoutSecond = 60
+const sessionTokenTimeoutSecond = 24 * 60 * 60 * 7
+const sessionTokenLength = 128
 
 func (x *Default) CreateAuthState() (string, error) {
 	v, err := uuid.NewV4()
@@ -79,13 +81,32 @@ func (x *Default) AuthGitHubUser(code, state string) (*model.User, error) {
 	return user, nil
 }
 
-func (x *Default) CreateToken(user *model.User) ([]byte, error) {
-	return []byte("five timeless words"), nil
+func (x *Default) CreateSession(user *model.User) (*model.Session, error) {
+	token := x.svc.Infra.Utils.GenerateToken(sessionTokenLength)
+	now := x.svc.Infra.Utils.TimeNow()
+	ssn := &model.Session{
+		UserID:    user.UserID,
+		Token:     token,
+		CreatedAt: now.Unix(),
+		ExpiresAt: now.Unix() + sessionTokenTimeoutSecond,
+	}
+
+	if err := x.svc.DB().PutSession(ssn); err != nil {
+		return nil, err
+	}
+
+	return ssn, nil
 }
 
-func (x *Default) ValidateToken(token []byte) (string, error) {
-	if string(token) == "five timeless words" {
-		return "881", nil
+func (x *Default) ValidateSession(token string) (*model.Session, error) {
+	now := x.svc.Infra.Utils.TimeNow()
+	ssn, err := x.svc.DB().GetSession(token, now.Unix())
+	if err != nil {
+		return nil, err
 	}
-	return "", goerr.Wrap(model.ErrAuthenticationFailed)
+	if ssn == nil {
+		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Invalid token")
+	}
+
+	return ssn, nil
 }

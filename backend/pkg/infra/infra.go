@@ -8,6 +8,7 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/infra/githubapp"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/githubauth"
 	"github.com/m-mizutani/octovy/backend/pkg/infra/trivydb"
+	"github.com/m-mizutani/octovy/backend/pkg/infra/utils"
 )
 
 func New() *interfaces.Infra {
@@ -20,7 +21,7 @@ func New() *interfaces.Infra {
 		NewGitHubApp:     githubapp.New,
 		NewGitHub:        github.New,
 		NewGitHubAuth:    githubauth.New,
-		Utils:            DefaultUtils(),
+		Utils:            utils.DefaultUtils(),
 	}
 	return defaultInfra
 }

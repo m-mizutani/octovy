@@ -58,15 +58,15 @@ func getAuthGitHubCallback(c *gin.Context) {
 		return
 	}
 
-	token, err := cfg.Usecase.CreateToken(user)
+	ssn, err := cfg.Usecase.CreateSession(user)
 	if err != nil {
 		v := url.Values{}
-		v.Set("login_error", "Failed to issue token")
+		v.Set("login_error", "Failed to issue session token")
 		c.Redirect(http.StatusFound, meta.FrontendURL+"?"+v.Encode())
 		golambda.EmitError(err)
 	}
 
-	c.SetCookie(tokenCookieName, string(token), 86400, "", "/", true, true)
+	c.SetCookie(tokenCookieName, ssn.Token, 86400*7, "", "/", true, true)
 	c.Redirect(http.StatusFound, meta.FrontendURL)
 }
 

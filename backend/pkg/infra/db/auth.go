@@ -135,3 +135,54 @@ func (x *DynamoClient) GetGitHubToken(userID string) (*model.GitHubToken, error)
 
 	return token, nil
 }
+
+func sessionPK(token string) string {
+	return "session:" + token
+}
+func sessionSK() string {
+	return "*"
+}
+
+func (x *DynamoClient) PutSession(ssn *model.Session) error {
+	if err := ssn.IsValid(); err != nil {
+		return err
+	}
+
+	record := dynamoRecord{
+		PK:        sessionPK(ssn.Token),
+		SK:        sessionSK(),
+		Doc:       ssn,
+		ExpiresAt: &ssn.ExpiresAt,
+	}
+	if err := x.table.Put(record).Run(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (x *DynamoClient) GetSession(token string, now int64) (*model.Session, error) {
+	if token == "" {
+		return nil, goerr.Wrap(model.ErrInvalidInputValues, "token must not be empty")
+	}
+	var record dynamoRecord
+
+	pk := sessionPK(token)
+	sk := sessionSK()
+
+	q := x.table.Get("pk", pk).Range("sk", dynamo.Equal, sk).Filter("? < expires_at", now)
+	if err := q.One(&record); err != nil {
+		if isNotFoundErr(err) {
+			return nil, nil
+		}
+		return nil, goerr.Wrap(err)
+	}
+
+	var ssn *model.Session
+	if err := record.Unmarshal(&ssn); err != nil {
+		return nil, err
+	}
+
+	return ssn, nil
+}

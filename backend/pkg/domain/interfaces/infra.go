@@ -88,6 +88,8 @@ type DBClient interface {
 	GetUser(userID string) (*model.User, error)
 	PutGitHubToken(token *model.GitHubToken) error
 	GetGitHubToken(userID string) (*model.GitHubToken, error)
+	PutSession(ssn *model.Session) error
+	GetSession(token string, now int64) (*model.Session, error)
 
 	TableName() string
 	Close() error
@@ -129,10 +131,12 @@ type WriteFile func(r io.Reader, path string) error
 type OpenZip func(path string) (*zip.ReadCloser, error)
 type TempFile func(dir, pattern string) (f *os.File, err error)
 type Remove func(name string) error
+type GenerateToken func(n int) string
 
 type Utils struct {
-	TimeNow  TimeNow
-	TempFile TempFile
-	OpenZip  OpenZip
-	Remove   Remove
+	TimeNow       TimeNow
+	TempFile      TempFile
+	OpenZip       OpenZip
+	Remove        Remove
+	GenerateToken GenerateToken
 }

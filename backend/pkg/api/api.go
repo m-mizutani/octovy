@@ -117,7 +117,7 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/scan/report/:report_id", getScanReport)
 	r.GET("/package", getPackage)
 	r.GET("/vuln/:vuln_id", getVulnerability)
-	r.POST("/status/:owner/:repo_name", postVulnResponse)
+	r.POST("/status/:owner/:repo_name", postVulnStatus)
 	r.GET("/meta/octovy", getOctovyMetadata)
 	r.GET("/user", getUser)
 
@@ -138,22 +138,21 @@ func getConfig(c *gin.Context) *Config {
 }
 
 const tokenCookieName = "token"
-const userIDKey = "userID"
 
-func isAuthenticated(c *gin.Context) (string, error) {
+func isAuthenticated(c *gin.Context) (*model.Session, error) {
 	cookie, err := c.Cookie(tokenCookieName)
 	if err != nil {
-		return "", goerr.Wrap(model.ErrAuthenticationFailed, "No valid cookie")
+		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "No valid cookie")
 	}
 
 	cfg := getConfig(c)
-	userID, err := cfg.Usecase.ValidateToken([]byte(cookie))
+	ssn, err := cfg.Usecase.ValidateSession(cookie)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if userID == "" {
-		return "", goerr.Wrap(model.ErrAuthenticationFailed, "Invalid user in token")
+	if ssn == nil {
+		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Invalid user in token")
 	}
-
-	return userID, nil
+	ssn.Token = "" // Erase token
+	return ssn, nil
 }
