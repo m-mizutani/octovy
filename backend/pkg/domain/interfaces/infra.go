@@ -23,6 +23,7 @@ type Infra struct {
 	NewS3            NewS3
 	NewGitHub        NewGitHub
 	NewGitHubApp     NewGitHubApp
+	NewGitHubAuth    NewGitHubAuth
 	Utils            *Utils
 }
 
@@ -81,25 +82,41 @@ type DBClient interface {
 	GetVulnStatus(repo *model.GitHubRepo, now int64) ([]*model.VulnStatus, error)
 	GetVulnStatusLogs(repo *model.GitHubRepo, key *model.VulnPackageKey) ([]*model.VulnStatus, error)
 
+	SaveAuthState(state string, expiresAt int64) error
+	HasAuthState(state string, now int64) (bool, error)
+	PutUser(user *model.User) error
+	GetUser(userID string) (*model.User, error)
+	PutGitHubToken(token *model.GitHubToken) error
+	GetGitHubToken(userID string) (*model.GitHubToken, error)
+	PutSession(ssn *model.Session) error
+	GetSession(token string, now int64) (*model.Session, error)
+	DeleteSession(token string) error
+
 	TableName() string
 	Close() error
 }
 
-// GitHub
-type NewGitHub func() GitHubClient
+// GitHubClient accesses only github.com to download trivy DB. It does not require API endpoint configuration and credentials
 type GitHubClient interface {
 	ListReleases(owner, repo string) ([]*github.RepositoryRelease, error)
 	DownloadReleaseAsset(owner, repo string, assetID int64) (io.ReadCloser, error)
 }
+type NewGitHub func() GitHubClient
 
-// GitHubApp
-type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitHubApp
+// GitHubApp is GitHub App interface that requires both of App ID and Install ID. Additionally it needs to change API endpoint for GitHub Enterprise
 type GitHubApp interface {
 	GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
 	CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error
 	CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error)
 	UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error
 }
+type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitHubApp
+
+// GitHubAuth is for authentication of GitHub user. It does not require App ID and Install ID, but requires API endpoint configuration for GitHub Enterprise
+type GitHubAuth interface {
+	GetAccessToken(code string) (*model.User, *model.GitHubToken, error)
+}
+type NewGitHubAuth func(clientID, clientSecret, apiEndpoint, webEndpoint string) GitHubAuth
 
 // Trivy DB
 type NewTrivyDB func(dbPath string) (TrivyDBClient, error)
@@ -115,10 +132,12 @@ type WriteFile func(r io.Reader, path string) error
 type OpenZip func(path string) (*zip.ReadCloser, error)
 type TempFile func(dir, pattern string) (f *os.File, err error)
 type Remove func(name string) error
+type GenerateToken func(n int) string
 
 type Utils struct {
-	TimeNow  TimeNow
-	TempFile TempFile
-	OpenZip  OpenZip
-	Remove   Remove
+	TimeNow       TimeNow
+	TempFile      TempFile
+	OpenZip       OpenZip
+	Remove        Remove
+	GenerateToken GenerateToken
 }

@@ -36,5 +36,13 @@ type Usecases interface {
 	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 	HandleGitHubInstallationEvent(event *github.InstallationEvent) error
 
-	GetOctovyMetadata() *model.OctovyMetadata
+	GetGitHubAppClientID() (string, error)
+	CreateAuthState() (string, error)
+	AuthGitHubUser(code, state string) (*model.User, error)
+	LookupUser(userID string) (*model.User, error)
+	CreateSession(user *model.User) (*model.Session, error)
+	ValidateSession(token string) (*model.Session, error)
+	RevokeSession(token string) error
+
+	GetOctovyMetadata() *model.Metadata
 }

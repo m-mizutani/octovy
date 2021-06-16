@@ -11,7 +11,11 @@ import (
 
 type secretValues struct {
 	GitHubAppPrivateKey string `json:"github_app_private_key"`
-	GitHubAppID         string `json:"github_app_id"`
+	GitHubClientSecret  string `json:"github_client_secret"`
+
+	// AppID and ClientID does not required to be hide, but save them with private key and client secret for life cycle management of the variables.
+	GitHubAppID    string `json:"github_app_id"`
+	GitHubClientID string `json:"github_client_id"`
 }
 
 func (x *secretValues) GithubAppPEM() ([]byte, error) {

@@ -69,12 +69,15 @@ func globalSetup(c *cli.Context) error {
 type apiCommandConfig struct {
 	AWSRegion string
 	TableName string
-	SecretARN string
 	AssetDir  string
 	Addr      string
 	Port      int
 
-	GitHubAppURL string
+	FrontendURL    string
+	GitHubAppURL   string
+	GitHubWebURL   string
+	GitHubEndpoint string
+	SecretsARN     string
 
 	ctrl *Controller
 }
@@ -126,18 +129,32 @@ func newAPICommand(ctrl *Controller) *cli.Command {
 				Destination: &config.AssetDir,
 			},
 
-			// Required to handle webhook. Normally not necessary
 			&cli.StringFlag{
-				Name:        "secret-arn",
+				Name:        "secrets-arn",
+				EnvVars:     []string{"OCTOVY_SECRETS_ARN"},
 				Aliases:     []string{"s"},
-				EnvVars:     []string{"OCTOVY_SECRET_ARN"},
-				Destination: &config.SecretARN,
+				Destination: &config.SecretsARN,
 			},
 
 			&cli.StringFlag{
 				Name:        "github-app-url",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_URL"},
 				Destination: &config.GitHubAppURL,
+			},
+			&cli.StringFlag{
+				Name:        "github-web-url",
+				EnvVars:     []string{"OCTOVY_GITHUB_WEB_URL"},
+				Destination: &config.GitHubWebURL,
+			},
+			&cli.StringFlag{
+				Name:        "github-endpoint",
+				EnvVars:     []string{"OCTOVY_GITHUB_ENDPOINT"},
+				Destination: &config.GitHubEndpoint,
+			},
+			&cli.StringFlag{
+				Name:        "frontend-url",
+				EnvVars:     []string{"OCTOVY_FRONTEND_URL"},
+				Destination: &config.FrontendURL,
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -147,11 +164,15 @@ func newAPICommand(ctrl *Controller) *cli.Command {
 }
 
 func apiCommand(c *cli.Context, config *apiCommandConfig) error {
+	serverAddr := fmt.Sprintf("%s:%d", config.Addr, config.Port)
+
 	config.ctrl.Config.AwsRegion = config.AWSRegion
 	config.ctrl.Config.TableName = config.TableName
-	config.ctrl.Config.SecretsARN = config.SecretARN
 	config.ctrl.Config.GitHubAppURL = config.GitHubAppURL
-
+	config.ctrl.Config.GitHubWebURL = config.GitHubWebURL
+	config.ctrl.Config.GitHubEndpoint = config.GitHubEndpoint
+	config.ctrl.Config.SecretsARN = config.SecretsARN
+	config.ctrl.Config.FrontendURL = config.FrontendURL
 	engine := api.New(&api.Config{
 		Usecase:  config.ctrl.Usecase,
 		AssetDir: config.AssetDir,
@@ -159,7 +180,7 @@ func apiCommand(c *cli.Context, config *apiCommandConfig) error {
 
 	gin.SetMode(gin.DebugMode)
 	logger.Info().Interface("config", config).Msg("Starting server...")
-	if err := engine.Run(fmt.Sprintf("%s:%d", config.Addr, config.Port)); err != nil {
+	if err := engine.Run(serverAddr); err != nil {
 		logger.Error().Err(err).Interface("config", config).Msg("Server error")
 	}
 

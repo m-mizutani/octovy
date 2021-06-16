@@ -51,6 +51,7 @@ type VulnStatus struct {
 	Status    VulnStatusType
 	ExpiresAt int64
 	CreatedAt int64
+	UserID    string
 	Comment   string
 }
 

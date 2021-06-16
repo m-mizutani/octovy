@@ -142,7 +142,7 @@ function filterVulnerability(
 export function Report(props: reportProps) {
   const classes = useStyles();
   const scanClasses = scanStyles();
-
+  const [errMsg, setErrMsg] = React.useState<string>();
   const [status, setStatus] = React.useState<reportStatus>({
     isLoaded: false,
     displayed: [],
@@ -202,6 +202,7 @@ export function Report(props: reportProps) {
               src={src.Source}
               vuln={status.report.Vulnerabilities[vulnID].Detail}
               status={status.statusDB.getStatus(src.Source, pkg.Name, vulnID)}
+              setErr={setErrMsg}
             />
           )
         );
@@ -210,6 +211,13 @@ export function Report(props: reportProps) {
 
     return (
       <div>
+        {errMsg ? (
+          <Alert severity="error" onClose={() => setErrMsg(undefined)}>
+            {errMsg}
+          </Alert>
+        ) : (
+          ""
+        )}
         {sources.map((src, idx) => (
           <Grid key={idx}>
             <Typography className={scanClasses.vulnSourceTitle}>
@@ -406,6 +414,7 @@ type PackageRowProps = {
   owner: string;
   repoName: string;
   status?: model.vulnStatus;
+  setErr: React.Dispatch<React.SetStateAction<string>>;
 };
 
 function PackageRow(props: PackageRowProps) {
@@ -483,21 +492,6 @@ function PackageRow(props: PackageRowProps) {
         })}
       </div>
     );
-    /*
-    return (
-      <div className={scanClasses.vulnImpactCell}>
-        {Object.keys(metrics).map((m, idx) => {
-          if (vectors[m] === "L" || vectors[m] === "H") {
-            return (
-              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
-                <Avatar style={styles[m]}>{m}</Avatar>
-              </Tooltip>
-            );
-          }
-        })}
-      </div>
-    );
-    */
   };
 
   type vulnStatusRequest = {
@@ -522,6 +516,13 @@ function PackageRow(props: PackageRowProps) {
     }
   };
 
+  const clearStatusDialog = () => {
+    setStatusError(undefined);
+    setStatusComment(undefined);
+    setStatusDuration(0);
+    setInputDialog(undefined);
+  };
+
   const updateVulnStatus = (newStatus: model.vulnStatusType) => {
     const now = new Date();
     const expiresAt =
@@ -537,10 +538,14 @@ function PackageRow(props: PackageRowProps) {
       Source: props.src,
       Comment: statusComment,
     };
-    setStatusError(undefined);
-    setStatusComment(undefined);
-    setStatusDuration(0);
 
+    const setErr = (errMsg) => {
+      if (inputDialog) {
+        setStatusError(errMsg);
+      } else {
+        props.setErr(errMsg);
+      }
+    };
     fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
       method: "POST",
       body: JSON.stringify(req),
@@ -549,26 +554,17 @@ function PackageRow(props: PackageRowProps) {
       .then(
         (result) => {
           console.log("status:", { result });
-          setVulnStatus(result.data);
+          if (result.error) {
+            setErr(result.error);
+          } else {
+            setVulnStatus(result.data);
+            clearStatusDialog();
+          }
         },
         (error) => {
-          console.log("Error:", error);
+          setErr(error);
         }
       );
-  };
-
-  const renderStatus = (status?: model.vulnStatus) => {
-    if (vulnStatus.Status === "snoozed") {
-      const now = new Date();
-      const diff = vulnStatus.ExpiresAt - now.getTime() / 1000;
-      if (diff > 86400) {
-        return " (" + Math.floor(diff / 86000) + " days)";
-      } else {
-        return " (" + Math.floor(diff / 3600) + " hours)";
-      }
-    }
-
-    return;
   };
 
   const renderStatusIcon = () => {
@@ -601,7 +597,6 @@ function PackageRow(props: PackageRowProps) {
       return;
     }
     updateVulnStatus(inputDialog as model.vulnStatusType);
-    setInputDialog(undefined);
   };
 
   const dialogMessage = {

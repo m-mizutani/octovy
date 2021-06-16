@@ -55,6 +55,7 @@ interface OctovyProps extends cdk.StackProps {
 
   readonly frontendURL?: string;
   readonly githubAppURL?: string;
+  readonly githubWebURL?: string;
   readonly homepageURL?: string;
 
   readonly rules?: rules;
@@ -72,6 +73,8 @@ export class OctovyStack extends cdk.Stack {
   readonly metaTable: dynamodb.Table;
   readonly scanRequestQueue: sqs.Queue;
   readonly feedbackRequestQueue: sqs.Queue;
+  readonly deadLetterScanRequestQueue: sqs.Queue;
+  readonly deadLetterFeedbackRequestQueue: sqs.Queue;
 
   readonly apiHandler: lambda.Function;
   readonly scanRepo: lambda.Function;
@@ -98,12 +101,30 @@ export class OctovyStack extends cdk.Stack {
     });
 
     // SQS
+    this.deadLetterScanRequestQueue = new sqs.Queue(
+      this,
+      "deadLetterScanRequestQueue"
+    );
+    this.deadLetterFeedbackRequestQueue = new sqs.Queue(
+      this,
+      "deadLetterFeedbackRequestQueue"
+    );
+
     this.scanRequestQueue = new sqs.Queue(this, "scanRequest", {
       visibilityTimeout: cdk.Duration.seconds(300),
+      deadLetterQueue: {
+        queue: this.deadLetterScanRequestQueue,
+        maxReceiveCount: 5,
+      },
     });
     this.feedbackRequestQueue = new sqs.Queue(this, "feedbackRequest", {
       visibilityTimeout: cdk.Duration.seconds(120),
+      deadLetterQueue: {
+        queue: this.deadLetterFeedbackRequestQueue,
+        maxReceiveCount: 5,
+      },
     });
+
     // VPC
     var securityGroups: ec2.ISecurityGroup[] | undefined = undefined;
     var vpc: ec2.IVpc | undefined = undefined;
@@ -149,6 +170,7 @@ export class OctovyStack extends cdk.Stack {
       FEEDBACK_REQUEST_QUEUE: this.feedbackRequestQueue.queueUrl,
       GITHUB_ENDPOINT: props.githubEndpoint || "",
       GITHUB_APP_URL: props.githubAppURL || "",
+      GITHUB_WEB_URL: props.githubWebURL || "",
       HOMEPAGE_URL: props.homepageURL || "",
 
       RULE_PR_COMMENT_TRIGGERS: rules.PullReqCommentTriggers
@@ -237,6 +259,11 @@ export class OctovyStack extends cdk.Stack {
 
     apiGW.root.addMethod("GET");
     apiGW.root.addResource("bundle.js").addMethod("GET");
+    const authRoot = apiGW.root.addResource("auth");
+    const authGitHub = authRoot.addResource("github");
+    authGitHub.addMethod("GET");
+    authGitHub.addResource("callback").addMethod("GET");
+    authRoot.addResource("logout").addMethod("GET");
 
     const apiRoot = apiGW.root.addResource("api").addResource("v1");
 
@@ -284,6 +311,10 @@ export class OctovyStack extends cdk.Stack {
     // Metadata
     const apiMeta = apiRoot.addResource("meta");
     apiMeta.addResource("octovy").addMethod("GET");
+
+    // User
+    const apiUser = apiRoot.addResource("user");
+    apiUser.addMethod("GET");
 
     // Lambda without API handler
     envVars.FRONTEND_URL = props.frontendURL || apiGW.url;

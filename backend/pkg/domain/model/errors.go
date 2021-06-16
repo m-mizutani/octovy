@@ -13,5 +13,7 @@ var (
 	ErrSystem = goerr.New("System error")
 
 	// API
-	ErrInvalidWebhookData = goerr.New("Invalid webhook data")
+	ErrInvalidWebhookData   = goerr.New("Invalid webhook data")
+	ErrAuthenticationFailed = goerr.New("Authentication failed")
+	ErrUserNotFound         = goerr.New("User not found")
 )

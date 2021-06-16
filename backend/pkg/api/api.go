@@ -17,6 +17,8 @@ var logger = golambda.Logger
 const (
 	contextConfig       = "config"
 	contextRequestIDKey = "requestID"
+	cookieTokenName     = "token"
+	cookieReferrerName  = "referrer"
 )
 
 type Config struct {
@@ -86,6 +88,10 @@ func New(cfg *Config) *gin.Engine {
 					errResp(c, http.StatusNotAcceptable, err)
 				case errors.Is(err, errResourceNotFound):
 					errResp(c, http.StatusNotFound, err)
+				case errors.Is(err, model.ErrAuthenticationFailed):
+					errResp(c, http.StatusUnauthorized, err)
+				case errors.Is(err, model.ErrUserNotFound):
+					errResp(c, http.StatusNotFound, err)
 				default:
 					golambda.EmitError(err)
 					errResp(c, http.StatusInternalServerError, err)
@@ -99,6 +105,9 @@ func New(cfg *Config) *gin.Engine {
 
 	engine.GET("/", getIndex)
 	engine.GET("/bundle.js", getBundleJS)
+	engine.GET("/auth/github", getAuthGitHub)
+	engine.GET("/auth/github/callback", getAuthGitHubCallback)
+	engine.GET("/auth/logout", getLogout)
 	engine.POST("/webhook/github", postWebhookGitHub)
 
 	r := engine.Group("/api/v1")
@@ -110,8 +119,9 @@ func New(cfg *Config) *gin.Engine {
 	r.GET("/scan/report/:report_id", getScanReport)
 	r.GET("/package", getPackage)
 	r.GET("/vuln/:vuln_id", getVulnerability)
-	r.POST("/status/:owner/:repo_name", postVulnResponse)
+	r.POST("/status/:owner/:repo_name", postVulnStatus)
 	r.GET("/meta/octovy", getOctovyMetadata)
+	r.GET("/user", getUser)
 
 	return engine
 }
@@ -127,4 +137,22 @@ func getConfig(c *gin.Context) *Config {
 	}
 	return config
 
+}
+
+func isAuthenticated(c *gin.Context) (*model.Session, error) {
+	cookie, err := c.Cookie(cookieTokenName)
+	if err != nil {
+		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "No valid cookie")
+	}
+
+	cfg := getConfig(c)
+	ssn, err := cfg.Usecase.ValidateSession(cookie)
+	if err != nil {
+		return nil, err
+	}
+	if ssn == nil {
+		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Invalid user in token")
+	}
+	ssn.Token = "" // Erase token
+	return ssn, nil
 }
