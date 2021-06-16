@@ -186,3 +186,18 @@ func (x *DynamoClient) GetSession(token string, now int64) (*model.Session, erro
 
 	return ssn, nil
 }
+
+func (x DynamoClient) DeleteSession(token string) error {
+	if token == "" {
+		return goerr.Wrap(model.ErrInvalidInputValues, "token must not be empty")
+	}
+
+	pk := sessionPK(token)
+	sk := sessionSK()
+
+	if err := x.table.Delete("pk", pk).Range("sk", sk).Run(); err != nil {
+		return goerr.Wrap(err)
+	}
+
+	return nil
+}

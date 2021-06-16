@@ -90,6 +90,7 @@ type DBClient interface {
 	GetGitHubToken(userID string) (*model.GitHubToken, error)
 	PutSession(ssn *model.Session) error
 	GetSession(token string, now int64) (*model.Session, error)
+	DeleteSession(token string) error
 
 	TableName() string
 	Close() error

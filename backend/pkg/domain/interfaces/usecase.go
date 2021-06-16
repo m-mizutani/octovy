@@ -42,6 +42,7 @@ type Usecases interface {
 	LookupUser(userID string) (*model.User, error)
 	CreateSession(user *model.User) (*model.Session, error)
 	ValidateSession(token string) (*model.Session, error)
+	RevokeSession(token string) error
 
 	GetOctovyMetadata() *model.Metadata
 }

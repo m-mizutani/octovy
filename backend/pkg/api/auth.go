@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
 func getAuthGitHub(c *gin.Context) {
@@ -80,7 +82,18 @@ func getAuthGitHubCallback(c *gin.Context) {
 func getLogout(c *gin.Context) {
 	cfg := getConfig(c)
 	meta := cfg.Usecase.GetOctovyMetadata()
-	// TODO: revoke session
+
+	cookie, err := c.Cookie(cookieTokenName)
+	if err != nil {
+		c.Error(goerr.Wrap(model.ErrAuthenticationFailed, "No valid cookie"))
+		return
+	}
+
+	if err := cfg.Usecase.RevokeSession(cookie); err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.SetCookie(cookieTokenName, "", 0, "", "/", true, true)
 	c.Redirect(http.StatusFound, meta.FrontendURL)
 }

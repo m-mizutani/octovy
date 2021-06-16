@@ -110,3 +110,7 @@ func (x *Default) ValidateSession(token string) (*model.Session, error) {
 
 	return ssn, nil
 }
+
+func (x *Default) RevokeSession(token string) error {
+	return x.svc.DB().DeleteSession(token)
+}
