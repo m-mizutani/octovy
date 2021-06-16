@@ -73,6 +73,8 @@ export class OctovyStack extends cdk.Stack {
   readonly metaTable: dynamodb.Table;
   readonly scanRequestQueue: sqs.Queue;
   readonly feedbackRequestQueue: sqs.Queue;
+  readonly deadLetterScanRequestQueue: sqs.Queue;
+  readonly deadLetterFeedbackRequestQueue: sqs.Queue;
 
   readonly apiHandler: lambda.Function;
   readonly scanRepo: lambda.Function;
@@ -99,12 +101,30 @@ export class OctovyStack extends cdk.Stack {
     });
 
     // SQS
+    this.deadLetterScanRequestQueue = new sqs.Queue(
+      this,
+      "deadLetterScanRequestQueue"
+    );
+    this.deadLetterFeedbackRequestQueue = new sqs.Queue(
+      this,
+      "deadLetterFeedbackRequestQueue"
+    );
+
     this.scanRequestQueue = new sqs.Queue(this, "scanRequest", {
       visibilityTimeout: cdk.Duration.seconds(300),
+      deadLetterQueue: {
+        queue: this.deadLetterScanRequestQueue,
+        maxReceiveCount: 5,
+      },
     });
     this.feedbackRequestQueue = new sqs.Queue(this, "feedbackRequest", {
       visibilityTimeout: cdk.Duration.seconds(120),
+      deadLetterQueue: {
+        queue: this.deadLetterFeedbackRequestQueue,
+        maxReceiveCount: 5,
+      },
     });
+
     // VPC
     var securityGroups: ec2.ISecurityGroup[] | undefined = undefined;
     var vpc: ec2.IVpc | undefined = undefined;
