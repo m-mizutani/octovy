@@ -239,6 +239,11 @@ export class OctovyStack extends cdk.Stack {
 
     apiGW.root.addMethod("GET");
     apiGW.root.addResource("bundle.js").addMethod("GET");
+    const authRoot = apiGW.root.addResource("auth");
+    const authGitHub = authRoot.addResource("github");
+    authGitHub.addMethod("GET");
+    authGitHub.addResource("callback").addMethod("GET");
+    authRoot.addResource("logout").addMethod("GET");
 
     const apiRoot = apiGW.root.addResource("api").addResource("v1");
 
@@ -286,6 +291,10 @@ export class OctovyStack extends cdk.Stack {
     // Metadata
     const apiMeta = apiRoot.addResource("meta");
     apiMeta.addResource("octovy").addMethod("GET");
+
+    // User
+    const apiUser = apiRoot.addResource("user");
+    apiUser.addMethod("GET");
 
     // Lambda without API handler
     envVars.FRONTEND_URL = props.frontendURL || apiGW.url;
