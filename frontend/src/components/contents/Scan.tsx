@@ -142,7 +142,7 @@ function filterVulnerability(
 export function Report(props: reportProps) {
   const classes = useStyles();
   const scanClasses = scanStyles();
-
+  const [errMsg, setErrMsg] = React.useState<string>();
   const [status, setStatus] = React.useState<reportStatus>({
     isLoaded: false,
     displayed: [],
@@ -202,6 +202,7 @@ export function Report(props: reportProps) {
               src={src.Source}
               vuln={status.report.Vulnerabilities[vulnID].Detail}
               status={status.statusDB.getStatus(src.Source, pkg.Name, vulnID)}
+              setErr={setErrMsg}
             />
           )
         );
@@ -210,6 +211,13 @@ export function Report(props: reportProps) {
 
     return (
       <div>
+        {errMsg ? (
+          <Alert severity="error" onClose={() => setErrMsg(undefined)}>
+            {errMsg}
+          </Alert>
+        ) : (
+          ""
+        )}
         {sources.map((src, idx) => (
           <Grid key={idx}>
             <Typography className={scanClasses.vulnSourceTitle}>
@@ -406,6 +414,7 @@ type PackageRowProps = {
   owner: string;
   repoName: string;
   status?: model.vulnStatus;
+  setErr: React.Dispatch<React.SetStateAction<string>>;
 };
 
 function PackageRow(props: PackageRowProps) {
@@ -483,21 +492,6 @@ function PackageRow(props: PackageRowProps) {
         })}
       </div>
     );
-    /*
-    return (
-      <div className={scanClasses.vulnImpactCell}>
-        {Object.keys(metrics).map((m, idx) => {
-          if (vectors[m] === "L" || vectors[m] === "H") {
-            return (
-              <Tooltip title={`${metrics[m]} (${vectors[m]})`} key={idx}>
-                <Avatar style={styles[m]}>{m}</Avatar>
-              </Tooltip>
-            );
-          }
-        })}
-      </div>
-    );
-    */
   };
 
   type vulnStatusRequest = {
@@ -545,6 +539,13 @@ function PackageRow(props: PackageRowProps) {
       Comment: statusComment,
     };
 
+    const setErr = (errMsg) => {
+      if (inputDialog) {
+        setStatusError(errMsg);
+      } else {
+        props.setErr(errMsg);
+      }
+    };
     fetch(`api/v1/status/${props.owner}/${props.repoName}`, {
       method: "POST",
       body: JSON.stringify(req),
@@ -554,15 +555,14 @@ function PackageRow(props: PackageRowProps) {
         (result) => {
           console.log("status:", { result });
           if (result.error) {
-            setStatusError(result.error);
+            setErr(result.error);
           } else {
             setVulnStatus(result.data);
             clearStatusDialog();
           }
         },
         (error) => {
-          console.log({ error });
-          setStatusError(error);
+          setErr(error);
         }
       );
   };
