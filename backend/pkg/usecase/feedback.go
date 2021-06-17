@@ -134,6 +134,8 @@ func getLatestBranchReport(db interfaces.DBClient, repo *model.GitHubRepo, branc
 }
 
 func feedbackPullRequest(props feedbackProps) error {
+	var cmpWithDstBranch bool
+
 	if props.Options.PullReqID == nil {
 		return nil
 	}
@@ -149,18 +151,21 @@ func feedbackPullRequest(props feedbackProps) error {
 			return err
 		}
 		pullReqReport = lastScanReport
+		cmpWithDstBranch = true
 	}
 	if pullReqReport == nil {
 		pullReqReport = props.OldReport
+		cmpWithDstBranch = false
 	}
 
 	rawChanges := diffReport(props.NewReport, pullReqReport)
 	changes := ignoreUnhandledVulnRecord(&rawChanges, props.VulnStatusDB)
 
-	body := buildFeedbackComment(props.NewReport, changes, props.FrontendURL, false)
-	if body == "" {
+	if len(changes.News) == 0 && len(changes.Fixed) == 0 && (len(changes.Unfixed) == 0 || cmpWithDstBranch) {
 		return nil
 	}
+
+	body := buildFeedbackComment(props.NewReport, changes, props.FrontendURL)
 
 	logger.With("props", props).With("report", props.NewReport).Info("Creating a PR comment")
 
@@ -185,7 +190,7 @@ func feedbackCheckRun(props feedbackProps) error {
 	conclusion := "neutral"
 	title := fmt.Sprintf("❗ %d vulnerabilities detected", len(changes.Unfixed)+len(changes.News))
 	summary := fmt.Sprintf("New %d and remained %d vulnerabilities found", len(changes.News), len(changes.Unfixed))
-	body := buildFeedbackComment(props.NewReport, changes, props.FrontendURL, true)
+	body := buildFeedbackComment(props.NewReport, changes, props.FrontendURL)
 
 	if len(changes.Unfixed) == 0 && len(changes.News) == 0 {
 		conclusion = "success"
@@ -310,15 +315,12 @@ func feedbackCommentVulnRecord(v *vulnRecord, url string) string {
 		v.VulnID, url, v.VulnID, v.PkgName, v.PkgVersion, v.Source, v.Source)
 }
 
-func buildFeedbackComment(report *model.ScanReport, changes *changeSet, frontendURL string, showUnfix bool) string {
+func buildFeedbackComment(report *model.ScanReport, changes *changeSet, frontendURL string) string {
 	var body string
 	const listSize = 5
 
 	if len(changes.News) == 0 && len(changes.Unfixed) == 0 {
 		body += "🎉 **No vulnerable packages**\n\n"
-	}
-	if len(changes.News) == 0 && len(changes.Fixed) == 0 && !showUnfix {
-		return ""
 	}
 
 	// New vulnerabilities
@@ -347,7 +349,7 @@ func buildFeedbackComment(report *model.ScanReport, changes *changeSet, frontend
 		body += "\n"
 	}
 
-	if showUnfix && len(changes.Unfixed) > 0 {
+	if len(changes.Unfixed) > 0 {
 		remainCount := map[string]int{}
 		for _, vuln := range changes.Unfixed {
 			remainCount[vuln.Source] = remainCount[vuln.Source] + 1
