@@ -48,6 +48,7 @@ type VulnStatus struct {
 	GitHubRepo
 	VulnPackageKey
 
+	ID        string
 	Status    VulnStatusType
 	ExpiresAt int64
 	CreatedAt int64

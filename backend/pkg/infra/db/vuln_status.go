@@ -22,10 +22,10 @@ const vulnStatusLogTimeKey = "2006-01-02T15:04:05"
 func vulnStatusLogPK(repo *model.GitHubRepo) string {
 	return fmt.Sprintf("vuln_status_log:%s/%s", repo.Owner, repo.RepoName)
 }
-func vulnStatusLogSK(key *model.VulnPackageKey, createdAt int64) string {
+func vulnStatusLogSK(key *model.VulnPackageKey, createdAt int64, id string) string {
 	ts := time.Unix(createdAt, 0)
 	return fmt.Sprintf("%s%s|%s", vulnStatusLogSKPrefix(key),
-		ts.Format(vulnStatusLogTimeKey), uuid.New().String())
+		ts.Format(vulnStatusLogTimeKey), id)
 }
 func vulnStatusLogSKPrefix(key *model.VulnPackageKey) string {
 	return vulnStatusSK(key) + "|"
@@ -34,6 +34,9 @@ func vulnStatusLogSKPrefix(key *model.VulnPackageKey) string {
 func (x *DynamoClient) PutVulnStatus(status *model.VulnStatus) error {
 	if err := status.IsValid(); err != nil {
 		return err
+	}
+	if status.ID == "" {
+		status.ID = uuid.New().String()
 	}
 
 	tx := x.db.WriteTx()
@@ -50,7 +53,7 @@ func (x *DynamoClient) PutVulnStatus(status *model.VulnStatus) error {
 
 	logRecord := &dynamoRecord{
 		PK:  vulnStatusLogPK(&status.GitHubRepo),
-		SK:  vulnStatusLogSK(&status.VulnPackageKey, status.CreatedAt),
+		SK:  vulnStatusLogSK(&status.VulnPackageKey, status.CreatedAt, status.ID),
 		Doc: status,
 	}
 	tx = tx.Put(x.table.Put(logRecord))

@@ -612,7 +612,7 @@ func TestFeedbackScanResultPullReqComment(t *testing.T) {
 		assert.True(t, calledCreateIssueCommentMock)
 	})
 
-	t.Run("do not comment by second report", func(t *testing.T) {
+	t.Run("do not comment by second report because of only unfixed vuln", func(t *testing.T) {
 		uc, mock := setup(t)
 		require.NoError(t, mock.db.InsertScanReport(firstReport))
 		require.NoError(t, mock.db.InsertScanReport(secondReport))
