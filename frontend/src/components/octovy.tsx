@@ -7,10 +7,8 @@ import {
   Theme,
 } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
-import Hidden from "@material-ui/core/Hidden";
 import Typography from "@material-ui/core/Typography";
 import Link from "@material-ui/core/Link";
-import Navigator from "./Navigator";
 import Header from "./Header";
 
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
@@ -177,7 +175,7 @@ const useStyle = makeStyles((theme: Theme) =>
 );
 
 type octovyProps = {
-  hasNavigator?: boolean;
+  enablePackageSearch?: boolean;
   children?: React.ReactNode;
 };
 
@@ -185,40 +183,13 @@ export function Frame(props: octovyProps) {
   const classes = useStyle();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const renderNavigator = () => {
-    if (!props.hasNavigator) {
-      return;
-    }
-
-    return (
-      <nav className={classes.drawer}>
-        <Hidden smUp implementation="js">
-          <Navigator
-            PaperProps={{ style: { width: drawerWidth } }}
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-          />
-        </Hidden>
-        <Hidden xsDown implementation="css">
-          <Navigator PaperProps={{ style: { width: drawerWidth } }} />
-        </Hidden>
-      </nav>
-    );
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <div className={classes.root}>
         <Router>
           <CssBaseline />
-          {renderNavigator()}
           <div className={classes.app}>
-            <Header />
+            <Header enablePackageSearch={props.enablePackageSearch} />
             <main className={classes.main}>{props.children}</main>
             <footer className={classes.footer}>
               <Copyright />

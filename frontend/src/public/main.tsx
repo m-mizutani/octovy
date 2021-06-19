@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme: Theme) =>
 function App() {
   const classes = useStyles();
   return (
-    <octovy.Frame hasNavigator={false}>
+    <octovy.Frame enablePackageSearch={true}>
       <Grid
         container
         alignItems="center"
