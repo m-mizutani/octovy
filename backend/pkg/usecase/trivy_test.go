@@ -73,7 +73,7 @@ func TestUpdateTrivyDB(t *testing.T) {
 		},
 	}
 
-	svc.Infra.NewGitHub = func() interfaces.GitHubClient { return ghMock }
+	svc.Infra.NewGitHubCom = func() interfaces.GitHubCom { return ghMock }
 
 	err := uc.UpdateTrivyDB()
 	require.NoError(t, err)

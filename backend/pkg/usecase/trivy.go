@@ -18,7 +18,7 @@ const (
 )
 
 func downloadLatestTrivyDB(svc *service.Service, releases []*github.RepositoryRelease) (io.ReadCloser, error) {
-	client := svc.Infra.NewGitHub()
+	client := svc.Infra.NewGitHubCom()
 	dbNamePrefix := trivyDBSchemaVer + "-"
 
 	for _, release := range releases {
@@ -45,7 +45,7 @@ func downloadLatestTrivyDB(svc *service.Service, releases []*github.RepositoryRe
 }
 
 func (x *Default) UpdateTrivyDB() error {
-	client := x.svc.Infra.NewGitHub()
+	client := x.svc.Infra.NewGitHubCom()
 
 	releases, err := client.ListReleases(trivyDBOwner, trivyDBRepo)
 	if err != nil {

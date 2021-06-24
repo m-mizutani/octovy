@@ -1,13 +1,10 @@
 import React, { useEffect } from "react";
 
-import Toolbar from "@material-ui/core/Toolbar";
 import Paper from "@material-ui/core/Paper";
+import Toolbar from "@material-ui/core/Toolbar";
 import AppBar from "@material-ui/core/AppBar";
 import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
-import Tooltip from "@material-ui/core/Tooltip";
-import IconButton from "@material-ui/core/IconButton";
-import RefreshIcon from "@material-ui/icons/Refresh";
+import GitHubIcon from "@material-ui/icons/GitHub";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -20,16 +17,15 @@ import Link from "@material-ui/core/Link";
 import Chip from "@material-ui/core/Chip";
 import { Redirect, useLocation } from "react-router-dom";
 
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import Avatar from "@material-ui/core/Avatar";
+
 import Typography from "@material-ui/core/Typography";
 import { useParams } from "react-router-dom";
 import { Link as RouterLink } from "react-router-dom";
-
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import FolderIcon from "@material-ui/icons/Folder";
-import Divider from "@material-ui/core/Divider";
 import Checkbox from "@material-ui/core/Checkbox";
 
 import strftime from "strftime";
@@ -52,6 +48,15 @@ const repoStyles = makeStyles((theme: Theme) =>
     ownerSearchBoxToolBar: {
       minHeight: "94px",
     },
+    ownerTitle: {
+      fontSize: "32px",
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+    },
+    ownerGrid: {
+      marginTop: theme.spacing(4),
+      marginBottom: theme.spacing(0),
+    },
     repositoryListGrid: {
       maxWidth: "1280px",
     },
@@ -69,6 +74,14 @@ const repoStyles = makeStyles((theme: Theme) =>
       fontSize: "16px",
       margin: theme.spacing(5),
     },
+    formControl: {
+      margin: theme.spacing(1),
+      minWidth: 256,
+    },
+    largeAvatar: {
+      width: theme.spacing(5),
+      height: theme.spacing(5),
+    },
   })
 );
 
@@ -83,7 +96,11 @@ interface repoState {
   allItems?: model.repository[];
 }
 
-function Owners() {
+type OwnersProps = {
+  selected?: string;
+};
+
+function Owners(props: OwnersProps) {
   const classes = repoStyles();
   const common = useStyles();
 
@@ -98,6 +115,7 @@ function Owners() {
   };
 
   const [status, setStatus] = React.useState<ownerStatus>({ isLoaded: false });
+  const [redirectTo, setRedirectTo] = React.useState<string>();
 
   const fetchOwners = () => {
     fetch(`api/v1/repo`)
@@ -119,65 +137,55 @@ function Owners() {
       );
   };
 
-  const renderOwners = () => {
-    if (!status.isLoaded) {
-      return (
-        <Alert severity="info">
-          Loading...
-          <CircularProgress size={16} className={common.progressIcon} />
-        </Alert>
-      );
-    } else if (status.error) {
-      <Alert severity="error">Error: {status.error}</Alert>;
-    } else if (status.owners) {
-      return (
-        <div>
-          <Divider />
-          <List dense={true}>
-            {status.owners.map((owner, idx) => {
-              return (
-                <ListItem key={`owner-${idx}`}>
-                  <ListItemIcon className={classes.ownerItemIcon}>
-                    <FolderIcon />
-                  </ListItemIcon>
-                  <RouterLink to={`/repository/${owner.Name}`}>
-                    <ListItemText primary={owner.Name} />
-                  </RouterLink>
-                </ListItem>
-              );
-            })}
-          </List>
-        </div>
-      );
-    }
-  };
-
   React.useEffect(fetchOwners, []);
 
-  return (
-    <div>
-      <Typography variant="h6" className={common.typographyTitle}>
-        Owners
-      </Typography>
-      {renderOwners()}
-    </div>
-  );
-}
-
-function Repositories() {
-  const classes = repoStyles();
-
-  const { owner } = useParams();
-  const [inputOwner, setInputOwner] = React.useState<string>("");
-  const [redirectTo, setRedirectTo] = React.useState<string>();
-  const [repoState, setRepoState] = React.useState<repoState>({});
-  const [filterScan, setFilterScan] = React.useState<boolean>(true);
-  console.log("owner:", owner);
   const doRedirect = () => {
     if (redirectTo) {
       return <Redirect to={`/repository/${redirectTo}`} />;
     }
   };
+
+  const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setRedirectTo(event.target.value as string);
+  };
+
+  if (!status.isLoaded) {
+    return (
+      <Alert severity="info">
+        Loading...
+        <CircularProgress size={16} className={common.progressIcon} />
+      </Alert>
+    );
+  } else if (status.error) {
+    <Alert severity="error">Error: {status.error}</Alert>;
+  } else if (status.owners) {
+    return (
+      <FormControl className={classes.formControl}>
+        {doRedirect()}
+        <InputLabel id="owner-select-label">Owner</InputLabel>
+        <Select
+          labelId="owner-select-label"
+          id="owner-select"
+          value={props.selected || ""}
+          onChange={handleChange}>
+          {status.owners.map((owner, idx) => (
+            <MenuItem key={idx} value={owner.Name}>
+              {owner.Name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  }
+}
+
+function Repositories() {
+  const classes = repoStyles();
+  const repoClasses = repoStyles();
+
+  const { owner } = useParams();
+  const [repoState, setRepoState] = React.useState<repoState>({});
+  const [filterScan, setFilterScan] = React.useState<boolean>(true);
 
   const filterRepos = (repos: model.repository[]): model.repository[] => {
     if (repos === undefined) {
@@ -191,10 +199,6 @@ function Repositories() {
 
   const reloadRepoState = () => {
     setRepoState({ isLoaded: false, allItems: undefined });
-    setInputOwner(owner || "");
-    if (!owner) {
-      return;
-    }
 
     fetch(`api/v1/repo/${owner}`)
       .then((res) => res.json())
@@ -225,51 +229,17 @@ function Repositories() {
     });
   }, [filterScan]);
 
-  const renderSearchBox = () => {
-    return (
-      <AppBar position="static" elevation={0} color="inherit">
-        <Toolbar className={classes.ownerSearchBoxToolBar}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs>
-              <TextField
-                label="User / Organization"
-                fullWidth
-                value={inputOwner}
-                onChange={(e) => {
-                  setInputOwner(e.target.value as string);
-                }}
-                onKeyPress={(e) => {
-                  if (e.code === "Enter") {
-                    setRedirectTo(inputOwner);
-                  }
-                }}
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item>
-              <Tooltip title="Reload">
-                <IconButton onClick={reloadRepoState}>
-                  <RefreshIcon color="inherit" />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
-        </Toolbar>
-      </AppBar>
-    );
-  };
-
-  const renderRepoIcon = (repo: model.repository) => {
-    if (repo.Branch.ReportSummary.PkgCount === 0) {
-      return "☑️";
-    } else if (repo.Branch.ReportSummary.VulnCount === 0) {
-      return "✅";
-    } else {
-      return "⚠️";
-    }
-  };
-
   const renderRepositories = () => {
+    const renderRepoIcon = (repo: model.repository) => {
+      if (repo.Branch.ReportSummary.PkgCount === 0) {
+        return "☑️";
+      } else if (repo.Branch.ReportSummary.VulnCount === 0) {
+        return "✅";
+      } else {
+        return "⚠️";
+      }
+    };
+
     if (!owner) {
       return;
     } else if (repoState.error) {
@@ -280,17 +250,7 @@ function Repositories() {
       return <NoData owner={owner} />;
     } else {
       return (
-        <div>
-          <Grid>
-            <Checkbox
-              checked={filterScan}
-              onChange={(e) => {
-                setFilterScan(e.target.checked);
-              }}
-              color="primary"
-            />
-            Only scanned
-          </Grid>
+        <React.Fragment>
           <TableContainer
             component={Paper}
             className={classes.repositoryListTable}>
@@ -340,17 +300,41 @@ function Repositories() {
               </TableBody>
             </Table>
           </TableContainer>
-        </div>
+        </React.Fragment>
       );
     }
   };
 
   return (
-    <div>
-      {doRedirect()}
-      {renderSearchBox()}
+    <React.Fragment>
+      <Grid>
+        <Owners selected={owner} />
+      </Grid>
+      {owner ? (
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          className={repoClasses.ownerGrid}>
+          <Grid item>
+            {owner.AvatarURL ? (
+              <Avatar
+                src={owner.AvatarURL}
+                alt={owner.Name}
+                className={classes.largeAvatar}
+              />
+            ) : (
+              <GitHubIcon color="inherit" fontSize="large" />
+            )}
+          </Grid>
+          <Grid item xs>
+            <Typography className={repoClasses.ownerTitle}>{owner}</Typography>
+          </Grid>
+        </Grid>
+      ) : undefined}
+
       {renderRepositories()}
-    </div>
+    </React.Fragment>
   );
 }
 
@@ -362,44 +346,17 @@ export function Content(props: ContentProps) {
   const common = useStyles();
   const classes = repoStyles();
 
-  const renderContent = () => {
-    if (props.ownerList) {
-      return (
-        <Grid container spacing={4}>
-          <Grid item className={classes.ownerListGrid}>
-            <Paper elevation={3} square className={common.paper}>
-              <Grid className={common.contentWrapper}>
-                <Owners />
-              </Grid>
-            </Paper>
-          </Grid>
-          <Grid item xs className={classes.repositoryListGrid}>
-            <Paper elevation={3} square className={common.paper}>
-              <Grid className={common.contentWrapper}>
-                <Repositories />
-              </Grid>
-            </Paper>
-          </Grid>
-        </Grid>
-      );
-    } else {
-      return (
-        <Grid container spacing={4} alignItems="center" justify="center">
-          <Grid item xs className={classes.repositoryListGrid}>
-            <Paper elevation={3} square className={common.paper}>
-              <Grid className={common.contentWrapper}>
-                <Repositories />
-              </Grid>
-            </Paper>
-          </Grid>
-        </Grid>
-      );
-    }
-  };
-
   return (
     <Grid item xs={12}>
-      {renderContent()}
+      <Grid container spacing={4} alignItems="center" justify="center">
+        <Grid item xs className={classes.repositoryListGrid}>
+          <Paper elevation={3} square className={common.paper}>
+            <Grid className={common.contentWrapper}>
+              <Repositories />
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
     </Grid>
   );
 }
