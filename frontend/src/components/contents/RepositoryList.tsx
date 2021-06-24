@@ -78,9 +78,11 @@ const repoStyles = makeStyles((theme: Theme) =>
       margin: theme.spacing(1),
       minWidth: 256,
     },
-    largeAvatar: {
-      width: theme.spacing(5),
-      height: theme.spacing(5),
+    ownerAvatar: {
+      width: theme.spacing(2.5),
+      height: theme.spacing(2.5),
+      marginTop: theme.spacing(0),
+      marginRight: theme.spacing(1),
     },
   })
 );
@@ -106,6 +108,7 @@ function Owners(props: OwnersProps) {
 
   interface owner {
     Name: string;
+    AvatarURL: string;
   }
 
   type ownerStatus = {
@@ -169,8 +172,17 @@ function Owners(props: OwnersProps) {
           value={props.selected || ""}
           onChange={handleChange}>
           {status.owners.map((owner, idx) => (
-            <MenuItem key={idx} value={owner.Name}>
-              {owner.Name}
+            <MenuItem key={idx} value={owner.Name} dense>
+              <Grid container>
+                <Grid item>
+                  <Avatar
+                    src={owner.AvatarURL}
+                    alt={owner.Name}
+                    className={classes.ownerAvatar}
+                  />
+                </Grid>
+                <Grid>{owner.Name}</Grid>
+              </Grid>
             </MenuItem>
           ))}
         </Select>
@@ -317,15 +329,7 @@ function Repositories() {
           alignItems="center"
           className={repoClasses.ownerGrid}>
           <Grid item>
-            {owner.AvatarURL ? (
-              <Avatar
-                src={owner.AvatarURL}
-                alt={owner.Name}
-                className={classes.largeAvatar}
-              />
-            ) : (
-              <GitHubIcon color="inherit" fontSize="large" />
-            )}
+            <GitHubIcon color="inherit" fontSize="large" />
           </Grid>
           <Grid item xs>
             <Typography className={repoClasses.ownerTitle}>{owner}</Typography>
