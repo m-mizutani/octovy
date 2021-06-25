@@ -1,4 +1,4 @@
-package github
+package githubcom
 
 import (
 	"context"
@@ -16,7 +16,7 @@ type Client struct {
 	client *github.Client
 }
 
-func New() interfaces.GitHubClient {
+func New() interfaces.GitHubCom {
 	return &Client{
 		client: github.NewClient(&http.Client{}),
 	}

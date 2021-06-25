@@ -21,16 +21,16 @@ type Session struct {
 
 func (x *Session) IsValid() error {
 	if x.UserID == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "UserID must not be empty")
+		return goerr.Wrap(ErrInvalidValue, "UserID must not be empty")
 	}
 	if x.Token == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "Token must not be empty")
+		return goerr.Wrap(ErrInvalidValue, "Token must not be empty")
 	}
 	if x.CreatedAt <= 0 {
-		return goerr.Wrap(ErrInvalidInputValues, "CreatedAt must not be > 0")
+		return goerr.Wrap(ErrInvalidValue, "CreatedAt must not be > 0")
 	}
 	if x.ExpiresAt <= 0 {
-		return goerr.Wrap(ErrInvalidInputValues, "ExpiresAt must not be > 0")
+		return goerr.Wrap(ErrInvalidValue, "ExpiresAt must not be > 0")
 	}
 
 	return nil
@@ -42,4 +42,14 @@ type User struct {
 	Name      string
 	AvatarURL string
 	URL       string
+}
+
+type UserPermissions struct {
+	UserID      string
+	Permissions map[string][]*RepoPermission
+}
+
+type RepoPermission struct {
+	GitHubRepo
+	Permissions map[string]bool
 }

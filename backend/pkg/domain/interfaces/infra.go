@@ -21,7 +21,7 @@ type Infra struct {
 	NewSecretManager NewSecretManager
 	NewSQS           NewSQS
 	NewS3            NewS3
-	NewGitHub        NewGitHub
+	NewGitHubCom     NewGitHubCom
 	NewGitHubApp     NewGitHubApp
 	NewGitHubAuth    NewGitHubAuth
 	Utils            *Utils
@@ -86,6 +86,9 @@ type DBClient interface {
 	HasAuthState(state string, now int64) (bool, error)
 	PutUser(user *model.User) error
 	GetUser(userID string) (*model.User, error)
+	PutUserPermissions(perm *model.UserPermissions) error
+	GetUserPermissions(userID string) (*model.UserPermissions, error)
+
 	PutGitHubToken(token *model.GitHubToken) error
 	GetGitHubToken(userID string) (*model.GitHubToken, error)
 	PutSession(ssn *model.Session) error
@@ -96,12 +99,12 @@ type DBClient interface {
 	Close() error
 }
 
-// GitHubClient accesses only github.com to download trivy DB. It does not require API endpoint configuration and credentials
-type GitHubClient interface {
+// GitHubCom accesses only github.com to download trivy DB. It does not require API endpoint configuration and credentials
+type GitHubCom interface {
 	ListReleases(owner, repo string) ([]*github.RepositoryRelease, error)
 	DownloadReleaseAsset(owner, repo string, assetID int64) (io.ReadCloser, error)
 }
-type NewGitHub func() GitHubClient
+type NewGitHubCom func() GitHubCom
 
 // GitHubApp is GitHub App interface that requires both of App ID and Install ID. Additionally it needs to change API endpoint for GitHub Enterprise
 type GitHubApp interface {
@@ -114,9 +117,14 @@ type NewGitHubApp func(appID, installID int64, pem []byte, endpoint string) GitH
 
 // GitHubAuth is for authentication of GitHub user. It does not require App ID and Install ID, but requires API endpoint configuration for GitHub Enterprise
 type GitHubAuth interface {
-	GetAccessToken(code string) (*model.User, *model.GitHubToken, error)
+	SetToken(token *model.GitHubToken)
+	Authenticate(clientID, clientSecret, code string) (*model.GitHubToken, error)
+
+	GetUser() (*model.User, error)
+	GetInstallations() ([]*github.Installation, error)
+	GetInstalledRepositories(installID int64) ([]*github.Repository, error)
 }
-type NewGitHubAuth func(clientID, clientSecret, apiEndpoint, webEndpoint string) GitHubAuth
+type NewGitHubAuth func(apiEndpoint, webEndpoint string) GitHubAuth
 
 // Trivy DB
 type NewTrivyDB func(dbPath string) (TrivyDBClient, error)

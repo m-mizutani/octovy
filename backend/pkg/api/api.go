@@ -84,7 +84,7 @@ func New(cfg *Config) *gin.Engine {
 		if ginError := c.Errors.Last(); ginError != nil {
 			if err := errors.Cause(ginError); err != nil {
 				switch {
-				case errors.Is(err, model.ErrInvalidInputValues):
+				case errors.Is(err, model.ErrInvalidValue):
 					errResp(c, http.StatusNotAcceptable, err)
 				case errors.Is(err, errResourceNotFound):
 					errResp(c, http.StatusNotFound, err)
@@ -141,7 +141,7 @@ func getConfig(c *gin.Context) *Config {
 
 func isAuthenticated(c *gin.Context) (*model.Session, error) {
 	cookie, err := c.Cookie(cookieTokenName)
-	if err != nil {
+	if err != nil || cookie == "" {
 		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "No valid cookie")
 	}
 

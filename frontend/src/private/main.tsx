@@ -17,7 +17,7 @@ import * as Report from "../components/contents/Report";
 
 function App() {
   return (
-    <octovy.Frame hasNavigator={true}>
+    <octovy.Frame enablePackageSearch={true}>
       <Switch>
         <Route path="/repository/:owner/:repoName/:branch">
           <repository.Content enablePackageLink={true} />

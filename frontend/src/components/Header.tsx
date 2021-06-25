@@ -19,9 +19,10 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Link from "@material-ui/core/Link";
 import { Redirect, useLocation } from "react-router-dom";
+import ImageSearchIcon from "@material-ui/icons/ImageSearch";
+import Tooltip from "@material-ui/core/Tooltip";
 
 import * as model from "./contents/Model";
-import { error } from "console";
 
 const lightColor = "rgba(255, 255, 255, 0.7)";
 
@@ -46,9 +47,21 @@ const styles = (theme: Theme) =>
     button: {
       borderColor: lightColor,
     },
+    title: {
+      fontWeight: "bold",
+      fontSize: 32,
+      letterSpacing: 0.5,
+      fontFamily: ["Kanit"].join(","),
+      color: "#fff",
+      textDecoration: "none",
+    },
   });
 
-function Header() {
+type headerProps = {
+  enablePackageSearch?: boolean;
+};
+
+function Header(props: headerProps) {
   const classes = makeStyles(styles)();
   const [errMsg, setErrMsg] = useState<string>();
   const [user, setUser] = useState<model.user>();
@@ -107,10 +120,25 @@ function Header() {
     setMenuAnchorEl(event.currentTarget);
   };
 
+  const renderSearchIcon = () => {
+    if (!props.enablePackageSearch) {
+      return;
+    }
+
+    return (
+      <Grid item>
+        <Tooltip title="Search packages">
+          <IconButton color="inherit" component={RouterLink} to="/package">
+            <ImageSearchIcon />
+          </IconButton>
+        </Tooltip>
+      </Grid>
+    );
+  };
   const renderLoginStatus = () => {
     if (user) {
       return (
-        <div>
+        <Grid item>
           <IconButton
             color="inherit"
             onClick={handleMenuClick}
@@ -127,7 +155,7 @@ function Header() {
               <Link href="auth/logout">Logout</Link>
             </MenuItem>
           </Menu>
-        </div>
+        </Grid>
       );
     } else {
       return (
@@ -148,19 +176,19 @@ function Header() {
         <Toolbar>
           <Grid container spacing={1} alignItems="center">
             <Grid item xs>
-              <Typography color="inherit" variant="h5" component="h1">
-                <Switch>
-                  <Route path="/repository">Repository</Route>
-                  <Route path="/package">Package</Route>
-                  <Route path="/vuln">Vulnerability</Route>
-                  <Route path="/scan/report/">Scan Report</Route>
-                </Switch>
+              <Typography color="inherit" variant="h4">
+                <RouterLink to="/" className={classes.title}>
+                  Octovy
+                </RouterLink>
               </Typography>
             </Grid>
-            <Grid item>{renderLoginStatus()}</Grid>
+
+            {renderSearchIcon()}
+            {renderLoginStatus()}
           </Grid>
         </Toolbar>
       </AppBar>
+
       {renderLoginErrorMessage()}
     </React.Fragment>
   );

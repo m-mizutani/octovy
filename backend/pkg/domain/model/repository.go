@@ -9,10 +9,10 @@ type GitHubRepo struct {
 
 func (x *GitHubRepo) IsValid() error {
 	if x.Owner == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "Owner is not set")
+		return goerr.Wrap(ErrInvalidValue, "Owner is not set")
 	}
 	if x.RepoName == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "RepoName is not set")
+		return goerr.Wrap(ErrInvalidValue, "RepoName is not set")
 	}
 
 	return nil
@@ -25,7 +25,7 @@ type GitHubBranch struct {
 
 func (x *GitHubBranch) IsValid() error {
 	if x.Branch == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "Branch is not set")
+		return goerr.Wrap(ErrInvalidValue, "Branch is not set")
 	}
 	if err := x.GitHubRepo.IsValid(); err != nil {
 		return err
@@ -40,15 +40,17 @@ type GitHubCommit struct {
 }
 
 type Owner struct {
-	Name string
+	Name      string
+	AvatarURL string
 }
 
 type Repository struct {
 	GitHubRepo
-	URL           string
-	DefaultBranch string
-	Branch        Branch
-	InstallID     int64
+	URL            string
+	OwnerAvatarURL string
+	DefaultBranch  string
+	Branch         Branch
+	InstallID      int64
 }
 
 type Branch struct {

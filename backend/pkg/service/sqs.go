@@ -12,7 +12,7 @@ import (
 func (x *Service) sendSQSMessage(msg interface{}, url string) error {
 	raw, err := json.Marshal(msg)
 	if err != nil {
-		return goerr.Wrap(model.ErrInvalidInputValues, err.Error())
+		return goerr.Wrap(model.ErrInvalidValue, err.Error())
 	}
 
 	client, err := x.Infra.NewSQS(x.config.AwsRegion)

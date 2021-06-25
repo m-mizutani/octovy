@@ -21,7 +21,7 @@ func (x *ScanRepositoryRequest) IsValid() error {
 		return err
 	}
 	if x.InstallID == 0 {
-		return goerr.Wrap(ErrInvalidInputValues, "InstallID must not be 0")
+		return goerr.Wrap(ErrInvalidValue, "InstallID must not be 0")
 	}
 
 	return nil
@@ -35,13 +35,13 @@ type FeedbackRequest struct {
 
 func (x *FeedbackRequest) IsValid() error {
 	if x.ReportID == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "ReportID must not be empty")
+		return goerr.Wrap(ErrInvalidValue, "ReportID must not be empty")
 	}
 	if x.InstallID == 0 {
-		return goerr.Wrap(ErrInvalidInputValues, "InstallID must not be 0")
+		return goerr.Wrap(ErrInvalidValue, "InstallID must not be 0")
 	}
 	if x.Options.PullReqID == nil && x.Options.CheckID == nil {
-		return goerr.Wrap(ErrInvalidInputValues, "Either one of PullReqID and CheckSuiteID is required")
+		return goerr.Wrap(ErrInvalidValue, "Either one of PullReqID and CheckSuiteID is required")
 	}
 
 	return nil
@@ -63,16 +63,16 @@ func Int(v int) *int       { return &v }
 
 func (x *ScanTarget) IsValid() error {
 	if x.Branch == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "Branch is empty")
+		return goerr.Wrap(ErrInvalidValue, "Branch is empty")
 	}
 	if x.Owner == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "Owner is empty")
+		return goerr.Wrap(ErrInvalidValue, "Owner is empty")
 	}
 	if x.RepoName == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "RepoName is empty")
+		return goerr.Wrap(ErrInvalidValue, "RepoName is empty")
 	}
 	if x.CommitID == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "CommitID is empty")
+		return goerr.Wrap(ErrInvalidValue, "CommitID is empty")
 	}
 
 	return nil
@@ -109,10 +109,10 @@ type ScanReportResponse struct {
 
 func (x *ScanReport) IsValid() error {
 	if x.ReportID == "" {
-		return goerr.Wrap(ErrInvalidInputValues, "ID is not set")
+		return goerr.Wrap(ErrInvalidValue, "ID is not set")
 	}
 	if x.ScannedAt == 0 {
-		return goerr.Wrap(ErrInvalidInputValues, "ScannedAt is not set")
+		return goerr.Wrap(ErrInvalidValue, "ScannedAt is not set")
 	}
 	if err := x.Target.IsValid(); err != nil {
 		return err

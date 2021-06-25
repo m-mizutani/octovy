@@ -47,7 +47,7 @@ func (x *GitHubApp) githubClient() (*github.Client, error) {
 		return nil, goerr.Wrap(err)
 	}
 
-	endpoint := strings.TrimLeft(x.endpoint, "/")
+	endpoint := strings.TrimSuffix(x.endpoint, "/")
 
 	if endpoint == "" {
 		x.client = github.NewClient(&http.Client{Transport: itr})

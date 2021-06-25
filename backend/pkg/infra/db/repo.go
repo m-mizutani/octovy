@@ -22,9 +22,12 @@ func ownerSK(owner string) string {
 
 func (x *DynamoClient) InsertRepo(repo *model.Repository) (bool, error) {
 	ownerRecord := &dynamoRecord{
-		PK:  ownerPK(),
-		SK:  ownerSK(repo.Owner),
-		Doc: model.Owner{Name: repo.Owner},
+		PK: ownerPK(),
+		SK: ownerSK(repo.Owner),
+		Doc: model.Owner{
+			Name:      repo.Owner,
+			AvatarURL: repo.OwnerAvatarURL,
+		},
 	}
 	if err := x.table.Put(ownerRecord).Run(); err != nil {
 		return false, goerr.Wrap(err).With("ownerRecord", ownerRecord)

@@ -9,6 +9,13 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
+func str(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 func (x *Default) HandleGitHubInstallationEvent(event *github.InstallationEvent) error {
 	if event == nil ||
 		event.Installation == nil ||
@@ -112,10 +119,11 @@ func (x *Default) HandleGitHubPushEvent(event *github.PushEvent) error {
 	}
 
 	repo := &model.Repository{
-		GitHubRepo:    req.GitHubRepo,
-		URL:           *event.Repo.HTMLURL,
-		DefaultBranch: *event.Repo.DefaultBranch,
-		InstallID:     *event.Installation.ID,
+		GitHubRepo:     req.GitHubRepo,
+		URL:            *event.Repo.HTMLURL,
+		DefaultBranch:  *event.Repo.DefaultBranch,
+		InstallID:      *event.Installation.ID,
+		OwnerAvatarURL: str(event.Repo.Owner.AvatarURL),
 	}
 	if err := x.RegisterRepository(repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
@@ -199,10 +207,11 @@ func (x *Default) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 	}
 
 	repo := &model.Repository{
-		GitHubRepo:    req.GitHubRepo,
-		URL:           *event.Repo.HTMLURL,
-		DefaultBranch: *event.Repo.DefaultBranch,
-		InstallID:     *event.Installation.ID,
+		GitHubRepo:     req.GitHubRepo,
+		URL:            *event.Repo.HTMLURL,
+		DefaultBranch:  *event.Repo.DefaultBranch,
+		InstallID:      *event.Installation.ID,
+		OwnerAvatarURL: str(event.Repo.Owner.AvatarURL),
 	}
 	if err := x.RegisterRepository(repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
