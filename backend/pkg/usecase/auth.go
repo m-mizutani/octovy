@@ -6,7 +6,7 @@ import (
 	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 )
 
-const authStateTimeoutSecond = 60
+const authStateTimeoutSecond = 600
 const sessionTokenTimeoutSecond = 24 * 60 * 60 * 7
 const sessionTokenLength = 128
 
@@ -47,11 +47,12 @@ func (x *Default) GetGitHubAppClientID() (string, error) {
 }
 
 func (x *Default) AuthGitHubUser(code, state string) (*model.User, error) {
-	if state == "" {
-		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Auth state is empty")
+	if len(state) < 32 {
+		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Auth state is empty or not enough length")
 	}
 
 	now := x.svc.Infra.Utils.TimeNow().UTC().Unix()
+	logger.With("now", now).With("state", state[:4]).Info("Looking up state")
 	found, err := x.svc.DB().HasAuthState(state, now)
 	if err != nil {
 		return nil, goerr.Wrap(err)
@@ -78,46 +79,48 @@ func (x *Default) AuthGitHubUser(code, state string) (*model.User, error) {
 	}
 	token.UserID = user.UserID
 
-	installations, err := authClient.GetInstallations()
-	if err != nil {
-		return nil, err
-	}
-
-	userPerm := &model.UserPermissions{
-		UserID:      user.UserID,
-		Permissions: make(map[string][]*model.RepoPermission),
-	}
-
-	for _, install := range installations {
-		if install.ID == nil {
-			logger.With("install", install).Error("No installID in Installation")
-			continue
-		}
-
-		repositories, err := authClient.GetInstalledRepositories(*install.ID)
+	/*
+		installations, err := authClient.GetInstallations()
 		if err != nil {
 			return nil, err
 		}
 
-		for _, repo := range repositories {
-			if repo.Owner == nil ||
-				repo.Owner.Login == nil ||
-				repo.Name == nil ||
-				repo.Permissions == nil {
-				logger.With("repo", repo).Error("Invalid repositroy data")
+		userPerm := &model.UserPermissions{
+			UserID:      user.UserID,
+			Permissions: make(map[string][]*model.RepoPermission),
+		}
+
+		for _, install := range installations {
+			if install.ID == nil {
+				logger.With("install", install).Error("No installID in Installation")
 				continue
 			}
 
-			perm := &model.RepoPermission{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    *repo.Owner.Login,
-					RepoName: *repo.Name,
-				},
-				Permissions: *repo.Permissions,
+			repositories, err := authClient.GetInstalledRepositories(*install.ID)
+			if err != nil {
+				return nil, err
 			}
-			userPerm.Permissions[perm.Owner] = append(userPerm.Permissions[perm.Owner], perm)
+
+			for _, repo := range repositories {
+				if repo.Owner == nil ||
+					repo.Owner.Login == nil ||
+					repo.Name == nil ||
+					repo.Permissions == nil {
+					logger.With("repo", repo).Error("Invalid repositroy data")
+					continue
+				}
+
+				perm := &model.RepoPermission{
+					GitHubRepo: model.GitHubRepo{
+						Owner:    *repo.Owner.Login,
+						RepoName: *repo.Name,
+					},
+					Permissions: *repo.Permissions,
+				}
+				userPerm.Permissions[perm.Owner] = append(userPerm.Permissions[perm.Owner], perm)
+			}
 		}
-	}
+	*/
 
 	if err := x.svc.DB().PutGitHubToken(token); err != nil {
 		return nil, goerr.Wrap(err)
@@ -125,10 +128,11 @@ func (x *Default) AuthGitHubUser(code, state string) (*model.User, error) {
 	if err := x.svc.DB().PutUser(user); err != nil {
 		return nil, goerr.Wrap(err)
 	}
-	if err := x.svc.DB().PutUserPermissions(userPerm); err != nil {
-		return nil, goerr.Wrap(err)
-	}
-
+	/*
+		if err := x.svc.DB().PutUserPermissions(userPerm); err != nil {
+			return nil, goerr.Wrap(err)
+		}
+	*/
 	return user, nil
 }
 
