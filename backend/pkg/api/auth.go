@@ -57,7 +57,7 @@ func getAuthGitHubCallback(c *gin.Context) {
 
 		v := url.Values{}
 		v.Set("login_error", errMsg)
-		c.Redirect(http.StatusFound, meta.FrontendURL+"?"+v.Encode())
+		c.Redirect(http.StatusFound, meta.FrontendURL+"/#/repository?"+v.Encode())
 		golambda.EmitError(err)
 		return
 	}
@@ -66,7 +66,7 @@ func getAuthGitHubCallback(c *gin.Context) {
 	if err != nil {
 		v := url.Values{}
 		v.Set("login_error", "Failed to issue session token")
-		c.Redirect(http.StatusFound, meta.FrontendURL+"?"+v.Encode())
+		c.Redirect(http.StatusFound, meta.FrontendURL+"/#/repository?"+v.Encode())
 		golambda.EmitError(err)
 	}
 
