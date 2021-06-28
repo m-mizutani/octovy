@@ -172,6 +172,7 @@ export class OctovyStack extends cdk.Stack {
       GITHUB_APP_URL: props.githubAppURL || "",
       GITHUB_WEB_URL: props.githubWebURL || "",
       HOMEPAGE_URL: props.homepageURL || "",
+      FRONTEND_URL: props.frontendURL || "",
 
       RULE_PR_COMMENT_TRIGGERS: rules.PullReqCommentTriggers
         ? rules.PullReqCommentTriggers.join("|")
@@ -316,8 +317,8 @@ export class OctovyStack extends cdk.Stack {
     const apiUser = apiRoot.addResource("user");
     apiUser.addMethod("GET");
 
-    // Lambda without API handler
-    envVars.FRONTEND_URL = props.frontendURL || apiGW.url;
+    // Overwrite FRONTEND_URL with API GW URL if not set
+    envVars.FRONTEND_URL = envVars.FRONTEND_URL || apiGW.url;
 
     this.scanRepo = newLambda({
       id: "scanRepo",
