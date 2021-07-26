@@ -9,15 +9,16 @@ import (
 type VulnStatusType string
 
 const (
-	StatusNone      VulnStatusType = "none"
-	StatusSnoozed   VulnStatusType = "snoozed"
-	StatusMitigated VulnStatusType = "mitigated"
-	StatusFixed     VulnStatusType = "fixed"
+	StatusNone       VulnStatusType = "none"
+	StatusSnoozed    VulnStatusType = "snoozed"
+	StatusMitigated  VulnStatusType = "mitigated"
+	StatusUnaffected VulnStatusType = "unaffected"
+	StatusFixed      VulnStatusType = "fixed"
 )
 
 func (x VulnStatusType) IsValid() error {
 	switch x {
-	case StatusNone, StatusSnoozed, StatusFixed, StatusMitigated:
+	case StatusNone, StatusSnoozed, StatusFixed, StatusMitigated, StatusUnaffected:
 		return nil
 	}
 
@@ -26,7 +27,7 @@ func (x VulnStatusType) IsValid() error {
 
 func (x VulnStatusType) IsUpdatable() error {
 	switch x {
-	case StatusNone, StatusSnoozed, StatusMitigated:
+	case StatusNone, StatusSnoozed, StatusMitigated, StatusUnaffected:
 		return nil
 	}
 

@@ -15,7 +15,12 @@ export interface pkg {
   Vulnerabilities: string[];
 }
 
-export type vulnStatusType = "none" | "snoozed" | "mitigated" | "fixed";
+export type vulnStatusType =
+  | "none"
+  | "snoozed"
+  | "mitigated"
+  | "unaffected"
+  | "fixed";
 
 export interface vulnStatus {
   Comment: string;

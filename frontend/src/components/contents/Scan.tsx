@@ -29,6 +29,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import ReportProblemIcon from "@material-ui/icons/ReportProblem";
 import AccessAlarmIcon from "@material-ui/icons/AccessAlarm";
 import BuildIcon from "@material-ui/icons/Build";
+import BeenhereIcon from "@material-ui/icons/Beenhere";
 
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -573,6 +574,8 @@ function PackageRow(props: PackageRowProps) {
         return <ReportProblemIcon className={scanClasses.vulnStatusIcon} />;
       case "mitigated":
         return <BuildIcon className={scanClasses.vulnStatusIcon} />;
+      case "unaffected":
+        return <BeenhereIcon className={scanClasses.vulnStatusIcon} />;
       case "snoozed":
         const now = new Date();
         const diff = vulnStatus.ExpiresAt - now.getTime() / 1000;
@@ -602,6 +605,7 @@ function PackageRow(props: PackageRowProps) {
   const dialogMessage = {
     snoozed: "Describe a reason for pending to update version",
     mitigated: "Describe how did you do to mitigate risk",
+    unaffected: "Describe why unaffected",
   };
   const renderDialog = () => (
     <Dialog
@@ -708,6 +712,7 @@ function PackageRow(props: PackageRowProps) {
           <MenuItem value={"none"}>To be fixed</MenuItem>
           <MenuItem value={"snoozed"}>Snoozed</MenuItem>
           <MenuItem value={"mitigated"}>Mitigated</MenuItem>
+          <MenuItem value={"unaffected"}>Unaffected</MenuItem>
         </Select>
       </TableCell>
       <TableCell style={{ fontSize: "12px" }}>{vulnStatus.Comment}</TableCell>
