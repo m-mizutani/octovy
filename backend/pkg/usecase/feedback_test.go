@@ -274,7 +274,7 @@ func TestFeedbackScanResultWithVulnStatus(t *testing.T) {
 		assert.True(t, calledUpdateCheckRunMock)
 	})
 
-	t.Run("With mitigated status", func(t *testing.T) {
+	t.Run("With mitigated (+unaffected) status", func(t *testing.T) {
 		t.Run("for remained vuln", func(t *testing.T) {
 			uc, mock := setupFeedbackScanResultWithVulnStatus(t)
 			require.NoError(t, mock.db.PutVulnStatus(&model.VulnStatus{
@@ -286,6 +286,34 @@ func TestFeedbackScanResultWithVulnStatus(t *testing.T) {
 					VulnID:  "CVE-2999-0003",
 				},
 				Status:    model.StatusMitigated,
+				CreatedAt: 123,
+			}))
+
+			calledUpdateCheckRunMock := false
+			mock.githubapp.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+				calledUpdateCheckRunMock = true
+				assert.Contains(t, *opt.Output.Text, "🚨")
+				assert.Contains(t, *opt.Output.Text, "✅")
+				assert.NotContains(t, *opt.Output.Text, "⚠️")
+				assert.Equal(t, "neutral", *opt.Conclusion)
+				return nil
+			}
+
+			require.NoError(t, uc.FeedbackScanResult(req))
+			assert.True(t, calledUpdateCheckRunMock)
+		})
+
+		t.Run("for remained vuln (unaffected)", func(t *testing.T) {
+			uc, mock := setupFeedbackScanResultWithVulnStatus(t)
+			require.NoError(t, mock.db.PutVulnStatus(&model.VulnStatus{
+				GitHubRepo: branch.GitHubRepo,
+				VulnPackageKey: model.VulnPackageKey{
+					Source:  "Gemfile.lock",
+					PkgType: model.PkgRubyGems,
+					PkgName: "red",
+					VulnID:  "CVE-2999-0003",
+				},
+				Status:    model.StatusUnaffected,
 				CreatedAt: 123,
 			}))
 
