@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/m-mizutani/octovy/backend/pkg/controller"
+	"github.com/m-mizutani/octovy/pkg/controller"
 )
 
 func main() {
