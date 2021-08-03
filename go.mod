@@ -1,6 +1,6 @@
 module github.com/m-mizutani/octovy
 
-go 1.15
+go 1.16
 
 require (
 	github.com/Netflix/go-env v0.0.0-20210215222557-e437a7e7f9fb
@@ -19,7 +19,7 @@ require (
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-errors/errors v1.1.1 // indirect
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
-	github.com/gofrs/uuid v4.0.0+incompatible // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-github/v29 v29.0.3
 	github.com/google/go-querystring v1.1.0 // indirect

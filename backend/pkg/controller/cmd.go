@@ -26,7 +26,7 @@ func (x *Controller) RunCmd(args []string, envVars []string) error {
 			},
 		},
 		Commands: []*cli.Command{
-			newAPICommand(x),
+			newServeCommand(x),
 		},
 		Before: globalSetup,
 	}
@@ -74,7 +74,6 @@ type apiCommandConfig struct {
 	Port      int
 
 	FrontendURL    string
-	GitHubAppURL   string
 	GitHubWebURL   string
 	GitHubEndpoint string
 	SecretsARN     string
@@ -82,13 +81,13 @@ type apiCommandConfig struct {
 	ctrl *Controller
 }
 
-func newAPICommand(ctrl *Controller) *cli.Command {
+func newServeCommand(ctrl *Controller) *cli.Command {
 	config := &apiCommandConfig{
 		ctrl: ctrl,
 	}
 
 	return &cli.Command{
-		Name: "api",
+		Name: "serve",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "aws-region",
@@ -121,14 +120,6 @@ func newAPICommand(ctrl *Controller) *cli.Command {
 				Value:       9080,
 			},
 
-			// Required to handle asset. Not necessary if testing with webpack server
-			&cli.StringFlag{
-				Name:        "asset-dir",
-				Aliases:     []string{"d"},
-				EnvVars:     []string{"OCTOVY_ASSET_DIR"},
-				Destination: &config.AssetDir,
-			},
-
 			&cli.StringFlag{
 				Name:        "secrets-arn",
 				EnvVars:     []string{"OCTOVY_SECRETS_ARN"},
@@ -137,24 +128,22 @@ func newAPICommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.StringFlag{
-				Name:        "github-app-url",
-				EnvVars:     []string{"OCTOVY_GITHUB_APP_URL"},
-				Destination: &config.GitHubAppURL,
-			},
-			&cli.StringFlag{
 				Name:        "github-web-url",
 				EnvVars:     []string{"OCTOVY_GITHUB_WEB_URL"},
 				Destination: &config.GitHubWebURL,
+				Value:       "https://github.com",
 			},
 			&cli.StringFlag{
 				Name:        "github-endpoint",
 				EnvVars:     []string{"OCTOVY_GITHUB_ENDPOINT"},
 				Destination: &config.GitHubEndpoint,
+				Value:       "https://api.github.com",
 			},
 			&cli.StringFlag{
 				Name:        "frontend-url",
 				EnvVars:     []string{"OCTOVY_FRONTEND_URL"},
 				Destination: &config.FrontendURL,
+				Required:    true,
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -168,11 +157,12 @@ func apiCommand(c *cli.Context, config *apiCommandConfig) error {
 
 	config.ctrl.Config.AwsRegion = config.AWSRegion
 	config.ctrl.Config.TableName = config.TableName
-	config.ctrl.Config.GitHubAppURL = config.GitHubAppURL
+	config.ctrl.Config.SecretsARN = config.SecretsARN
+
 	config.ctrl.Config.GitHubWebURL = config.GitHubWebURL
 	config.ctrl.Config.GitHubEndpoint = config.GitHubEndpoint
-	config.ctrl.Config.SecretsARN = config.SecretsARN
 	config.ctrl.Config.FrontendURL = config.FrontendURL
+
 	engine := api.New(&api.Config{
 		Usecase:  config.ctrl.Usecase,
 		AssetDir: config.AssetDir,

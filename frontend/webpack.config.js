@@ -1,4 +1,6 @@
-const baseConfig = {
+const devServer = {};
+
+module.exports = {
   mode: "development",
   module: {
     rules: [
@@ -12,46 +14,19 @@ const baseConfig = {
     extensions: [".ts", ".tsx", ".js", ".json"],
   },
   target: ["web", "es5"],
-};
 
-const devServer = {
-  contentBase: "dist",
-  proxy: {
-    "/api": "http://localhost:9080",
-    "/auth": "http://localhost:9080",
+  entry: `./src/main.tsx`,
+  output: {
+    path: `${__dirname}/dist`,
+    filename: "bundle.js",
   },
-  hot: true,
+  devServer: {
+    contentBase: "dist",
+    proxy: {
+      "/api": "http://localhost:9080",
+      "/auth": "http://localhost:9080",
+    },
+    hot: true,
+    contentBase: "dist",
+  },
 };
-
-module.exports = [
-  {
-    ...baseConfig,
-    ...{
-      name: "public",
-      entry: `./src/public/main.tsx`,
-      output: {
-        path: `${__dirname}/dist/public`,
-        filename: "bundle.js",
-      },
-      devServer: {
-        ...devServer,
-        ...{ contentBase: "dist/public" },
-      },
-    },
-  },
-  {
-    ...baseConfig,
-    ...{
-      name: "private",
-      entry: `./src/private/main.tsx`,
-      output: {
-        path: `${__dirname}/dist/private`,
-        filename: "bundle.js",
-      },
-      devServer: {
-        ...devServer,
-        ...{ contentBase: "dist/private" },
-      },
-    },
-  },
-];

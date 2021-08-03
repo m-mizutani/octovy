@@ -8,7 +8,6 @@ import (
 
 type Metadata struct {
 	FrontendURL  string `env:"FRONTEND_URL"`
-	GitHubAppURL string `env:"GITHUB_APP_URL"`
 	GitHubWebURL string `env:"GITHUB_WEB_URL"`
 	HomepageURL  string `env:"HOMEPAGE_URL"`
 }

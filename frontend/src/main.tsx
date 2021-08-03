@@ -1,19 +1,14 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as octovy from "../components/octovy";
+import * as octovy from "./components/octovy";
 
-import {
-  HashRouter as Router,
-  Route,
-  Switch,
-  Redirect,
-} from "react-router-dom";
+import { Route, Switch, Redirect } from "react-router-dom";
 
-import * as repositoryList from "../components/contents/RepositoryList";
-import * as repository from "../components/contents/Repository";
-import * as packages from "../components/contents/Packages";
-import * as vulnerability from "../components/contents/Vulnerability";
-import * as Report from "../components/contents/Report";
+import * as repositoryList from "./components/contents/RepositoryList";
+import * as repository from "./components/contents/Repository";
+import * as packages from "./components/contents/Packages";
+import * as vulnerability from "./components/contents/Vulnerability";
+import * as Report from "./components/contents/Report";
 
 function App() {
   return (

@@ -1,15 +1,14 @@
 ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-ASSET_OUTPUT = /asset-output
-LAMBDA_SRC = backend/pkg/*/*.go backend/pkg/*/*/*.go
-LAMBDA_FUNCTIONS = build/handler
 
-lambda: $(LAMBDA_FUNCTIONS)
+CMD=octovy
+BACKEND_DIR=backend
+FRONTEND_DIR=frontend
+ASSET=$(FRONTEND_DIR)/dist/bundle.js
 
-build/handler: backend/lambda/*.go $(LAMBDA_SRC)
-	go build -o build/handler ./backend/lambda
+all: $(CMD)
 
-FRONTEND_DIR = $(ROOT)/frontend
+$(ASSET): $(FRONTEND_DIR)/src/**/*.tsx
+	cd $(ROOT)/$(FRONTEND_DIR) && npm install && cd $(ROOT)
 
-asset: lambda
-	cp build/* $(ASSET_OUTPUT)
-	cp -r $(FRONTEND_DIR)/dist/${STAGE} $(ASSET_OUTPUT)/assets
+$(CMD): $(ASSET) $(BACKEND_DIR)/pkg/**/*.go
+	go build -v -o $(CMD) ./cmd/octovy

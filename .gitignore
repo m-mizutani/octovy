@@ -13,3 +13,4 @@ build
 tmp
 
 trivy.db
+octovy
