@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/m-mizutani/octovy/pkg/api"
+	"github.com/m-mizutani/octovy/pkg/controller/scanner"
+	"github.com/m-mizutani/octovy/pkg/controller/server"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/rs/zerolog"
 	"github.com/urfave/cli/v2"
@@ -178,9 +179,8 @@ func apiCommand(c *cli.Context, config *serveCommandConfig) error {
 
 	// Server thread
 	go func() {
-		engine := api.New(&api.Config{
-			Usecase:  config.ctrl.Usecase,
-			AssetDir: config.AssetDir,
+		engine := server.New(&server.Config{
+			Usecase: config.ctrl.Usecase,
 		})
 
 		gin.SetMode(gin.ReleaseMode)
@@ -190,6 +190,14 @@ func apiCommand(c *cli.Context, config *serveCommandConfig) error {
 
 		logger.Info().Interface("config", config).Msg("Starting server...")
 		if err := engine.Run(serverAddr); err != nil {
+			errCh <- err
+		}
+	}()
+
+	// Scanner thread
+	go func() {
+		proc := scanner.New(config.ctrl.Usecase)
+		if err := proc.Run(); err != nil {
 			errCh <- err
 		}
 	}()

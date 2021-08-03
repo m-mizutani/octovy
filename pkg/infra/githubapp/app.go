@@ -49,7 +49,7 @@ func (x *GitHubApp) githubClient() (*github.Client, error) {
 
 	endpoint := strings.TrimSuffix(x.endpoint, "/")
 
-	if endpoint == "" {
+	if endpoint == "" || endpoint == "https://api.github.com" {
 		x.client = github.NewClient(&http.Client{Transport: itr})
 	} else {
 		itr.BaseURL = endpoint

@@ -5,5 +5,10 @@ import (
 )
 
 func (x *Default) SendScanRequest(req *model.ScanRepositoryRequest) error {
-	return x.svc.SendScanRequest(req)
+	x.scanQueue <- req
+	return nil
+}
+
+func (x *Default) RecvScanRequest() *model.ScanRepositoryRequest {
+	return <-x.scanQueue
 }

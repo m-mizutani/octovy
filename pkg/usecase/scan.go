@@ -200,6 +200,8 @@ func (x *Default) buildGitHubApp(installID int64) (interfaces.GitHubApp, error) 
 	if err != nil {
 		return nil, err
 	}
+	logger.With("config", x.config).Info("debug")
+
 	gitHubApp := x.svc.Infra.NewGitHubApp(appID, installID, pem, x.config.GitHubEndpoint)
 
 	return gitHubApp, nil
@@ -307,7 +309,8 @@ func (x *Default) scanProcedure(req *model.ScanRepositoryRequest, app interfaces
 			InstallID: req.InstallID,
 			Options:   *req.Feedback,
 		}
-		if err := x.svc.SendFeedbackRequest(feedbackReq); err != nil {
+
+		if err := x.FeedbackScanResult(feedbackReq); err != nil {
 			return err
 		}
 	}

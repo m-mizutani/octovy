@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"net/http"
@@ -22,8 +22,7 @@ const (
 )
 
 type Config struct {
-	Usecase  interfaces.Usecases
-	AssetDir string
+	Usecase interfaces.Usecases
 }
 
 type baseResponse struct {

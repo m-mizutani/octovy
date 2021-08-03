@@ -8,8 +8,7 @@ import (
 type Usecases interface {
 	ScanRepository(req *model.ScanRepositoryRequest) error
 	SendScanRequest(req *model.ScanRepositoryRequest) error
-
-	FeedbackScanResult(req *model.FeedbackRequest) error
+	RecvScanRequest() *model.ScanRepositoryRequest
 
 	RegisterRepository(repo *model.Repository) error
 	PutNewRepository(repo *model.Repository) (bool, error)
