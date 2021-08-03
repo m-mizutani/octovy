@@ -22,4 +22,7 @@ var (
 	ErrInvalidWebhookData   = goerr.New("Invalid webhook data")
 	ErrAuthenticationFailed = goerr.New("Authentication failed")
 	ErrUserNotFound         = goerr.New("User not found")
+
+	// Fatal error, system can not be recovered and should go to shutdown
+	ErrFatal = goerr.New("Fatal error")
 )

@@ -27,7 +27,7 @@ require (
 	github.com/guregu/dynamo v1.10.4
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/m-mizutani/goerr v0.1.0
+	github.com/m-mizutani/goerr v0.1.1
 	github.com/m-mizutani/golambda v1.1.3
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/onsi/ginkgo v1.16.1 // indirect

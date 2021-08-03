@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/octovy/backend/pkg/api"
+	"github.com/m-mizutani/octovy/backend/pkg/domain/model"
 	"github.com/rs/zerolog"
 	"github.com/urfave/cli/v2"
 )
@@ -66,7 +68,7 @@ func globalSetup(c *cli.Context) error {
 	return nil
 }
 
-type apiCommandConfig struct {
+type serveCommandConfig struct {
 	AWSRegion string
 	TableName string
 	AssetDir  string
@@ -78,11 +80,13 @@ type apiCommandConfig struct {
 	GitHubEndpoint string
 	SecretsARN     string
 
+	DebugMode bool
+
 	ctrl *Controller
 }
 
 func newServeCommand(ctrl *Controller) *cli.Command {
-	config := &apiCommandConfig{
+	config := &serveCommandConfig{
 		ctrl: ctrl,
 	}
 
@@ -120,6 +124,13 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Value:       9080,
 			},
 
+			&cli.BoolFlag{
+				Name:        "debug",
+				Usage:       "Enable debug mode",
+				Aliases:     []string{"d"},
+				Destination: &config.DebugMode,
+			},
+
 			&cli.StringFlag{
 				Name:        "secrets-arn",
 				EnvVars:     []string{"OCTOVY_SECRETS_ARN"},
@@ -152,7 +163,7 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 	}
 }
 
-func apiCommand(c *cli.Context, config *apiCommandConfig) error {
+func apiCommand(c *cli.Context, config *serveCommandConfig) error {
 	serverAddr := fmt.Sprintf("%s:%d", config.Addr, config.Port)
 
 	config.ctrl.Config.AwsRegion = config.AWSRegion
@@ -163,15 +174,32 @@ func apiCommand(c *cli.Context, config *apiCommandConfig) error {
 	config.ctrl.Config.GitHubEndpoint = config.GitHubEndpoint
 	config.ctrl.Config.FrontendURL = config.FrontendURL
 
-	engine := api.New(&api.Config{
-		Usecase:  config.ctrl.Usecase,
-		AssetDir: config.AssetDir,
-	})
+	errCh := make(chan error, 128)
 
-	gin.SetMode(gin.DebugMode)
-	logger.Info().Interface("config", config).Msg("Starting server...")
-	if err := engine.Run(serverAddr); err != nil {
+	// Server thread
+	go func() {
+		engine := api.New(&api.Config{
+			Usecase:  config.ctrl.Usecase,
+			AssetDir: config.AssetDir,
+		})
+
+		gin.SetMode(gin.ReleaseMode)
+		if config.DebugMode {
+			gin.SetMode(gin.DebugMode)
+		}
+
+		logger.Info().Interface("config", config).Msg("Starting server...")
+		if err := engine.Run(serverAddr); err != nil {
+			errCh <- err
+		}
+	}()
+
+	for err := range errCh {
 		logger.Error().Err(err).Interface("config", config).Msg("Server error")
+		if errors.Is(err, model.ErrFatal) {
+			logger.Error().Err(err).Msg("shuting down by fatal error")
+			return err
+		}
 	}
 
 	return nil
