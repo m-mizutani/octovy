@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupFeedbackScanResult(t *testing.T) (interfaces.Usecases, *mockSet) {
+func setupFeedbackScanResult(t *testing.T) (*usecase.Default, *mockSet) {
 	pem := genRSAKey(t)
 	base64PEM := base64.StdEncoding.EncodeToString(pem)
 	const secretsARN = "arn:aws:secretsmanager:us-east-0:123456789012:secret:tutorials/MyFirstSecret-jiObOV"
@@ -60,7 +60,7 @@ func setupFeedbackScanResult(t *testing.T) (interfaces.Usecases, *mockSet) {
 		assert.Equal(t, "https://ghe.example.org/api/v3", gitHubAppMock.Endpoint)
 	})
 
-	return uc, &mockSet{
+	return uc.(*usecase.Default), &mockSet{
 		db:        dbClient,
 		githubapp: gitHubAppMock,
 		utils:     svc.Infra.Utils,
@@ -183,7 +183,7 @@ func TestFeedbackScanResultWithVulnStatus(t *testing.T) {
 		},
 	}
 
-	setupFeedbackScanResultWithVulnStatus := func(t *testing.T) (interfaces.Usecases, *mockSet) {
+	setupFeedbackScanResultWithVulnStatus := func(t *testing.T) (*usecase.Default, *mockSet) {
 		uc, mock := setupFeedbackScanResult(t)
 		oldReport := &model.ScanReport{
 			ReportID:  "ebc",
@@ -565,7 +565,7 @@ func TestFeedbackScanResultPullReqComment(t *testing.T) {
 		},
 	}
 
-	setup := func(t *testing.T) (interfaces.Usecases, *mockSet) {
+	setup := func(t *testing.T) (*usecase.Default, *mockSet) {
 		uc, mock := setupFeedbackScanResult(t)
 
 		dstBranch := model.GitHubBranch{
