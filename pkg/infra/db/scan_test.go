@@ -1,185 +1,70 @@
 package db_test
 
 import (
+	"context"
 	"testing"
 
-	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
+	"github.com/m-mizutani/octovy/pkg/infra/db"
+	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestScanResult(t *testing.T) {
-	t.Run("Insert and find vulnerabilities", func(t *testing.T) {
-		client := newTestTable(t)
-		trivyMeta := model.TrivyDBMeta{
-			Version:   1,
-			Type:      1,
-			UpdatedAt: 2345,
-		}
-		results := []*model.ScanReport{
-			{
-				ReportID: "aaaa",
-				Target: model.ScanTarget{
-					GitHubBranch: model.GitHubBranch{
-						GitHubRepo: model.GitHubRepo{
-							Owner:    "blue",
-							RepoName: "five",
-						},
-						Branch: "dev",
-					},
-					CommitID:  "beef1111",
-					UpdatedAt: 1230,
-				},
-				ScannedAt: 3000,
-				Sources: []*model.PackageSource{
-					{
-						Source: "Gemfile.lock",
-						Packages: []*model.Package{
-							{
-								Type:            model.PkgRubyGems,
-								Name:            "hoge",
-								Version:         "1.2.3",
-								Vulnerabilities: []string{},
-							},
-						},
-					},
-				},
-				TrivyDBMeta: trivyMeta,
-			},
-			{
-				ReportID: "bbbb",
-				Target: model.ScanTarget{
-					GitHubBranch: model.GitHubBranch{
-						GitHubRepo: model.GitHubRepo{
-							Owner:    "blue",
-							RepoName: "five",
-						},
-						Branch: "dev",
-					},
-					CommitID:  "beef1111",
-					UpdatedAt: 1230,
-				},
-				ScannedAt: 1000,
-				Sources: []*model.PackageSource{
-					{
-						Source: "Gemfile.lock",
-						Packages: []*model.Package{
-							{
-								Type:            model.PkgRubyGems,
-								Name:            "hoge",
-								Version:         "bbbb",
-								Vulnerabilities: []string{},
-							},
-						},
-					},
-				},
-				TrivyDBMeta: trivyMeta,
-			},
-			{
-				ReportID: "cccc",
-				Target: model.ScanTarget{
-					GitHubBranch: model.GitHubBranch{
-						GitHubRepo: model.GitHubRepo{
-							Owner:    "blue",
-							RepoName: "five",
-						},
-						Branch: "dev",
-					},
-					CommitID:  "beef2222",
-					UpdatedAt: 1240,
-				},
-				ScannedAt: 2000,
-				Sources: []*model.PackageSource{
-					{
-						Source: "Gemfile.lock",
-						Packages: []*model.Package{
-							{
-								Type:            model.PkgRubyGems,
-								Name:            "hoge",
-								Version:         "1.2.5",
-								Vulnerabilities: []string{},
-							},
-						},
-					},
-				},
-				TrivyDBMeta: trivyMeta,
-			},
-		}
+func TestScan(t *testing.T) {
+	client := setupDB(t)
+	ctx := context.Background()
 
-		require.NoError(t, client.InsertScanReport(results[0]))
-		require.NoError(t, client.InsertScanReport(results[1]))
-		require.NoError(t, client.InsertScanReport(results[2]))
+	vulnSet := []*ent.Vulnerability{
+		{
+			ID:             "CVE-2001-1000",
+			FirstSeenAt:    1000,
+			LastModifiedAt: 1200,
+			Title:          "blue",
+			Description:    "5",
+		},
+		{
+			ID:             "CVE-2002-1000",
+			FirstSeenAt:    2000,
+			LastModifiedAt: 1345,
+			Title:          "orange",
+		},
+	}
 
-		t.Run("Lookup report", func(t *testing.T) {
-			r, err := client.LookupScanReport("cccc")
-			require.NoError(t, err)
-			assert.Equal(t, r, results[2])
-		})
+	pkgSet := []*ent.PackageRecord{
+		{
+			Type:    types.PkgGoModule,
+			Source:  "go.mod",
+			Name:    "xxx",
+			Version: "v0.1.1",
+			VulnIds: []string{"CVE-2001-1000", "CVE-2002-1000"},
+		},
+	}
 
-		t.Run("List latest scan results", func(t *testing.T) {
-			r, err := client.FindScanLogsByBranch(&model.GitHubBranch{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
-				},
-				Branch: "dev",
-			}, 2)
-			require.NoError(t, err)
-			require.Equal(t, 2, len(r))
-			assert.Equal(t, "aaaa", r[0].Summary.ReportID)
-			assert.Equal(t, "cccc", r[1].Summary.ReportID)
-		})
+	scan := &ent.Scan{
+		CommitID:    "1234567",
+		RequestedAt: 100,
+		ScannedAt:   200,
+		CheckID:     999,
+	}
 
-		t.Run("List latest scan results (over)", func(t *testing.T) {
-			r, err := client.FindScanLogsByBranch(&model.GitHubBranch{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
-				},
-				Branch: "dev",
-			}, 5)
-			require.NoError(t, err)
-			require.Equal(t, 3, len(r))
-			assert.Equal(t, "aaaa", r[0].Summary.ReportID)
-			assert.Equal(t, "cccc", r[1].Summary.ReportID)
-			assert.Equal(t, "bbbb", r[2].Summary.ReportID)
-		})
+	require.NoError(t, client.PutVulnerabilities(ctx, vulnSet))
 
-		t.Run("No error by find not existing repo/branch", func(t *testing.T) {
-			r1, err := client.FindScanLogsByBranch(&model.GitHubBranch{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
-				},
-				Branch: "end",
-			}, 5)
-			require.NoError(t, err)
-			assert.Zero(t, len(r1))
+	addedPkg, err := client.PutPackages(ctx, pkgSet)
+	require.NoError(t, err)
 
-			r2, err := client.FindScanLogsByBranch(&model.GitHubBranch{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "six",
-				},
-				Branch: "dev",
-			}, 5)
-			require.NoError(t, err)
-			assert.Zero(t, len(r2))
-		})
-
-		t.Run("Find latest result of commitID", func(t *testing.T) {
-			r, err := client.FindScanLogsByCommit(&model.GitHubCommit{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
-				},
-				CommitID: "beef1111",
-			}, 3)
-
-			require.NoError(t, err)
-			require.Equal(t, 2, len(r))
-			assert.Contains(t, []string{r[0].Summary.ReportID, r[1].Summary.ReportID}, "aaaa")
-			assert.Contains(t, []string{r[0].Summary.ReportID, r[1].Summary.ReportID}, "bbbb")
-		})
+	branch, err := client.GetBranch(ctx, &db.BranchKey{
+		Owner:    "blue",
+		RepoName: "five",
+		Branch:   "main",
 	})
+	require.NoError(t, err)
+
+	addedscan, err := client.PutScan(ctx, scan, branch, addedPkg)
+	require.NoError(t, err)
+
+	got, err := client.GetScan(ctx, addedscan.ID)
+	require.NoError(t, err)
+	assert.Equal(t, got.CheckID, scan.CheckID)
+	require.Len(t, got.Edges.Packages, 1)
 }
