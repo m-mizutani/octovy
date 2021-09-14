@@ -20,7 +20,6 @@ func (PackageRecord) Fields() []ent.Field {
 		field.String("source").Immutable(),
 		field.String("name").Immutable(),
 		field.String("version").Immutable(),
-		field.Strings("vuln_ids"),
 	}
 }
 
