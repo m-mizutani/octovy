@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
-	types "github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/enttest"
 )
@@ -32,6 +32,8 @@ type Interface interface {
 
 	Close() error
 }
+
+type Factory func(dbType, dbConfig string) (Interface, error)
 
 type Client struct {
 	client *ent.Client
@@ -62,12 +64,12 @@ func NewDBMock(t *testing.T) Interface {
 func (x *Client) init(dbType, dbConfig string) error {
 	client, err := ent.Open(dbType, dbConfig)
 	if err != nil {
-		return types.ErrDatabaseUnexpected.Wrap(err)
+		return model.ErrDatabaseUnexpected.Wrap(err)
 	}
 	x.client = client
 
 	if err := client.Schema.Create(context.Background()); err != nil {
-		return types.ErrDatabaseUnexpected.Wrap(err)
+		return model.ErrDatabaseUnexpected.Wrap(err)
 	}
 
 	return nil
@@ -75,7 +77,7 @@ func (x *Client) init(dbType, dbConfig string) error {
 
 func (x *Client) Close() error {
 	if err := x.client.Close(); err != nil {
-		return types.ErrDatabaseUnexpected.Wrap(err)
+		return model.ErrDatabaseUnexpected.Wrap(err)
 	}
 	return nil
 }

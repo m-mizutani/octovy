@@ -19,6 +19,8 @@ type Client struct {
 	client *github.Client
 }
 
+type Factory func() Interface
+
 func New() Interface {
 	return &Client{
 		client: github.NewClient(&http.Client{}),

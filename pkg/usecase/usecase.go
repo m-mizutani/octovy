@@ -4,12 +4,15 @@ import (
 	"github.com/google/go-github/v39/github"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
 type Interface interface {
+	// Scan
 	ScanRepository(req *model.ScanRepositoryRequest) error
 	SendScanRequest(req *model.ScanRepositoryRequest) error
+	RunScanThread()
 
 	RegisterRepository(repo *ent.Repository) (*ent.Repository, error)
 	UpdateRepositoryDefaultBranch(repo *model.GitHubRepo, branch string) error
@@ -38,12 +41,14 @@ type Interface interface {
 
 func New(cfg *model.Config) Interface {
 	return &usecase{
-		config: cfg,
+		config:    cfg,
+		factories: infra.New(),
 	}
 }
 
 type usecase struct {
-	config *model.Config
+	config    *model.Config
+	factories infra.Factories
 }
 
 func (x *usecase) ScanRepository(req *model.ScanRepositoryRequest) error {
@@ -52,6 +57,10 @@ func (x *usecase) ScanRepository(req *model.ScanRepositoryRequest) error {
 
 func (x *usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
 	panic("not implemented") // TODO: Implement
+}
+
+func (x *usecase) RunScanThread() {
+	panic("not implemented")
 }
 
 func (x *usecase) RegisterRepository(repo *ent.Repository) (*ent.Repository, error) {
