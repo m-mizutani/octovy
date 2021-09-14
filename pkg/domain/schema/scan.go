@@ -14,6 +14,8 @@ type Scan struct {
 // Fields of the Scan.
 func (Scan) Fields() []ent.Field {
 	return []ent.Field{
+		field.String("id").Immutable().Unique(),
+		field.String("branch").Immutable(),
 		field.String("commit_id").Immutable(),
 		field.Int64("requested_at"),
 		field.Int64("scanned_at").Optional(),
@@ -25,7 +27,7 @@ func (Scan) Fields() []ent.Field {
 // Edges of the Scan.
 func (Scan) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("target", Branch.Type).Ref("scan"),
+		edge.From("repository", Repository.Type).Ref("scan"),
 		edge.To("packages", PackageRecord.Type),
 	}
 }

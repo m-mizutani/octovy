@@ -91,6 +91,20 @@ func IDLTE(id string) predicate.VulnStatus {
 	})
 }
 
+// Source applies equality check predicate on the "source" field. It's identical to SourceEQ.
+func Source(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSource), v))
+	})
+}
+
+// PkgName applies equality check predicate on the "pkg_name" field. It's identical to PkgNameEQ.
+func PkgName(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldPkgName), v))
+	})
+}
+
 // VulnID applies equality check predicate on the "vuln_id" field. It's identical to VulnIDEQ.
 func VulnID(v string) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
@@ -109,6 +123,13 @@ func ExpiresAt(v int64) predicate.VulnStatus {
 func CreatedAt(v int64) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
+	})
+}
+
+// Comment applies equality check predicate on the "comment" field. It's identical to CommentEQ.
+func Comment(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldComment), v))
 	})
 }
 
@@ -159,6 +180,278 @@ func StatusNotIn(vs ...types.VulnStatusType) predicate.VulnStatus {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldStatus), v...))
+	})
+}
+
+// SourceEQ applies the EQ predicate on the "source" field.
+func SourceEQ(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldSource), v))
+	})
+}
+
+// SourceNEQ applies the NEQ predicate on the "source" field.
+func SourceNEQ(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldSource), v))
+	})
+}
+
+// SourceIn applies the In predicate on the "source" field.
+func SourceIn(vs ...string) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldSource), v...))
+	})
+}
+
+// SourceNotIn applies the NotIn predicate on the "source" field.
+func SourceNotIn(vs ...string) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldSource), v...))
+	})
+}
+
+// SourceGT applies the GT predicate on the "source" field.
+func SourceGT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldSource), v))
+	})
+}
+
+// SourceGTE applies the GTE predicate on the "source" field.
+func SourceGTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldSource), v))
+	})
+}
+
+// SourceLT applies the LT predicate on the "source" field.
+func SourceLT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldSource), v))
+	})
+}
+
+// SourceLTE applies the LTE predicate on the "source" field.
+func SourceLTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldSource), v))
+	})
+}
+
+// SourceContains applies the Contains predicate on the "source" field.
+func SourceContains(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldSource), v))
+	})
+}
+
+// SourceHasPrefix applies the HasPrefix predicate on the "source" field.
+func SourceHasPrefix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldSource), v))
+	})
+}
+
+// SourceHasSuffix applies the HasSuffix predicate on the "source" field.
+func SourceHasSuffix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldSource), v))
+	})
+}
+
+// SourceEqualFold applies the EqualFold predicate on the "source" field.
+func SourceEqualFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldSource), v))
+	})
+}
+
+// SourceContainsFold applies the ContainsFold predicate on the "source" field.
+func SourceContainsFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldSource), v))
+	})
+}
+
+// PkgNameEQ applies the EQ predicate on the "pkg_name" field.
+func PkgNameEQ(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameNEQ applies the NEQ predicate on the "pkg_name" field.
+func PkgNameNEQ(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameIn applies the In predicate on the "pkg_name" field.
+func PkgNameIn(vs ...string) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldPkgName), v...))
+	})
+}
+
+// PkgNameNotIn applies the NotIn predicate on the "pkg_name" field.
+func PkgNameNotIn(vs ...string) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldPkgName), v...))
+	})
+}
+
+// PkgNameGT applies the GT predicate on the "pkg_name" field.
+func PkgNameGT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameGTE applies the GTE predicate on the "pkg_name" field.
+func PkgNameGTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameLT applies the LT predicate on the "pkg_name" field.
+func PkgNameLT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameLTE applies the LTE predicate on the "pkg_name" field.
+func PkgNameLTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameContains applies the Contains predicate on the "pkg_name" field.
+func PkgNameContains(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameHasPrefix applies the HasPrefix predicate on the "pkg_name" field.
+func PkgNameHasPrefix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameHasSuffix applies the HasSuffix predicate on the "pkg_name" field.
+func PkgNameHasSuffix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameEqualFold applies the EqualFold predicate on the "pkg_name" field.
+func PkgNameEqualFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgNameContainsFold applies the ContainsFold predicate on the "pkg_name" field.
+func PkgNameContainsFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldPkgName), v))
+	})
+}
+
+// PkgTypeEQ applies the EQ predicate on the "pkg_type" field.
+func PkgTypeEQ(v types.PkgType) predicate.VulnStatus {
+	vc := v
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldPkgType), vc))
+	})
+}
+
+// PkgTypeNEQ applies the NEQ predicate on the "pkg_type" field.
+func PkgTypeNEQ(v types.PkgType) predicate.VulnStatus {
+	vc := v
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldPkgType), vc))
+	})
+}
+
+// PkgTypeIn applies the In predicate on the "pkg_type" field.
+func PkgTypeIn(vs ...types.PkgType) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldPkgType), v...))
+	})
+}
+
+// PkgTypeNotIn applies the NotIn predicate on the "pkg_type" field.
+func PkgTypeNotIn(vs ...types.PkgType) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldPkgType), v...))
 	})
 }
 
@@ -422,6 +715,117 @@ func CreatedAtLT(v int64) predicate.VulnStatus {
 func CreatedAtLTE(v int64) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CommentEQ applies the EQ predicate on the "comment" field.
+func CommentEQ(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldComment), v))
+	})
+}
+
+// CommentNEQ applies the NEQ predicate on the "comment" field.
+func CommentNEQ(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldComment), v))
+	})
+}
+
+// CommentIn applies the In predicate on the "comment" field.
+func CommentIn(vs ...string) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldComment), v...))
+	})
+}
+
+// CommentNotIn applies the NotIn predicate on the "comment" field.
+func CommentNotIn(vs ...string) predicate.VulnStatus {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldComment), v...))
+	})
+}
+
+// CommentGT applies the GT predicate on the "comment" field.
+func CommentGT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldComment), v))
+	})
+}
+
+// CommentGTE applies the GTE predicate on the "comment" field.
+func CommentGTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldComment), v))
+	})
+}
+
+// CommentLT applies the LT predicate on the "comment" field.
+func CommentLT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldComment), v))
+	})
+}
+
+// CommentLTE applies the LTE predicate on the "comment" field.
+func CommentLTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldComment), v))
+	})
+}
+
+// CommentContains applies the Contains predicate on the "comment" field.
+func CommentContains(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldComment), v))
+	})
+}
+
+// CommentHasPrefix applies the HasPrefix predicate on the "comment" field.
+func CommentHasPrefix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldComment), v))
+	})
+}
+
+// CommentHasSuffix applies the HasSuffix predicate on the "comment" field.
+func CommentHasSuffix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldComment), v))
+	})
+}
+
+// CommentEqualFold applies the EqualFold predicate on the "comment" field.
+func CommentEqualFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldComment), v))
+	})
+}
+
+// CommentContainsFold applies the ContainsFold predicate on the "comment" field.
+func CommentContainsFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldComment), v))
 	})
 }
 

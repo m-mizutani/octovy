@@ -7,17 +7,16 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
-func (x *Client) GetBranch(ctx context.Context, key *BranchKey) (*ent.Branch, error) {
+func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
 
-	branchID, err := x.client.Branch.Create().
-		SetKey(key.Owner + "/" + key.RepoName + ":" + key.Branch).
-		SetRepoName(key.RepoName).
-		SetOwner(key.Owner).
-		SetName(key.Branch).
+	branchID, err := x.client.Repository.Create().
+		SetName(repo.Name).
+		SetOwner(repo.Owner).
+		SetInstallID(repo.InstallID).
 		OnConflict().
 		Ignore().ID(ctx)
 
@@ -25,7 +24,7 @@ func (x *Client) GetBranch(ctx context.Context, key *BranchKey) (*ent.Branch, er
 		return nil, goerr.Wrap(err)
 	}
 
-	branch, err := x.client.Branch.Get(ctx, branchID)
+	branch, err := x.client.Repository.Get(ctx, branchID)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}

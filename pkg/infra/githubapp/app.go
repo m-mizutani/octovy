@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/pkg/domain/model"

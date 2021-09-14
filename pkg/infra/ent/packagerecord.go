@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -25,8 +24,6 @@ type PackageRecord struct {
 	Name string `json:"name,omitempty"`
 	// Version holds the value of the "version" field.
 	Version string `json:"version,omitempty"`
-	// VulnIds holds the value of the "vuln_ids" field.
-	VulnIds []string `json:"vuln_ids,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PackageRecordQuery when eager-loading is set.
 	Edges PackageRecordEdges `json:"edges"`
@@ -77,8 +74,6 @@ func (*PackageRecord) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case packagerecord.FieldVulnIds:
-			values[i] = new([]byte)
 		case packagerecord.FieldID:
 			values[i] = new(sql.NullInt64)
 		case packagerecord.FieldType, packagerecord.FieldSource, packagerecord.FieldName, packagerecord.FieldVersion:
@@ -127,14 +122,6 @@ func (pr *PackageRecord) assignValues(columns []string, values []interface{}) er
 				return fmt.Errorf("unexpected type %T for field version", values[i])
 			} else if value.Valid {
 				pr.Version = value.String
-			}
-		case packagerecord.FieldVulnIds:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field vuln_ids", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &pr.VulnIds); err != nil {
-					return fmt.Errorf("unmarshal field vuln_ids: %w", err)
-				}
 			}
 		}
 	}
@@ -187,8 +174,6 @@ func (pr *PackageRecord) String() string {
 	builder.WriteString(pr.Name)
 	builder.WriteString(", version=")
 	builder.WriteString(pr.Version)
-	builder.WriteString(", vuln_ids=")
-	builder.WriteString(fmt.Sprintf("%v", pr.VulnIds))
 	builder.WriteByte(')')
 	return builder.String()
 }

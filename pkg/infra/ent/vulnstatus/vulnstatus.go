@@ -15,12 +15,20 @@ const (
 	FieldID = "id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldSource holds the string denoting the source field in the database.
+	FieldSource = "source"
+	// FieldPkgName holds the string denoting the pkg_name field in the database.
+	FieldPkgName = "pkg_name"
+	// FieldPkgType holds the string denoting the pkg_type field in the database.
+	FieldPkgType = "pkg_type"
 	// FieldVulnID holds the string denoting the vuln_id field in the database.
 	FieldVulnID = "vuln_id"
 	// FieldExpiresAt holds the string denoting the expires_at field in the database.
 	FieldExpiresAt = "expires_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldComment holds the string denoting the comment field in the database.
+	FieldComment = "comment"
 	// Table holds the table name of the vulnstatus in the database.
 	Table = "vuln_status"
 )
@@ -29,15 +37,20 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldStatus,
+	FieldSource,
+	FieldPkgName,
+	FieldPkgType,
 	FieldVulnID,
 	FieldExpiresAt,
 	FieldCreatedAt,
+	FieldComment,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "vuln_status"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"package_record_status",
+	"user_edited_status",
 	"vulnerability_status",
 }
 
@@ -68,5 +81,15 @@ func StatusValidator(s types.VulnStatusType) error {
 		return nil
 	default:
 		return fmt.Errorf("vulnstatus: invalid enum value for status field: %q", s)
+	}
+}
+
+// PkgTypeValidator is a validator for the "pkg_type" field enum values. It is called by the builders before save.
+func PkgTypeValidator(pt types.PkgType) error {
+	switch pt {
+	case "rubygems", "npm", "gomod", "pypi":
+		return nil
+	default:
+		return fmt.Errorf("vulnstatus: invalid enum value for pkg_type field: %q", pt)
 	}
 }

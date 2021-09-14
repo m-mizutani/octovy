@@ -36,21 +36,15 @@ func (pru *PackageRecordUpdate) SetType(tt types.PkgType) *PackageRecordUpdate {
 	return pru
 }
 
-// SetVulnIds sets the "vuln_ids" field.
-func (pru *PackageRecordUpdate) SetVulnIds(s []string) *PackageRecordUpdate {
-	pru.mutation.SetVulnIds(s)
-	return pru
-}
-
 // AddScanIDs adds the "scan" edge to the Scan entity by IDs.
-func (pru *PackageRecordUpdate) AddScanIDs(ids ...int) *PackageRecordUpdate {
+func (pru *PackageRecordUpdate) AddScanIDs(ids ...string) *PackageRecordUpdate {
 	pru.mutation.AddScanIDs(ids...)
 	return pru
 }
 
 // AddScan adds the "scan" edges to the Scan entity.
 func (pru *PackageRecordUpdate) AddScan(s ...*Scan) *PackageRecordUpdate {
-	ids := make([]int, len(s))
+	ids := make([]string, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -99,14 +93,14 @@ func (pru *PackageRecordUpdate) ClearScan() *PackageRecordUpdate {
 }
 
 // RemoveScanIDs removes the "scan" edge to Scan entities by IDs.
-func (pru *PackageRecordUpdate) RemoveScanIDs(ids ...int) *PackageRecordUpdate {
+func (pru *PackageRecordUpdate) RemoveScanIDs(ids ...string) *PackageRecordUpdate {
 	pru.mutation.RemoveScanIDs(ids...)
 	return pru
 }
 
 // RemoveScan removes "scan" edges to Scan entities.
 func (pru *PackageRecordUpdate) RemoveScan(s ...*Scan) *PackageRecordUpdate {
-	ids := make([]int, len(s))
+	ids := make([]string, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -250,13 +244,6 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Column: packagerecord.FieldType,
 		})
 	}
-	if value, ok := pru.mutation.VulnIds(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: packagerecord.FieldVulnIds,
-		})
-	}
 	if pru.mutation.ScanCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -266,7 +253,7 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},
@@ -282,7 +269,7 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},
@@ -301,7 +288,7 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},
@@ -444,21 +431,15 @@ func (pruo *PackageRecordUpdateOne) SetType(tt types.PkgType) *PackageRecordUpda
 	return pruo
 }
 
-// SetVulnIds sets the "vuln_ids" field.
-func (pruo *PackageRecordUpdateOne) SetVulnIds(s []string) *PackageRecordUpdateOne {
-	pruo.mutation.SetVulnIds(s)
-	return pruo
-}
-
 // AddScanIDs adds the "scan" edge to the Scan entity by IDs.
-func (pruo *PackageRecordUpdateOne) AddScanIDs(ids ...int) *PackageRecordUpdateOne {
+func (pruo *PackageRecordUpdateOne) AddScanIDs(ids ...string) *PackageRecordUpdateOne {
 	pruo.mutation.AddScanIDs(ids...)
 	return pruo
 }
 
 // AddScan adds the "scan" edges to the Scan entity.
 func (pruo *PackageRecordUpdateOne) AddScan(s ...*Scan) *PackageRecordUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]string, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -507,14 +488,14 @@ func (pruo *PackageRecordUpdateOne) ClearScan() *PackageRecordUpdateOne {
 }
 
 // RemoveScanIDs removes the "scan" edge to Scan entities by IDs.
-func (pruo *PackageRecordUpdateOne) RemoveScanIDs(ids ...int) *PackageRecordUpdateOne {
+func (pruo *PackageRecordUpdateOne) RemoveScanIDs(ids ...string) *PackageRecordUpdateOne {
 	pruo.mutation.RemoveScanIDs(ids...)
 	return pruo
 }
 
 // RemoveScan removes "scan" edges to Scan entities.
 func (pruo *PackageRecordUpdateOne) RemoveScan(s ...*Scan) *PackageRecordUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]string, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -682,13 +663,6 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 			Column: packagerecord.FieldType,
 		})
 	}
-	if value, ok := pruo.mutation.VulnIds(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: packagerecord.FieldVulnIds,
-		})
-	}
 	if pruo.mutation.ScanCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -698,7 +672,7 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},
@@ -714,7 +688,7 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},
@@ -733,7 +707,7 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},

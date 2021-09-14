@@ -3,7 +3,7 @@ package githubapp
 import (
 	"io"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 

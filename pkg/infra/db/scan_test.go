@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/m-mizutani/octovy/pkg/domain/types"
-	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,12 +36,12 @@ func TestScan(t *testing.T) {
 			Source:  "go.mod",
 			Name:    "xxx",
 			Version: "v0.1.1",
-			VulnIds: []string{"CVE-2001-1000", "CVE-2002-1000"},
 		},
 	}
 
 	scan := &ent.Scan{
 		CommitID:    "1234567",
+		Branch:      "main",
 		RequestedAt: 100,
 		ScannedAt:   200,
 		CheckID:     999,
@@ -50,17 +49,17 @@ func TestScan(t *testing.T) {
 
 	require.NoError(t, client.PutVulnerabilities(ctx, vulnSet))
 
-	addedPkg, err := client.PutPackages(ctx, pkgSet)
+	addedPkg, err := client.PutPackages(ctx, pkgSet, []string{"CVE-2001-1000", "CVE-2002-1000"})
 	require.NoError(t, err)
 
-	branch, err := client.GetBranch(ctx, &db.BranchKey{
-		Owner:    "blue",
-		RepoName: "five",
-		Branch:   "main",
+	repo, err := client.CreateRepo(ctx, &ent.Repository{
+		Owner:     "blue",
+		Name:      "five",
+		InstallID: 1,
 	})
 	require.NoError(t, err)
 
-	addedscan, err := client.PutScan(ctx, scan, branch, addedPkg)
+	addedscan, err := client.PutScan(ctx, scan, repo, addedPkg)
 	require.NoError(t, err)
 
 	got, err := client.GetScan(ctx, addedscan.ID)

@@ -4,6 +4,8 @@ package ent
 
 import (
 	"github.com/m-mizutani/octovy/pkg/domain/schema"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
@@ -12,6 +14,18 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	sessionFields := schema.Session{}.Fields()
+	_ = sessionFields
+	// sessionDescToken is the schema descriptor for token field.
+	sessionDescToken := sessionFields[0].Descriptor()
+	// session.TokenValidator is a validator for the "token" field. It is called by the builders before save.
+	session.TokenValidator = sessionDescToken.Validators[0].(func(string) error)
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescID is the schema descriptor for id field.
+	userDescID := userFields[0].Descriptor()
+	// user.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	user.IDValidator = userDescID.Validators[0].(func(string) error)
 	vulnstatusFields := schema.VulnStatus{}.Fields()
 	_ = vulnstatusFields
 	// vulnstatusDescID is the schema descriptor for id field.

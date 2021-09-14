@@ -33,6 +33,24 @@ func (vsu *VulnStatusUpdate) SetStatus(tst types.VulnStatusType) *VulnStatusUpda
 	return vsu
 }
 
+// SetSource sets the "source" field.
+func (vsu *VulnStatusUpdate) SetSource(s string) *VulnStatusUpdate {
+	vsu.mutation.SetSource(s)
+	return vsu
+}
+
+// SetPkgName sets the "pkg_name" field.
+func (vsu *VulnStatusUpdate) SetPkgName(s string) *VulnStatusUpdate {
+	vsu.mutation.SetPkgName(s)
+	return vsu
+}
+
+// SetPkgType sets the "pkg_type" field.
+func (vsu *VulnStatusUpdate) SetPkgType(tt types.PkgType) *VulnStatusUpdate {
+	vsu.mutation.SetPkgType(tt)
+	return vsu
+}
+
 // SetVulnID sets the "vuln_id" field.
 func (vsu *VulnStatusUpdate) SetVulnID(s string) *VulnStatusUpdate {
 	vsu.mutation.SetVulnID(s)
@@ -62,6 +80,12 @@ func (vsu *VulnStatusUpdate) SetCreatedAt(i int64) *VulnStatusUpdate {
 // AddCreatedAt adds i to the "created_at" field.
 func (vsu *VulnStatusUpdate) AddCreatedAt(i int64) *VulnStatusUpdate {
 	vsu.mutation.AddCreatedAt(i)
+	return vsu
+}
+
+// SetComment sets the "comment" field.
+func (vsu *VulnStatusUpdate) SetComment(s string) *VulnStatusUpdate {
+	vsu.mutation.SetComment(s)
 	return vsu
 }
 
@@ -137,6 +161,11 @@ func (vsu *VulnStatusUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf("ent: validator failed for field \"status\": %w", err)}
 		}
 	}
+	if v, ok := vsu.mutation.PkgType(); ok {
+		if err := vulnstatus.PkgTypeValidator(v); err != nil {
+			return &ValidationError{Name: "pkg_type", err: fmt.Errorf("ent: validator failed for field \"pkg_type\": %w", err)}
+		}
+	}
 	return nil
 }
 
@@ -163,6 +192,27 @@ func (vsu *VulnStatusUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeEnum,
 			Value:  value,
 			Column: vulnstatus.FieldStatus,
+		})
+	}
+	if value, ok := vsu.mutation.Source(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldSource,
+		})
+	}
+	if value, ok := vsu.mutation.PkgName(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldPkgName,
+		})
+	}
+	if value, ok := vsu.mutation.PkgType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: vulnstatus.FieldPkgType,
 		})
 	}
 	if value, ok := vsu.mutation.VulnID(); ok {
@@ -200,6 +250,13 @@ func (vsu *VulnStatusUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: vulnstatus.FieldCreatedAt,
 		})
 	}
+	if value, ok := vsu.mutation.Comment(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldComment,
+		})
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, vsu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{vulnstatus.Label}
@@ -222,6 +279,24 @@ type VulnStatusUpdateOne struct {
 // SetStatus sets the "status" field.
 func (vsuo *VulnStatusUpdateOne) SetStatus(tst types.VulnStatusType) *VulnStatusUpdateOne {
 	vsuo.mutation.SetStatus(tst)
+	return vsuo
+}
+
+// SetSource sets the "source" field.
+func (vsuo *VulnStatusUpdateOne) SetSource(s string) *VulnStatusUpdateOne {
+	vsuo.mutation.SetSource(s)
+	return vsuo
+}
+
+// SetPkgName sets the "pkg_name" field.
+func (vsuo *VulnStatusUpdateOne) SetPkgName(s string) *VulnStatusUpdateOne {
+	vsuo.mutation.SetPkgName(s)
+	return vsuo
+}
+
+// SetPkgType sets the "pkg_type" field.
+func (vsuo *VulnStatusUpdateOne) SetPkgType(tt types.PkgType) *VulnStatusUpdateOne {
+	vsuo.mutation.SetPkgType(tt)
 	return vsuo
 }
 
@@ -254,6 +329,12 @@ func (vsuo *VulnStatusUpdateOne) SetCreatedAt(i int64) *VulnStatusUpdateOne {
 // AddCreatedAt adds i to the "created_at" field.
 func (vsuo *VulnStatusUpdateOne) AddCreatedAt(i int64) *VulnStatusUpdateOne {
 	vsuo.mutation.AddCreatedAt(i)
+	return vsuo
+}
+
+// SetComment sets the "comment" field.
+func (vsuo *VulnStatusUpdateOne) SetComment(s string) *VulnStatusUpdateOne {
+	vsuo.mutation.SetComment(s)
 	return vsuo
 }
 
@@ -336,6 +417,11 @@ func (vsuo *VulnStatusUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf("ent: validator failed for field \"status\": %w", err)}
 		}
 	}
+	if v, ok := vsuo.mutation.PkgType(); ok {
+		if err := vulnstatus.PkgTypeValidator(v); err != nil {
+			return &ValidationError{Name: "pkg_type", err: fmt.Errorf("ent: validator failed for field \"pkg_type\": %w", err)}
+		}
+	}
 	return nil
 }
 
@@ -381,6 +467,27 @@ func (vsuo *VulnStatusUpdateOne) sqlSave(ctx context.Context) (_node *VulnStatus
 			Column: vulnstatus.FieldStatus,
 		})
 	}
+	if value, ok := vsuo.mutation.Source(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldSource,
+		})
+	}
+	if value, ok := vsuo.mutation.PkgName(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldPkgName,
+		})
+	}
+	if value, ok := vsuo.mutation.PkgType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: vulnstatus.FieldPkgType,
+		})
+	}
 	if value, ok := vsuo.mutation.VulnID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -414,6 +521,13 @@ func (vsuo *VulnStatusUpdateOne) sqlSave(ctx context.Context) (_node *VulnStatus
 			Type:   field.TypeInt64,
 			Value:  value,
 			Column: vulnstatus.FieldCreatedAt,
+		})
+	}
+	if value, ok := vsuo.mutation.Comment(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldComment,
 		})
 	}
 	_node = &VulnStatus{config: vsuo.config}

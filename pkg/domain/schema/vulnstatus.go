@@ -16,9 +16,13 @@ func (VulnStatus) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").NotEmpty().Immutable().Unique(),
 		field.Enum("status").GoType(types.VulnStatusType("")),
+		field.String("source"),
+		field.String("pkg_name"),
+		field.Enum("pkg_type").GoType(types.PkgType("")),
 		field.String("vuln_id"),
 		field.Int64("expires_at"),
 		field.Int64("created_at"),
+		field.String("comment"),
 	}
 }
 

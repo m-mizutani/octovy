@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/m-mizutani/goerr"
 )
 

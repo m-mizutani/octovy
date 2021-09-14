@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/branch"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
@@ -21,6 +21,12 @@ type ScanCreate struct {
 	mutation *ScanMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
+}
+
+// SetBranch sets the "branch" field.
+func (sc *ScanCreate) SetBranch(s string) *ScanCreate {
+	sc.mutation.SetBranch(s)
+	return sc
 }
 
 // SetCommitID sets the "commit_id" field.
@@ -69,19 +75,25 @@ func (sc *ScanCreate) SetNillablePullRequestTarget(s *string) *ScanCreate {
 	return sc
 }
 
-// AddTargetIDs adds the "target" edge to the Branch entity by IDs.
-func (sc *ScanCreate) AddTargetIDs(ids ...int) *ScanCreate {
-	sc.mutation.AddTargetIDs(ids...)
+// SetID sets the "id" field.
+func (sc *ScanCreate) SetID(s string) *ScanCreate {
+	sc.mutation.SetID(s)
 	return sc
 }
 
-// AddTarget adds the "target" edges to the Branch entity.
-func (sc *ScanCreate) AddTarget(b ...*Branch) *ScanCreate {
-	ids := make([]int, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by IDs.
+func (sc *ScanCreate) AddRepositoryIDs(ids ...int) *ScanCreate {
+	sc.mutation.AddRepositoryIDs(ids...)
+	return sc
+}
+
+// AddRepository adds the "repository" edges to the Repository entity.
+func (sc *ScanCreate) AddRepository(r ...*Repository) *ScanCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return sc.AddTargetIDs(ids...)
+	return sc.AddRepositoryIDs(ids...)
 }
 
 // AddPackageIDs adds the "packages" edge to the PackageRecord entity by IDs.
@@ -169,6 +181,9 @@ func (sc *ScanCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (sc *ScanCreate) check() error {
+	if _, ok := sc.mutation.Branch(); !ok {
+		return &ValidationError{Name: "branch", err: errors.New(`ent: missing required field "branch"`)}
+	}
 	if _, ok := sc.mutation.CommitID(); !ok {
 		return &ValidationError{Name: "commit_id", err: errors.New(`ent: missing required field "commit_id"`)}
 	}
@@ -189,8 +204,6 @@ func (sc *ScanCreate) sqlSave(ctx context.Context) (*Scan, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -200,12 +213,24 @@ func (sc *ScanCreate) createSpec() (*Scan, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: scan.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: scan.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = sc.conflict
+	if id, ok := sc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := sc.mutation.Branch(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: scan.FieldBranch,
+		})
+		_node.Branch = value
+	}
 	if value, ok := sc.mutation.CommitID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -246,17 +271,17 @@ func (sc *ScanCreate) createSpec() (*Scan, *sqlgraph.CreateSpec) {
 		})
 		_node.PullRequestTarget = value
 	}
-	if nodes := sc.mutation.TargetIDs(); len(nodes) > 0 {
+	if nodes := sc.mutation.RepositoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}
@@ -291,7 +316,7 @@ func (sc *ScanCreate) createSpec() (*Scan, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Scan.Create().
-//		SetCommitID(v).
+//		SetBranch(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -300,7 +325,7 @@ func (sc *ScanCreate) createSpec() (*Scan, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ScanUpsert) {
-//			SetCommitID(v+v).
+//			SetBranch(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -337,6 +362,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetBranch sets the "branch" field.
+func (u *ScanUpsert) SetBranch(v string) *ScanUpsert {
+	u.Set(scan.FieldBranch, v)
+	return u
+}
+
+// UpdateBranch sets the "branch" field to the value that was provided on create.
+func (u *ScanUpsert) UpdateBranch() *ScanUpsert {
+	u.SetExcluded(scan.FieldBranch)
+	return u
+}
 
 // SetCommitID sets the "commit_id" field.
 func (u *ScanUpsert) SetCommitID(v string) *ScanUpsert {
@@ -450,6 +487,20 @@ func (u *ScanUpsertOne) Update(set func(*ScanUpsert)) *ScanUpsertOne {
 	return u
 }
 
+// SetBranch sets the "branch" field.
+func (u *ScanUpsertOne) SetBranch(v string) *ScanUpsertOne {
+	return u.Update(func(s *ScanUpsert) {
+		s.SetBranch(v)
+	})
+}
+
+// UpdateBranch sets the "branch" field to the value that was provided on create.
+func (u *ScanUpsertOne) UpdateBranch() *ScanUpsertOne {
+	return u.Update(func(s *ScanUpsert) {
+		s.UpdateBranch()
+	})
+}
+
 // SetCommitID sets the "commit_id" field.
 func (u *ScanUpsertOne) SetCommitID(v string) *ScanUpsertOne {
 	return u.Update(func(s *ScanUpsert) {
@@ -550,7 +601,7 @@ func (u *ScanUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *ScanUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *ScanUpsertOne) ID(ctx context.Context) (id string, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -559,7 +610,7 @@ func (u *ScanUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *ScanUpsertOne) IDX(ctx context.Context) int {
+func (u *ScanUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -610,10 +661,6 @@ func (scb *ScanCreateBulk) Save(ctx context.Context) ([]*Scan, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {
@@ -664,7 +711,7 @@ func (scb *ScanCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ScanUpsert) {
-//			SetCommitID(v+v).
+//			SetBranch(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -733,6 +780,20 @@ func (u *ScanUpsertBulk) Update(set func(*ScanUpsert)) *ScanUpsertBulk {
 		set(&ScanUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetBranch sets the "branch" field.
+func (u *ScanUpsertBulk) SetBranch(v string) *ScanUpsertBulk {
+	return u.Update(func(s *ScanUpsert) {
+		s.SetBranch(v)
+	})
+}
+
+// UpdateBranch sets the "branch" field to the value that was provided on create.
+func (u *ScanUpsertBulk) UpdateBranch() *ScanUpsertBulk {
+	return u.Update(func(s *ScanUpsert) {
+		s.UpdateBranch()
+	})
 }
 
 // SetCommitID sets the "commit_id" field.

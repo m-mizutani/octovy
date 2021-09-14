@@ -14,7 +14,9 @@ import (
 type Scan struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
+	// Branch holds the value of the "branch" field.
+	Branch string `json:"branch,omitempty"`
 	// CommitID holds the value of the "commit_id" field.
 	CommitID string `json:"commit_id,omitempty"`
 	// RequestedAt holds the value of the "requested_at" field.
@@ -32,8 +34,8 @@ type Scan struct {
 
 // ScanEdges holds the relations/edges for other nodes in the graph.
 type ScanEdges struct {
-	// Target holds the value of the target edge.
-	Target []*Branch `json:"target,omitempty"`
+	// Repository holds the value of the repository edge.
+	Repository []*Repository `json:"repository,omitempty"`
 	// Packages holds the value of the packages edge.
 	Packages []*PackageRecord `json:"packages,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -41,13 +43,13 @@ type ScanEdges struct {
 	loadedTypes [2]bool
 }
 
-// TargetOrErr returns the Target value or an error if the edge
+// RepositoryOrErr returns the Repository value or an error if the edge
 // was not loaded in eager-loading.
-func (e ScanEdges) TargetOrErr() ([]*Branch, error) {
+func (e ScanEdges) RepositoryOrErr() ([]*Repository, error) {
 	if e.loadedTypes[0] {
-		return e.Target, nil
+		return e.Repository, nil
 	}
-	return nil, &NotLoadedError{edge: "target"}
+	return nil, &NotLoadedError{edge: "repository"}
 }
 
 // PackagesOrErr returns the Packages value or an error if the edge
@@ -64,9 +66,9 @@ func (*Scan) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scan.FieldID, scan.FieldRequestedAt, scan.FieldScannedAt, scan.FieldCheckID:
+		case scan.FieldRequestedAt, scan.FieldScannedAt, scan.FieldCheckID:
 			values[i] = new(sql.NullInt64)
-		case scan.FieldCommitID, scan.FieldPullRequestTarget:
+		case scan.FieldID, scan.FieldBranch, scan.FieldCommitID, scan.FieldPullRequestTarget:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Scan", columns[i])
@@ -84,11 +86,17 @@ func (s *Scan) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case scan.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value.Valid {
+				s.ID = value.String
 			}
-			s.ID = int(value.Int64)
+		case scan.FieldBranch:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field branch", values[i])
+			} else if value.Valid {
+				s.Branch = value.String
+			}
 		case scan.FieldCommitID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field commit_id", values[i])
@@ -124,9 +132,9 @@ func (s *Scan) assignValues(columns []string, values []interface{}) error {
 	return nil
 }
 
-// QueryTarget queries the "target" edge of the Scan entity.
-func (s *Scan) QueryTarget() *BranchQuery {
-	return (&ScanClient{config: s.config}).QueryTarget(s)
+// QueryRepository queries the "repository" edge of the Scan entity.
+func (s *Scan) QueryRepository() *RepositoryQuery {
+	return (&ScanClient{config: s.config}).QueryRepository(s)
 }
 
 // QueryPackages queries the "packages" edge of the Scan entity.
@@ -157,6 +165,8 @@ func (s *Scan) String() string {
 	var builder strings.Builder
 	builder.WriteString("Scan(")
 	builder.WriteString(fmt.Sprintf("id=%v", s.ID))
+	builder.WriteString(", branch=")
+	builder.WriteString(s.Branch)
 	builder.WriteString(", commit_id=")
 	builder.WriteString(s.CommitID)
 	builder.WriteString(", requested_at=")

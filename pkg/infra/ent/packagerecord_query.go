@@ -457,8 +457,8 @@ func (prq *PackageRecordQuery) sqlAll(ctx context.Context) ([]*PackageRecord, er
 			node.Edges.Scan = []*Scan{}
 		}
 		var (
-			edgeids []int
-			edges   = make(map[int][]*PackageRecord)
+			edgeids []string
+			edges   = make(map[string][]*PackageRecord)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -470,19 +470,19 @@ func (prq *PackageRecordQuery) sqlAll(ctx context.Context) ([]*PackageRecord, er
 				s.Where(sql.InValues(packagerecord.ScanPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullString)}
 			},
 			Assign: func(out, in interface{}) error {
 				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullInt64)
+				ein, ok := in.(*sql.NullString)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := ein.String
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)

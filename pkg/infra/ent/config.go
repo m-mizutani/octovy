@@ -24,9 +24,11 @@ type config struct {
 
 // hooks per client, for fast access.
 type hooks struct {
-	Branch        []ent.Hook
 	PackageRecord []ent.Hook
+	Repository    []ent.Hook
 	Scan          []ent.Hook
+	Session       []ent.Hook
+	User          []ent.Hook
 	VulnStatus    []ent.Hook
 	Vulnerability []ent.Hook
 }

@@ -49,21 +49,15 @@ func (prc *PackageRecordCreate) SetVersion(s string) *PackageRecordCreate {
 	return prc
 }
 
-// SetVulnIds sets the "vuln_ids" field.
-func (prc *PackageRecordCreate) SetVulnIds(s []string) *PackageRecordCreate {
-	prc.mutation.SetVulnIds(s)
-	return prc
-}
-
 // AddScanIDs adds the "scan" edge to the Scan entity by IDs.
-func (prc *PackageRecordCreate) AddScanIDs(ids ...int) *PackageRecordCreate {
+func (prc *PackageRecordCreate) AddScanIDs(ids ...string) *PackageRecordCreate {
 	prc.mutation.AddScanIDs(ids...)
 	return prc
 }
 
 // AddScan adds the "scan" edges to the Scan entity.
 func (prc *PackageRecordCreate) AddScan(s ...*Scan) *PackageRecordCreate {
-	ids := make([]int, len(s))
+	ids := make([]string, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -187,9 +181,6 @@ func (prc *PackageRecordCreate) check() error {
 	if _, ok := prc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "version"`)}
 	}
-	if _, ok := prc.mutation.VulnIds(); !ok {
-		return &ValidationError{Name: "vuln_ids", err: errors.New(`ent: missing required field "vuln_ids"`)}
-	}
 	return nil
 }
 
@@ -250,14 +241,6 @@ func (prc *PackageRecordCreate) createSpec() (*PackageRecord, *sqlgraph.CreateSp
 		})
 		_node.Version = value
 	}
-	if value, ok := prc.mutation.VulnIds(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: packagerecord.FieldVulnIds,
-		})
-		_node.VulnIds = value
-	}
 	if nodes := prc.mutation.ScanIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -267,7 +250,7 @@ func (prc *PackageRecordCreate) createSpec() (*PackageRecord, *sqlgraph.CreateSp
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: scan.FieldID,
 				},
 			},
@@ -417,18 +400,6 @@ func (u *PackageRecordUpsert) UpdateVersion() *PackageRecordUpsert {
 	return u
 }
 
-// SetVulnIds sets the "vuln_ids" field.
-func (u *PackageRecordUpsert) SetVulnIds(v []string) *PackageRecordUpsert {
-	u.Set(packagerecord.FieldVulnIds, v)
-	return u
-}
-
-// UpdateVulnIds sets the "vuln_ids" field to the value that was provided on create.
-func (u *PackageRecordUpsert) UpdateVulnIds() *PackageRecordUpsert {
-	u.SetExcluded(packagerecord.FieldVulnIds)
-	return u
-}
-
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
@@ -522,20 +493,6 @@ func (u *PackageRecordUpsertOne) SetVersion(v string) *PackageRecordUpsertOne {
 func (u *PackageRecordUpsertOne) UpdateVersion() *PackageRecordUpsertOne {
 	return u.Update(func(s *PackageRecordUpsert) {
 		s.UpdateVersion()
-	})
-}
-
-// SetVulnIds sets the "vuln_ids" field.
-func (u *PackageRecordUpsertOne) SetVulnIds(v []string) *PackageRecordUpsertOne {
-	return u.Update(func(s *PackageRecordUpsert) {
-		s.SetVulnIds(v)
-	})
-}
-
-// UpdateVulnIds sets the "vuln_ids" field to the value that was provided on create.
-func (u *PackageRecordUpsertOne) UpdateVulnIds() *PackageRecordUpsertOne {
-	return u.Update(func(s *PackageRecordUpsert) {
-		s.UpdateVulnIds()
 	})
 }
 
@@ -793,20 +750,6 @@ func (u *PackageRecordUpsertBulk) SetVersion(v string) *PackageRecordUpsertBulk 
 func (u *PackageRecordUpsertBulk) UpdateVersion() *PackageRecordUpsertBulk {
 	return u.Update(func(s *PackageRecordUpsert) {
 		s.UpdateVersion()
-	})
-}
-
-// SetVulnIds sets the "vuln_ids" field.
-func (u *PackageRecordUpsertBulk) SetVulnIds(v []string) *PackageRecordUpsertBulk {
-	return u.Update(func(s *PackageRecordUpsert) {
-		s.SetVulnIds(v)
-	})
-}
-
-// UpdateVulnIds sets the "vuln_ids" field to the value that was provided on create.
-func (u *PackageRecordUpsertBulk) UpdateVulnIds() *PackageRecordUpsertBulk {
-	return u.Update(func(s *PackageRecordUpsert) {
-		s.UpdateVulnIds()
 	})
 }
 

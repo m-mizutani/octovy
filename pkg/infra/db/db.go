@@ -8,32 +8,26 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/m-mizutani/octovy/pkg/domain/types"
+	types "github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/enttest"
 )
 
 type ScanResult struct {
-	Branch          *ent.Branch
+	Repo            *ent.Repository
 	Scan            *ent.Scan
 	Packages        []*ent.PackageRecord
 	Vulnerabilities []*ent.Vulnerability
 }
 
-type BranchKey struct {
-	Owner    string
-	RepoName string
-	Branch   string
-}
-
 type Interface interface {
-	GetBranch(ctx context.Context, branch *BranchKey) (*ent.Branch, error)
+	CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
 
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
-	PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
-	PutScan(ctx context.Context, scan *ent.Scan, branch *ent.Branch, packages []*ent.PackageRecord) (*ent.Scan, error)
+	PutPackages(ctx context.Context, packages []*ent.PackageRecord, vulnIDs []string) ([]*ent.PackageRecord, error)
+	PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
 
-	GetScan(ctx context.Context, id int) (*ent.Scan, error)
+	GetScan(ctx context.Context, id string) (*ent.Scan, error)
 	GetLatestScan(ctx context.Context, owner, repoName, branch string) (*ent.Scan, error)
 
 	Close() error

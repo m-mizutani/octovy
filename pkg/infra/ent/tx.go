@@ -12,12 +12,16 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
-	// Branch is the client for interacting with the Branch builders.
-	Branch *BranchClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
+	// Repository is the client for interacting with the Repository builders.
+	Repository *RepositoryClient
 	// Scan is the client for interacting with the Scan builders.
 	Scan *ScanClient
+	// Session is the client for interacting with the Session builders.
+	Session *SessionClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 	// VulnStatus is the client for interacting with the VulnStatus builders.
 	VulnStatus *VulnStatusClient
 	// Vulnerability is the client for interacting with the Vulnerability builders.
@@ -157,9 +161,11 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
-	tx.Branch = NewBranchClient(tx.config)
 	tx.PackageRecord = NewPackageRecordClient(tx.config)
+	tx.Repository = NewRepositoryClient(tx.config)
 	tx.Scan = NewScanClient(tx.config)
+	tx.Session = NewSessionClient(tx.config)
+	tx.User = NewUserClient(tx.config)
 	tx.VulnStatus = NewVulnStatusClient(tx.config)
 	tx.Vulnerability = NewVulnerabilityClient(tx.config)
 }
@@ -171,7 +177,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Branch.QueryXXX(), the query will be executed
+// applies a query, for example: PackageRecord.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

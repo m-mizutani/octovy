@@ -8,20 +8,6 @@ import (
 )
 
 var (
-	// BranchesColumns holds the columns for the "branches" table.
-	BranchesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "key", Type: field.TypeString, Unique: true},
-		{Name: "owner", Type: field.TypeString},
-		{Name: "repo_name", Type: field.TypeString},
-		{Name: "name", Type: field.TypeString},
-	}
-	// BranchesTable holds the schema information for the "branches" table.
-	BranchesTable = &schema.Table{
-		Name:       "branches",
-		Columns:    BranchesColumns,
-		PrimaryKey: []*schema.Column{BranchesColumns[0]},
-	}
 	// PackageRecordsColumns holds the columns for the "package_records" table.
 	PackageRecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -29,7 +15,6 @@ var (
 		{Name: "source", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "version", Type: field.TypeString},
-		{Name: "vuln_ids", Type: field.TypeJSON},
 	}
 	// PackageRecordsTable holds the schema information for the "package_records" table.
 	PackageRecordsTable = &schema.Table{
@@ -37,9 +22,23 @@ var (
 		Columns:    PackageRecordsColumns,
 		PrimaryKey: []*schema.Column{PackageRecordsColumns[0]},
 	}
+	// RepositoriesColumns holds the columns for the "repositories" table.
+	RepositoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "owner", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "install_id", Type: field.TypeInt64},
+	}
+	// RepositoriesTable holds the schema information for the "repositories" table.
+	RepositoriesTable = &schema.Table{
+		Name:       "repositories",
+		Columns:    RepositoriesColumns,
+		PrimaryKey: []*schema.Column{RepositoriesColumns[0]},
+	}
 	// ScansColumns holds the columns for the "scans" table.
 	ScansColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString, Unique: true},
+		{Name: "branch", Type: field.TypeString},
 		{Name: "commit_id", Type: field.TypeString},
 		{Name: "requested_at", Type: field.TypeInt64},
 		{Name: "scanned_at", Type: field.TypeInt64, Nullable: true},
@@ -52,14 +51,55 @@ var (
 		Columns:    ScansColumns,
 		PrimaryKey: []*schema.Column{ScansColumns[0]},
 	}
+	// SessionsColumns holds the columns for the "sessions" table.
+	SessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "token", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeInt64},
+		{Name: "expires_at", Type: field.TypeInt64},
+		{Name: "session_login", Type: field.TypeString, Nullable: true},
+	}
+	// SessionsTable holds the schema information for the "sessions" table.
+	SessionsTable = &schema.Table{
+		Name:       "sessions",
+		Columns:    SessionsColumns,
+		PrimaryKey: []*schema.Column{SessionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "sessions_users_login",
+				Columns:    []*schema.Column{SessionsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "login", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "avatar_url", Type: field.TypeString},
+		{Name: "url", Type: field.TypeString},
+	}
+	// UsersTable holds the schema information for the "users" table.
+	UsersTable = &schema.Table{
+		Name:       "users",
+		Columns:    UsersColumns,
+		PrimaryKey: []*schema.Column{UsersColumns[0]},
+	}
 	// VulnStatusColumns holds the columns for the "vuln_status" table.
 	VulnStatusColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"none", "snoozed", "mitigated", "unaffected", "fixed"}},
+		{Name: "source", Type: field.TypeString},
+		{Name: "pkg_name", Type: field.TypeString},
+		{Name: "pkg_type", Type: field.TypeEnum, Enums: []string{"rubygems", "npm", "gomod", "pypi"}},
 		{Name: "vuln_id", Type: field.TypeString},
 		{Name: "expires_at", Type: field.TypeInt64},
 		{Name: "created_at", Type: field.TypeInt64},
+		{Name: "comment", Type: field.TypeString},
 		{Name: "package_record_status", Type: field.TypeInt, Nullable: true},
+		{Name: "user_edited_status", Type: field.TypeString, Nullable: true},
 		{Name: "vulnerability_status", Type: field.TypeString, Nullable: true},
 	}
 	// VulnStatusTable holds the schema information for the "vuln_status" table.
@@ -70,13 +110,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "vuln_status_package_records_status",
-				Columns:    []*schema.Column{VulnStatusColumns[5]},
+				Columns:    []*schema.Column{VulnStatusColumns[9]},
 				RefColumns: []*schema.Column{PackageRecordsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
+				Symbol:     "vuln_status_users_edited_status",
+				Columns:    []*schema.Column{VulnStatusColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
 				Symbol:     "vuln_status_vulnerabilities_status",
-				Columns:    []*schema.Column{VulnStatusColumns[6]},
+				Columns:    []*schema.Column{VulnStatusColumns[11]},
 				RefColumns: []*schema.Column{VulnerabilitiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -99,31 +145,6 @@ var (
 		Name:       "vulnerabilities",
 		Columns:    VulnerabilitiesColumns,
 		PrimaryKey: []*schema.Column{VulnerabilitiesColumns[0]},
-	}
-	// BranchScanColumns holds the columns for the "branch_scan" table.
-	BranchScanColumns = []*schema.Column{
-		{Name: "branch_id", Type: field.TypeInt},
-		{Name: "scan_id", Type: field.TypeInt},
-	}
-	// BranchScanTable holds the schema information for the "branch_scan" table.
-	BranchScanTable = &schema.Table{
-		Name:       "branch_scan",
-		Columns:    BranchScanColumns,
-		PrimaryKey: []*schema.Column{BranchScanColumns[0], BranchScanColumns[1]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "branch_scan_branch_id",
-				Columns:    []*schema.Column{BranchScanColumns[0]},
-				RefColumns: []*schema.Column{BranchesColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "branch_scan_scan_id",
-				Columns:    []*schema.Column{BranchScanColumns[1]},
-				RefColumns: []*schema.Column{ScansColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-		},
 	}
 	// PackageRecordVulnerabilitiesColumns holds the columns for the "package_record_vulnerabilities" table.
 	PackageRecordVulnerabilitiesColumns = []*schema.Column{
@@ -150,9 +171,34 @@ var (
 			},
 		},
 	}
+	// RepositoryScanColumns holds the columns for the "repository_scan" table.
+	RepositoryScanColumns = []*schema.Column{
+		{Name: "repository_id", Type: field.TypeInt},
+		{Name: "scan_id", Type: field.TypeString},
+	}
+	// RepositoryScanTable holds the schema information for the "repository_scan" table.
+	RepositoryScanTable = &schema.Table{
+		Name:       "repository_scan",
+		Columns:    RepositoryScanColumns,
+		PrimaryKey: []*schema.Column{RepositoryScanColumns[0], RepositoryScanColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "repository_scan_repository_id",
+				Columns:    []*schema.Column{RepositoryScanColumns[0]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "repository_scan_scan_id",
+				Columns:    []*schema.Column{RepositoryScanColumns[1]},
+				RefColumns: []*schema.Column{ScansColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// ScanPackagesColumns holds the columns for the "scan_packages" table.
 	ScanPackagesColumns = []*schema.Column{
-		{Name: "scan_id", Type: field.TypeInt},
+		{Name: "scan_id", Type: field.TypeString},
 		{Name: "package_record_id", Type: field.TypeInt},
 	}
 	// ScanPackagesTable holds the schema information for the "scan_packages" table.
@@ -177,24 +223,28 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		BranchesTable,
 		PackageRecordsTable,
+		RepositoriesTable,
 		ScansTable,
+		SessionsTable,
+		UsersTable,
 		VulnStatusTable,
 		VulnerabilitiesTable,
-		BranchScanTable,
 		PackageRecordVulnerabilitiesTable,
+		RepositoryScanTable,
 		ScanPackagesTable,
 	}
 )
 
 func init() {
+	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[0].RefTable = PackageRecordsTable
-	VulnStatusTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
-	BranchScanTable.ForeignKeys[0].RefTable = BranchesTable
-	BranchScanTable.ForeignKeys[1].RefTable = ScansTable
+	VulnStatusTable.ForeignKeys[1].RefTable = UsersTable
+	VulnStatusTable.ForeignKeys[2].RefTable = VulnerabilitiesTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[0].RefTable = PackageRecordsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
+	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable
+	RepositoryScanTable.ForeignKeys[1].RefTable = ScansTable
 	ScanPackagesTable.ForeignKeys[0].RefTable = ScansTable
 	ScanPackagesTable.ForeignKeys[1].RefTable = PackageRecordsTable
 }

@@ -12,9 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/branch"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
@@ -28,8 +28,8 @@ type ScanQuery struct {
 	fields     []string
 	predicates []predicate.Scan
 	// eager-loading edges.
-	withTarget   *BranchQuery
-	withPackages *PackageRecordQuery
+	withRepository *RepositoryQuery
+	withPackages   *PackageRecordQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -66,9 +66,9 @@ func (sq *ScanQuery) Order(o ...OrderFunc) *ScanQuery {
 	return sq
 }
 
-// QueryTarget chains the current query on the "target" edge.
-func (sq *ScanQuery) QueryTarget() *BranchQuery {
-	query := &BranchQuery{config: sq.config}
+// QueryRepository chains the current query on the "repository" edge.
+func (sq *ScanQuery) QueryRepository() *RepositoryQuery {
+	query := &RepositoryQuery{config: sq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := sq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -79,8 +79,8 @@ func (sq *ScanQuery) QueryTarget() *BranchQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(scan.Table, scan.FieldID, selector),
-			sqlgraph.To(branch.Table, branch.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, scan.TargetTable, scan.TargetPrimaryKey...),
+			sqlgraph.To(repository.Table, repository.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, scan.RepositoryTable, scan.RepositoryPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -134,8 +134,8 @@ func (sq *ScanQuery) FirstX(ctx context.Context) *Scan {
 
 // FirstID returns the first Scan ID from the query.
 // Returns a *NotFoundError when no Scan ID was found.
-func (sq *ScanQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *ScanQuery) FirstID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = sq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -147,7 +147,7 @@ func (sq *ScanQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *ScanQuery) FirstIDX(ctx context.Context) int {
+func (sq *ScanQuery) FirstIDX(ctx context.Context) string {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -185,8 +185,8 @@ func (sq *ScanQuery) OnlyX(ctx context.Context) *Scan {
 // OnlyID is like Only, but returns the only Scan ID in the query.
 // Returns a *NotSingularError when exactly one Scan ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *ScanQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *ScanQuery) OnlyID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = sq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -202,7 +202,7 @@ func (sq *ScanQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *ScanQuery) OnlyIDX(ctx context.Context) int {
+func (sq *ScanQuery) OnlyIDX(ctx context.Context) string {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -228,8 +228,8 @@ func (sq *ScanQuery) AllX(ctx context.Context) []*Scan {
 }
 
 // IDs executes the query and returns a list of Scan IDs.
-func (sq *ScanQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (sq *ScanQuery) IDs(ctx context.Context) ([]string, error) {
+	var ids []string
 	if err := sq.Select(scan.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (sq *ScanQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *ScanQuery) IDsX(ctx context.Context) []int {
+func (sq *ScanQuery) IDsX(ctx context.Context) []string {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -286,27 +286,27 @@ func (sq *ScanQuery) Clone() *ScanQuery {
 		return nil
 	}
 	return &ScanQuery{
-		config:       sq.config,
-		limit:        sq.limit,
-		offset:       sq.offset,
-		order:        append([]OrderFunc{}, sq.order...),
-		predicates:   append([]predicate.Scan{}, sq.predicates...),
-		withTarget:   sq.withTarget.Clone(),
-		withPackages: sq.withPackages.Clone(),
+		config:         sq.config,
+		limit:          sq.limit,
+		offset:         sq.offset,
+		order:          append([]OrderFunc{}, sq.order...),
+		predicates:     append([]predicate.Scan{}, sq.predicates...),
+		withRepository: sq.withRepository.Clone(),
+		withPackages:   sq.withPackages.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
 	}
 }
 
-// WithTarget tells the query-builder to eager-load the nodes that are connected to
-// the "target" edge. The optional arguments are used to configure the query builder of the edge.
-func (sq *ScanQuery) WithTarget(opts ...func(*BranchQuery)) *ScanQuery {
-	query := &BranchQuery{config: sq.config}
+// WithRepository tells the query-builder to eager-load the nodes that are connected to
+// the "repository" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ScanQuery) WithRepository(opts ...func(*RepositoryQuery)) *ScanQuery {
+	query := &RepositoryQuery{config: sq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	sq.withTarget = query
+	sq.withRepository = query
 	return sq
 }
 
@@ -327,12 +327,12 @@ func (sq *ScanQuery) WithPackages(opts ...func(*PackageRecordQuery)) *ScanQuery 
 // Example:
 //
 //	var v []struct {
-//		CommitID string `json:"commit_id,omitempty"`
+//		Branch string `json:"branch,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Scan.Query().
-//		GroupBy(scan.FieldCommitID).
+//		GroupBy(scan.FieldBranch).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -354,11 +354,11 @@ func (sq *ScanQuery) GroupBy(field string, fields ...string) *ScanGroupBy {
 // Example:
 //
 //	var v []struct {
-//		CommitID string `json:"commit_id,omitempty"`
+//		Branch string `json:"branch,omitempty"`
 //	}
 //
 //	client.Scan.Query().
-//		Select(scan.FieldCommitID).
+//		Select(scan.FieldBranch).
 //		Scan(ctx, &v)
 //
 func (sq *ScanQuery) Select(fields ...string) *ScanSelect {
@@ -387,7 +387,7 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 		nodes       = []*Scan{}
 		_spec       = sq.querySpec()
 		loadedTypes = [2]bool{
-			sq.withTarget != nil,
+			sq.withRepository != nil,
 			sq.withPackages != nil,
 		}
 	)
@@ -411,13 +411,13 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 		return nodes, nil
 	}
 
-	if query := sq.withTarget; query != nil {
+	if query := sq.withRepository; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[int]*Scan, len(nodes))
+		ids := make(map[string]*Scan, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
-			node.Edges.Target = []*Branch{}
+			node.Edges.Repository = []*Repository{}
 		}
 		var (
 			edgeids []int
@@ -426,17 +426,17 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
 				Inverse: true,
-				Table:   scan.TargetTable,
-				Columns: scan.TargetPrimaryKey,
+				Table:   scan.RepositoryTable,
+				Columns: scan.RepositoryPrimaryKey,
 			},
 			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(scan.TargetPrimaryKey[1], fks...))
+				s.Where(sql.InValues(scan.RepositoryPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+				return [2]interface{}{new(sql.NullString), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullInt64)
+				eout, ok := out.(*sql.NullString)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
@@ -444,7 +444,7 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := int(eout.Int64)
+				outValue := eout.String
 				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
@@ -458,9 +458,9 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 			},
 		}
 		if err := sqlgraph.QueryEdges(ctx, sq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "target": %w`, err)
+			return nil, fmt.Errorf(`query edges "repository": %w`, err)
 		}
-		query.Where(branch.IDIn(edgeids...))
+		query.Where(repository.IDIn(edgeids...))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
@@ -468,17 +468,17 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 		for _, n := range neighbors {
 			nodes, ok := edges[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected "target" node returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected "repository" node returned %v`, n.ID)
 			}
 			for i := range nodes {
-				nodes[i].Edges.Target = append(nodes[i].Edges.Target, n)
+				nodes[i].Edges.Repository = append(nodes[i].Edges.Repository, n)
 			}
 		}
 	}
 
 	if query := sq.withPackages; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[int]*Scan, len(nodes))
+		ids := make(map[string]*Scan, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
@@ -498,10 +498,10 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 				s.Where(sql.InValues(scan.PackagesPrimaryKey[0], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+				return [2]interface{}{new(sql.NullString), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullInt64)
+				eout, ok := out.(*sql.NullString)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
@@ -509,7 +509,7 @@ func (sq *ScanQuery) sqlAll(ctx context.Context) ([]*Scan, error) {
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := int(eout.Int64)
+				outValue := eout.String
 				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
@@ -563,7 +563,7 @@ func (sq *ScanQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   scan.Table,
 			Columns: scan.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: scan.FieldID,
 			},
 		},

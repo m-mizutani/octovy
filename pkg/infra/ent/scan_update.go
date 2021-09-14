@@ -9,9 +9,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/branch"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
@@ -101,19 +101,19 @@ func (su *ScanUpdate) ClearPullRequestTarget() *ScanUpdate {
 	return su
 }
 
-// AddTargetIDs adds the "target" edge to the Branch entity by IDs.
-func (su *ScanUpdate) AddTargetIDs(ids ...int) *ScanUpdate {
-	su.mutation.AddTargetIDs(ids...)
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by IDs.
+func (su *ScanUpdate) AddRepositoryIDs(ids ...int) *ScanUpdate {
+	su.mutation.AddRepositoryIDs(ids...)
 	return su
 }
 
-// AddTarget adds the "target" edges to the Branch entity.
-func (su *ScanUpdate) AddTarget(b ...*Branch) *ScanUpdate {
-	ids := make([]int, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// AddRepository adds the "repository" edges to the Repository entity.
+func (su *ScanUpdate) AddRepository(r ...*Repository) *ScanUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return su.AddTargetIDs(ids...)
+	return su.AddRepositoryIDs(ids...)
 }
 
 // AddPackageIDs adds the "packages" edge to the PackageRecord entity by IDs.
@@ -136,25 +136,25 @@ func (su *ScanUpdate) Mutation() *ScanMutation {
 	return su.mutation
 }
 
-// ClearTarget clears all "target" edges to the Branch entity.
-func (su *ScanUpdate) ClearTarget() *ScanUpdate {
-	su.mutation.ClearTarget()
+// ClearRepository clears all "repository" edges to the Repository entity.
+func (su *ScanUpdate) ClearRepository() *ScanUpdate {
+	su.mutation.ClearRepository()
 	return su
 }
 
-// RemoveTargetIDs removes the "target" edge to Branch entities by IDs.
-func (su *ScanUpdate) RemoveTargetIDs(ids ...int) *ScanUpdate {
-	su.mutation.RemoveTargetIDs(ids...)
+// RemoveRepositoryIDs removes the "repository" edge to Repository entities by IDs.
+func (su *ScanUpdate) RemoveRepositoryIDs(ids ...int) *ScanUpdate {
+	su.mutation.RemoveRepositoryIDs(ids...)
 	return su
 }
 
-// RemoveTarget removes "target" edges to Branch entities.
-func (su *ScanUpdate) RemoveTarget(b ...*Branch) *ScanUpdate {
-	ids := make([]int, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// RemoveRepository removes "repository" edges to Repository entities.
+func (su *ScanUpdate) RemoveRepository(r ...*Repository) *ScanUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return su.RemoveTargetIDs(ids...)
+	return su.RemoveRepositoryIDs(ids...)
 }
 
 // ClearPackages clears all "packages" edges to the PackageRecord entity.
@@ -238,7 +238,7 @@ func (su *ScanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   scan.Table,
 			Columns: scan.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: scan.FieldID,
 			},
 		},
@@ -311,33 +311,33 @@ func (su *ScanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: scan.FieldPullRequestTarget,
 		})
 	}
-	if su.mutation.TargetCleared() {
+	if su.mutation.RepositoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.RemovedTargetIDs(); len(nodes) > 0 && !su.mutation.TargetCleared() {
+	if nodes := su.mutation.RemovedRepositoryIDs(); len(nodes) > 0 && !su.mutation.RepositoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}
@@ -346,17 +346,17 @@ func (su *ScanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.TargetIDs(); len(nodes) > 0 {
+	if nodes := su.mutation.RepositoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}
@@ -511,19 +511,19 @@ func (suo *ScanUpdateOne) ClearPullRequestTarget() *ScanUpdateOne {
 	return suo
 }
 
-// AddTargetIDs adds the "target" edge to the Branch entity by IDs.
-func (suo *ScanUpdateOne) AddTargetIDs(ids ...int) *ScanUpdateOne {
-	suo.mutation.AddTargetIDs(ids...)
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by IDs.
+func (suo *ScanUpdateOne) AddRepositoryIDs(ids ...int) *ScanUpdateOne {
+	suo.mutation.AddRepositoryIDs(ids...)
 	return suo
 }
 
-// AddTarget adds the "target" edges to the Branch entity.
-func (suo *ScanUpdateOne) AddTarget(b ...*Branch) *ScanUpdateOne {
-	ids := make([]int, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// AddRepository adds the "repository" edges to the Repository entity.
+func (suo *ScanUpdateOne) AddRepository(r ...*Repository) *ScanUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return suo.AddTargetIDs(ids...)
+	return suo.AddRepositoryIDs(ids...)
 }
 
 // AddPackageIDs adds the "packages" edge to the PackageRecord entity by IDs.
@@ -546,25 +546,25 @@ func (suo *ScanUpdateOne) Mutation() *ScanMutation {
 	return suo.mutation
 }
 
-// ClearTarget clears all "target" edges to the Branch entity.
-func (suo *ScanUpdateOne) ClearTarget() *ScanUpdateOne {
-	suo.mutation.ClearTarget()
+// ClearRepository clears all "repository" edges to the Repository entity.
+func (suo *ScanUpdateOne) ClearRepository() *ScanUpdateOne {
+	suo.mutation.ClearRepository()
 	return suo
 }
 
-// RemoveTargetIDs removes the "target" edge to Branch entities by IDs.
-func (suo *ScanUpdateOne) RemoveTargetIDs(ids ...int) *ScanUpdateOne {
-	suo.mutation.RemoveTargetIDs(ids...)
+// RemoveRepositoryIDs removes the "repository" edge to Repository entities by IDs.
+func (suo *ScanUpdateOne) RemoveRepositoryIDs(ids ...int) *ScanUpdateOne {
+	suo.mutation.RemoveRepositoryIDs(ids...)
 	return suo
 }
 
-// RemoveTarget removes "target" edges to Branch entities.
-func (suo *ScanUpdateOne) RemoveTarget(b ...*Branch) *ScanUpdateOne {
-	ids := make([]int, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// RemoveRepository removes "repository" edges to Repository entities.
+func (suo *ScanUpdateOne) RemoveRepository(r ...*Repository) *ScanUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return suo.RemoveTargetIDs(ids...)
+	return suo.RemoveRepositoryIDs(ids...)
 }
 
 // ClearPackages clears all "packages" edges to the PackageRecord entity.
@@ -655,7 +655,7 @@ func (suo *ScanUpdateOne) sqlSave(ctx context.Context) (_node *Scan, err error) 
 			Table:   scan.Table,
 			Columns: scan.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: scan.FieldID,
 			},
 		},
@@ -745,33 +745,33 @@ func (suo *ScanUpdateOne) sqlSave(ctx context.Context) (_node *Scan, err error) 
 			Column: scan.FieldPullRequestTarget,
 		})
 	}
-	if suo.mutation.TargetCleared() {
+	if suo.mutation.RepositoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.RemovedTargetIDs(); len(nodes) > 0 && !suo.mutation.TargetCleared() {
+	if nodes := suo.mutation.RemovedRepositoryIDs(); len(nodes) > 0 && !suo.mutation.RepositoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}
@@ -780,17 +780,17 @@ func (suo *ScanUpdateOne) sqlSave(ctx context.Context) (_node *Scan, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.TargetIDs(); len(nodes) > 0 {
+	if nodes := suo.mutation.RepositoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   scan.TargetTable,
-			Columns: scan.TargetPrimaryKey,
+			Table:   scan.RepositoryTable,
+			Columns: scan.RepositoryPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: branch.FieldID,
+					Column: repository.FieldID,
 				},
 			},
 		}

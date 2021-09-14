@@ -9,19 +9,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
-// The BranchFunc type is an adapter to allow the use of ordinary
-// function as Branch mutator.
-type BranchFunc func(context.Context, *ent.BranchMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f BranchFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.BranchMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BranchMutation", m)
-	}
-	return f(ctx, mv)
-}
-
 // The PackageRecordFunc type is an adapter to allow the use of ordinary
 // function as PackageRecord mutator.
 type PackageRecordFunc func(context.Context, *ent.PackageRecordMutation) (ent.Value, error)
@@ -35,6 +22,19 @@ func (f PackageRecordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return f(ctx, mv)
 }
 
+// The RepositoryFunc type is an adapter to allow the use of ordinary
+// function as Repository mutator.
+type RepositoryFunc func(context.Context, *ent.RepositoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RepositoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.RepositoryMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RepositoryMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The ScanFunc type is an adapter to allow the use of ordinary
 // function as Scan mutator.
 type ScanFunc func(context.Context, *ent.ScanMutation) (ent.Value, error)
@@ -44,6 +44,32 @@ func (f ScanFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	mv, ok := m.(*ent.ScanMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScanMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The SessionFunc type is an adapter to allow the use of ordinary
+// function as Session mutator.
+type SessionFunc func(context.Context, *ent.SessionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.SessionMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SessionMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The UserFunc type is an adapter to allow the use of ordinary
+// function as User mutator.
+type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.UserMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
 	}
 	return f(ctx, mv)
 }

@@ -18,13 +18,22 @@ type VulnStatus struct {
 	ID string `json:"id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status types.VulnStatusType `json:"status,omitempty"`
+	// Source holds the value of the "source" field.
+	Source string `json:"source,omitempty"`
+	// PkgName holds the value of the "pkg_name" field.
+	PkgName string `json:"pkg_name,omitempty"`
+	// PkgType holds the value of the "pkg_type" field.
+	PkgType types.PkgType `json:"pkg_type,omitempty"`
 	// VulnID holds the value of the "vuln_id" field.
 	VulnID string `json:"vuln_id,omitempty"`
 	// ExpiresAt holds the value of the "expires_at" field.
 	ExpiresAt int64 `json:"expires_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt             int64 `json:"created_at,omitempty"`
+	CreatedAt int64 `json:"created_at,omitempty"`
+	// Comment holds the value of the "comment" field.
+	Comment               string `json:"comment,omitempty"`
 	package_record_status *int
+	user_edited_status    *string
 	vulnerability_status  *string
 }
 
@@ -35,11 +44,13 @@ func (*VulnStatus) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case vulnstatus.FieldExpiresAt, vulnstatus.FieldCreatedAt:
 			values[i] = new(sql.NullInt64)
-		case vulnstatus.FieldID, vulnstatus.FieldStatus, vulnstatus.FieldVulnID:
+		case vulnstatus.FieldID, vulnstatus.FieldStatus, vulnstatus.FieldSource, vulnstatus.FieldPkgName, vulnstatus.FieldPkgType, vulnstatus.FieldVulnID, vulnstatus.FieldComment:
 			values[i] = new(sql.NullString)
 		case vulnstatus.ForeignKeys[0]: // package_record_status
 			values[i] = new(sql.NullInt64)
-		case vulnstatus.ForeignKeys[1]: // vulnerability_status
+		case vulnstatus.ForeignKeys[1]: // user_edited_status
+			values[i] = new(sql.NullString)
+		case vulnstatus.ForeignKeys[2]: // vulnerability_status
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type VulnStatus", columns[i])
@@ -68,6 +79,24 @@ func (vs *VulnStatus) assignValues(columns []string, values []interface{}) error
 			} else if value.Valid {
 				vs.Status = types.VulnStatusType(value.String)
 			}
+		case vulnstatus.FieldSource:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source", values[i])
+			} else if value.Valid {
+				vs.Source = value.String
+			}
+		case vulnstatus.FieldPkgName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field pkg_name", values[i])
+			} else if value.Valid {
+				vs.PkgName = value.String
+			}
+		case vulnstatus.FieldPkgType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field pkg_type", values[i])
+			} else if value.Valid {
+				vs.PkgType = types.PkgType(value.String)
+			}
 		case vulnstatus.FieldVulnID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field vuln_id", values[i])
@@ -86,6 +115,12 @@ func (vs *VulnStatus) assignValues(columns []string, values []interface{}) error
 			} else if value.Valid {
 				vs.CreatedAt = value.Int64
 			}
+		case vulnstatus.FieldComment:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field comment", values[i])
+			} else if value.Valid {
+				vs.Comment = value.String
+			}
 		case vulnstatus.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field package_record_status", value)
@@ -94,6 +129,13 @@ func (vs *VulnStatus) assignValues(columns []string, values []interface{}) error
 				*vs.package_record_status = int(value.Int64)
 			}
 		case vulnstatus.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field user_edited_status", values[i])
+			} else if value.Valid {
+				vs.user_edited_status = new(string)
+				*vs.user_edited_status = value.String
+			}
+		case vulnstatus.ForeignKeys[2]:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field vulnerability_status", values[i])
 			} else if value.Valid {
@@ -130,12 +172,20 @@ func (vs *VulnStatus) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", vs.ID))
 	builder.WriteString(", status=")
 	builder.WriteString(fmt.Sprintf("%v", vs.Status))
+	builder.WriteString(", source=")
+	builder.WriteString(vs.Source)
+	builder.WriteString(", pkg_name=")
+	builder.WriteString(vs.PkgName)
+	builder.WriteString(", pkg_type=")
+	builder.WriteString(fmt.Sprintf("%v", vs.PkgType))
 	builder.WriteString(", vuln_id=")
 	builder.WriteString(vs.VulnID)
 	builder.WriteString(", expires_at=")
 	builder.WriteString(fmt.Sprintf("%v", vs.ExpiresAt))
 	builder.WriteString(", created_at=")
 	builder.WriteString(fmt.Sprintf("%v", vs.CreatedAt))
+	builder.WriteString(", comment=")
+	builder.WriteString(vs.Comment)
 	builder.WriteByte(')')
 	return builder.String()
 }

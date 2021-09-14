@@ -21,8 +21,6 @@ const (
 	FieldName = "name"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
-	// FieldVulnIds holds the string denoting the vuln_ids field in the database.
-	FieldVulnIds = "vuln_ids"
 	// EdgeScan holds the string denoting the scan edge name in mutations.
 	EdgeScan = "scan"
 	// EdgeVulnerabilities holds the string denoting the vulnerabilities edge name in mutations.
@@ -57,7 +55,6 @@ var Columns = []string{
 	FieldSource,
 	FieldName,
 	FieldVersion,
-	FieldVulnIds,
 }
 
 var (

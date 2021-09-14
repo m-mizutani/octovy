@@ -9,28 +9,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Scan {
+func ID(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Scan {
+func IDEQ(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Scan {
+func IDNEQ(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Scan {
+func IDIn(ids ...string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -47,7 +47,7 @@ func IDIn(ids ...int) predicate.Scan {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Scan {
+func IDNotIn(ids ...string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -64,30 +64,37 @@ func IDNotIn(ids ...int) predicate.Scan {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Scan {
+func IDGT(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Scan {
+func IDGTE(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Scan {
+func IDLT(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Scan {
+func IDLTE(id string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
+	})
+}
+
+// Branch applies equality check predicate on the "branch" field. It's identical to BranchEQ.
+func Branch(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldBranch), v))
 	})
 }
 
@@ -123,6 +130,117 @@ func CheckID(v int64) predicate.Scan {
 func PullRequestTarget(v string) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldPullRequestTarget), v))
+	})
+}
+
+// BranchEQ applies the EQ predicate on the "branch" field.
+func BranchEQ(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldBranch), v))
+	})
+}
+
+// BranchNEQ applies the NEQ predicate on the "branch" field.
+func BranchNEQ(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldBranch), v))
+	})
+}
+
+// BranchIn applies the In predicate on the "branch" field.
+func BranchIn(vs ...string) predicate.Scan {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Scan(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldBranch), v...))
+	})
+}
+
+// BranchNotIn applies the NotIn predicate on the "branch" field.
+func BranchNotIn(vs ...string) predicate.Scan {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Scan(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldBranch), v...))
+	})
+}
+
+// BranchGT applies the GT predicate on the "branch" field.
+func BranchGT(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldBranch), v))
+	})
+}
+
+// BranchGTE applies the GTE predicate on the "branch" field.
+func BranchGTE(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldBranch), v))
+	})
+}
+
+// BranchLT applies the LT predicate on the "branch" field.
+func BranchLT(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldBranch), v))
+	})
+}
+
+// BranchLTE applies the LTE predicate on the "branch" field.
+func BranchLTE(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldBranch), v))
+	})
+}
+
+// BranchContains applies the Contains predicate on the "branch" field.
+func BranchContains(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldBranch), v))
+	})
+}
+
+// BranchHasPrefix applies the HasPrefix predicate on the "branch" field.
+func BranchHasPrefix(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldBranch), v))
+	})
+}
+
+// BranchHasSuffix applies the HasSuffix predicate on the "branch" field.
+func BranchHasSuffix(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldBranch), v))
+	})
+}
+
+// BranchEqualFold applies the EqualFold predicate on the "branch" field.
+func BranchEqualFold(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldBranch), v))
+	})
+}
+
+// BranchContainsFold applies the ContainsFold predicate on the "branch" field.
+func BranchContainsFold(v string) predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldBranch), v))
 	})
 }
 
@@ -604,25 +722,25 @@ func PullRequestTargetContainsFold(v string) predicate.Scan {
 	})
 }
 
-// HasTarget applies the HasEdge predicate on the "target" edge.
-func HasTarget() predicate.Scan {
+// HasRepository applies the HasEdge predicate on the "repository" edge.
+func HasRepository() predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(TargetTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, TargetTable, TargetPrimaryKey...),
+			sqlgraph.To(RepositoryTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RepositoryTable, RepositoryPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasTargetWith applies the HasEdge predicate on the "target" edge with a given conditions (other predicates).
-func HasTargetWith(preds ...predicate.Branch) predicate.Scan {
+// HasRepositoryWith applies the HasEdge predicate on the "repository" edge with a given conditions (other predicates).
+func HasRepositoryWith(preds ...predicate.Repository) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(TargetInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, TargetTable, TargetPrimaryKey...),
+			sqlgraph.To(RepositoryInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RepositoryTable, RepositoryPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

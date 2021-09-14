@@ -7,6 +7,8 @@ const (
 	Label = "scan"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldBranch holds the string denoting the branch field in the database.
+	FieldBranch = "branch"
 	// FieldCommitID holds the string denoting the commit_id field in the database.
 	FieldCommitID = "commit_id"
 	// FieldRequestedAt holds the string denoting the requested_at field in the database.
@@ -17,17 +19,17 @@ const (
 	FieldCheckID = "check_id"
 	// FieldPullRequestTarget holds the string denoting the pull_request_target field in the database.
 	FieldPullRequestTarget = "pull_request_target"
-	// EdgeTarget holds the string denoting the target edge name in mutations.
-	EdgeTarget = "target"
+	// EdgeRepository holds the string denoting the repository edge name in mutations.
+	EdgeRepository = "repository"
 	// EdgePackages holds the string denoting the packages edge name in mutations.
 	EdgePackages = "packages"
 	// Table holds the table name of the scan in the database.
 	Table = "scans"
-	// TargetTable is the table that holds the target relation/edge. The primary key declared below.
-	TargetTable = "branch_scan"
-	// TargetInverseTable is the table name for the Branch entity.
-	// It exists in this package in order to avoid circular dependency with the "branch" package.
-	TargetInverseTable = "branches"
+	// RepositoryTable is the table that holds the repository relation/edge. The primary key declared below.
+	RepositoryTable = "repository_scan"
+	// RepositoryInverseTable is the table name for the Repository entity.
+	// It exists in this package in order to avoid circular dependency with the "repository" package.
+	RepositoryInverseTable = "repositories"
 	// PackagesTable is the table that holds the packages relation/edge. The primary key declared below.
 	PackagesTable = "scan_packages"
 	// PackagesInverseTable is the table name for the PackageRecord entity.
@@ -38,6 +40,7 @@ const (
 // Columns holds all SQL columns for scan fields.
 var Columns = []string{
 	FieldID,
+	FieldBranch,
 	FieldCommitID,
 	FieldRequestedAt,
 	FieldScannedAt,
@@ -46,9 +49,9 @@ var Columns = []string{
 }
 
 var (
-	// TargetPrimaryKey and TargetColumn2 are the table columns denoting the
-	// primary key for the target relation (M2M).
-	TargetPrimaryKey = []string{"branch_id", "scan_id"}
+	// RepositoryPrimaryKey and RepositoryColumn2 are the table columns denoting the
+	// primary key for the repository relation (M2M).
+	RepositoryPrimaryKey = []string{"repository_id", "scan_id"}
 	// PackagesPrimaryKey and PackagesColumn2 are the table columns denoting the
 	// primary key for the packages relation (M2M).
 	PackagesPrimaryKey = []string{"scan_id", "package_record_id"}

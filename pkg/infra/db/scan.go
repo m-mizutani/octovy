@@ -3,12 +3,13 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
-func (x *Client) PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error) {
+func (x *Client) PutPackages(ctx context.Context, packages []*ent.PackageRecord, vulnIDs []string) ([]*ent.PackageRecord, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -21,8 +22,7 @@ func (x *Client) PutPackages(ctx context.Context, packages []*ent.PackageRecord)
 			SetSource(pkg.Source).
 			SetType(pkg.Type).
 			SetVersion(pkg.Version).
-			SetVulnIds(pkg.VulnIds).
-			AddVulnerabilityIDs(pkg.VulnIds...)
+			AddVulnerabilityIDs(vulnIDs...)
 	}
 	added, err := x.client.PackageRecord.CreateBulk(pkgBuilder...).Save(ctx)
 	if err != nil {
@@ -32,18 +32,20 @@ func (x *Client) PutPackages(ctx context.Context, packages []*ent.PackageRecord)
 	return added, nil
 }
 
-func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, branch *ent.Branch, packages []*ent.PackageRecord) (*ent.Scan, error) {
+func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
 
 	scan, err := x.client.Scan.Create().
+		SetID(uuid.NewString()).
 		SetCommitID(scan.CommitID).
+		SetBranch(scan.Branch).
 		SetRequestedAt(scan.RequestedAt).
 		SetCheckID(scan.CheckID).
 		SetPullRequestTarget(scan.PullRequestTarget).
-		AddTarget(branch).
+		AddRepository(repo).
 		AddPackages(packages...).
 		Save(ctx)
 	if err != nil {
@@ -53,14 +55,14 @@ func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, branch *ent.Branch
 	return scan, nil
 }
 
-func (x *Client) GetScan(ctx context.Context, id int) (*ent.Scan, error) {
+func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
 
 	got, err := x.client.Scan.Query().Where(scan.ID(id)).
-		WithTarget().
+		WithRepository().
 		WithPackages(func(prq *ent.PackageRecordQuery) {
 			prq.WithStatus().WithVulnerabilities()
 		}).

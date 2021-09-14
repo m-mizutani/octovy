@@ -28,6 +28,24 @@ func (vsc *VulnStatusCreate) SetStatus(tst types.VulnStatusType) *VulnStatusCrea
 	return vsc
 }
 
+// SetSource sets the "source" field.
+func (vsc *VulnStatusCreate) SetSource(s string) *VulnStatusCreate {
+	vsc.mutation.SetSource(s)
+	return vsc
+}
+
+// SetPkgName sets the "pkg_name" field.
+func (vsc *VulnStatusCreate) SetPkgName(s string) *VulnStatusCreate {
+	vsc.mutation.SetPkgName(s)
+	return vsc
+}
+
+// SetPkgType sets the "pkg_type" field.
+func (vsc *VulnStatusCreate) SetPkgType(tt types.PkgType) *VulnStatusCreate {
+	vsc.mutation.SetPkgType(tt)
+	return vsc
+}
+
 // SetVulnID sets the "vuln_id" field.
 func (vsc *VulnStatusCreate) SetVulnID(s string) *VulnStatusCreate {
 	vsc.mutation.SetVulnID(s)
@@ -43,6 +61,12 @@ func (vsc *VulnStatusCreate) SetExpiresAt(i int64) *VulnStatusCreate {
 // SetCreatedAt sets the "created_at" field.
 func (vsc *VulnStatusCreate) SetCreatedAt(i int64) *VulnStatusCreate {
 	vsc.mutation.SetCreatedAt(i)
+	return vsc
+}
+
+// SetComment sets the "comment" field.
+func (vsc *VulnStatusCreate) SetComment(s string) *VulnStatusCreate {
+	vsc.mutation.SetComment(s)
 	return vsc
 }
 
@@ -130,6 +154,20 @@ func (vsc *VulnStatusCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "status": %w`, err)}
 		}
 	}
+	if _, ok := vsc.mutation.Source(); !ok {
+		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "source"`)}
+	}
+	if _, ok := vsc.mutation.PkgName(); !ok {
+		return &ValidationError{Name: "pkg_name", err: errors.New(`ent: missing required field "pkg_name"`)}
+	}
+	if _, ok := vsc.mutation.PkgType(); !ok {
+		return &ValidationError{Name: "pkg_type", err: errors.New(`ent: missing required field "pkg_type"`)}
+	}
+	if v, ok := vsc.mutation.PkgType(); ok {
+		if err := vulnstatus.PkgTypeValidator(v); err != nil {
+			return &ValidationError{Name: "pkg_type", err: fmt.Errorf(`ent: validator failed for field "pkg_type": %w`, err)}
+		}
+	}
 	if _, ok := vsc.mutation.VulnID(); !ok {
 		return &ValidationError{Name: "vuln_id", err: errors.New(`ent: missing required field "vuln_id"`)}
 	}
@@ -138,6 +176,9 @@ func (vsc *VulnStatusCreate) check() error {
 	}
 	if _, ok := vsc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "created_at"`)}
+	}
+	if _, ok := vsc.mutation.Comment(); !ok {
+		return &ValidationError{Name: "comment", err: errors.New(`ent: missing required field "comment"`)}
 	}
 	if v, ok := vsc.mutation.ID(); ok {
 		if err := vulnstatus.IDValidator(v); err != nil {
@@ -182,6 +223,30 @@ func (vsc *VulnStatusCreate) createSpec() (*VulnStatus, *sqlgraph.CreateSpec) {
 		})
 		_node.Status = value
 	}
+	if value, ok := vsc.mutation.Source(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldSource,
+		})
+		_node.Source = value
+	}
+	if value, ok := vsc.mutation.PkgName(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldPkgName,
+		})
+		_node.PkgName = value
+	}
+	if value, ok := vsc.mutation.PkgType(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  value,
+			Column: vulnstatus.FieldPkgType,
+		})
+		_node.PkgType = value
+	}
 	if value, ok := vsc.mutation.VulnID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -205,6 +270,14 @@ func (vsc *VulnStatusCreate) createSpec() (*VulnStatus, *sqlgraph.CreateSpec) {
 			Column: vulnstatus.FieldCreatedAt,
 		})
 		_node.CreatedAt = value
+	}
+	if value, ok := vsc.mutation.Comment(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: vulnstatus.FieldComment,
+		})
+		_node.Comment = value
 	}
 	return _node, _spec
 }
@@ -272,6 +345,42 @@ func (u *VulnStatusUpsert) UpdateStatus() *VulnStatusUpsert {
 	return u
 }
 
+// SetSource sets the "source" field.
+func (u *VulnStatusUpsert) SetSource(v string) *VulnStatusUpsert {
+	u.Set(vulnstatus.FieldSource, v)
+	return u
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *VulnStatusUpsert) UpdateSource() *VulnStatusUpsert {
+	u.SetExcluded(vulnstatus.FieldSource)
+	return u
+}
+
+// SetPkgName sets the "pkg_name" field.
+func (u *VulnStatusUpsert) SetPkgName(v string) *VulnStatusUpsert {
+	u.Set(vulnstatus.FieldPkgName, v)
+	return u
+}
+
+// UpdatePkgName sets the "pkg_name" field to the value that was provided on create.
+func (u *VulnStatusUpsert) UpdatePkgName() *VulnStatusUpsert {
+	u.SetExcluded(vulnstatus.FieldPkgName)
+	return u
+}
+
+// SetPkgType sets the "pkg_type" field.
+func (u *VulnStatusUpsert) SetPkgType(v types.PkgType) *VulnStatusUpsert {
+	u.Set(vulnstatus.FieldPkgType, v)
+	return u
+}
+
+// UpdatePkgType sets the "pkg_type" field to the value that was provided on create.
+func (u *VulnStatusUpsert) UpdatePkgType() *VulnStatusUpsert {
+	u.SetExcluded(vulnstatus.FieldPkgType)
+	return u
+}
+
 // SetVulnID sets the "vuln_id" field.
 func (u *VulnStatusUpsert) SetVulnID(v string) *VulnStatusUpsert {
 	u.Set(vulnstatus.FieldVulnID, v)
@@ -305,6 +414,18 @@ func (u *VulnStatusUpsert) SetCreatedAt(v int64) *VulnStatusUpsert {
 // UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
 func (u *VulnStatusUpsert) UpdateCreatedAt() *VulnStatusUpsert {
 	u.SetExcluded(vulnstatus.FieldCreatedAt)
+	return u
+}
+
+// SetComment sets the "comment" field.
+func (u *VulnStatusUpsert) SetComment(v string) *VulnStatusUpsert {
+	u.Set(vulnstatus.FieldComment, v)
+	return u
+}
+
+// UpdateComment sets the "comment" field to the value that was provided on create.
+func (u *VulnStatusUpsert) UpdateComment() *VulnStatusUpsert {
+	u.SetExcluded(vulnstatus.FieldComment)
 	return u
 }
 
@@ -362,6 +483,48 @@ func (u *VulnStatusUpsertOne) UpdateStatus() *VulnStatusUpsertOne {
 	})
 }
 
+// SetSource sets the "source" field.
+func (u *VulnStatusUpsertOne) SetSource(v string) *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *VulnStatusUpsertOne) UpdateSource() *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdateSource()
+	})
+}
+
+// SetPkgName sets the "pkg_name" field.
+func (u *VulnStatusUpsertOne) SetPkgName(v string) *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetPkgName(v)
+	})
+}
+
+// UpdatePkgName sets the "pkg_name" field to the value that was provided on create.
+func (u *VulnStatusUpsertOne) UpdatePkgName() *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdatePkgName()
+	})
+}
+
+// SetPkgType sets the "pkg_type" field.
+func (u *VulnStatusUpsertOne) SetPkgType(v types.PkgType) *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetPkgType(v)
+	})
+}
+
+// UpdatePkgType sets the "pkg_type" field to the value that was provided on create.
+func (u *VulnStatusUpsertOne) UpdatePkgType() *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdatePkgType()
+	})
+}
+
 // SetVulnID sets the "vuln_id" field.
 func (u *VulnStatusUpsertOne) SetVulnID(v string) *VulnStatusUpsertOne {
 	return u.Update(func(s *VulnStatusUpsert) {
@@ -401,6 +564,20 @@ func (u *VulnStatusUpsertOne) SetCreatedAt(v int64) *VulnStatusUpsertOne {
 func (u *VulnStatusUpsertOne) UpdateCreatedAt() *VulnStatusUpsertOne {
 	return u.Update(func(s *VulnStatusUpsert) {
 		s.UpdateCreatedAt()
+	})
+}
+
+// SetComment sets the "comment" field.
+func (u *VulnStatusUpsertOne) SetComment(v string) *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetComment(v)
+	})
+}
+
+// UpdateComment sets the "comment" field to the value that was provided on create.
+func (u *VulnStatusUpsertOne) UpdateComment() *VulnStatusUpsertOne {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdateComment()
 	})
 }
 
@@ -615,6 +792,48 @@ func (u *VulnStatusUpsertBulk) UpdateStatus() *VulnStatusUpsertBulk {
 	})
 }
 
+// SetSource sets the "source" field.
+func (u *VulnStatusUpsertBulk) SetSource(v string) *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *VulnStatusUpsertBulk) UpdateSource() *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdateSource()
+	})
+}
+
+// SetPkgName sets the "pkg_name" field.
+func (u *VulnStatusUpsertBulk) SetPkgName(v string) *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetPkgName(v)
+	})
+}
+
+// UpdatePkgName sets the "pkg_name" field to the value that was provided on create.
+func (u *VulnStatusUpsertBulk) UpdatePkgName() *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdatePkgName()
+	})
+}
+
+// SetPkgType sets the "pkg_type" field.
+func (u *VulnStatusUpsertBulk) SetPkgType(v types.PkgType) *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetPkgType(v)
+	})
+}
+
+// UpdatePkgType sets the "pkg_type" field to the value that was provided on create.
+func (u *VulnStatusUpsertBulk) UpdatePkgType() *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdatePkgType()
+	})
+}
+
 // SetVulnID sets the "vuln_id" field.
 func (u *VulnStatusUpsertBulk) SetVulnID(v string) *VulnStatusUpsertBulk {
 	return u.Update(func(s *VulnStatusUpsert) {
@@ -654,6 +873,20 @@ func (u *VulnStatusUpsertBulk) SetCreatedAt(v int64) *VulnStatusUpsertBulk {
 func (u *VulnStatusUpsertBulk) UpdateCreatedAt() *VulnStatusUpsertBulk {
 	return u.Update(func(s *VulnStatusUpsert) {
 		s.UpdateCreatedAt()
+	})
+}
+
+// SetComment sets the "comment" field.
+func (u *VulnStatusUpsertBulk) SetComment(v string) *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.SetComment(v)
+	})
+}
+
+// UpdateComment sets the "comment" field to the value that was provided on create.
+func (u *VulnStatusUpsertBulk) UpdateComment() *VulnStatusUpsertBulk {
+	return u.Update(func(s *VulnStatusUpsert) {
+		s.UpdateComment()
 	})
 }
 

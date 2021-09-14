@@ -8,9 +8,11 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/branch"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
@@ -33,9 +35,11 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		branch.Table:        branch.ValidColumn,
 		packagerecord.Table: packagerecord.ValidColumn,
+		repository.Table:    repository.ValidColumn,
 		scan.Table:          scan.ValidColumn,
+		session.Table:       session.ValidColumn,
+		user.Table:          user.ValidColumn,
 		vulnstatus.Table:    vulnstatus.ValidColumn,
 		vulnerability.Table: vulnerability.ValidColumn,
 	}
