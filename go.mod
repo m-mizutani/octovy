@@ -5,6 +5,10 @@ go 1.16
 require (
 	entgo.io/ent v0.9.1
 	github.com/Netflix/go-env v0.0.0-20210215222557-e437a7e7f9fb
+	github.com/aquasecurity/go-gem-version v0.0.0-20201115065557-8eed6fe000ce
+	github.com/aquasecurity/go-npm-version v0.0.0-20201110091526-0b796d180798
+	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
+	github.com/aquasecurity/go-version v0.0.0-20210121072130-637058cfe492
 	github.com/aquasecurity/trivy-db v0.0.0-20210907100132-2ec74c43526d
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/gin-gonic/gin v1.4.0
@@ -18,6 +22,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.7.0
-	github.com/urfave/cli/v2 v2.2.0
+	github.com/urfave/cli/v2 v2.3.0
 	go.etcd.io/bbolt v1.3.5
 )
