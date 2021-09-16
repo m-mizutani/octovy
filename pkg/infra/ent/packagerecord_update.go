@@ -36,6 +36,12 @@ func (pru *PackageRecordUpdate) SetType(tt types.PkgType) *PackageRecordUpdate {
 	return pru
 }
 
+// SetVulnIds sets the "vuln_ids" field.
+func (pru *PackageRecordUpdate) SetVulnIds(s []string) *PackageRecordUpdate {
+	pru.mutation.SetVulnIds(s)
+	return pru
+}
+
 // AddScanIDs adds the "scan" edge to the Scan entity by IDs.
 func (pru *PackageRecordUpdate) AddScanIDs(ids ...string) *PackageRecordUpdate {
 	pru.mutation.AddScanIDs(ids...)
@@ -244,6 +250,13 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Column: packagerecord.FieldType,
 		})
 	}
+	if value, ok := pru.mutation.VulnIds(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Value:  value,
+			Column: packagerecord.FieldVulnIds,
+		})
+	}
 	if pru.mutation.ScanCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -428,6 +441,12 @@ type PackageRecordUpdateOne struct {
 // SetType sets the "type" field.
 func (pruo *PackageRecordUpdateOne) SetType(tt types.PkgType) *PackageRecordUpdateOne {
 	pruo.mutation.SetType(tt)
+	return pruo
+}
+
+// SetVulnIds sets the "vuln_ids" field.
+func (pruo *PackageRecordUpdateOne) SetVulnIds(s []string) *PackageRecordUpdateOne {
+	pruo.mutation.SetVulnIds(s)
 	return pruo
 }
 
@@ -661,6 +680,13 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 			Type:   field.TypeEnum,
 			Value:  value,
 			Column: packagerecord.FieldType,
+		})
+	}
+	if value, ok := pruo.mutation.VulnIds(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeJSON,
+			Value:  value,
+			Column: packagerecord.FieldVulnIds,
 		})
 	}
 	if pruo.mutation.ScanCleared() {

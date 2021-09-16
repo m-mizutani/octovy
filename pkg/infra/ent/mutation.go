@@ -48,6 +48,7 @@ type PackageRecordMutation struct {
 	source                 *string
 	name                   *string
 	version                *string
+	vuln_ids               *[]string
 	clearedFields          map[string]struct{}
 	scan                   map[string]struct{}
 	removedscan            map[string]struct{}
@@ -286,6 +287,42 @@ func (m *PackageRecordMutation) ResetVersion() {
 	m.version = nil
 }
 
+// SetVulnIds sets the "vuln_ids" field.
+func (m *PackageRecordMutation) SetVulnIds(s []string) {
+	m.vuln_ids = &s
+}
+
+// VulnIds returns the value of the "vuln_ids" field in the mutation.
+func (m *PackageRecordMutation) VulnIds() (r []string, exists bool) {
+	v := m.vuln_ids
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVulnIds returns the old "vuln_ids" field's value of the PackageRecord entity.
+// If the PackageRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PackageRecordMutation) OldVulnIds(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldVulnIds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldVulnIds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVulnIds: %w", err)
+	}
+	return oldValue.VulnIds, nil
+}
+
+// ResetVulnIds resets all changes to the "vuln_ids" field.
+func (m *PackageRecordMutation) ResetVulnIds() {
+	m.vuln_ids = nil
+}
+
 // AddScanIDs adds the "scan" edge to the Scan entity by ids.
 func (m *PackageRecordMutation) AddScanIDs(ids ...string) {
 	if m.scan == nil {
@@ -467,7 +504,7 @@ func (m *PackageRecordMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PackageRecordMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m._type != nil {
 		fields = append(fields, packagerecord.FieldType)
 	}
@@ -479,6 +516,9 @@ func (m *PackageRecordMutation) Fields() []string {
 	}
 	if m.version != nil {
 		fields = append(fields, packagerecord.FieldVersion)
+	}
+	if m.vuln_ids != nil {
+		fields = append(fields, packagerecord.FieldVulnIds)
 	}
 	return fields
 }
@@ -496,6 +536,8 @@ func (m *PackageRecordMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case packagerecord.FieldVersion:
 		return m.Version()
+	case packagerecord.FieldVulnIds:
+		return m.VulnIds()
 	}
 	return nil, false
 }
@@ -513,6 +555,8 @@ func (m *PackageRecordMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldName(ctx)
 	case packagerecord.FieldVersion:
 		return m.OldVersion(ctx)
+	case packagerecord.FieldVulnIds:
+		return m.OldVulnIds(ctx)
 	}
 	return nil, fmt.Errorf("unknown PackageRecord field %s", name)
 }
@@ -549,6 +593,13 @@ func (m *PackageRecordMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVersion(v)
+		return nil
+	case packagerecord.FieldVulnIds:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVulnIds(v)
 		return nil
 	}
 	return fmt.Errorf("unknown PackageRecord field %s", name)
@@ -610,6 +661,9 @@ func (m *PackageRecordMutation) ResetField(name string) error {
 		return nil
 	case packagerecord.FieldVersion:
 		m.ResetVersion()
+		return nil
+	case packagerecord.FieldVulnIds:
+		m.ResetVulnIds()
 		return nil
 	}
 	return fmt.Errorf("unknown PackageRecord field %s", name)
@@ -1570,24 +1624,10 @@ func (m *ScanMutation) AddedScannedAt() (r int64, exists bool) {
 	return *v, true
 }
 
-// ClearScannedAt clears the value of the "scanned_at" field.
-func (m *ScanMutation) ClearScannedAt() {
-	m.scanned_at = nil
-	m.addscanned_at = nil
-	m.clearedFields[scan.FieldScannedAt] = struct{}{}
-}
-
-// ScannedAtCleared returns if the "scanned_at" field was cleared in this mutation.
-func (m *ScanMutation) ScannedAtCleared() bool {
-	_, ok := m.clearedFields[scan.FieldScannedAt]
-	return ok
-}
-
 // ResetScannedAt resets all changes to the "scanned_at" field.
 func (m *ScanMutation) ResetScannedAt() {
 	m.scanned_at = nil
 	m.addscanned_at = nil
-	delete(m.clearedFields, scan.FieldScannedAt)
 }
 
 // SetCheckID sets the "check_id" field.
@@ -1640,10 +1680,24 @@ func (m *ScanMutation) AddedCheckID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearCheckID clears the value of the "check_id" field.
+func (m *ScanMutation) ClearCheckID() {
+	m.check_id = nil
+	m.addcheck_id = nil
+	m.clearedFields[scan.FieldCheckID] = struct{}{}
+}
+
+// CheckIDCleared returns if the "check_id" field was cleared in this mutation.
+func (m *ScanMutation) CheckIDCleared() bool {
+	_, ok := m.clearedFields[scan.FieldCheckID]
+	return ok
+}
+
 // ResetCheckID resets all changes to the "check_id" field.
 func (m *ScanMutation) ResetCheckID() {
 	m.check_id = nil
 	m.addcheck_id = nil
+	delete(m.clearedFields, scan.FieldCheckID)
 }
 
 // SetPullRequestTarget sets the "pull_request_target" field.
@@ -2002,8 +2056,8 @@ func (m *ScanMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ScanMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(scan.FieldScannedAt) {
-		fields = append(fields, scan.FieldScannedAt)
+	if m.FieldCleared(scan.FieldCheckID) {
+		fields = append(fields, scan.FieldCheckID)
 	}
 	if m.FieldCleared(scan.FieldPullRequestTarget) {
 		fields = append(fields, scan.FieldPullRequestTarget)
@@ -2022,8 +2076,8 @@ func (m *ScanMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ScanMutation) ClearField(name string) error {
 	switch name {
-	case scan.FieldScannedAt:
-		m.ClearScannedAt()
+	case scan.FieldCheckID:
+		m.ClearCheckID()
 		return nil
 	case scan.FieldPullRequestTarget:
 		m.ClearPullRequestTarget()

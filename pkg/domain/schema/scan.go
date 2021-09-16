@@ -18,8 +18,8 @@ func (Scan) Fields() []ent.Field {
 		field.String("branch").Immutable(),
 		field.String("commit_id").Immutable(),
 		field.Int64("requested_at"),
-		field.Int64("scanned_at").Optional(),
-		field.Int64("check_id"),
+		field.Int64("scanned_at"),
+		field.Int64("check_id").Optional(),
 		field.String("pull_request_target").Optional(),
 	}
 }

@@ -47,17 +47,17 @@ func (sc *ScanCreate) SetScannedAt(i int64) *ScanCreate {
 	return sc
 }
 
-// SetNillableScannedAt sets the "scanned_at" field if the given value is not nil.
-func (sc *ScanCreate) SetNillableScannedAt(i *int64) *ScanCreate {
-	if i != nil {
-		sc.SetScannedAt(*i)
-	}
-	return sc
-}
-
 // SetCheckID sets the "check_id" field.
 func (sc *ScanCreate) SetCheckID(i int64) *ScanCreate {
 	sc.mutation.SetCheckID(i)
+	return sc
+}
+
+// SetNillableCheckID sets the "check_id" field if the given value is not nil.
+func (sc *ScanCreate) SetNillableCheckID(i *int64) *ScanCreate {
+	if i != nil {
+		sc.SetCheckID(*i)
+	}
 	return sc
 }
 
@@ -190,8 +190,8 @@ func (sc *ScanCreate) check() error {
 	if _, ok := sc.mutation.RequestedAt(); !ok {
 		return &ValidationError{Name: "requested_at", err: errors.New(`ent: missing required field "requested_at"`)}
 	}
-	if _, ok := sc.mutation.CheckID(); !ok {
-		return &ValidationError{Name: "check_id", err: errors.New(`ent: missing required field "check_id"`)}
+	if _, ok := sc.mutation.ScannedAt(); !ok {
+		return &ValidationError{Name: "scanned_at", err: errors.New(`ent: missing required field "scanned_at"`)}
 	}
 	return nil
 }
@@ -411,12 +411,6 @@ func (u *ScanUpsert) UpdateScannedAt() *ScanUpsert {
 	return u
 }
 
-// ClearScannedAt clears the value of the "scanned_at" field.
-func (u *ScanUpsert) ClearScannedAt() *ScanUpsert {
-	u.SetNull(scan.FieldScannedAt)
-	return u
-}
-
 // SetCheckID sets the "check_id" field.
 func (u *ScanUpsert) SetCheckID(v int64) *ScanUpsert {
 	u.Set(scan.FieldCheckID, v)
@@ -426,6 +420,12 @@ func (u *ScanUpsert) SetCheckID(v int64) *ScanUpsert {
 // UpdateCheckID sets the "check_id" field to the value that was provided on create.
 func (u *ScanUpsert) UpdateCheckID() *ScanUpsert {
 	u.SetExcluded(scan.FieldCheckID)
+	return u
+}
+
+// ClearCheckID clears the value of the "check_id" field.
+func (u *ScanUpsert) ClearCheckID() *ScanUpsert {
+	u.SetNull(scan.FieldCheckID)
 	return u
 }
 
@@ -543,13 +543,6 @@ func (u *ScanUpsertOne) UpdateScannedAt() *ScanUpsertOne {
 	})
 }
 
-// ClearScannedAt clears the value of the "scanned_at" field.
-func (u *ScanUpsertOne) ClearScannedAt() *ScanUpsertOne {
-	return u.Update(func(s *ScanUpsert) {
-		s.ClearScannedAt()
-	})
-}
-
 // SetCheckID sets the "check_id" field.
 func (u *ScanUpsertOne) SetCheckID(v int64) *ScanUpsertOne {
 	return u.Update(func(s *ScanUpsert) {
@@ -561,6 +554,13 @@ func (u *ScanUpsertOne) SetCheckID(v int64) *ScanUpsertOne {
 func (u *ScanUpsertOne) UpdateCheckID() *ScanUpsertOne {
 	return u.Update(func(s *ScanUpsert) {
 		s.UpdateCheckID()
+	})
+}
+
+// ClearCheckID clears the value of the "check_id" field.
+func (u *ScanUpsertOne) ClearCheckID() *ScanUpsertOne {
+	return u.Update(func(s *ScanUpsert) {
+		s.ClearCheckID()
 	})
 }
 
@@ -838,13 +838,6 @@ func (u *ScanUpsertBulk) UpdateScannedAt() *ScanUpsertBulk {
 	})
 }
 
-// ClearScannedAt clears the value of the "scanned_at" field.
-func (u *ScanUpsertBulk) ClearScannedAt() *ScanUpsertBulk {
-	return u.Update(func(s *ScanUpsert) {
-		s.ClearScannedAt()
-	})
-}
-
 // SetCheckID sets the "check_id" field.
 func (u *ScanUpsertBulk) SetCheckID(v int64) *ScanUpsertBulk {
 	return u.Update(func(s *ScanUpsert) {
@@ -856,6 +849,13 @@ func (u *ScanUpsertBulk) SetCheckID(v int64) *ScanUpsertBulk {
 func (u *ScanUpsertBulk) UpdateCheckID() *ScanUpsertBulk {
 	return u.Update(func(s *ScanUpsert) {
 		s.UpdateCheckID()
+	})
+}
+
+// ClearCheckID clears the value of the "check_id" field.
+func (u *ScanUpsertBulk) ClearCheckID() *ScanUpsertBulk {
+	return u.Update(func(s *ScanUpsert) {
+		s.ClearCheckID()
 	})
 }
 

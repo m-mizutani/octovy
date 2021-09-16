@@ -5,9 +5,7 @@ import (
 )
 
 type ScanTarget struct {
-	Owner          string
-	RepoName       string
-	Branch         string
+	GitHubBranch
 	CommitID       string
 	UpdatedAt      int64
 	RequestedAt    int64

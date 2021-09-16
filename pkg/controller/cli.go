@@ -81,10 +81,21 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},
 				Destination: &ctrl.Config.GitHubAppID,
 			},
+			&cli.PathFlag{
+				Name:        "github-app-pem",
+				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
+				Usage:       "GitHub App private key file path",
+				Destination: &ctrl.Config.GitHubAppPrivateKeyPath,
+			},
 			&cli.Int64Flag{
-				Name:        "github-app-id",
+				Name:        "github-app-client-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_CLIENT_ID"},
-				Destination: &ctrl.Config.GitHubAppID,
+				Destination: &ctrl.Config.GitHubAppClientID,
+			},
+			&cli.StringFlag{
+				Name:        "github-app-client-id",
+				EnvVars:     []string{"OCTOVY_GITHUB_SECRET"},
+				Destination: &ctrl.Config.GitHubAppSecret,
 			},
 		},
 		Action: func(c *cli.Context) error {

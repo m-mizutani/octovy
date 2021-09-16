@@ -6,21 +6,21 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
+
+var logger = utils.Logger
 
 type Interface interface {
 	// Scan
-	ScanRepository(req *model.ScanRepositoryRequest) error
 	SendScanRequest(req *model.ScanRepositoryRequest) error
-	RunScanThread()
+	RunScanThread() error
 
+	//
 	RegisterRepository(repo *ent.Repository) (*ent.Repository, error)
-	UpdateRepositoryDefaultBranch(repo *model.GitHubRepo, branch string) error
 
 	UpdateVulnStatus(req *model.UpdateVulnStatusRequest) error
 	LookupScanReport(reportID string) (*ent.Scan, error)
-
-	UpdateTrivyDB() error
 
 	HandleGitHubPushEvent(event *github.PushEvent) error
 	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
@@ -40,27 +40,17 @@ type Interface interface {
 }
 
 func New(cfg *model.Config) Interface {
-	return &usecase{
-		config:    cfg,
-		factories: infra.New(),
+	uc := &usecase{
+		config: cfg,
+		infra:  infra.New(),
 	}
+
+	return uc
 }
 
 type usecase struct {
-	config    *model.Config
-	factories infra.Factories
-}
-
-func (x *usecase) ScanRepository(req *model.ScanRepositoryRequest) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) RunScanThread() {
-	panic("not implemented")
+	config *model.Config
+	infra  infra.Interfaces
 }
 
 func (x *usecase) RegisterRepository(repo *ent.Repository) (*ent.Repository, error) {
@@ -76,22 +66,6 @@ func (x *usecase) UpdateVulnStatus(req *model.UpdateVulnStatusRequest) error {
 }
 
 func (x *usecase) LookupScanReport(reportID string) (*ent.Scan, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) UpdateTrivyDB() error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) HandleGitHubPushEvent(event *github.PushEvent) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) HandleGitHubInstallationEvent(event *github.InstallationEvent) error {
 	panic("not implemented") // TODO: Implement
 }
 

@@ -5,6 +5,7 @@ go 1.16
 require (
 	entgo.io/ent v0.9.1
 	github.com/Netflix/go-env v0.0.0-20210215222557-e437a7e7f9fb
+	github.com/aquasecurity/go-dep-parser v0.0.0-20210905090655-b95c2c079bbb
 	github.com/aquasecurity/go-gem-version v0.0.0-20201115065557-8eed6fe000ce
 	github.com/aquasecurity/go-npm-version v0.0.0-20201110091526-0b796d180798
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46

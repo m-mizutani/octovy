@@ -24,11 +24,11 @@ type Interface interface {
 	CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
 
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
-	PutPackages(ctx context.Context, packages []*ent.PackageRecord, vulnIDs []string) ([]*ent.PackageRecord, error)
+	PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
 	PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
 
 	GetScan(ctx context.Context, id string) (*ent.Scan, error)
-	GetLatestScan(ctx context.Context, owner, repoName, branch string) (*ent.Scan, error)
+	GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error)
 
 	Close() error
 }

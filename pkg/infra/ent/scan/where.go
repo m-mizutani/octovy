@@ -507,20 +507,6 @@ func ScannedAtLTE(v int64) predicate.Scan {
 	})
 }
 
-// ScannedAtIsNil applies the IsNil predicate on the "scanned_at" field.
-func ScannedAtIsNil() predicate.Scan {
-	return predicate.Scan(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldScannedAt)))
-	})
-}
-
-// ScannedAtNotNil applies the NotNil predicate on the "scanned_at" field.
-func ScannedAtNotNil() predicate.Scan {
-	return predicate.Scan(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldScannedAt)))
-	})
-}
-
 // CheckIDEQ applies the EQ predicate on the "check_id" field.
 func CheckIDEQ(v int64) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
@@ -594,6 +580,20 @@ func CheckIDLT(v int64) predicate.Scan {
 func CheckIDLTE(v int64) predicate.Scan {
 	return predicate.Scan(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCheckID), v))
+	})
+}
+
+// CheckIDIsNil applies the IsNil predicate on the "check_id" field.
+func CheckIDIsNil() predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldCheckID)))
+	})
+}
+
+// CheckIDNotNil applies the NotNil predicate on the "check_id" field.
+func CheckIDNotNil() predicate.Scan {
+	return predicate.Scan(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldCheckID)))
 	})
 }
 

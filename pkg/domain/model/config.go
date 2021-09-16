@@ -5,9 +5,11 @@ type Config struct {
 	DBConfig    string
 	FrontendURL string
 
-	GitHubAppID    int64
-	GitHubClientID int64
-
 	ServerAddr string
 	ServerPort int
+
+	GitHubAppID             int64
+	GitHubAppPrivateKeyPath string
+	GitHubAppClientID       int64
+	GitHubAppSecret         string
 }

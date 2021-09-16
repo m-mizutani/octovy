@@ -48,23 +48,9 @@ func (su *ScanUpdate) SetScannedAt(i int64) *ScanUpdate {
 	return su
 }
 
-// SetNillableScannedAt sets the "scanned_at" field if the given value is not nil.
-func (su *ScanUpdate) SetNillableScannedAt(i *int64) *ScanUpdate {
-	if i != nil {
-		su.SetScannedAt(*i)
-	}
-	return su
-}
-
 // AddScannedAt adds i to the "scanned_at" field.
 func (su *ScanUpdate) AddScannedAt(i int64) *ScanUpdate {
 	su.mutation.AddScannedAt(i)
-	return su
-}
-
-// ClearScannedAt clears the value of the "scanned_at" field.
-func (su *ScanUpdate) ClearScannedAt() *ScanUpdate {
-	su.mutation.ClearScannedAt()
 	return su
 }
 
@@ -75,9 +61,23 @@ func (su *ScanUpdate) SetCheckID(i int64) *ScanUpdate {
 	return su
 }
 
+// SetNillableCheckID sets the "check_id" field if the given value is not nil.
+func (su *ScanUpdate) SetNillableCheckID(i *int64) *ScanUpdate {
+	if i != nil {
+		su.SetCheckID(*i)
+	}
+	return su
+}
+
 // AddCheckID adds i to the "check_id" field.
 func (su *ScanUpdate) AddCheckID(i int64) *ScanUpdate {
 	su.mutation.AddCheckID(i)
+	return su
+}
+
+// ClearCheckID clears the value of the "check_id" field.
+func (su *ScanUpdate) ClearCheckID() *ScanUpdate {
+	su.mutation.ClearCheckID()
 	return su
 }
 
@@ -278,12 +278,6 @@ func (su *ScanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: scan.FieldScannedAt,
 		})
 	}
-	if su.mutation.ScannedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: scan.FieldScannedAt,
-		})
-	}
 	if value, ok := su.mutation.CheckID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
@@ -295,6 +289,12 @@ func (su *ScanUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
+			Column: scan.FieldCheckID,
+		})
+	}
+	if su.mutation.CheckIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
 			Column: scan.FieldCheckID,
 		})
 	}
@@ -458,23 +458,9 @@ func (suo *ScanUpdateOne) SetScannedAt(i int64) *ScanUpdateOne {
 	return suo
 }
 
-// SetNillableScannedAt sets the "scanned_at" field if the given value is not nil.
-func (suo *ScanUpdateOne) SetNillableScannedAt(i *int64) *ScanUpdateOne {
-	if i != nil {
-		suo.SetScannedAt(*i)
-	}
-	return suo
-}
-
 // AddScannedAt adds i to the "scanned_at" field.
 func (suo *ScanUpdateOne) AddScannedAt(i int64) *ScanUpdateOne {
 	suo.mutation.AddScannedAt(i)
-	return suo
-}
-
-// ClearScannedAt clears the value of the "scanned_at" field.
-func (suo *ScanUpdateOne) ClearScannedAt() *ScanUpdateOne {
-	suo.mutation.ClearScannedAt()
 	return suo
 }
 
@@ -485,9 +471,23 @@ func (suo *ScanUpdateOne) SetCheckID(i int64) *ScanUpdateOne {
 	return suo
 }
 
+// SetNillableCheckID sets the "check_id" field if the given value is not nil.
+func (suo *ScanUpdateOne) SetNillableCheckID(i *int64) *ScanUpdateOne {
+	if i != nil {
+		suo.SetCheckID(*i)
+	}
+	return suo
+}
+
 // AddCheckID adds i to the "check_id" field.
 func (suo *ScanUpdateOne) AddCheckID(i int64) *ScanUpdateOne {
 	suo.mutation.AddCheckID(i)
+	return suo
+}
+
+// ClearCheckID clears the value of the "check_id" field.
+func (suo *ScanUpdateOne) ClearCheckID() *ScanUpdateOne {
+	suo.mutation.ClearCheckID()
 	return suo
 }
 
@@ -712,12 +712,6 @@ func (suo *ScanUpdateOne) sqlSave(ctx context.Context) (_node *Scan, err error) 
 			Column: scan.FieldScannedAt,
 		})
 	}
-	if suo.mutation.ScannedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Column: scan.FieldScannedAt,
-		})
-	}
 	if value, ok := suo.mutation.CheckID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
@@ -729,6 +723,12 @@ func (suo *ScanUpdateOne) sqlSave(ctx context.Context) (_node *Scan, err error) 
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
+			Column: scan.FieldCheckID,
+		})
+	}
+	if suo.mutation.CheckIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
 			Column: scan.FieldCheckID,
 		})
 	}

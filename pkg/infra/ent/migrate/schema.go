@@ -15,6 +15,7 @@ var (
 		{Name: "source", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "version", Type: field.TypeString},
+		{Name: "vuln_ids", Type: field.TypeJSON},
 	}
 	// PackageRecordsTable holds the schema information for the "package_records" table.
 	PackageRecordsTable = &schema.Table{
@@ -41,8 +42,8 @@ var (
 		{Name: "branch", Type: field.TypeString},
 		{Name: "commit_id", Type: field.TypeString},
 		{Name: "requested_at", Type: field.TypeInt64},
-		{Name: "scanned_at", Type: field.TypeInt64, Nullable: true},
-		{Name: "check_id", Type: field.TypeInt64},
+		{Name: "scanned_at", Type: field.TypeInt64},
+		{Name: "check_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "pull_request_target", Type: field.TypeString, Nullable: true},
 	}
 	// ScansTable holds the schema information for the "scans" table.
