@@ -10,4 +10,5 @@ var (
 	ErrInvalidInput         = goerr.New("invalid input data")
 	ErrAuthenticationFailed = goerr.New("authentication failed")
 	ErrUserNotFound         = goerr.New("user not found")
+	ErrInvalidWebhookData   = goerr.New("invalid webhook data")
 )

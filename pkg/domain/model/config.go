@@ -10,6 +10,6 @@ type Config struct {
 
 	GitHubAppID             int64
 	GitHubAppPrivateKeyPath string
-	GitHubAppClientID       int64
+	GitHubAppClientID       string
 	GitHubAppSecret         string
 }

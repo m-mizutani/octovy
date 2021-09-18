@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v39/github"
@@ -23,27 +22,25 @@ type Interface interface {
 	UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error
 }
 
-type GitHubApp struct {
+type Client struct {
 	appID     int64
 	installID int64
 	pem       []byte
-	endpoint  string
 
 	client *github.Client
 }
 
-type Factory func(appID, installID int64, pem []byte, endpoint string) Interface
+type Factory func(appID, installID int64, pem []byte) Interface
 
-func New(appID, installID int64, pem []byte, endpoint string) Interface {
-	return &GitHubApp{
+func New(appID, installID int64, pem []byte) Interface {
+	return &Client{
 		appID:     appID,
 		installID: installID,
 		pem:       pem,
-		endpoint:  endpoint,
 	}
 }
 
-func (x *GitHubApp) githubClient() (*github.Client, error) {
+func (x *Client) githubClient() (*github.Client, error) {
 	if x.client != nil {
 		return x.client, nil
 	}
@@ -55,23 +52,12 @@ func (x *GitHubApp) githubClient() (*github.Client, error) {
 		return nil, goerr.Wrap(err)
 	}
 
-	endpoint := strings.TrimSuffix(x.endpoint, "/")
-
-	if endpoint == "" {
-		x.client = github.NewClient(&http.Client{Transport: itr})
-	} else {
-		itr.BaseURL = endpoint
-		httpClient := &http.Client{Transport: itr}
-		x.client, err = github.NewEnterpriseClient(endpoint, endpoint, httpClient)
-		if err != nil {
-			return nil, goerr.Wrap(err).With("endpoint", endpoint)
-		}
-	}
+	x.client = github.NewClient(&http.Client{Transport: itr})
 
 	return x.client, nil
 }
 
-func (x *GitHubApp) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
+func (x *Client) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
 	client, err := x.githubClient()
 	if err != nil {
 		return err
@@ -86,7 +72,6 @@ func (x *GitHubApp) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.Wri
 		With("appID", x.appID).
 		With("repo", repo).
 		With("installID", x.installID).
-		With("endpoint", x.endpoint).
 		With("privateKey.length", len(x.pem)).
 		Debug("Sending GetArchiveLink request")
 
@@ -125,7 +110,7 @@ func (x *GitHubApp) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.Wri
 	return nil
 }
 
-func (x *GitHubApp) CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error {
+func (x *Client) CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error {
 	client, err := x.githubClient()
 	if err != nil {
 		return err
@@ -146,7 +131,7 @@ func (x *GitHubApp) CreateIssueComment(repo *model.GitHubRepo, prID int, body st
 	return nil
 }
 
-func (x *GitHubApp) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error) {
+func (x *Client) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error) {
 	client, err := x.githubClient()
 	if err != nil {
 		return 0, err
@@ -171,7 +156,7 @@ func (x *GitHubApp) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64
 	return *run.ID, nil
 }
 
-func (x *GitHubApp) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+func (x *Client) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
 	client, err := x.githubClient()
 	if err != nil {
 		return err

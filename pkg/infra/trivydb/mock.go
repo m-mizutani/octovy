@@ -6,15 +6,15 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
-type TrivyDBMock struct {
+type Mock struct {
 	DBPath           string
 	AdvisoryMap      map[string]map[string][]*model.AdvisoryData
 	VulnerabilityMap map[string]*types.Vulnerability
 	DBMeta           *model.TrivyDBMeta
 }
 
-func NewMock() (Factory, *TrivyDBMock) {
-	mock := &TrivyDBMock{
+func NewMock() (Factory, *Mock) {
+	mock := &Mock{
 		AdvisoryMap: map[string]map[string][]*model.AdvisoryData{
 			"GitHub Security Advisory Rubygems": make(map[string][]*model.AdvisoryData),
 			"GitHub Security Advisory Npm":      make(map[string][]*model.AdvisoryData),
@@ -33,7 +33,7 @@ func NewMock() (Factory, *TrivyDBMock) {
 	}, mock
 }
 
-func (x *TrivyDBMock) GetAdvisories(source string, pkgName string) ([]*model.AdvisoryData, error) {
+func (x *Mock) GetAdvisories(source string, pkgName string) ([]*model.AdvisoryData, error) {
 	pkgBucket, ok := x.AdvisoryMap[source]
 	if !ok {
 		return nil, goerr.New("Invalid package source name for trivy DB").With("source", source)
@@ -42,11 +42,11 @@ func (x *TrivyDBMock) GetAdvisories(source string, pkgName string) ([]*model.Adv
 	return pkgBucket[pkgName], nil
 }
 
-func (x *TrivyDBMock) GetVulnerability(vulnID string) (*types.Vulnerability, error) {
+func (x *Mock) GetVulnerability(vulnID string) (*types.Vulnerability, error) {
 	return x.VulnerabilityMap[vulnID], nil
 }
 
-func (x *TrivyDBMock) GetDBMeta() (*model.TrivyDBMeta, error) {
+func (x *Mock) GetDBMeta() (*model.TrivyDBMeta, error) {
 	if x.DBMeta != nil {
 		return x.DBMeta, nil
 	} else {

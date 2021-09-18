@@ -40,6 +40,56 @@ func (rc *RepositoryCreate) SetInstallID(i int64) *RepositoryCreate {
 	return rc
 }
 
+// SetNillableInstallID sets the "install_id" field if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableInstallID(i *int64) *RepositoryCreate {
+	if i != nil {
+		rc.SetInstallID(*i)
+	}
+	return rc
+}
+
+// SetURL sets the "url" field.
+func (rc *RepositoryCreate) SetURL(s string) *RepositoryCreate {
+	rc.mutation.SetURL(s)
+	return rc
+}
+
+// SetNillableURL sets the "url" field if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableURL(s *string) *RepositoryCreate {
+	if s != nil {
+		rc.SetURL(*s)
+	}
+	return rc
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (rc *RepositoryCreate) SetAvatarURL(s string) *RepositoryCreate {
+	rc.mutation.SetAvatarURL(s)
+	return rc
+}
+
+// SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableAvatarURL(s *string) *RepositoryCreate {
+	if s != nil {
+		rc.SetAvatarURL(*s)
+	}
+	return rc
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (rc *RepositoryCreate) SetDefaultBranch(s string) *RepositoryCreate {
+	rc.mutation.SetDefaultBranch(s)
+	return rc
+}
+
+// SetNillableDefaultBranch sets the "default_branch" field if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableDefaultBranch(s *string) *RepositoryCreate {
+	if s != nil {
+		rc.SetDefaultBranch(*s)
+	}
+	return rc
+}
+
 // AddScanIDs adds the "scan" edge to the Scan entity by IDs.
 func (rc *RepositoryCreate) AddScanIDs(ids ...string) *RepositoryCreate {
 	rc.mutation.AddScanIDs(ids...)
@@ -131,9 +181,6 @@ func (rc *RepositoryCreate) check() error {
 	if _, ok := rc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "name"`)}
 	}
-	if _, ok := rc.mutation.InstallID(); !ok {
-		return &ValidationError{Name: "install_id", err: errors.New(`ent: missing required field "install_id"`)}
-	}
 	return nil
 }
 
@@ -185,6 +232,30 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			Column: repository.FieldInstallID,
 		})
 		_node.InstallID = value
+	}
+	if value, ok := rc.mutation.URL(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldURL,
+		})
+		_node.URL = value
+	}
+	if value, ok := rc.mutation.AvatarURL(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldAvatarURL,
+		})
+		_node.AvatarURL = &value
+	}
+	if value, ok := rc.mutation.DefaultBranch(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldDefaultBranch,
+		})
+		_node.DefaultBranch = &value
 	}
 	if nodes := rc.mutation.ScanIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -295,6 +366,66 @@ func (u *RepositoryUpsert) UpdateInstallID() *RepositoryUpsert {
 	return u
 }
 
+// ClearInstallID clears the value of the "install_id" field.
+func (u *RepositoryUpsert) ClearInstallID() *RepositoryUpsert {
+	u.SetNull(repository.FieldInstallID)
+	return u
+}
+
+// SetURL sets the "url" field.
+func (u *RepositoryUpsert) SetURL(v string) *RepositoryUpsert {
+	u.Set(repository.FieldURL, v)
+	return u
+}
+
+// UpdateURL sets the "url" field to the value that was provided on create.
+func (u *RepositoryUpsert) UpdateURL() *RepositoryUpsert {
+	u.SetExcluded(repository.FieldURL)
+	return u
+}
+
+// ClearURL clears the value of the "url" field.
+func (u *RepositoryUpsert) ClearURL() *RepositoryUpsert {
+	u.SetNull(repository.FieldURL)
+	return u
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (u *RepositoryUpsert) SetAvatarURL(v string) *RepositoryUpsert {
+	u.Set(repository.FieldAvatarURL, v)
+	return u
+}
+
+// UpdateAvatarURL sets the "avatar_url" field to the value that was provided on create.
+func (u *RepositoryUpsert) UpdateAvatarURL() *RepositoryUpsert {
+	u.SetExcluded(repository.FieldAvatarURL)
+	return u
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (u *RepositoryUpsert) ClearAvatarURL() *RepositoryUpsert {
+	u.SetNull(repository.FieldAvatarURL)
+	return u
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (u *RepositoryUpsert) SetDefaultBranch(v string) *RepositoryUpsert {
+	u.Set(repository.FieldDefaultBranch, v)
+	return u
+}
+
+// UpdateDefaultBranch sets the "default_branch" field to the value that was provided on create.
+func (u *RepositoryUpsert) UpdateDefaultBranch() *RepositoryUpsert {
+	u.SetExcluded(repository.FieldDefaultBranch)
+	return u
+}
+
+// ClearDefaultBranch clears the value of the "default_branch" field.
+func (u *RepositoryUpsert) ClearDefaultBranch() *RepositoryUpsert {
+	u.SetNull(repository.FieldDefaultBranch)
+	return u
+}
+
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
@@ -374,6 +505,76 @@ func (u *RepositoryUpsertOne) SetInstallID(v int64) *RepositoryUpsertOne {
 func (u *RepositoryUpsertOne) UpdateInstallID() *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.UpdateInstallID()
+	})
+}
+
+// ClearInstallID clears the value of the "install_id" field.
+func (u *RepositoryUpsertOne) ClearInstallID() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearInstallID()
+	})
+}
+
+// SetURL sets the "url" field.
+func (u *RepositoryUpsertOne) SetURL(v string) *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetURL(v)
+	})
+}
+
+// UpdateURL sets the "url" field to the value that was provided on create.
+func (u *RepositoryUpsertOne) UpdateURL() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateURL()
+	})
+}
+
+// ClearURL clears the value of the "url" field.
+func (u *RepositoryUpsertOne) ClearURL() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearURL()
+	})
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (u *RepositoryUpsertOne) SetAvatarURL(v string) *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetAvatarURL(v)
+	})
+}
+
+// UpdateAvatarURL sets the "avatar_url" field to the value that was provided on create.
+func (u *RepositoryUpsertOne) UpdateAvatarURL() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateAvatarURL()
+	})
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (u *RepositoryUpsertOne) ClearAvatarURL() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearAvatarURL()
+	})
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (u *RepositoryUpsertOne) SetDefaultBranch(v string) *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetDefaultBranch(v)
+	})
+}
+
+// UpdateDefaultBranch sets the "default_branch" field to the value that was provided on create.
+func (u *RepositoryUpsertOne) UpdateDefaultBranch() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateDefaultBranch()
+	})
+}
+
+// ClearDefaultBranch clears the value of the "default_branch" field.
+func (u *RepositoryUpsertOne) ClearDefaultBranch() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearDefaultBranch()
 	})
 }
 
@@ -617,6 +818,76 @@ func (u *RepositoryUpsertBulk) SetInstallID(v int64) *RepositoryUpsertBulk {
 func (u *RepositoryUpsertBulk) UpdateInstallID() *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.UpdateInstallID()
+	})
+}
+
+// ClearInstallID clears the value of the "install_id" field.
+func (u *RepositoryUpsertBulk) ClearInstallID() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearInstallID()
+	})
+}
+
+// SetURL sets the "url" field.
+func (u *RepositoryUpsertBulk) SetURL(v string) *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetURL(v)
+	})
+}
+
+// UpdateURL sets the "url" field to the value that was provided on create.
+func (u *RepositoryUpsertBulk) UpdateURL() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateURL()
+	})
+}
+
+// ClearURL clears the value of the "url" field.
+func (u *RepositoryUpsertBulk) ClearURL() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearURL()
+	})
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (u *RepositoryUpsertBulk) SetAvatarURL(v string) *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetAvatarURL(v)
+	})
+}
+
+// UpdateAvatarURL sets the "avatar_url" field to the value that was provided on create.
+func (u *RepositoryUpsertBulk) UpdateAvatarURL() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateAvatarURL()
+	})
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (u *RepositoryUpsertBulk) ClearAvatarURL() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearAvatarURL()
+	})
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (u *RepositoryUpsertBulk) SetDefaultBranch(v string) *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetDefaultBranch(v)
+	})
+}
+
+// UpdateDefaultBranch sets the "default_branch" field to the value that was provided on create.
+func (u *RepositoryUpsertBulk) UpdateDefaultBranch() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateDefaultBranch()
+	})
+}
+
+// ClearDefaultBranch clears the value of the "default_branch" field.
+func (u *RepositoryUpsertBulk) ClearDefaultBranch() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearDefaultBranch()
 	})
 }
 

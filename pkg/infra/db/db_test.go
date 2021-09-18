@@ -10,7 +10,7 @@ import (
 )
 
 func setupDB(t *testing.T) db.Interface {
-	client := db.NewDBMock(t)
+	client := db.NewMock(t)
 	t.Cleanup(func() {
 		if err := client.Close(); err != nil {
 			t.Logf("Warning failed to close DB: %+v", err)

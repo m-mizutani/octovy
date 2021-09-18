@@ -13,6 +13,12 @@ const (
 	FieldName = "name"
 	// FieldInstallID holds the string denoting the install_id field in the database.
 	FieldInstallID = "install_id"
+	// FieldURL holds the string denoting the url field in the database.
+	FieldURL = "url"
+	// FieldAvatarURL holds the string denoting the avatar_url field in the database.
+	FieldAvatarURL = "avatar_url"
+	// FieldDefaultBranch holds the string denoting the default_branch field in the database.
+	FieldDefaultBranch = "default_branch"
 	// EdgeScan holds the string denoting the scan edge name in mutations.
 	EdgeScan = "scan"
 	// Table holds the table name of the repository in the database.
@@ -30,6 +36,9 @@ var Columns = []string{
 	FieldOwner,
 	FieldName,
 	FieldInstallID,
+	FieldURL,
+	FieldAvatarURL,
+	FieldDefaultBranch,
 }
 
 var (

@@ -7,17 +7,15 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
-	"github.com/m-mizutani/octovy/pkg/infra/queue"
 	"github.com/m-mizutani/octovy/pkg/infra/trivydb"
 )
 
 type Interfaces struct {
-	NewDB        db.Factory
-	NewGitHub    github.Factory
+	DB           db.Interface
+	GitHub       github.Interface
 	NewGitHubApp githubapp.Factory
 	NewTrivyDB   trivydb.Factory
-	ScanQueue    queue.Interface
-	Utils        Utils
+	Utils        *Utils
 }
 
 type Utils struct {
@@ -25,16 +23,19 @@ type Utils struct {
 	ReadFile func(fname string) ([]byte, error)
 }
 
-func New() Interfaces {
-	return Interfaces{
-		NewDB:        db.New,
-		NewGitHub:    github.New,
+func NewUtils() *Utils {
+	return &Utils{
+		Now:      time.Now,
+		ReadFile: ioutil.ReadFile,
+	}
+}
+
+func New() *Interfaces {
+	return &Interfaces{
+		DB:           db.New(),
+		GitHub:       github.New(),
 		NewGitHubApp: githubapp.New,
 		NewTrivyDB:   trivydb.New,
-		ScanQueue:    queue.New(),
-		Utils: Utils{
-			Now:      time.Now,
-			ReadFile: ioutil.ReadFile,
-		},
+		Utils:        NewUtils(),
 	}
 }

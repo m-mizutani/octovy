@@ -112,6 +112,27 @@ func InstallID(v int64) predicate.Repository {
 	})
 }
 
+// URL applies equality check predicate on the "url" field. It's identical to URLEQ.
+func URL(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldURL), v))
+	})
+}
+
+// AvatarURL applies equality check predicate on the "avatar_url" field. It's identical to AvatarURLEQ.
+func AvatarURL(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldAvatarURL), v))
+	})
+}
+
+// DefaultBranch applies equality check predicate on the "default_branch" field. It's identical to DefaultBranchEQ.
+func DefaultBranch(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldDefaultBranch), v))
+	})
+}
+
 // OwnerEQ applies the EQ predicate on the "owner" field.
 func OwnerEQ(v string) predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {
@@ -407,6 +428,395 @@ func InstallIDLT(v int64) predicate.Repository {
 func InstallIDLTE(v int64) predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldInstallID), v))
+	})
+}
+
+// InstallIDIsNil applies the IsNil predicate on the "install_id" field.
+func InstallIDIsNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldInstallID)))
+	})
+}
+
+// InstallIDNotNil applies the NotNil predicate on the "install_id" field.
+func InstallIDNotNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldInstallID)))
+	})
+}
+
+// URLEQ applies the EQ predicate on the "url" field.
+func URLEQ(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldURL), v))
+	})
+}
+
+// URLNEQ applies the NEQ predicate on the "url" field.
+func URLNEQ(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldURL), v))
+	})
+}
+
+// URLIn applies the In predicate on the "url" field.
+func URLIn(vs ...string) predicate.Repository {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Repository(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldURL), v...))
+	})
+}
+
+// URLNotIn applies the NotIn predicate on the "url" field.
+func URLNotIn(vs ...string) predicate.Repository {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Repository(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldURL), v...))
+	})
+}
+
+// URLGT applies the GT predicate on the "url" field.
+func URLGT(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldURL), v))
+	})
+}
+
+// URLGTE applies the GTE predicate on the "url" field.
+func URLGTE(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldURL), v))
+	})
+}
+
+// URLLT applies the LT predicate on the "url" field.
+func URLLT(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldURL), v))
+	})
+}
+
+// URLLTE applies the LTE predicate on the "url" field.
+func URLLTE(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldURL), v))
+	})
+}
+
+// URLContains applies the Contains predicate on the "url" field.
+func URLContains(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldURL), v))
+	})
+}
+
+// URLHasPrefix applies the HasPrefix predicate on the "url" field.
+func URLHasPrefix(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldURL), v))
+	})
+}
+
+// URLHasSuffix applies the HasSuffix predicate on the "url" field.
+func URLHasSuffix(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldURL), v))
+	})
+}
+
+// URLIsNil applies the IsNil predicate on the "url" field.
+func URLIsNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldURL)))
+	})
+}
+
+// URLNotNil applies the NotNil predicate on the "url" field.
+func URLNotNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldURL)))
+	})
+}
+
+// URLEqualFold applies the EqualFold predicate on the "url" field.
+func URLEqualFold(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldURL), v))
+	})
+}
+
+// URLContainsFold applies the ContainsFold predicate on the "url" field.
+func URLContainsFold(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldURL), v))
+	})
+}
+
+// AvatarURLEQ applies the EQ predicate on the "avatar_url" field.
+func AvatarURLEQ(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLNEQ applies the NEQ predicate on the "avatar_url" field.
+func AvatarURLNEQ(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLIn applies the In predicate on the "avatar_url" field.
+func AvatarURLIn(vs ...string) predicate.Repository {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Repository(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldAvatarURL), v...))
+	})
+}
+
+// AvatarURLNotIn applies the NotIn predicate on the "avatar_url" field.
+func AvatarURLNotIn(vs ...string) predicate.Repository {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Repository(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldAvatarURL), v...))
+	})
+}
+
+// AvatarURLGT applies the GT predicate on the "avatar_url" field.
+func AvatarURLGT(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLGTE applies the GTE predicate on the "avatar_url" field.
+func AvatarURLGTE(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLLT applies the LT predicate on the "avatar_url" field.
+func AvatarURLLT(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLLTE applies the LTE predicate on the "avatar_url" field.
+func AvatarURLLTE(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLContains applies the Contains predicate on the "avatar_url" field.
+func AvatarURLContains(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLHasPrefix applies the HasPrefix predicate on the "avatar_url" field.
+func AvatarURLHasPrefix(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLHasSuffix applies the HasSuffix predicate on the "avatar_url" field.
+func AvatarURLHasSuffix(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLIsNil applies the IsNil predicate on the "avatar_url" field.
+func AvatarURLIsNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldAvatarURL)))
+	})
+}
+
+// AvatarURLNotNil applies the NotNil predicate on the "avatar_url" field.
+func AvatarURLNotNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldAvatarURL)))
+	})
+}
+
+// AvatarURLEqualFold applies the EqualFold predicate on the "avatar_url" field.
+func AvatarURLEqualFold(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldAvatarURL), v))
+	})
+}
+
+// AvatarURLContainsFold applies the ContainsFold predicate on the "avatar_url" field.
+func AvatarURLContainsFold(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldAvatarURL), v))
+	})
+}
+
+// DefaultBranchEQ applies the EQ predicate on the "default_branch" field.
+func DefaultBranchEQ(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchNEQ applies the NEQ predicate on the "default_branch" field.
+func DefaultBranchNEQ(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchIn applies the In predicate on the "default_branch" field.
+func DefaultBranchIn(vs ...string) predicate.Repository {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Repository(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldDefaultBranch), v...))
+	})
+}
+
+// DefaultBranchNotIn applies the NotIn predicate on the "default_branch" field.
+func DefaultBranchNotIn(vs ...string) predicate.Repository {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Repository(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldDefaultBranch), v...))
+	})
+}
+
+// DefaultBranchGT applies the GT predicate on the "default_branch" field.
+func DefaultBranchGT(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchGTE applies the GTE predicate on the "default_branch" field.
+func DefaultBranchGTE(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchLT applies the LT predicate on the "default_branch" field.
+func DefaultBranchLT(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchLTE applies the LTE predicate on the "default_branch" field.
+func DefaultBranchLTE(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchContains applies the Contains predicate on the "default_branch" field.
+func DefaultBranchContains(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchHasPrefix applies the HasPrefix predicate on the "default_branch" field.
+func DefaultBranchHasPrefix(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchHasSuffix applies the HasSuffix predicate on the "default_branch" field.
+func DefaultBranchHasSuffix(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchIsNil applies the IsNil predicate on the "default_branch" field.
+func DefaultBranchIsNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldDefaultBranch)))
+	})
+}
+
+// DefaultBranchNotNil applies the NotNil predicate on the "default_branch" field.
+func DefaultBranchNotNil() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldDefaultBranch)))
+	})
+}
+
+// DefaultBranchEqualFold applies the EqualFold predicate on the "default_branch" field.
+func DefaultBranchEqualFold(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldDefaultBranch), v))
+	})
+}
+
+// DefaultBranchContainsFold applies the ContainsFold predicate on the "default_branch" field.
+func DefaultBranchContainsFold(v string) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldDefaultBranch), v))
 	})
 }
 

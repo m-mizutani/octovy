@@ -21,6 +21,12 @@ type Repository struct {
 	Name string `json:"name,omitempty"`
 	// InstallID holds the value of the "install_id" field.
 	InstallID int64 `json:"install_id,omitempty"`
+	// URL holds the value of the "url" field.
+	URL string `json:"url,omitempty"`
+	// AvatarURL holds the value of the "avatar_url" field.
+	AvatarURL *string `json:"avatar_url,omitempty"`
+	// DefaultBranch holds the value of the "default_branch" field.
+	DefaultBranch *string `json:"default_branch,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RepositoryQuery when eager-loading is set.
 	Edges RepositoryEdges `json:"edges"`
@@ -51,7 +57,7 @@ func (*Repository) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case repository.FieldID, repository.FieldInstallID:
 			values[i] = new(sql.NullInt64)
-		case repository.FieldOwner, repository.FieldName:
+		case repository.FieldOwner, repository.FieldName, repository.FieldURL, repository.FieldAvatarURL, repository.FieldDefaultBranch:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Repository", columns[i])
@@ -92,6 +98,26 @@ func (r *Repository) assignValues(columns []string, values []interface{}) error 
 			} else if value.Valid {
 				r.InstallID = value.Int64
 			}
+		case repository.FieldURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field url", values[i])
+			} else if value.Valid {
+				r.URL = value.String
+			}
+		case repository.FieldAvatarURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field avatar_url", values[i])
+			} else if value.Valid {
+				r.AvatarURL = new(string)
+				*r.AvatarURL = value.String
+			}
+		case repository.FieldDefaultBranch:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field default_branch", values[i])
+			} else if value.Valid {
+				r.DefaultBranch = new(string)
+				*r.DefaultBranch = value.String
+			}
 		}
 	}
 	return nil
@@ -131,6 +157,16 @@ func (r *Repository) String() string {
 	builder.WriteString(r.Name)
 	builder.WriteString(", install_id=")
 	builder.WriteString(fmt.Sprintf("%v", r.InstallID))
+	builder.WriteString(", url=")
+	builder.WriteString(r.URL)
+	if v := r.AvatarURL; v != nil {
+		builder.WriteString(", avatar_url=")
+		builder.WriteString(*v)
+	}
+	if v := r.DefaultBranch; v != nil {
+		builder.WriteString(", default_branch=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

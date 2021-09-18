@@ -41,52 +41,49 @@ var parserMap = map[string]parser{
 }
 
 func (x *usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
-	x.infra.ScanQueue.SendQueue(req)
+	x.scanQueue <- req
 	return nil
 }
 
-func (x *usecase) RunScanThread() error {
-	dbClient, err := x.infra.NewDB(x.config.DBType, x.config.DBConfig)
-	if err != nil {
-		return goerr.Wrap(err, "Failed to initialize DB client for scan thread")
-	}
+func (x *usecase) InvokeScanThread() {
+	go func() {
+		if err := x.runScanThread(); err != nil {
+			x.handleError(err)
+		}
+	}()
+}
 
+func (x *usecase) runScanThread() error {
 	githubAppPEM, err := x.infra.Utils.ReadFile(x.config.GitHubAppPrivateKeyPath)
 	if err != nil {
 		return goerr.Wrap(err, "Failed to read github private key file")
 	}
 
-	detector := newVulnDetector(x.infra.NewGitHub(), x.infra.NewTrivyDB)
+	detector := newVulnDetector(x.infra.GitHub, x.infra.NewTrivyDB)
 
-	go func() {
-		for {
-			req := x.infra.ScanQueue.RecvQueue()
-			ctx := context.Background()
+	for req := range x.scanQueue {
+		ctx := context.Background()
 
-			clients := &scanClients{
-				DB:        dbClient,
-				GitHubApp: x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, githubAppPEM, ""),
-				Detector:  detector,
-			}
-
-			if err := scanRepository(ctx, req, clients); err != nil {
-				handleScanThreadError(req, err)
-			}
+		clients := &scanClients{
+			DB:        x.infra.DB,
+			GitHubApp: x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, githubAppPEM),
+			Detector:  detector,
+			Utils:     x.infra.Utils,
 		}
-	}()
+
+		if err := scanRepository(ctx, req, clients); err != nil {
+			x.handleError(goerr.Wrap(err).With("request", req))
+		}
+	}
 
 	return nil
-}
-
-func handleScanThreadError(req *model.ScanRepositoryRequest, err error) {
-	logger.Error().Err(err).Interface("request", req).Msg("Failed scan")
 }
 
 type scanClients struct {
 	DB        db.Interface
 	GitHubApp githubapp.Interface
 	Detector  *vulnDetector
-	Utils     infra.Utils
+	Utils     *infra.Utils
 }
 
 func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanRepositoryRequest, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) error {
@@ -130,6 +127,10 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 		checkID = id
 	}
 
+	if err := clients.Detector.RefreshDB(); err != nil {
+		return err
+	}
+
 	pkgs, err := detectPackages(req, clients)
 	if err != nil {
 		return err
@@ -151,6 +152,11 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 		return err
 	}
 
+	var oldPkgs []*ent.PackageRecord
+	if latest != nil {
+		oldPkgs = latest.Edges.Packages
+	}
+
 	sourcePkgMap := map[string][]*ent.PackageRecord{}
 	var newPkgs []*ent.PackageRecord
 	for i := range pkgs {
@@ -158,7 +164,7 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 		newPkgs = append(newPkgs, pkgs[i])
 	}
 
-	addPkgs, modPkgs, delPkgs := diffPackageList(latest.Edges.Packages, newPkgs)
+	addPkgs, modPkgs, delPkgs := diffPackageList(oldPkgs, newPkgs)
 
 	if req.IsPullRequest {
 		// TODO: feedback
@@ -254,6 +260,7 @@ func annotateVulnerability(dt *vulnDetector, pkgs []*ent.PackageRecord, seenAt i
 			}
 
 			detectedVulnMap[vuln.VulnID] = &ent.Vulnerability{
+				ID:             vuln.VulnID,
 				FirstSeenAt:    seenAt,
 				LastModifiedAt: seenAt,
 				Title:          vuln.Detail.Title,

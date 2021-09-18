@@ -1,8 +1,11 @@
 package usecase
 
 import (
+	"context"
+
 	"github.com/google/go-github/v39/github"
 
+	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
@@ -12,16 +15,20 @@ import (
 var logger = utils.Logger
 
 type Interface interface {
+	Init() error
+
 	// Scan
 	SendScanRequest(req *model.ScanRepositoryRequest) error
-	RunScanThread() error
 
-	//
+	// Invoke thread
+	InvokeScanThread()
+
+	// DB access proxy
 	RegisterRepository(repo *ent.Repository) (*ent.Repository, error)
-
 	UpdateVulnStatus(req *model.UpdateVulnStatusRequest) error
 	LookupScanReport(reportID string) (*ent.Scan, error)
 
+	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(event *github.PushEvent) error
 	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 	HandleGitHubInstallationEvent(event *github.InstallationEvent) error
@@ -35,26 +42,49 @@ type Interface interface {
 	ValidateSession(token string) (*ent.Session, error)
 	RevokeSession(token string) error
 
-	// Config
+	// Config proxy
 	FrontendURL() string
 }
 
 func New(cfg *model.Config) Interface {
 	uc := &usecase{
-		config: cfg,
-		infra:  infra.New(),
+		config:    cfg,
+		infra:     infra.New(),
+		scanQueue: make(chan *model.ScanRepositoryRequest, 1024),
 	}
 
 	return uc
 }
 
 type usecase struct {
+	initialized bool
+	scanQueue   chan *model.ScanRepositoryRequest
+
 	config *model.Config
-	infra  infra.Interfaces
+	infra  *infra.Interfaces
+
+	// Control usecase for test
+	testErrorHandler func(error)
+}
+
+func (x *usecase) Init() error {
+	if err := x.infra.DB.Open(x.config.DBType, x.config.DBConfig); err != nil {
+		return goerr.Wrap(err)
+	}
+
+	x.InvokeScanThread()
+
+	x.initialized = true
+	return nil
 }
 
 func (x *usecase) RegisterRepository(repo *ent.Repository) (*ent.Repository, error) {
-	panic("not implemented") // TODO: Implement
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	ctx := context.Background()
+	return x.infra.DB.CreateRepo(ctx, repo)
 }
 
 func (x *usecase) UpdateRepositoryDefaultBranch(repo *model.GitHubRepo, branch string) error {

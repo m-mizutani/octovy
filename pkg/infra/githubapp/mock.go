@@ -16,16 +16,14 @@ type Mock struct {
 	AppID     int64
 	InstallID int64
 	PEM       []byte
-	Endpoint  string
 }
 
 func NewMock() (Factory, *Mock) {
 	mock := &Mock{}
-	return func(appID, installID int64, pem []byte, endpoint string) Interface {
+	return func(appID, installID int64, pem []byte) Interface {
 		mock.AppID = appID
 		mock.InstallID = installID
 		mock.PEM = pem
-		mock.Endpoint = endpoint
 
 		return mock
 	}, mock

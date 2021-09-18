@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"compress/gzip"
 	"context"
 	"io"
 	"io/ioutil"
@@ -37,7 +38,15 @@ func newVulnDetector(client github.Interface, newTrivyDB trivydb.Factory) *vulnD
 	}
 }
 
-func (x *vulnDetector) refreshDB() error {
+func (x *vulnDetector) Detect(pkgType types.PkgType, pkgName, version string) ([]*model.Vulnerability, error) {
+	if x.dt == nil {
+		panic("trivy DB for detector is not set")
+	}
+
+	return x.dt.Detect(pkgType, pkgName, version)
+}
+
+func (x *vulnDetector) RefreshDB() error {
 	ctx := context.Background()
 	releases, err := x.github.ListReleases(ctx, trivyDBOwner, trivyDBRepo)
 	if err != nil {
@@ -55,12 +64,18 @@ func (x *vulnDetector) refreshDB() error {
 		return goerr.Wrap(err)
 	}
 
-	if _, err := io.Copy(tmp, dbReader); err != nil {
+	gz, err := gzip.NewReader(dbReader)
+	if err != nil {
+		return goerr.Wrap(err)
+	}
+
+	if _, err := io.Copy(tmp, gz); err != nil {
 		return goerr.Wrap(err, "Failed to save trivyDB").With("dst", tmp.Name())
 	}
 	if err := tmp.Close(); err != nil {
 		return goerr.Wrap(err).With("path", tmp.Name())
 	}
+	logger.Debug().Str("path", tmp.Name()).Msg("Saved trivy DB file")
 
 	db, err := x.newTrivyDB(tmp.Name())
 	if err != nil {
@@ -69,10 +84,6 @@ func (x *vulnDetector) refreshDB() error {
 
 	x.dt = detector.New(db)
 	return nil
-}
-
-func (x *vulnDetector) Detect(pkgType types.PkgType, pkgName, version string) ([]*model.Vulnerability, error) {
-	return x.dt.Detect(pkgType, pkgName, version)
 }
 
 func downloadLatestTrivyDB(ctx context.Context, client github.Interface, releases []*gh.RepositoryRelease) (io.ReadCloser, error) {
@@ -93,6 +104,8 @@ func downloadLatestTrivyDB(ctx context.Context, client github.Interface, release
 				logger.Warn().Err(err).Interface("asset", asset).Msg("Failed to download trivy DB")
 				continue
 			}
+
+			logger.Debug().Interface("asset", asset).Msg("Downloading trivy DB file")
 
 			return rc, nil
 		}

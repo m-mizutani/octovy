@@ -808,20 +808,23 @@ func (m *PackageRecordMutation) ResetEdge(name string) error {
 // RepositoryMutation represents an operation that mutates the Repository nodes in the graph.
 type RepositoryMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	owner         *string
-	name          *string
-	install_id    *int64
-	addinstall_id *int64
-	clearedFields map[string]struct{}
-	scan          map[string]struct{}
-	removedscan   map[string]struct{}
-	clearedscan   bool
-	done          bool
-	oldValue      func(context.Context) (*Repository, error)
-	predicates    []predicate.Repository
+	op             Op
+	typ            string
+	id             *int
+	owner          *string
+	name           *string
+	install_id     *int64
+	addinstall_id  *int64
+	url            *string
+	avatar_url     *string
+	default_branch *string
+	clearedFields  map[string]struct{}
+	scan           map[string]struct{}
+	removedscan    map[string]struct{}
+	clearedscan    bool
+	done           bool
+	oldValue       func(context.Context) (*Repository, error)
+	predicates     []predicate.Repository
 }
 
 var _ ent.Mutation = (*RepositoryMutation)(nil)
@@ -1025,10 +1028,171 @@ func (m *RepositoryMutation) AddedInstallID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearInstallID clears the value of the "install_id" field.
+func (m *RepositoryMutation) ClearInstallID() {
+	m.install_id = nil
+	m.addinstall_id = nil
+	m.clearedFields[repository.FieldInstallID] = struct{}{}
+}
+
+// InstallIDCleared returns if the "install_id" field was cleared in this mutation.
+func (m *RepositoryMutation) InstallIDCleared() bool {
+	_, ok := m.clearedFields[repository.FieldInstallID]
+	return ok
+}
+
 // ResetInstallID resets all changes to the "install_id" field.
 func (m *RepositoryMutation) ResetInstallID() {
 	m.install_id = nil
 	m.addinstall_id = nil
+	delete(m.clearedFields, repository.FieldInstallID)
+}
+
+// SetURL sets the "url" field.
+func (m *RepositoryMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *RepositoryMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the Repository entity.
+// If the Repository object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepositoryMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ClearURL clears the value of the "url" field.
+func (m *RepositoryMutation) ClearURL() {
+	m.url = nil
+	m.clearedFields[repository.FieldURL] = struct{}{}
+}
+
+// URLCleared returns if the "url" field was cleared in this mutation.
+func (m *RepositoryMutation) URLCleared() bool {
+	_, ok := m.clearedFields[repository.FieldURL]
+	return ok
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *RepositoryMutation) ResetURL() {
+	m.url = nil
+	delete(m.clearedFields, repository.FieldURL)
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (m *RepositoryMutation) SetAvatarURL(s string) {
+	m.avatar_url = &s
+}
+
+// AvatarURL returns the value of the "avatar_url" field in the mutation.
+func (m *RepositoryMutation) AvatarURL() (r string, exists bool) {
+	v := m.avatar_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAvatarURL returns the old "avatar_url" field's value of the Repository entity.
+// If the Repository object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepositoryMutation) OldAvatarURL(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldAvatarURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldAvatarURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAvatarURL: %w", err)
+	}
+	return oldValue.AvatarURL, nil
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (m *RepositoryMutation) ClearAvatarURL() {
+	m.avatar_url = nil
+	m.clearedFields[repository.FieldAvatarURL] = struct{}{}
+}
+
+// AvatarURLCleared returns if the "avatar_url" field was cleared in this mutation.
+func (m *RepositoryMutation) AvatarURLCleared() bool {
+	_, ok := m.clearedFields[repository.FieldAvatarURL]
+	return ok
+}
+
+// ResetAvatarURL resets all changes to the "avatar_url" field.
+func (m *RepositoryMutation) ResetAvatarURL() {
+	m.avatar_url = nil
+	delete(m.clearedFields, repository.FieldAvatarURL)
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (m *RepositoryMutation) SetDefaultBranch(s string) {
+	m.default_branch = &s
+}
+
+// DefaultBranch returns the value of the "default_branch" field in the mutation.
+func (m *RepositoryMutation) DefaultBranch() (r string, exists bool) {
+	v := m.default_branch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDefaultBranch returns the old "default_branch" field's value of the Repository entity.
+// If the Repository object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepositoryMutation) OldDefaultBranch(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldDefaultBranch is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldDefaultBranch requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDefaultBranch: %w", err)
+	}
+	return oldValue.DefaultBranch, nil
+}
+
+// ClearDefaultBranch clears the value of the "default_branch" field.
+func (m *RepositoryMutation) ClearDefaultBranch() {
+	m.default_branch = nil
+	m.clearedFields[repository.FieldDefaultBranch] = struct{}{}
+}
+
+// DefaultBranchCleared returns if the "default_branch" field was cleared in this mutation.
+func (m *RepositoryMutation) DefaultBranchCleared() bool {
+	_, ok := m.clearedFields[repository.FieldDefaultBranch]
+	return ok
+}
+
+// ResetDefaultBranch resets all changes to the "default_branch" field.
+func (m *RepositoryMutation) ResetDefaultBranch() {
+	m.default_branch = nil
+	delete(m.clearedFields, repository.FieldDefaultBranch)
 }
 
 // AddScanIDs adds the "scan" edge to the Scan entity by ids.
@@ -1104,7 +1268,7 @@ func (m *RepositoryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RepositoryMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 6)
 	if m.owner != nil {
 		fields = append(fields, repository.FieldOwner)
 	}
@@ -1113,6 +1277,15 @@ func (m *RepositoryMutation) Fields() []string {
 	}
 	if m.install_id != nil {
 		fields = append(fields, repository.FieldInstallID)
+	}
+	if m.url != nil {
+		fields = append(fields, repository.FieldURL)
+	}
+	if m.avatar_url != nil {
+		fields = append(fields, repository.FieldAvatarURL)
+	}
+	if m.default_branch != nil {
+		fields = append(fields, repository.FieldDefaultBranch)
 	}
 	return fields
 }
@@ -1128,6 +1301,12 @@ func (m *RepositoryMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case repository.FieldInstallID:
 		return m.InstallID()
+	case repository.FieldURL:
+		return m.URL()
+	case repository.FieldAvatarURL:
+		return m.AvatarURL()
+	case repository.FieldDefaultBranch:
+		return m.DefaultBranch()
 	}
 	return nil, false
 }
@@ -1143,6 +1322,12 @@ func (m *RepositoryMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldName(ctx)
 	case repository.FieldInstallID:
 		return m.OldInstallID(ctx)
+	case repository.FieldURL:
+		return m.OldURL(ctx)
+	case repository.FieldAvatarURL:
+		return m.OldAvatarURL(ctx)
+	case repository.FieldDefaultBranch:
+		return m.OldDefaultBranch(ctx)
 	}
 	return nil, fmt.Errorf("unknown Repository field %s", name)
 }
@@ -1172,6 +1357,27 @@ func (m *RepositoryMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetInstallID(v)
+		return nil
+	case repository.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
+		return nil
+	case repository.FieldAvatarURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAvatarURL(v)
+		return nil
+	case repository.FieldDefaultBranch:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDefaultBranch(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Repository field %s", name)
@@ -1217,7 +1423,20 @@ func (m *RepositoryMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *RepositoryMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(repository.FieldInstallID) {
+		fields = append(fields, repository.FieldInstallID)
+	}
+	if m.FieldCleared(repository.FieldURL) {
+		fields = append(fields, repository.FieldURL)
+	}
+	if m.FieldCleared(repository.FieldAvatarURL) {
+		fields = append(fields, repository.FieldAvatarURL)
+	}
+	if m.FieldCleared(repository.FieldDefaultBranch) {
+		fields = append(fields, repository.FieldDefaultBranch)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1230,6 +1449,20 @@ func (m *RepositoryMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *RepositoryMutation) ClearField(name string) error {
+	switch name {
+	case repository.FieldInstallID:
+		m.ClearInstallID()
+		return nil
+	case repository.FieldURL:
+		m.ClearURL()
+		return nil
+	case repository.FieldAvatarURL:
+		m.ClearAvatarURL()
+		return nil
+	case repository.FieldDefaultBranch:
+		m.ClearDefaultBranch()
+		return nil
+	}
 	return fmt.Errorf("unknown Repository nullable field %s", name)
 }
 
@@ -1245,6 +1478,15 @@ func (m *RepositoryMutation) ResetField(name string) error {
 		return nil
 	case repository.FieldInstallID:
 		m.ResetInstallID()
+		return nil
+	case repository.FieldURL:
+		m.ResetURL()
+		return nil
+	case repository.FieldAvatarURL:
+		m.ResetAvatarURL()
+		return nil
+	case repository.FieldDefaultBranch:
+		m.ResetDefaultBranch()
 		return nil
 	}
 	return fmt.Errorf("unknown Repository field %s", name)

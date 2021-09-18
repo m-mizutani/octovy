@@ -46,9 +46,83 @@ func (ru *RepositoryUpdate) SetInstallID(i int64) *RepositoryUpdate {
 	return ru
 }
 
+// SetNillableInstallID sets the "install_id" field if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableInstallID(i *int64) *RepositoryUpdate {
+	if i != nil {
+		ru.SetInstallID(*i)
+	}
+	return ru
+}
+
 // AddInstallID adds i to the "install_id" field.
 func (ru *RepositoryUpdate) AddInstallID(i int64) *RepositoryUpdate {
 	ru.mutation.AddInstallID(i)
+	return ru
+}
+
+// ClearInstallID clears the value of the "install_id" field.
+func (ru *RepositoryUpdate) ClearInstallID() *RepositoryUpdate {
+	ru.mutation.ClearInstallID()
+	return ru
+}
+
+// SetURL sets the "url" field.
+func (ru *RepositoryUpdate) SetURL(s string) *RepositoryUpdate {
+	ru.mutation.SetURL(s)
+	return ru
+}
+
+// SetNillableURL sets the "url" field if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableURL(s *string) *RepositoryUpdate {
+	if s != nil {
+		ru.SetURL(*s)
+	}
+	return ru
+}
+
+// ClearURL clears the value of the "url" field.
+func (ru *RepositoryUpdate) ClearURL() *RepositoryUpdate {
+	ru.mutation.ClearURL()
+	return ru
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (ru *RepositoryUpdate) SetAvatarURL(s string) *RepositoryUpdate {
+	ru.mutation.SetAvatarURL(s)
+	return ru
+}
+
+// SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableAvatarURL(s *string) *RepositoryUpdate {
+	if s != nil {
+		ru.SetAvatarURL(*s)
+	}
+	return ru
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (ru *RepositoryUpdate) ClearAvatarURL() *RepositoryUpdate {
+	ru.mutation.ClearAvatarURL()
+	return ru
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (ru *RepositoryUpdate) SetDefaultBranch(s string) *RepositoryUpdate {
+	ru.mutation.SetDefaultBranch(s)
+	return ru
+}
+
+// SetNillableDefaultBranch sets the "default_branch" field if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableDefaultBranch(s *string) *RepositoryUpdate {
+	if s != nil {
+		ru.SetDefaultBranch(*s)
+	}
+	return ru
+}
+
+// ClearDefaultBranch clears the value of the "default_branch" field.
+func (ru *RepositoryUpdate) ClearDefaultBranch() *RepositoryUpdate {
+	ru.mutation.ClearDefaultBranch()
 	return ru
 }
 
@@ -193,6 +267,51 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: repository.FieldInstallID,
 		})
 	}
+	if ru.mutation.InstallIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: repository.FieldInstallID,
+		})
+	}
+	if value, ok := ru.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldURL,
+		})
+	}
+	if ru.mutation.URLCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: repository.FieldURL,
+		})
+	}
+	if value, ok := ru.mutation.AvatarURL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldAvatarURL,
+		})
+	}
+	if ru.mutation.AvatarURLCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: repository.FieldAvatarURL,
+		})
+	}
+	if value, ok := ru.mutation.DefaultBranch(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldDefaultBranch,
+		})
+	}
+	if ru.mutation.DefaultBranchCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: repository.FieldDefaultBranch,
+		})
+	}
 	if ru.mutation.ScanCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -285,9 +404,83 @@ func (ruo *RepositoryUpdateOne) SetInstallID(i int64) *RepositoryUpdateOne {
 	return ruo
 }
 
+// SetNillableInstallID sets the "install_id" field if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableInstallID(i *int64) *RepositoryUpdateOne {
+	if i != nil {
+		ruo.SetInstallID(*i)
+	}
+	return ruo
+}
+
 // AddInstallID adds i to the "install_id" field.
 func (ruo *RepositoryUpdateOne) AddInstallID(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddInstallID(i)
+	return ruo
+}
+
+// ClearInstallID clears the value of the "install_id" field.
+func (ruo *RepositoryUpdateOne) ClearInstallID() *RepositoryUpdateOne {
+	ruo.mutation.ClearInstallID()
+	return ruo
+}
+
+// SetURL sets the "url" field.
+func (ruo *RepositoryUpdateOne) SetURL(s string) *RepositoryUpdateOne {
+	ruo.mutation.SetURL(s)
+	return ruo
+}
+
+// SetNillableURL sets the "url" field if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableURL(s *string) *RepositoryUpdateOne {
+	if s != nil {
+		ruo.SetURL(*s)
+	}
+	return ruo
+}
+
+// ClearURL clears the value of the "url" field.
+func (ruo *RepositoryUpdateOne) ClearURL() *RepositoryUpdateOne {
+	ruo.mutation.ClearURL()
+	return ruo
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (ruo *RepositoryUpdateOne) SetAvatarURL(s string) *RepositoryUpdateOne {
+	ruo.mutation.SetAvatarURL(s)
+	return ruo
+}
+
+// SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableAvatarURL(s *string) *RepositoryUpdateOne {
+	if s != nil {
+		ruo.SetAvatarURL(*s)
+	}
+	return ruo
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (ruo *RepositoryUpdateOne) ClearAvatarURL() *RepositoryUpdateOne {
+	ruo.mutation.ClearAvatarURL()
+	return ruo
+}
+
+// SetDefaultBranch sets the "default_branch" field.
+func (ruo *RepositoryUpdateOne) SetDefaultBranch(s string) *RepositoryUpdateOne {
+	ruo.mutation.SetDefaultBranch(s)
+	return ruo
+}
+
+// SetNillableDefaultBranch sets the "default_branch" field if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableDefaultBranch(s *string) *RepositoryUpdateOne {
+	if s != nil {
+		ruo.SetDefaultBranch(*s)
+	}
+	return ruo
+}
+
+// ClearDefaultBranch clears the value of the "default_branch" field.
+func (ruo *RepositoryUpdateOne) ClearDefaultBranch() *RepositoryUpdateOne {
+	ruo.mutation.ClearDefaultBranch()
 	return ruo
 }
 
@@ -454,6 +647,51 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Type:   field.TypeInt64,
 			Value:  value,
 			Column: repository.FieldInstallID,
+		})
+	}
+	if ruo.mutation.InstallIDCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Column: repository.FieldInstallID,
+		})
+	}
+	if value, ok := ruo.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldURL,
+		})
+	}
+	if ruo.mutation.URLCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: repository.FieldURL,
+		})
+	}
+	if value, ok := ruo.mutation.AvatarURL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldAvatarURL,
+		})
+	}
+	if ruo.mutation.AvatarURLCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: repository.FieldAvatarURL,
+		})
+	}
+	if value, ok := ruo.mutation.DefaultBranch(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repository.FieldDefaultBranch,
+		})
+	}
+	if ruo.mutation.DefaultBranchCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: repository.FieldDefaultBranch,
 		})
 	}
 	if ruo.mutation.ScanCleared() {

@@ -11,7 +11,11 @@ import (
 var Logger zerolog.Logger
 
 func initLogger() {
-	Logger = zerolog.New(os.Stderr).With().Timestamp().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	Logger = zerolog.New(os.Stderr).
+		With().
+		Timestamp().
+		Logger().
+		Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
 func SetLogLevel(logLevel string) error {

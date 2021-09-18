@@ -28,7 +28,10 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "owner", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
-		{Name: "install_id", Type: field.TypeInt64},
+		{Name: "install_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "url", Type: field.TypeString, Nullable: true},
+		{Name: "avatar_url", Type: field.TypeString, Nullable: true},
+		{Name: "default_branch", Type: field.TypeString, Nullable: true},
 	}
 	// RepositoriesTable holds the schema information for the "repositories" table.
 	RepositoriesTable = &schema.Table{

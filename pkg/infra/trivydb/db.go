@@ -33,7 +33,7 @@ func New(dbPath string) (Interface, error) {
 		ReadOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, goerr.Wrap(err)
 	}
 
 	// TODO: Validate trivy DB

@@ -28,11 +28,16 @@ func (x *Controller) RunCmd(args []string) error {
 		Commands: []*cli.Command{
 			newServeCommand(x),
 		},
-		Before: globalSetup,
+		Before: func(c *cli.Context) error {
+			if err := globalSetup(c); err != nil {
+				return err
+			}
+			return nil
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Error().Err(err).Msg("Failed")
+		logger.Error().Interface("config", x.Config).Err(err).Msg("Failed")
 		return err
 	}
 
@@ -49,12 +54,11 @@ func globalSetup(c *cli.Context) error {
 }
 
 func newServeCommand(ctrl *Controller) *cli.Command {
-
 	return &cli.Command{
 		Name: "serve",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "Addr",
+				Name:        "addr",
 				Usage:       "server binding address",
 				Aliases:     []string{"a"},
 				EnvVars:     []string{"OCTOVY_ADDR"},
@@ -62,12 +66,25 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Value:       "127.0.0.1",
 			},
 			&cli.IntFlag{
-				Name:        "Port",
+				Name:        "port",
 				Usage:       "Port number",
 				Aliases:     []string{"p"},
 				EnvVars:     []string{"OCTOVY_PORT"},
 				Destination: &ctrl.Config.ServerPort,
 				Value:       9080,
+			},
+
+			&cli.StringFlag{
+				Name:        "db-type",
+				Usage:       "Database type [postgres|sqlite3]",
+				EnvVars:     []string{"OCTOVY_DB_TYPE"},
+				Destination: &ctrl.Config.DBType,
+			},
+			&cli.StringFlag{
+				Name:        "db-config",
+				Usage:       "Database config as DSN",
+				EnvVars:     []string{"OCTOVY_DB_CONFIG"},
+				Destination: &ctrl.Config.DBConfig,
 			},
 
 			&cli.StringFlag{
@@ -87,24 +104,28 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Usage:       "GitHub App private key file path",
 				Destination: &ctrl.Config.GitHubAppPrivateKeyPath,
 			},
-			&cli.Int64Flag{
+			&cli.StringFlag{
 				Name:        "github-app-client-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_CLIENT_ID"},
 				Destination: &ctrl.Config.GitHubAppClientID,
 			},
 			&cli.StringFlag{
-				Name:        "github-app-client-id",
+				Name:        "github-app-client-secret",
 				EnvVars:     []string{"OCTOVY_GITHUB_SECRET"},
 				Destination: &ctrl.Config.GitHubAppSecret,
 			},
 		},
 		Action: func(c *cli.Context) error {
-			return apiCommand(c, ctrl)
+			if err := ctrl.usecase.Init(); err != nil {
+				return err
+			}
+
+			return serveCommand(c, ctrl)
 		},
 	}
 }
 
-func apiCommand(c *cli.Context, ctrl *Controller) error {
+func serveCommand(c *cli.Context, ctrl *Controller) error {
 	serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)
 
 	engine := api.New(ctrl.usecase)

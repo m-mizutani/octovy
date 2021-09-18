@@ -21,6 +21,7 @@ type ScanResult struct {
 }
 
 type Interface interface {
+	Open(dbType, dbConfig string) error
 	CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
 
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
@@ -38,30 +39,32 @@ type Factory func(dbType, dbConfig string) (Interface, error)
 type Client struct {
 	client *ent.Client
 
-	lock  bool
-	mutex sync.Mutex
+	disableOpen bool
+	lock        bool
+	mutex       sync.Mutex
 }
 
 func newClient() *Client {
 	return &Client{}
 }
 
-func New(dbType, dbConfig string) (Interface, error) {
-	client := newClient()
-	if err := client.init(dbType, dbConfig); err != nil {
-		return nil, err
-	}
-	return client, nil
+func New() *Client {
+	return newClient()
 }
 
-func NewDBMock(t *testing.T) Interface {
+func NewMock(t *testing.T) *Client {
 	db := newClient()
 	db.client = enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	db.disableOpen = true
 	db.lock = true
 	return db
 }
 
-func (x *Client) init(dbType, dbConfig string) error {
+func (x *Client) Open(dbType, dbConfig string) error {
+	if x.disableOpen {
+		return nil
+	}
+
 	client, err := ent.Open(dbType, dbConfig)
 	if err != nil {
 		return model.ErrDatabaseUnexpected.Wrap(err)

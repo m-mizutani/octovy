@@ -5,6 +5,7 @@ import (
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 )
 
 func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error) {
@@ -13,20 +14,43 @@ func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Rep
 		defer x.mutex.Unlock()
 	}
 
-	branchID, err := x.client.Repository.Create().
-		SetName(repo.Name).
-		SetOwner(repo.Owner).
+	repoID, err := x.client.Repository.Query().
+		Where(repository.Owner(repo.Owner)).
+		Where(repository.Name(repo.Name)).
+		FirstID(ctx)
+
+	if err != nil {
+		if !ent.IsNotFound(err) {
+			return nil, goerr.Wrap(err)
+		}
+
+		newRepo, err := x.client.Repository.Create().
+			SetName(repo.Name).
+			SetOwner(repo.Owner).
+			Save(ctx)
+		if err != nil {
+			return nil, goerr.Wrap(err)
+		}
+		repoID = newRepo.ID
+	}
+
+	q := x.client.Repository.UpdateOneID(repoID).
 		SetInstallID(repo.InstallID).
-		OnConflict().
-		Ignore().ID(ctx)
+		SetURL(repo.URL)
+	if repo.DefaultBranch != nil {
+		q = q.SetDefaultBranch(*repo.DefaultBranch)
+	}
+	if repo.AvatarURL != nil {
+		q = q.SetAvatarURL(*repo.AvatarURL)
+	}
 
-	if err != nil {
+	if _, err := q.Save(ctx); err != nil {
 		return nil, goerr.Wrap(err)
 	}
 
-	branch, err := x.client.Repository.Get(ctx, branchID)
+	updated, err := x.client.Repository.Get(ctx, repoID)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
-	return branch, nil
+	return updated, nil
 }

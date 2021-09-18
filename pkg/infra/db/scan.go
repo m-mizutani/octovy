@@ -95,7 +95,9 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 				})
 		}).First(ctx)
 
-	if err != nil {
+	if ent.IsNotFound(err) {
+		return nil, nil
+	} else if err != nil {
 		return nil, goerr.Wrap(err)
 	}
 
