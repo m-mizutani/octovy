@@ -59,7 +59,7 @@ func (x *usecase) runScanThread() error {
 		return goerr.Wrap(err, "Failed to read github private key file")
 	}
 
-	detector := newVulnDetector(x.infra.GitHub, x.infra.NewTrivyDB)
+	detector := newVulnDetector(x.infra.GitHub, x.infra.NewTrivyDB, x.config.TrivyDBPath)
 
 	for req := range x.scanQueue {
 		ctx := context.Background()

@@ -12,4 +12,6 @@ type Config struct {
 	GitHubAppPrivateKeyPath string
 	GitHubAppClientID       string
 	GitHubAppSecret         string
+
+	TrivyDBPath string
 }

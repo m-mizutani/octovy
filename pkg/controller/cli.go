@@ -114,6 +114,11 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				EnvVars:     []string{"OCTOVY_GITHUB_SECRET"},
 				Destination: &ctrl.Config.GitHubAppSecret,
 			},
+			&cli.StringFlag{
+				Name:        "trivy-db-path",
+				EnvVars:     []string{"OCTOVY_TRIVY_DB_PATH"},
+				Destination: &ctrl.Config.TrivyDBPath,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			if err := ctrl.usecase.Init(); err != nil {

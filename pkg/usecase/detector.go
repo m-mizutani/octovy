@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	gh "github.com/google/go-github/v39/github"
@@ -28,13 +29,16 @@ const (
 type vulnDetector struct {
 	github     github.Interface
 	newTrivyDB trivydb.Factory
-	dt         *detector.Detector
+	dbPath     string
+
+	dt *detector.Detector
 }
 
-func newVulnDetector(client github.Interface, newTrivyDB trivydb.Factory) *vulnDetector {
+func newVulnDetector(client github.Interface, newTrivyDB trivydb.Factory, dbPath string) *vulnDetector {
 	return &vulnDetector{
 		github:     client,
 		newTrivyDB: newTrivyDB,
+		dbPath:     dbPath,
 	}
 }
 
@@ -46,7 +50,27 @@ func (x *vulnDetector) Detect(pkgType types.PkgType, pkgName, version string) ([
 	return x.dt.Detect(pkgType, pkgName, version)
 }
 
+func isFileExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || !os.IsNotExist(err)
+}
+
+func (x *vulnDetector) initDetector() error {
+	db, err := x.newTrivyDB(x.dbPath)
+	if err != nil {
+		return err
+	}
+
+	x.dt = detector.New(db)
+	return nil
+}
+
 func (x *vulnDetector) RefreshDB() error {
+	if isFileExist(x.dbPath) {
+		logger.Debug().Str("path", x.dbPath).Msg("Found existing DB file")
+		return x.initDetector()
+	}
+
 	ctx := context.Background()
 	releases, err := x.github.ListReleases(ctx, trivyDBOwner, trivyDBRepo)
 	if err != nil {
@@ -77,13 +101,16 @@ func (x *vulnDetector) RefreshDB() error {
 	}
 	logger.Debug().Str("path", tmp.Name()).Msg("Saved trivy DB file")
 
-	db, err := x.newTrivyDB(tmp.Name())
-	if err != nil {
-		return err
+	if x.dbPath == "" {
+		x.dbPath = tmp.Name()
+	} else {
+		if err := os.Rename(tmp.Name(), x.dbPath); err != nil {
+			return goerr.Wrap(err)
+		}
+		logger.Debug().Str("old", tmp.Name()).Str("new", x.dbPath).Msg("Rename trivy DB file")
 	}
 
-	x.dt = detector.New(db)
-	return nil
+	return x.initDetector()
 }
 
 func downloadLatestTrivyDB(ctx context.Context, client github.Interface, releases []*gh.RepositoryRelease) (io.ReadCloser, error) {
