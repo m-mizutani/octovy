@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -9,7 +10,6 @@ import (
 	"encoding/pem"
 	"io"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
@@ -81,7 +81,11 @@ func genRSAKey(t *testing.T) []byte {
 }
 
 func injectGitHubMock(t *testing.T, mock *mockSet) {
-	var calledListReleasesMock, calledDownloadReleaseAssetMock, calledGetCodeZipMock int
+	var calledListReleasesMock,
+		calledDownloadReleaseAssetMock,
+		calledGetCodeZipMock,
+		calledCreateCheckRunMock,
+		calledUpdateCheckRunMock int
 
 	mock.GitHub.ListReleasesMock = func(ctx context.Context, owner, repo string) ([]*gh.RepositoryRelease, error) {
 		calledListReleasesMock++
@@ -112,7 +116,11 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 		assert.Equal(t, "trivy-db", repo)
 		assert.Equal(t, int64(3456), assetID)
 
-		return io.NopCloser(strings.NewReader("boom!")), nil
+		buf := &bytes.Buffer{}
+		gz := gzip.NewWriter(buf)
+		gz.Write([]byte("boom!"))
+		require.NoError(t, gz.Close())
+		return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
 	}
 
 	mock.GtiHubApp.GetCodeZipMock = func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
@@ -128,9 +136,23 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 		return genRSAKey(t), nil
 	}
 
+	const dummyCheckID int64 = 999
+	mock.GtiHubApp.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
+		calledCreateCheckRunMock++
+		return dummyCheckID, nil
+	}
+
+	mock.GtiHubApp.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *gh.UpdateCheckRunOptions) error {
+		calledUpdateCheckRunMock++
+		assert.Equal(t, dummyCheckID, checkID)
+		return nil
+	}
+
 	t.Cleanup(func() {
 		assert.Equal(t, 1, calledListReleasesMock)
 		assert.Equal(t, 1, calledDownloadReleaseAssetMock)
 		assert.Equal(t, 1, calledGetCodeZipMock)
+		assert.Equal(t, 1, calledCreateCheckRunMock)
+		assert.Equal(t, 1, calledUpdateCheckRunMock)
 	})
 }

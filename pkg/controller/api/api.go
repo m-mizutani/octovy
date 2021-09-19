@@ -109,7 +109,7 @@ func New(uc usecase.Interface) *gin.Engine {
 
 	r := engine.Group("/api/v1")
 	r.POST("/webhook/github", postWebhookGitHub)
-	r.GET("/scan/report/:report_id", getScanReport)
+	r.GET("/scan/:scan_id", getScanReport)
 
 	// r.GET("/vuln/:vuln_id", getVulnerability)
 	r.POST("/status/:owner/:repo_name", postVulnStatus)

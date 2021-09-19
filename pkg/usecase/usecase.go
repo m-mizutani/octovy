@@ -24,14 +24,14 @@ type Interface interface {
 	InvokeScanThread()
 
 	// DB access proxy
-	RegisterRepository(repo *ent.Repository) (*ent.Repository, error)
-	UpdateVulnStatus(req *model.UpdateVulnStatusRequest) error
-	LookupScanReport(reportID string) (*ent.Scan, error)
+	RegisterRepository(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
+	UpdateVulnStatus(ctx context.Context, req *model.UpdateVulnStatusRequest) error
+	LookupScanReport(ctx context.Context, scanID string) (*ent.Scan, error)
 
 	// Handle GitHub App Webhook event
-	HandleGitHubPushEvent(event *github.PushEvent) error
-	HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
-	HandleGitHubInstallationEvent(event *github.InstallationEvent) error
+	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error
+	HandleGitHubPullReqEvent(ctx context.Context, event *github.PullRequestEvent) error
+	HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error
 
 	// Auth
 	GetGitHubAppClientID() (string, error)
@@ -76,27 +76,6 @@ func (x *usecase) Init() error {
 
 	x.initialized = true
 	return nil
-}
-
-func (x *usecase) RegisterRepository(repo *ent.Repository) (*ent.Repository, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
-	ctx := context.Background()
-	return x.infra.DB.CreateRepo(ctx, repo)
-}
-
-func (x *usecase) UpdateRepositoryDefaultBranch(repo *model.GitHubRepo, branch string) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) UpdateVulnStatus(req *model.UpdateVulnStatusRequest) error {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) LookupScanReport(reportID string) (*ent.Scan, error) {
-	panic("not implemented") // TODO: Implement
 }
 
 // Auth

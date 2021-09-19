@@ -36,19 +36,19 @@ func postWebhookGitHub(c *gin.Context) {
 
 	switch event := raw.(type) {
 	case *github.PushEvent:
-		if err := uc.HandleGitHubPushEvent(event); err != nil {
+		if err := uc.HandleGitHubPushEvent(c, event); err != nil {
 			_ = c.Error(err)
 			return
 		}
 
 	case *github.PullRequestEvent:
-		if err := uc.HandleGitHubPullReqEvent(event); err != nil {
+		if err := uc.HandleGitHubPullReqEvent(c, event); err != nil {
 			_ = c.Error(err)
 			return
 		}
 
 	case *github.InstallationEvent:
-		if err := uc.HandleGitHubInstallationEvent(event); err != nil {
+		if err := uc.HandleGitHubInstallationEvent(c, event); err != nil {
 			_ = c.Error(err)
 			return
 		}

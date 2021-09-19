@@ -1,12 +1,8 @@
 package usecase
 
 import (
-	"archive/zip"
 	"context"
-	"fmt"
 	"io"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"sort"
 	"time"
@@ -69,6 +65,8 @@ func (x *usecase) runScanThread() error {
 			GitHubApp: x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, githubAppPEM),
 			Detector:  detector,
 			Utils:     x.infra.Utils,
+
+			FrontendURL: x.config.FrontendURL,
 		}
 
 		if err := scanRepository(ctx, req, clients); err != nil {
@@ -84,16 +82,18 @@ type scanClients struct {
 	GitHubApp githubapp.Interface
 	Detector  *vulnDetector
 	Utils     *infra.Utils
+
+	FrontendURL string
 }
 
-func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanRepositoryRequest, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) error {
+func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanRepositoryRequest, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) (*ent.Scan, error) {
 	if err := client.PutVulnerabilities(ctx, vulnList); err != nil {
-		return err
+		return nil, err
 	}
 
 	addedPkgs, err := client.PutPackages(ctx, pkgs)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	repo, err := client.CreateRepo(ctx, &ent.Repository{
@@ -101,7 +101,7 @@ func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanR
 		Name:  req.RepoName,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	report := &ent.Scan{
@@ -110,134 +110,69 @@ func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanR
 		RequestedAt: req.RequestedAt,
 		ScannedAt:   now.Unix(),
 	}
-	if _, err := client.PutScan(ctx, report, repo, addedPkgs); err != nil {
-		return err
+	scan, err := client.PutScan(ctx, report, repo, addedPkgs)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return scan, nil
 }
 
 func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clients *scanClients) error {
-	var checkID int64
-	if req.IsPullRequest {
-		id, err := clients.GitHubApp.CreateCheckRun(&req.GitHubRepo, req.CommitID)
-		if err != nil {
-			return err
-		}
-		checkID = id
+	check := newCheckRun(clients.GitHubApp)
+	if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
+		return err
 	}
 
 	if err := clients.Detector.RefreshDB(); err != nil {
 		return err
 	}
 
-	pkgs, err := detectPackages(req, clients)
+	newPkgs, err := crawlPackages(req, clients)
 	if err != nil {
 		return err
 	}
 
 	scannedAt := clients.Utils.Now()
-	vulnList, err := annotateVulnerability(clients.Detector, pkgs, scannedAt.Unix())
+	vulnList, err := annotateVulnerability(clients.Detector, newPkgs, scannedAt.Unix())
 	if err != nil {
 		return err
 	}
 
-	// Retrieve latest scan report to compare with current one before inserting
-	latest, err := clients.DB.GetLatestScan(ctx, req.GitHubBranch)
+	newScan, err := insertScanReport(ctx, clients.DB, req, newPkgs, vulnList, scannedAt)
 	if err != nil {
-		return goerr.Wrap(err)
-	}
-
-	if err := insertScanReport(ctx, clients.DB, req, pkgs, vulnList, scannedAt); err != nil {
 		return err
 	}
+	logger.Debug().Str("scanID", newScan.ID).Msg("inserted scan report")
 
-	var oldPkgs []*ent.PackageRecord
-	if latest != nil {
-		oldPkgs = latest.Edges.Packages
+	var changes *pkgChanges
+	if req.TargetBranch != "" {
+		// Retrieve latest scan report to compare with current one before inserting
+		latest, err := clients.DB.GetLatestScan(ctx, model.GitHubBranch{
+			GitHubRepo: req.GitHubRepo,
+			Branch:     req.TargetBranch,
+		})
+		if err != nil {
+			return goerr.Wrap(err)
+		}
+
+		var oldPkgs []*ent.PackageRecord
+		if latest != nil {
+			oldPkgs = latest.Edges.Packages
+		}
+
+		changes = diffPackages(oldPkgs, newPkgs)
+
+		if err := postGitHubComment(clients.GitHubApp, newScan.ID, changes, clients.FrontendURL); err != nil {
+			return err
+		}
 	}
 
-	sourcePkgMap := map[string][]*ent.PackageRecord{}
-	var newPkgs []*ent.PackageRecord
-	for i := range pkgs {
-		sourcePkgMap[pkgs[i].Source] = append(sourcePkgMap[pkgs[i].Source], pkgs[i])
-		newPkgs = append(newPkgs, pkgs[i])
-	}
-
-	addPkgs, modPkgs, delPkgs := diffPackageList(oldPkgs, newPkgs)
-
-	if req.IsPullRequest {
-		// TODO: feedback
-		logger.Info().
-			Interface("checkID", checkID).
-			Interface("added", addPkgs).
-			Interface("modified", modPkgs).
-			Interface("deleted", delPkgs).
-			Msg("DO Feedback")
+	if err := check.complete(newScan.ID, changes, clients.FrontendURL); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func detectPackages(req *model.ScanRepositoryRequest, clients *scanClients) ([]*ent.PackageRecord, error) {
-	tmp, err := ioutil.TempFile("", "*.zip")
-	if err != nil {
-		return nil, goerr.Wrap(err)
-	}
-	defer func() {
-		if err := os.Remove(tmp.Name()); err != nil {
-			logger.Error().Interface("filename", tmp.Name()).Msg("Failed to remove zip file")
-		}
-	}()
-
-	if err := clients.GitHubApp.GetCodeZip(&req.GitHubRepo, req.CommitID, tmp); err != nil {
-		return nil, err
-	}
-
-	zipFile, err := zip.OpenReader(tmp.Name())
-	if err != nil {
-		return nil, goerr.Wrap(err).With("file", tmp.Name())
-	}
-	defer func() {
-		if err := zipFile.Close(); err != nil {
-			logger.Error().Interface("zip", zipFile).Err(err).Msg("Failed to close zip file")
-		}
-	}()
-
-	var newPkgs []*ent.PackageRecord
-
-	for _, f := range zipFile.File {
-		psr, ok := parserMap[filepath.Base(f.Name)]
-		if !ok {
-			continue
-		}
-
-		fd, err := f.Open()
-		if err != nil {
-			return nil, goerr.Wrap(err)
-		}
-		defer fd.Close()
-
-		pkgs, err := psr.Parse(fd)
-		if err != nil {
-			return nil, goerr.Wrap(err)
-		}
-
-		parsed := make([]*ent.PackageRecord, len(pkgs))
-		for i := range pkgs {
-			pkg := &ent.PackageRecord{
-				Source:  stepDownDirectory(f.Name),
-				Type:    psr.PkgType,
-				Name:    pkgs[i].Name,
-				Version: pkgs[i].Version,
-			}
-			parsed[i] = pkg
-		}
-
-		newPkgs = append(newPkgs, parsed...)
-	}
-
-	return newPkgs, nil
 }
 
 func annotateVulnerability(dt *vulnDetector, pkgs []*ent.PackageRecord, seenAt int64) ([]*ent.Vulnerability, error) {
@@ -283,38 +218,6 @@ func annotateVulnerability(dt *vulnDetector, pkgs []*ent.PackageRecord, seenAt i
 	}
 
 	return vulnList, nil
-}
-
-func diffPackageList(oldPkgs, newPkgs []*ent.PackageRecord) (addPkgs, modPkgs, delPkgs []*ent.PackageRecord) {
-	oldMap := mapPackages(oldPkgs)
-	newMap := mapPackages(newPkgs)
-
-	for oldKey, oldPkg := range oldMap {
-		if newPkg, ok := newMap[oldKey]; !ok {
-			delPkgs = append(delPkgs, oldPkg)
-		} else {
-			if !matchVulnerabilities(oldPkg, newPkg) {
-				modPkgs = append(modPkgs, newPkg)
-			}
-		}
-	}
-
-	for newKey, newPkg := range newMap {
-		if _, ok := oldMap[newKey]; !ok {
-			addPkgs = append(addPkgs, newPkg)
-		}
-	}
-
-	return
-}
-
-func mapPackages(pkgs []*ent.PackageRecord) map[string]*ent.PackageRecord {
-	resp := make(map[string]*ent.PackageRecord)
-	for _, pkg := range pkgs {
-		key := fmt.Sprintf("%s|%s|%s", pkg.Source, pkg.Name, pkg.Version)
-		resp[key] = pkg
-	}
-	return resp
 }
 
 func matchVulnerabilities(a, b *ent.PackageRecord) bool {

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"sort"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
-func (x *usecase) HandleGitHubPushEvent(event *github.PushEvent) error {
+func (x *usecase) HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error {
 	if event == nil ||
 		event.Repo == nil ||
 		event.Repo.HTMLURL == nil ||
@@ -43,11 +44,10 @@ func (x *usecase) HandleGitHubPushEvent(event *github.PushEvent) error {
 				},
 				Branch: refs[2],
 			},
-			CommitID:       *commit.ID,
-			UpdatedAt:      commit.Timestamp.Unix(),
-			URL:            *event.Repo.HTMLURL,
-			IsPullRequest:  false,
-			IsTargetBranch: (*event.Repo.DefaultBranch == refs[2]),
+			CommitID:      *commit.ID,
+			UpdatedAt:     commit.Timestamp.Unix(),
+			URL:           *event.Repo.HTMLURL,
+			IsPullRequest: false,
 		},
 		InstallID: *event.Installation.ID,
 	}
@@ -64,7 +64,7 @@ func (x *usecase) HandleGitHubPushEvent(event *github.PushEvent) error {
 		DefaultBranch: event.Repo.DefaultBranch,
 		AvatarURL:     event.Repo.Owner.AvatarURL,
 	}
-	if _, err := x.RegisterRepository(repo); err != nil {
+	if _, err := x.RegisterRepository(ctx, repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 	}
 
@@ -73,7 +73,7 @@ func (x *usecase) HandleGitHubPushEvent(event *github.PushEvent) error {
 
 }
 
-func (x *usecase) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error {
+func (x *usecase) HandleGitHubPullReqEvent(ctx context.Context, event *github.PullRequestEvent) error {
 	if event == nil ||
 		event.Action == nil ||
 		event.Repo == nil ||
@@ -111,16 +111,13 @@ func (x *usecase) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 				},
 				Branch: *event.PullRequest.Head.Label,
 			},
-			CommitID:       *event.PullRequest.Head.SHA,
-			UpdatedAt:      event.PullRequest.CreatedAt.Unix(),
-			URL:            *event.Repo.HTMLURL,
-			IsPullRequest:  true,
-			IsTargetBranch: false,
+			CommitID:      *event.PullRequest.Head.SHA,
+			UpdatedAt:     event.PullRequest.CreatedAt.Unix(),
+			URL:           *event.Repo.HTMLURL,
+			IsPullRequest: true,
+			TargetBranch:  *event.PullRequest.Base.Ref,
 		},
 		InstallID: *event.Installation.ID,
-		Feedback: &model.FeedbackOptions{
-			PullReqBranch: *event.PullRequest.Base.Ref,
-		},
 	}
 
 	if err := x.SendScanRequest(&req); err != nil {
@@ -136,7 +133,7 @@ func (x *usecase) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 		AvatarURL:     event.Repo.Owner.AvatarURL,
 	}
 
-	if _, err := x.RegisterRepository(repo); err != nil {
+	if _, err := x.RegisterRepository(ctx, repo); err != nil {
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 	}
 
@@ -144,7 +141,7 @@ func (x *usecase) HandleGitHubPullReqEvent(event *github.PullRequestEvent) error
 	return nil
 }
 
-func (x *usecase) HandleGitHubInstallationEvent(event *github.InstallationEvent) error {
+func (x *usecase) HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error {
 	if event == nil ||
 		event.Installation == nil ||
 		event.Installation.ID == nil ||
@@ -169,7 +166,7 @@ func (x *usecase) HandleGitHubInstallationEvent(event *github.InstallationEvent)
 			InstallID: *event.Installation.ID,
 		}
 
-		if _, err := x.RegisterRepository(repo); err != nil {
+		if _, err := x.RegisterRepository(ctx, repo); err != nil {
 			return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 		}
 	}

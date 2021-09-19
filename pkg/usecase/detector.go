@@ -66,6 +66,7 @@ func (x *vulnDetector) initDetector() error {
 }
 
 func (x *vulnDetector) RefreshDB() error {
+	// TODO: improve trivy DB refresh logic
 	if isFileExist(x.dbPath) {
 		logger.Debug().Str("path", x.dbPath).Msg("Found existing DB file")
 		return x.initDetector()

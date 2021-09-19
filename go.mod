@@ -13,7 +13,6 @@ require (
 	github.com/aquasecurity/trivy-db v0.0.0-20210907100132-2ec74c43526d
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/gin-gonic/gin v1.4.0
-	github.com/google/go-github/v29 v29.0.3 // indirect
 	github.com/google/go-github/v39 v39.0.0
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.2

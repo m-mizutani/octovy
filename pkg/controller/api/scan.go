@@ -9,9 +9,9 @@ import (
 
 func getScanReport(c *gin.Context) {
 	uc := getUsecase(c)
-	reportID := c.Param("report_id")
+	scanID := c.Param("scan_id")
 
-	report, err := uc.LookupScanReport(reportID)
+	report, err := uc.LookupScanReport(c, scanID)
 	if err != nil {
 		_ = c.Error(err)
 		return
