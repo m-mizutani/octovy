@@ -85,6 +85,9 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 	if err != nil {
 		return nil, err
 	}
+	if latest == nil {
+		return nil, nil
+	}
 	return x.GetScan(ctx, latest.ID)
 }
 
