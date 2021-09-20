@@ -29,6 +29,5 @@ func (PackageRecord) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("scan", Scan.Type).Ref("packages"),
 		edge.To("vulnerabilities", Vulnerability.Type),
-		edge.To("status", VulnStatus.Type),
 	}
 }
