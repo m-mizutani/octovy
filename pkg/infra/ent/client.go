@@ -403,6 +403,22 @@ func (c *RepositoryClient) QueryScan(r *Repository) *ScanQuery {
 	return query
 }
 
+// QueryStatus queries the status edge of a Repository.
+func (c *RepositoryClient) QueryStatus(r *Repository) *VulnStatusQuery {
+	query := &VulnStatusQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, id),
+			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.StatusTable, repository.StatusColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *RepositoryClient) Hooks() []Hook {
 	return c.hooks.Repository

@@ -12,6 +12,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
 // RepositoryUpdate is the builder for updating Repository entities.
@@ -141,6 +142,21 @@ func (ru *RepositoryUpdate) AddScan(s ...*Scan) *RepositoryUpdate {
 	return ru.AddScanIDs(ids...)
 }
 
+// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
+func (ru *RepositoryUpdate) AddStatuIDs(ids ...string) *RepositoryUpdate {
+	ru.mutation.AddStatuIDs(ids...)
+	return ru
+}
+
+// AddStatus adds the "status" edges to the VulnStatus entity.
+func (ru *RepositoryUpdate) AddStatus(v ...*VulnStatus) *RepositoryUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return ru.AddStatuIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ru *RepositoryUpdate) Mutation() *RepositoryMutation {
 	return ru.mutation
@@ -165,6 +181,27 @@ func (ru *RepositoryUpdate) RemoveScan(s ...*Scan) *RepositoryUpdate {
 		ids[i] = s[i].ID
 	}
 	return ru.RemoveScanIDs(ids...)
+}
+
+// ClearStatus clears all "status" edges to the VulnStatus entity.
+func (ru *RepositoryUpdate) ClearStatus() *RepositoryUpdate {
+	ru.mutation.ClearStatus()
+	return ru
+}
+
+// RemoveStatuIDs removes the "status" edge to VulnStatus entities by IDs.
+func (ru *RepositoryUpdate) RemoveStatuIDs(ids ...string) *RepositoryUpdate {
+	ru.mutation.RemoveStatuIDs(ids...)
+	return ru
+}
+
+// RemoveStatus removes "status" edges to VulnStatus entities.
+func (ru *RepositoryUpdate) RemoveStatus(v ...*VulnStatus) *RepositoryUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return ru.RemoveStatuIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -366,6 +403,60 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.StatusCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedStatusIDs(); len(nodes) > 0 && !ru.mutation.StatusCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.StatusIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{repository.Label}
@@ -499,6 +590,21 @@ func (ruo *RepositoryUpdateOne) AddScan(s ...*Scan) *RepositoryUpdateOne {
 	return ruo.AddScanIDs(ids...)
 }
 
+// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
+func (ruo *RepositoryUpdateOne) AddStatuIDs(ids ...string) *RepositoryUpdateOne {
+	ruo.mutation.AddStatuIDs(ids...)
+	return ruo
+}
+
+// AddStatus adds the "status" edges to the VulnStatus entity.
+func (ruo *RepositoryUpdateOne) AddStatus(v ...*VulnStatus) *RepositoryUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return ruo.AddStatuIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ruo *RepositoryUpdateOne) Mutation() *RepositoryMutation {
 	return ruo.mutation
@@ -523,6 +629,27 @@ func (ruo *RepositoryUpdateOne) RemoveScan(s ...*Scan) *RepositoryUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return ruo.RemoveScanIDs(ids...)
+}
+
+// ClearStatus clears all "status" edges to the VulnStatus entity.
+func (ruo *RepositoryUpdateOne) ClearStatus() *RepositoryUpdateOne {
+	ruo.mutation.ClearStatus()
+	return ruo
+}
+
+// RemoveStatuIDs removes the "status" edge to VulnStatus entities by IDs.
+func (ruo *RepositoryUpdateOne) RemoveStatuIDs(ids ...string) *RepositoryUpdateOne {
+	ruo.mutation.RemoveStatuIDs(ids...)
+	return ruo
+}
+
+// RemoveStatus removes "status" edges to VulnStatus entities.
+func (ruo *RepositoryUpdateOne) RemoveStatus(v ...*VulnStatus) *RepositoryUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return ruo.RemoveStatuIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -740,6 +867,60 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.StatusCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedStatusIDs(); len(nodes) > 0 && !ruo.mutation.StatusCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.StatusIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
 				},
 			},
 		}

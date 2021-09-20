@@ -15,6 +15,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
 // RepositoryQuery is the builder for querying Repository entities.
@@ -27,7 +28,8 @@ type RepositoryQuery struct {
 	fields     []string
 	predicates []predicate.Repository
 	// eager-loading edges.
-	withScan *ScanQuery
+	withScan   *ScanQuery
+	withStatus *VulnStatusQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -79,6 +81,28 @@ func (rq *RepositoryQuery) QueryScan() *ScanQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(scan.Table, scan.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, repository.ScanTable, repository.ScanPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStatus chains the current query on the "status" edge.
+func (rq *RepositoryQuery) QueryStatus() *VulnStatusQuery {
+	query := &VulnStatusQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.StatusTable, repository.StatusColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -268,6 +292,7 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		order:      append([]OrderFunc{}, rq.order...),
 		predicates: append([]predicate.Repository{}, rq.predicates...),
 		withScan:   rq.withScan.Clone(),
+		withStatus: rq.withStatus.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -282,6 +307,17 @@ func (rq *RepositoryQuery) WithScan(opts ...func(*ScanQuery)) *RepositoryQuery {
 		opt(query)
 	}
 	rq.withScan = query
+	return rq
+}
+
+// WithStatus tells the query-builder to eager-load the nodes that are connected to
+// the "status" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithStatus(opts ...func(*VulnStatusQuery)) *RepositoryQuery {
+	query := &VulnStatusQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withStatus = query
 	return rq
 }
 
@@ -350,8 +386,9 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 	var (
 		nodes       = []*Repository{}
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			rq.withScan != nil,
+			rq.withStatus != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -436,6 +473,35 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 			for i := range nodes {
 				nodes[i].Edges.Scan = append(nodes[i].Edges.Scan, n)
 			}
+		}
+	}
+
+	if query := rq.withStatus; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Repository)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Status = []*VulnStatus{}
+		}
+		query.withFKs = true
+		query.Where(predicate.VulnStatus(func(s *sql.Selector) {
+			s.Where(sql.InValues(repository.StatusColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.repository_status
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "repository_status" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "repository_status" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Status = append(node.Edges.Status, n)
 		}
 	}
 

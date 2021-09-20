@@ -27,6 +27,7 @@ type Interface interface {
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
 	PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
 	PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
+	PutVulnStatus(ctx context.Context, repo *ent.Repository, status *ent.VulnStatus) error
 
 	GetScan(ctx context.Context, id string) (*ent.Scan, error)
 	GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error)

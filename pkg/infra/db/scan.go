@@ -66,7 +66,9 @@ func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
 	}
 
 	got, err := x.client.Scan.Query().Where(scan.ID(id)).
-		WithRepository().
+		WithRepository(func(rq *ent.RepositoryQuery) {
+			rq.WithStatus()
+		}).
 		WithPackages(func(prq *ent.PackageRecordQuery) {
 			prq.WithStatus().WithVulnerabilities()
 		}).
@@ -79,6 +81,15 @@ func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
 }
 
 func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error) {
+	latest, err := x.getLatestScanEntity(ctx, branch)
+	if err != nil {
+		return nil, err
+	}
+	return x.GetScan(ctx, latest.ID)
+}
+
+func (x *Client) getLatestScanEntity(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error) {
+
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -90,9 +101,7 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 		WithScan(func(sq *ent.ScanQuery) {
 			sq.Where(scan.Branch(branch.Branch)).
 				Order(ent.Desc("scanned_at")).
-				WithPackages(func(prq *ent.PackageRecordQuery) {
-					prq.WithVulnerabilities()
-				})
+				Limit(1)
 		}).First(ctx)
 
 	if ent.IsNotFound(err) {
@@ -101,12 +110,9 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 		return nil, goerr.Wrap(err)
 	}
 
-	if len(got.Edges.Scan) == 0 {
+	if len(got.Edges.Scan) != 1 {
 		return nil, nil // not found
 	}
-
-	// TODO: refactoring
-	got.Edges.Scan[0].Edges.Repository = []*ent.Repository{got}
 
 	return got.Edges.Scan[0], nil
 }

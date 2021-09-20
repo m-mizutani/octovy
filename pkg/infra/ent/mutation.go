@@ -822,6 +822,9 @@ type RepositoryMutation struct {
 	scan           map[string]struct{}
 	removedscan    map[string]struct{}
 	clearedscan    bool
+	status         map[string]struct{}
+	removedstatus  map[string]struct{}
+	clearedstatus  bool
 	done           bool
 	oldValue       func(context.Context) (*Repository, error)
 	predicates     []predicate.Repository
@@ -1249,6 +1252,60 @@ func (m *RepositoryMutation) ResetScan() {
 	m.removedscan = nil
 }
 
+// AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
+func (m *RepositoryMutation) AddStatuIDs(ids ...string) {
+	if m.status == nil {
+		m.status = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.status[ids[i]] = struct{}{}
+	}
+}
+
+// ClearStatus clears the "status" edge to the VulnStatus entity.
+func (m *RepositoryMutation) ClearStatus() {
+	m.clearedstatus = true
+}
+
+// StatusCleared reports if the "status" edge to the VulnStatus entity was cleared.
+func (m *RepositoryMutation) StatusCleared() bool {
+	return m.clearedstatus
+}
+
+// RemoveStatuIDs removes the "status" edge to the VulnStatus entity by IDs.
+func (m *RepositoryMutation) RemoveStatuIDs(ids ...string) {
+	if m.removedstatus == nil {
+		m.removedstatus = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.status, ids[i])
+		m.removedstatus[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedStatus returns the removed IDs of the "status" edge to the VulnStatus entity.
+func (m *RepositoryMutation) RemovedStatusIDs() (ids []string) {
+	for id := range m.removedstatus {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// StatusIDs returns the "status" edge IDs in the mutation.
+func (m *RepositoryMutation) StatusIDs() (ids []string) {
+	for id := range m.status {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetStatus resets all changes to the "status" edge.
+func (m *RepositoryMutation) ResetStatus() {
+	m.status = nil
+	m.clearedstatus = false
+	m.removedstatus = nil
+}
+
 // Where appends a list predicates to the RepositoryMutation builder.
 func (m *RepositoryMutation) Where(ps ...predicate.Repository) {
 	m.predicates = append(m.predicates, ps...)
@@ -1494,9 +1551,12 @@ func (m *RepositoryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RepositoryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.scan != nil {
 		edges = append(edges, repository.EdgeScan)
+	}
+	if m.status != nil {
+		edges = append(edges, repository.EdgeStatus)
 	}
 	return edges
 }
@@ -1511,15 +1571,24 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgeStatus:
+		ids := make([]ent.Value, 0, len(m.status))
+		for id := range m.status {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RepositoryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedscan != nil {
 		edges = append(edges, repository.EdgeScan)
+	}
+	if m.removedstatus != nil {
+		edges = append(edges, repository.EdgeStatus)
 	}
 	return edges
 }
@@ -1534,15 +1603,24 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgeStatus:
+		ids := make([]ent.Value, 0, len(m.removedstatus))
+		for id := range m.removedstatus {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RepositoryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedscan {
 		edges = append(edges, repository.EdgeScan)
+	}
+	if m.clearedstatus {
+		edges = append(edges, repository.EdgeStatus)
 	}
 	return edges
 }
@@ -1553,6 +1631,8 @@ func (m *RepositoryMutation) EdgeCleared(name string) bool {
 	switch name {
 	case repository.EdgeScan:
 		return m.clearedscan
+	case repository.EdgeStatus:
+		return m.clearedstatus
 	}
 	return false
 }
@@ -1571,6 +1651,9 @@ func (m *RepositoryMutation) ResetEdge(name string) error {
 	switch name {
 	case repository.EdgeScan:
 		m.ResetScan()
+		return nil
+	case repository.EdgeStatus:
+		m.ResetStatus()
 		return nil
 	}
 	return fmt.Errorf("unknown Repository edge %s", name)

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
 // RepositoryCreate is the builder for creating a Repository entity.
@@ -103,6 +104,21 @@ func (rc *RepositoryCreate) AddScan(s ...*Scan) *RepositoryCreate {
 		ids[i] = s[i].ID
 	}
 	return rc.AddScanIDs(ids...)
+}
+
+// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
+func (rc *RepositoryCreate) AddStatuIDs(ids ...string) *RepositoryCreate {
+	rc.mutation.AddStatuIDs(ids...)
+	return rc
+}
+
+// AddStatus adds the "status" edges to the VulnStatus entity.
+func (rc *RepositoryCreate) AddStatus(v ...*VulnStatus) *RepositoryCreate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return rc.AddStatuIDs(ids...)
 }
 
 // Mutation returns the RepositoryMutation object of the builder.
@@ -268,6 +284,25 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.StatusIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.StatusTable,
+			Columns: []string{repository.StatusColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: vulnstatus.FieldID,
 				},
 			},
 		}

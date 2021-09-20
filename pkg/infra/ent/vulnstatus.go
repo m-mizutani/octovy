@@ -33,6 +33,7 @@ type VulnStatus struct {
 	// Comment holds the value of the "comment" field.
 	Comment               string `json:"comment,omitempty"`
 	package_record_status *int
+	repository_status     *int
 	user_edited_status    *string
 	vulnerability_status  *string
 }
@@ -48,9 +49,11 @@ func (*VulnStatus) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case vulnstatus.ForeignKeys[0]: // package_record_status
 			values[i] = new(sql.NullInt64)
-		case vulnstatus.ForeignKeys[1]: // user_edited_status
+		case vulnstatus.ForeignKeys[1]: // repository_status
+			values[i] = new(sql.NullInt64)
+		case vulnstatus.ForeignKeys[2]: // user_edited_status
 			values[i] = new(sql.NullString)
-		case vulnstatus.ForeignKeys[2]: // vulnerability_status
+		case vulnstatus.ForeignKeys[3]: // vulnerability_status
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type VulnStatus", columns[i])
@@ -129,13 +132,20 @@ func (vs *VulnStatus) assignValues(columns []string, values []interface{}) error
 				*vs.package_record_status = int(value.Int64)
 			}
 		case vulnstatus.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field repository_status", value)
+			} else if value.Valid {
+				vs.repository_status = new(int)
+				*vs.repository_status = int(value.Int64)
+			}
+		case vulnstatus.ForeignKeys[2]:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field user_edited_status", values[i])
 			} else if value.Valid {
 				vs.user_edited_status = new(string)
 				*vs.user_edited_status = value.String
 			}
-		case vulnstatus.ForeignKeys[2]:
+		case vulnstatus.ForeignKeys[3]:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field vulnerability_status", values[i])
 			} else if value.Valid {

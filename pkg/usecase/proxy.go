@@ -16,9 +16,40 @@ func (x *usecase) RegisterRepository(ctx context.Context, repo *ent.Repository) 
 }
 
 func (x *usecase) UpdateVulnStatus(ctx context.Context, req *model.UpdateVulnStatusRequest) error {
-	panic("not implemented") // TODO: Implement
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	tgt, err := x.infra.DB.CreateRepo(ctx, &ent.Repository{
+		Owner: req.Owner,
+		Name:  req.RepoName,
+	})
+	if err != nil {
+		return err
+	}
+
+	status := &ent.VulnStatus{
+		Status:    req.Status,
+		Source:    req.Source,
+		PkgName:   req.PkgName,
+		PkgType:   req.PkgType,
+		ExpiresAt: req.ExpiresAt,
+		CreatedAt: x.infra.Utils.Now().Unix(),
+		VulnID:    req.VulnID,
+		Comment:   req.Comment,
+	}
+
+	if err := x.infra.DB.PutVulnStatus(ctx, tgt, status); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (x *usecase) LookupScanReport(ctx context.Context, scanID string) (*ent.Scan, error) {
-	return x.infra.DB.GetScan(context.Background(), scanID)
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	return x.infra.DB.GetScan(ctx, scanID)
 }

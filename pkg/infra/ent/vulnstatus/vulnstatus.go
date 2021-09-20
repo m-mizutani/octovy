@@ -50,6 +50,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"package_record_status",
+	"repository_status",
 	"user_edited_status",
 	"vulnerability_status",
 }
