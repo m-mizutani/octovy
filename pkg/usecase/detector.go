@@ -65,6 +65,8 @@ func (x *vulnDetector) initDetector() error {
 	return nil
 }
 
+const maxDBFileSize = 1073741824 //1GB
+
 func (x *vulnDetector) RefreshDB() error {
 	// TODO: improve trivy DB refresh logic
 	if isFileExist(x.dbPath) {
@@ -94,7 +96,7 @@ func (x *vulnDetector) RefreshDB() error {
 		return goerr.Wrap(err)
 	}
 
-	if _, err := io.Copy(tmp, gz); err != nil {
+	if _, err := io.CopyN(tmp, gz, maxDBFileSize); err != nil {
 		return goerr.Wrap(err, "Failed to save trivyDB").With("dst", tmp.Name())
 	}
 	if err := tmp.Close(); err != nil {
