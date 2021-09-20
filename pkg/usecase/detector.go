@@ -96,7 +96,7 @@ func (x *vulnDetector) RefreshDB() error {
 		return goerr.Wrap(err)
 	}
 
-	if _, err := io.CopyN(tmp, gz, maxDBFileSize); err != nil {
+	if _, err := io.CopyN(tmp, gz, maxDBFileSize); err != nil && err != io.EOF {
 		return goerr.Wrap(err, "Failed to save trivyDB").With("dst", tmp.Name())
 	}
 	if err := tmp.Close(); err != nil {
