@@ -1,8 +1,10 @@
 *.js
-!frontend/webpack.config.js
+!assets/next.config.js
 !jest.config.js
 *.d.ts
 node_modules
+assets/out
+assets/.next
 
 # CDK asset staging directory
 .cdk.staging

@@ -54,7 +54,7 @@ func postWebhookGitHub(c *gin.Context) {
 		}
 
 	default:
-		logger.With("event", event).With("type", githubEventType).Warn("Unsupported event")
+		logger.Warn().Interface("event", event).Interface("type", githubEventType).Msg("Unsupported event")
 	}
 
 	c.JSON(200, baseResponse{Data: "OK"})

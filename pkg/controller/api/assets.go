@@ -4,70 +4,109 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/assets"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
-type cache struct {
+type fileCache struct {
 	data []byte
 	eTag string
 }
-type cacheMap map[string]*cache
+type cacheMap map[string]*fileCache
 
 var assetCache = cacheMap{}
 
-func initAsset() {
-	assets := assets.Assets()
+func (x cacheMap) Read(fname string) *fileCache {
+	asset := assets.Assets()
+	c, ok := x[fname]
+	if !ok {
+		data, err := asset.ReadFile(filepath.Join("out", fname))
+		if err != nil {
+			logger.Debug().Str("path", fname).Err(err).Msg("failed to open requested file")
+			return nil
+		}
 
-	indexHTML, err := assets.ReadFile("dist/index.html")
-	if err != nil {
-		panic("Open dist/index.html: " + err.Error())
-	}
-	bundleJS, err := assets.ReadFile("dist/bundle.js")
-	if err != nil {
-		panic("Open dist/bundle.js: " + err.Error())
+		c = &fileCache{
+			data: data,
+			eTag: fmt.Sprintf("%x", sha256.Sum256(data)),
+		}
 	}
 
-	assetCache["index.html"] = &cache{
-		data: indexHTML,
-		eTag: fmt.Sprintf("%x", sha256.Sum256(indexHTML)),
-	}
-
-	assetCache["bundle.js"] = &cache{
-		data: bundleJS,
-		eTag: fmt.Sprintf("%x", sha256.Sum256(bundleJS)),
-	}
+	return c
 }
 
-func handleAsset(ctx *gin.Context, fname, contentType string) {
-	c, ok := assetCache[fname]
-	if !ok {
-		ctx.Error(goerr.Wrap(model.ErrItemNotFound))
+type extTypeMap map[string]string
+
+var extMap = extTypeMap{
+	".html": "text/html",
+	".js":   "application/javascript",
+}
+
+func (x extTypeMap) Find(path string) string {
+	for ext, contentType := range x {
+		if strings.HasSuffix(path, ext) {
+			return contentType
+		}
+	}
+
+	return "text/html"
+}
+
+type rewriteRoute struct {
+	ptn   *regexp.Regexp
+	fname string
+}
+
+type rewriteRoutes []*rewriteRoute
+
+func (x rewriteRoutes) Rewrite(path string) string {
+	for _, route := range x {
+		if route.ptn.MatchString(path) {
+			return route.fname
+		}
+	}
+	return path
+}
+
+var nextRoutes = rewriteRoutes{
+	{
+		ptn:   regexp.MustCompile("^scan/[a-z0-9-]+$"),
+		fname: "scan/[id].html",
+	},
+}
+
+func getStaticFile(ctx *gin.Context) {
+	ctx.Next()
+
+	if ctx.Writer.Status() != http.StatusNotFound {
+		return
+	}
+
+	fname := nextRoutes.Rewrite(strings.Trim(ctx.Request.URL.Path, "/"))
+	logger.Debug().Interface("req", ctx.Request.URL).Str("rewrite", fname).Msg("accessing static file")
+
+	if fname == "" {
+		fname = "index.html"
+	}
+
+	cache := assetCache.Read(fname)
+	if cache == nil {
 		return
 	}
 
 	ctx.Header("Cache-Control", "public, max-age=31536000")
-	ctx.Header("ETag", c.eTag)
+	ctx.Header("ETag", cache.eTag)
 
 	if match := ctx.GetHeader("If-None-Match"); match != "" {
-		if strings.Contains(match, c.eTag) {
+		if strings.Contains(match, cache.eTag) {
 			ctx.Status(http.StatusNotModified)
 			return
 		}
 	}
 
-	ctx.Data(http.StatusOK, contentType, c.data)
-}
-
-// Assets
-func getIndex(c *gin.Context) {
-	handleAsset(c, "index.html", "text/html")
-}
-
-func getBundleJS(c *gin.Context) {
-	handleAsset(c, "bundle.js", "application/javascript")
+	ctx.Data(http.StatusOK, extMap.Find(fname), cache.data)
 }

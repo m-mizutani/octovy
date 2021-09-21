@@ -11,10 +11,11 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/usecase"
+	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/pkg/errors"
 )
 
-var logger = golambda.Logger
+var logger = utils.Logger
 
 const (
 	contextUsecase      = "usecase"
@@ -38,19 +39,19 @@ func errResp(c *gin.Context, code int, err error) {
 
 	switch {
 	case errors.As(err, &wErr):
-		logger.With("stack", wErr.Stacks()).With("values", wErr.Values()).With("msg", wErr.Error()).Error("Failed with golambda.Error")
+		logger.Error().Interface("stack", wErr.Stacks()).Interface("values", wErr.Values()).Interface("msg", wErr.Error()).Msg("Failed with golambda.Error")
 		c.JSON(code, &errorResponse{
 			Error:  wErr.Error(),
 			Values: wErr.Values(),
 		})
 	case errors.As(err, &gErr):
-		logger.With("stack", gErr.Stacks()).With("values", gErr.Values()).With("msg", gErr.Error()).Error("Failed with goerr.Error")
+		logger.Error().Interface("stack", gErr.Stacks()).Interface("values", gErr.Values()).Interface("msg", gErr.Error()).Msg("Failed with goerr.Error")
 		c.JSON(code, &errorResponse{
 			Error:  gErr.Error(),
 			Values: gErr.Values(),
 		})
 	default:
-		logger.With("error", wErr).Error("Failed with normal Error")
+		logger.Error().Interface("error", wErr).Msg("Failed with normal Error")
 		c.JSON(code, &errorResponse{
 			Error: err.Error(),
 		})
@@ -62,18 +63,20 @@ func New(uc usecase.Interface) *gin.Engine {
 
 	engine.Use(func(c *gin.Context) {
 		reqID := uuid.New().String()
-		logger.
-			With("path", c.Request.URL.Path).
-			With("params", c.Params).
-			With("request_id", reqID).
-			With("remote", c.ClientIP()).
-			With("ua", c.Request.UserAgent()).
-			Info("API request")
+		logger.Info().
+			Interface("path", c.Request.URL.Path).
+			Interface("params", c.Params).
+			Interface("request_id", reqID).
+			Interface("remote", c.ClientIP()).
+			Interface("ua", c.Request.UserAgent()).
+			Msg("API request")
 
 		c.Set(contextRequestIDKey, reqID)
 		c.Set(contextUsecase, uc)
 		c.Next()
 	})
+
+	engine.Use(getStaticFile)
 
 	engine.Use(func(c *gin.Context) {
 		c.Next()
@@ -100,8 +103,6 @@ func New(uc usecase.Interface) *gin.Engine {
 		}
 	})
 
-	engine.GET("/", getIndex)
-	engine.GET("/bundle.js", getBundleJS)
 	engine.GET("/auth/github", getAuthGitHub)
 	engine.GET("/auth/github/callback", getAuthGitHubCallback)
 	engine.GET("/auth/logout", getLogout)
@@ -111,9 +112,7 @@ func New(uc usecase.Interface) *gin.Engine {
 	r.POST("/webhook/github", postWebhookGitHub)
 	r.GET("/scan/:scan_id", getScanReport)
 
-	// r.GET("/vuln/:vuln_id", getVulnerability)
 	r.POST("/status/:owner/:repo_name", postVulnStatus)
-
 	// r.GET("/user", getUser)
 
 	return engine
