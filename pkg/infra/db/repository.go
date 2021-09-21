@@ -13,6 +13,7 @@ func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Rep
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
+	logger.Debug().Interface("repo", repo).Send()
 
 	repoID, err := x.client.Repository.Query().
 		Where(repository.Owner(repo.Owner)).
@@ -34,9 +35,13 @@ func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Rep
 		repoID = newRepo.ID
 	}
 
-	q := x.client.Repository.UpdateOneID(repoID).
-		SetInstallID(repo.InstallID).
-		SetURL(repo.URL)
+	q := x.client.Repository.UpdateOneID(repoID)
+	if repo.InstallID != 0 {
+		q = q.SetInstallID(repo.InstallID)
+	}
+	if repo.URL != "" {
+		q = q.SetURL(repo.URL)
+	}
 	if repo.DefaultBranch != nil {
 		q = q.SetDefaultBranch(*repo.DefaultBranch)
 	}
@@ -44,13 +49,11 @@ func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Rep
 		q = q.SetAvatarURL(*repo.AvatarURL)
 	}
 
-	if _, err := q.Save(ctx); err != nil {
-		return nil, goerr.Wrap(err)
-	}
-
-	updated, err := x.client.Repository.Get(ctx, repoID)
+	updated, err := q.Save(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
+	logger.Debug().Interface("updated", updated).Msg("done CreateRepo")
+
 	return updated, nil
 }

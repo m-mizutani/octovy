@@ -11,7 +11,10 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/enttest"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
+
+var logger = utils.Logger
 
 type ScanResult struct {
 	Repo            *ent.Repository

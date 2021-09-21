@@ -31,7 +31,7 @@ func (x *checkRun) create(repo *model.GitHubRepo, commitID string) error {
 func (x *checkRun) complete(scanID string, changes *pkgChanges, frontendURL string) error {
 	logger.Debug().Str("scanID", scanID).
 		Str("url", frontendURL).
-		Interface("changes", changes).Msg("updating check run")
+		Msg("updating check run")
 
 	// TODO: ignore vulnerabilities having status
 
@@ -39,7 +39,7 @@ func (x *checkRun) complete(scanID string, changes *pkgChanges, frontendURL stri
 		Name:       "Octovy: package vulnerability check",
 		Status:     github.String("completed"),
 		Conclusion: github.String("success"),
-		DetailsURL: github.String(frontendURL + "/#/scan/" + scanID),
+		DetailsURL: github.String(frontendURL + "/scan/" + scanID),
 		Output: &github.CheckRunOutput{
 			Title:   github.String("Scanned new commit"),
 			Summary: github.String("OK"),
