@@ -38,11 +38,9 @@ type PackageRecordEdges struct {
 	Scan []*Scan `json:"scan,omitempty"`
 	// Vulnerabilities holds the value of the vulnerabilities edge.
 	Vulnerabilities []*Vulnerability `json:"vulnerabilities,omitempty"`
-	// Status holds the value of the status edge.
-	Status []*VulnStatus `json:"status,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // ScanOrErr returns the Scan value or an error if the edge
@@ -61,15 +59,6 @@ func (e PackageRecordEdges) VulnerabilitiesOrErr() ([]*Vulnerability, error) {
 		return e.Vulnerabilities, nil
 	}
 	return nil, &NotLoadedError{edge: "vulnerabilities"}
-}
-
-// StatusOrErr returns the Status value or an error if the edge
-// was not loaded in eager-loading.
-func (e PackageRecordEdges) StatusOrErr() ([]*VulnStatus, error) {
-	if e.loadedTypes[2] {
-		return e.Status, nil
-	}
-	return nil, &NotLoadedError{edge: "status"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -149,11 +138,6 @@ func (pr *PackageRecord) QueryScan() *ScanQuery {
 // QueryVulnerabilities queries the "vulnerabilities" edge of the PackageRecord entity.
 func (pr *PackageRecord) QueryVulnerabilities() *VulnerabilityQuery {
 	return (&PackageRecordClient{config: pr.config}).QueryVulnerabilities(pr)
-}
-
-// QueryStatus queries the "status" edge of the PackageRecord entity.
-func (pr *PackageRecord) QueryStatus() *VulnStatusQuery {
-	return (&PackageRecordClient{config: pr.config}).QueryStatus(pr)
 }
 
 // Update returns a builder for updating this PackageRecord.

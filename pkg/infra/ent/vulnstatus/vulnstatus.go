@@ -49,7 +49,6 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "vuln_status"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"package_record_status",
 	"repository_status",
 	"user_edited_status",
 	"vulnerability_status",

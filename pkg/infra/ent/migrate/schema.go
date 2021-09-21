@@ -102,7 +102,6 @@ var (
 		{Name: "expires_at", Type: field.TypeInt64},
 		{Name: "created_at", Type: field.TypeInt64},
 		{Name: "comment", Type: field.TypeString},
-		{Name: "package_record_status", Type: field.TypeInt, Nullable: true},
 		{Name: "repository_status", Type: field.TypeInt, Nullable: true},
 		{Name: "user_edited_status", Type: field.TypeString, Nullable: true},
 		{Name: "vulnerability_status", Type: field.TypeString, Nullable: true},
@@ -114,26 +113,20 @@ var (
 		PrimaryKey: []*schema.Column{VulnStatusColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "vuln_status_package_records_status",
-				Columns:    []*schema.Column{VulnStatusColumns[9]},
-				RefColumns: []*schema.Column{PackageRecordsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
 				Symbol:     "vuln_status_repositories_status",
-				Columns:    []*schema.Column{VulnStatusColumns[10]},
+				Columns:    []*schema.Column{VulnStatusColumns[9]},
 				RefColumns: []*schema.Column{RepositoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "vuln_status_users_edited_status",
-				Columns:    []*schema.Column{VulnStatusColumns[11]},
+				Columns:    []*schema.Column{VulnStatusColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "vuln_status_vulnerabilities_status",
-				Columns:    []*schema.Column{VulnStatusColumns[12]},
+				Columns:    []*schema.Column{VulnStatusColumns[11]},
 				RefColumns: []*schema.Column{VulnerabilitiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -249,10 +242,9 @@ var (
 
 func init() {
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
-	VulnStatusTable.ForeignKeys[0].RefTable = PackageRecordsTable
-	VulnStatusTable.ForeignKeys[1].RefTable = RepositoriesTable
-	VulnStatusTable.ForeignKeys[2].RefTable = UsersTable
-	VulnStatusTable.ForeignKeys[3].RefTable = VulnerabilitiesTable
+	VulnStatusTable.ForeignKeys[0].RefTable = RepositoriesTable
+	VulnStatusTable.ForeignKeys[1].RefTable = UsersTable
+	VulnStatusTable.ForeignKeys[2].RefTable = VulnerabilitiesTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[0].RefTable = PackageRecordsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
 	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable

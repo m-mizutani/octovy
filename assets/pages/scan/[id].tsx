@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
@@ -17,11 +17,12 @@ import TableRow from "@mui/material/TableRow";
 
 import * as model from "../../components/model";
 import * as app from "../../components/app";
-import { bgcolor, borderBottom } from "@mui/system";
+import Package from "./_package";
 
 type scanStatus = {
   isLoaded: boolean;
   data?: model.scan;
+  db?: model.vulnStatusDB;
   err?: any;
 };
 
@@ -43,9 +44,11 @@ function Scan() {
       .then(
         (result) => {
           console.log("result:", { result });
+          const scan: model.scan = result.data;
           setStatus({
             isLoaded: true,
-            data: result.data,
+            data: scan,
+            db: new model.vulnStatusDB(scan.edges.repository[0].edges.status),
           });
         },
         (error) => {
@@ -102,7 +105,7 @@ function Scan() {
       </Container>
       {Object.keys(vulnPkgMap).map((key) => {
         const url = `${repo.url}/blob/${scan.commit_id}/${key}`;
-        return renderPackageSource(key, vulnPkgMap[key], url);
+        return renderPackageSource(repo, key, vulnPkgMap[key], url, status.db);
       })}
     </app.Main>
   );
@@ -111,9 +114,11 @@ function Scan() {
 export default Scan;
 
 function renderPackageSource(
+  repo: model.repository,
   source: string,
   pkgs: model.packageRecord[],
-  url: string
+  url: string,
+  db: model.vulnStatusDB
 ) {
   return (
     <Container key={source} style={{ margin: "30px 0px" }}>
@@ -124,48 +129,44 @@ function renderPackageSource(
       </Grid>
       <Grid>
         {pkgs.length > 0 ? (
-          renderPackageTable(pkgs)
+          <TableContainer component={Paper}>
+            <Table
+              sx={{ minWidth: 650 }}
+              size="small"
+              aria-label="a dense table">
+              <TableHead>
+                <TableRow style={{ background: "#eee" }}>
+                  <TableCell style={{ minWidth: 160 }}>Package</TableCell>
+                  <TableCell>Version</TableCell>
+                  <TableCell>Vulnerability</TableCell>
+                  <TableCell>Title</TableCell>
+                  <TableCell style={{ minWidth: 160 }}>Status</TableCell>
+                  <TableCell>Comment</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {pkgs.map((pkg) => {
+                  return pkg.edges.vulnerabilities.map((vuln, idx) => {
+                    const k = `${pkg.source}:${pkg.name}:${pkg.version}:${vuln.id}`;
+                    return (
+                      <Package
+                        key={k}
+                        repo={repo}
+                        pkg={pkg}
+                        vuln={vuln}
+                        idx={idx}
+                        vulnDB={db}
+                      />
+                    );
+                  });
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
         ) : (
           <Typography>✅ No vulnerability found</Typography>
         )}
       </Grid>
     </Container>
   );
-}
-
-function renderPackageTable(pkgs: model.packageRecord[]) {
-  return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-        <TableHead>
-          <TableRow style={{ background: "#eee" }}>
-            <TableCell style={{ minWidth: 200 }}>Package</TableCell>
-            <TableCell>Version</TableCell>
-            <TableCell>Vulnerability</TableCell>
-            <TableCell>Title</TableCell>
-            <TableCell>Status</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>{pkgs.map(renderPackageRow)}</TableBody>
-      </Table>
-    </TableContainer>
-  );
-}
-
-function renderPackageRow(pkg: model.packageRecord) {
-  return pkg.edges.vulnerabilities.map((vuln, idx) => {
-    const pkgStyle =
-      idx < pkg.edges.vulnerabilities.length - 1
-        ? { borderBottom: "none" }
-        : {};
-    return (
-      <TableRow key={`${pkg.source}:${pkg.name}:${pkg.version}:${vuln.id}`}>
-        <TableCell style={pkgStyle}>{idx === 0 ? pkg.name : ""}</TableCell>
-        <TableCell style={pkgStyle}>{idx === 0 ? pkg.version : ""}</TableCell>
-        <TableCell>{vuln.id}</TableCell>
-        <TableCell>{vuln.title}</TableCell>
-        <TableCell>status</TableCell>
-      </TableRow>
-    );
-  });
 }

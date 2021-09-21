@@ -43,16 +43,14 @@ export type vulnStatusType =
   | "fixed";
 
 export type vulnStatus = {
-  Comment: string;
-  CreatedAt: number;
-  ExpiresAt: number;
-  Owner: string;
-  PkgName: string;
-  PkgType: string;
-  RepoName: string;
-  Source: string;
-  Status: vulnStatusType;
-  VulnID: string;
+  comment: string;
+  created_at: number;
+  expires_at: number;
+  pkg_name: string;
+  pkg_type: string;
+  source: string;
+  status: vulnStatusType;
+  vuln_id: string;
 };
 
 export type vulnerability = {
@@ -75,8 +73,14 @@ export interface user {
   URL: string;
 }
 
+export type vulnStatusAttrs = {
+  comment: string;
+  expires_at: number;
+  status: vulnStatusType;
+};
+
 export class vulnStatusDB {
-  readonly vulnMap: { [key: string]: vulnStatus };
+  readonly vulnMap: { [key: string]: vulnStatusAttrs };
   static toKey(src: string, pkgName: string, vulnID: string): string {
     return `${src}|${pkgName}|${vulnID}`;
   }
@@ -85,16 +89,28 @@ export class vulnStatusDB {
     this.vulnMap = {};
     status.forEach((status) => {
       const key = vulnStatusDB.toKey(
-        status.Source,
-        status.PkgName,
-        status.VulnID
+        status.source,
+        status.pkg_name,
+        status.vuln_id
       );
-      this.vulnMap[key] = status;
+      const attrs = {
+        comment: status.comment,
+        expires_at: status.expires_at,
+        status: status.status,
+      };
+      console.log("insert", { key }, { attrs });
+      this.vulnMap[key] = attrs;
     });
   }
 
-  getStatus(src: string, pkgName: string, vulnID: string): vulnStatus {
-    const key = vulnStatusDB.toKey(src, pkgName, vulnID);
-    return this.vulnMap[key];
+  get(pkg: packageRecord, vulnID: string): vulnStatusAttrs {
+    const key = vulnStatusDB.toKey(pkg.source, pkg.name, vulnID);
+    return (
+      this.vulnMap[key] || {
+        comment: "",
+        expires_at: 0,
+        status: "none",
+      }
+    );
   }
 }

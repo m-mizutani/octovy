@@ -70,7 +70,7 @@ func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
 			rq.WithStatus()
 		}).
 		WithPackages(func(prq *ent.PackageRecordQuery) {
-			prq.WithStatus().WithVulnerabilities()
+			prq.WithVulnerabilities()
 		}).
 		Only(ctx)
 	if err != nil {

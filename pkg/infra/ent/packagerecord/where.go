@@ -552,34 +552,6 @@ func HasVulnerabilitiesWith(preds ...predicate.Vulnerability) predicate.PackageR
 	})
 }
 
-// HasStatus applies the HasEdge predicate on the "status" edge.
-func HasStatus() predicate.PackageRecord {
-	return predicate.PackageRecord(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(StatusTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, StatusTable, StatusColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasStatusWith applies the HasEdge predicate on the "status" edge with a given conditions (other predicates).
-func HasStatusWith(preds ...predicate.VulnStatus) predicate.PackageRecord {
-	return predicate.PackageRecord(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(StatusInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, StatusTable, StatusColumn),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.PackageRecord) predicate.PackageRecord {
 	return predicate.PackageRecord(func(s *sql.Selector) {

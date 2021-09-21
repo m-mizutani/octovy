@@ -56,9 +56,6 @@ type PackageRecordMutation struct {
 	vulnerabilities        map[string]struct{}
 	removedvulnerabilities map[string]struct{}
 	clearedvulnerabilities bool
-	status                 map[string]struct{}
-	removedstatus          map[string]struct{}
-	clearedstatus          bool
 	done                   bool
 	oldValue               func(context.Context) (*PackageRecord, error)
 	predicates             []predicate.PackageRecord
@@ -431,60 +428,6 @@ func (m *PackageRecordMutation) ResetVulnerabilities() {
 	m.removedvulnerabilities = nil
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
-func (m *PackageRecordMutation) AddStatuIDs(ids ...string) {
-	if m.status == nil {
-		m.status = make(map[string]struct{})
-	}
-	for i := range ids {
-		m.status[ids[i]] = struct{}{}
-	}
-}
-
-// ClearStatus clears the "status" edge to the VulnStatus entity.
-func (m *PackageRecordMutation) ClearStatus() {
-	m.clearedstatus = true
-}
-
-// StatusCleared reports if the "status" edge to the VulnStatus entity was cleared.
-func (m *PackageRecordMutation) StatusCleared() bool {
-	return m.clearedstatus
-}
-
-// RemoveStatuIDs removes the "status" edge to the VulnStatus entity by IDs.
-func (m *PackageRecordMutation) RemoveStatuIDs(ids ...string) {
-	if m.removedstatus == nil {
-		m.removedstatus = make(map[string]struct{})
-	}
-	for i := range ids {
-		delete(m.status, ids[i])
-		m.removedstatus[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedStatus returns the removed IDs of the "status" edge to the VulnStatus entity.
-func (m *PackageRecordMutation) RemovedStatusIDs() (ids []string) {
-	for id := range m.removedstatus {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// StatusIDs returns the "status" edge IDs in the mutation.
-func (m *PackageRecordMutation) StatusIDs() (ids []string) {
-	for id := range m.status {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetStatus resets all changes to the "status" edge.
-func (m *PackageRecordMutation) ResetStatus() {
-	m.status = nil
-	m.clearedstatus = false
-	m.removedstatus = nil
-}
-
 // Where appends a list predicates to the PackageRecordMutation builder.
 func (m *PackageRecordMutation) Where(ps ...predicate.PackageRecord) {
 	m.predicates = append(m.predicates, ps...)
@@ -671,15 +614,12 @@ func (m *PackageRecordMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PackageRecordMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.scan != nil {
 		edges = append(edges, packagerecord.EdgeScan)
 	}
 	if m.vulnerabilities != nil {
 		edges = append(edges, packagerecord.EdgeVulnerabilities)
-	}
-	if m.status != nil {
-		edges = append(edges, packagerecord.EdgeStatus)
 	}
 	return edges
 }
@@ -700,27 +640,18 @@ func (m *PackageRecordMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case packagerecord.EdgeStatus:
-		ids := make([]ent.Value, 0, len(m.status))
-		for id := range m.status {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PackageRecordMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.removedscan != nil {
 		edges = append(edges, packagerecord.EdgeScan)
 	}
 	if m.removedvulnerabilities != nil {
 		edges = append(edges, packagerecord.EdgeVulnerabilities)
-	}
-	if m.removedstatus != nil {
-		edges = append(edges, packagerecord.EdgeStatus)
 	}
 	return edges
 }
@@ -741,27 +672,18 @@ func (m *PackageRecordMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case packagerecord.EdgeStatus:
-		ids := make([]ent.Value, 0, len(m.removedstatus))
-		for id := range m.removedstatus {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PackageRecordMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedscan {
 		edges = append(edges, packagerecord.EdgeScan)
 	}
 	if m.clearedvulnerabilities {
 		edges = append(edges, packagerecord.EdgeVulnerabilities)
-	}
-	if m.clearedstatus {
-		edges = append(edges, packagerecord.EdgeStatus)
 	}
 	return edges
 }
@@ -774,8 +696,6 @@ func (m *PackageRecordMutation) EdgeCleared(name string) bool {
 		return m.clearedscan
 	case packagerecord.EdgeVulnerabilities:
 		return m.clearedvulnerabilities
-	case packagerecord.EdgeStatus:
-		return m.clearedstatus
 	}
 	return false
 }
@@ -797,9 +717,6 @@ func (m *PackageRecordMutation) ResetEdge(name string) error {
 		return nil
 	case packagerecord.EdgeVulnerabilities:
 		m.ResetVulnerabilities()
-		return nil
-	case packagerecord.EdgeStatus:
-		m.ResetStatus()
 		return nil
 	}
 	return fmt.Errorf("unknown PackageRecord edge %s", name)

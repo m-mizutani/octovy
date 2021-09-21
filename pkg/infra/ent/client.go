@@ -281,22 +281,6 @@ func (c *PackageRecordClient) QueryVulnerabilities(pr *PackageRecord) *Vulnerabi
 	return query
 }
 
-// QueryStatus queries the status edge of a PackageRecord.
-func (c *PackageRecordClient) QueryStatus(pr *PackageRecord) *VulnStatusQuery {
-	query := &VulnStatusQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
-		id := pr.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(packagerecord.Table, packagerecord.FieldID, id),
-			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, packagerecord.StatusTable, packagerecord.StatusColumn),
-		)
-		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
 func (c *PackageRecordClient) Hooks() []Hook {
 	return c.hooks.PackageRecord

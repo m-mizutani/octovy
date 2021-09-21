@@ -14,7 +14,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
 // PackageRecordUpdate is the builder for updating PackageRecord entities.
@@ -72,21 +71,6 @@ func (pru *PackageRecordUpdate) AddVulnerabilities(v ...*Vulnerability) *Package
 	return pru.AddVulnerabilityIDs(ids...)
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
-func (pru *PackageRecordUpdate) AddStatuIDs(ids ...string) *PackageRecordUpdate {
-	pru.mutation.AddStatuIDs(ids...)
-	return pru
-}
-
-// AddStatus adds the "status" edges to the VulnStatus entity.
-func (pru *PackageRecordUpdate) AddStatus(v ...*VulnStatus) *PackageRecordUpdate {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return pru.AddStatuIDs(ids...)
-}
-
 // Mutation returns the PackageRecordMutation object of the builder.
 func (pru *PackageRecordUpdate) Mutation() *PackageRecordMutation {
 	return pru.mutation
@@ -132,27 +116,6 @@ func (pru *PackageRecordUpdate) RemoveVulnerabilities(v ...*Vulnerability) *Pack
 		ids[i] = v[i].ID
 	}
 	return pru.RemoveVulnerabilityIDs(ids...)
-}
-
-// ClearStatus clears all "status" edges to the VulnStatus entity.
-func (pru *PackageRecordUpdate) ClearStatus() *PackageRecordUpdate {
-	pru.mutation.ClearStatus()
-	return pru
-}
-
-// RemoveStatuIDs removes the "status" edge to VulnStatus entities by IDs.
-func (pru *PackageRecordUpdate) RemoveStatuIDs(ids ...string) *PackageRecordUpdate {
-	pru.mutation.RemoveStatuIDs(ids...)
-	return pru
-}
-
-// RemoveStatus removes "status" edges to VulnStatus entities.
-func (pru *PackageRecordUpdate) RemoveStatus(v ...*VulnStatus) *PackageRecordUpdate {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return pru.RemoveStatuIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -365,60 +328,6 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if pru.mutation.StatusCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pru.mutation.RemovedStatusIDs(); len(nodes) > 0 && !pru.mutation.StatusCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pru.mutation.StatusIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{packagerecord.Label}
@@ -480,21 +389,6 @@ func (pruo *PackageRecordUpdateOne) AddVulnerabilities(v ...*Vulnerability) *Pac
 	return pruo.AddVulnerabilityIDs(ids...)
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
-func (pruo *PackageRecordUpdateOne) AddStatuIDs(ids ...string) *PackageRecordUpdateOne {
-	pruo.mutation.AddStatuIDs(ids...)
-	return pruo
-}
-
-// AddStatus adds the "status" edges to the VulnStatus entity.
-func (pruo *PackageRecordUpdateOne) AddStatus(v ...*VulnStatus) *PackageRecordUpdateOne {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return pruo.AddStatuIDs(ids...)
-}
-
 // Mutation returns the PackageRecordMutation object of the builder.
 func (pruo *PackageRecordUpdateOne) Mutation() *PackageRecordMutation {
 	return pruo.mutation
@@ -540,27 +434,6 @@ func (pruo *PackageRecordUpdateOne) RemoveVulnerabilities(v ...*Vulnerability) *
 		ids[i] = v[i].ID
 	}
 	return pruo.RemoveVulnerabilityIDs(ids...)
-}
-
-// ClearStatus clears all "status" edges to the VulnStatus entity.
-func (pruo *PackageRecordUpdateOne) ClearStatus() *PackageRecordUpdateOne {
-	pruo.mutation.ClearStatus()
-	return pruo
-}
-
-// RemoveStatuIDs removes the "status" edge to VulnStatus entities by IDs.
-func (pruo *PackageRecordUpdateOne) RemoveStatuIDs(ids ...string) *PackageRecordUpdateOne {
-	pruo.mutation.RemoveStatuIDs(ids...)
-	return pruo
-}
-
-// RemoveStatus removes "status" edges to VulnStatus entities.
-func (pruo *PackageRecordUpdateOne) RemoveStatus(v ...*VulnStatus) *PackageRecordUpdateOne {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return pruo.RemoveStatuIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -789,60 +662,6 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: vulnerability.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if pruo.mutation.StatusCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pruo.mutation.RemovedStatusIDs(); len(nodes) > 0 && !pruo.mutation.StatusCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pruo.mutation.StatusIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
 				},
 			},
 		}

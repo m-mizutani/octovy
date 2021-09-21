@@ -14,7 +14,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
 // PackageRecordCreate is the builder for creating a PackageRecord entity.
@@ -83,21 +82,6 @@ func (prc *PackageRecordCreate) AddVulnerabilities(v ...*Vulnerability) *Package
 		ids[i] = v[i].ID
 	}
 	return prc.AddVulnerabilityIDs(ids...)
-}
-
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
-func (prc *PackageRecordCreate) AddStatuIDs(ids ...string) *PackageRecordCreate {
-	prc.mutation.AddStatuIDs(ids...)
-	return prc
-}
-
-// AddStatus adds the "status" edges to the VulnStatus entity.
-func (prc *PackageRecordCreate) AddStatus(v ...*VulnStatus) *PackageRecordCreate {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return prc.AddStatuIDs(ids...)
 }
 
 // Mutation returns the PackageRecordMutation object of the builder.
@@ -288,25 +272,6 @@ func (prc *PackageRecordCreate) createSpec() (*PackageRecord, *sqlgraph.CreateSp
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: vulnerability.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := prc.mutation.StatusIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   packagerecord.StatusTable,
-			Columns: []string{packagerecord.StatusColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
 				},
 			},
 		}

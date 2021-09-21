@@ -13,6 +13,8 @@ import Toolbar from "@mui/material/Toolbar";
 import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 
+import { pink } from "@mui/material/colors";
+
 type mainProp = {
   children?: React.ReactNode;
 };
@@ -52,6 +54,12 @@ let theme = createTheme({
       light: "#757ce8",
       main: "#3f50b5",
       dark: "#002884",
+      contrastText: "#fff",
+    },
+    secondary: {
+      light: pink[100],
+      main: pink[500],
+      dark: pink[800],
       contrastText: "#fff",
     },
   },

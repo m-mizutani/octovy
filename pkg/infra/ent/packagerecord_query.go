@@ -16,7 +16,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
 // PackageRecordQuery is the builder for querying PackageRecord entities.
@@ -31,7 +30,6 @@ type PackageRecordQuery struct {
 	// eager-loading edges.
 	withScan            *ScanQuery
 	withVulnerabilities *VulnerabilityQuery
-	withStatus          *VulnStatusQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -105,28 +103,6 @@ func (prq *PackageRecordQuery) QueryVulnerabilities() *VulnerabilityQuery {
 			sqlgraph.From(packagerecord.Table, packagerecord.FieldID, selector),
 			sqlgraph.To(vulnerability.Table, vulnerability.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, packagerecord.VulnerabilitiesTable, packagerecord.VulnerabilitiesPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(prq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryStatus chains the current query on the "status" edge.
-func (prq *PackageRecordQuery) QueryStatus() *VulnStatusQuery {
-	query := &VulnStatusQuery{config: prq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := prq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := prq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(packagerecord.Table, packagerecord.FieldID, selector),
-			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, packagerecord.StatusTable, packagerecord.StatusColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(prq.driver.Dialect(), step)
 		return fromU, nil
@@ -317,7 +293,6 @@ func (prq *PackageRecordQuery) Clone() *PackageRecordQuery {
 		predicates:          append([]predicate.PackageRecord{}, prq.predicates...),
 		withScan:            prq.withScan.Clone(),
 		withVulnerabilities: prq.withVulnerabilities.Clone(),
-		withStatus:          prq.withStatus.Clone(),
 		// clone intermediate query.
 		sql:  prq.sql.Clone(),
 		path: prq.path,
@@ -343,17 +318,6 @@ func (prq *PackageRecordQuery) WithVulnerabilities(opts ...func(*VulnerabilityQu
 		opt(query)
 	}
 	prq.withVulnerabilities = query
-	return prq
-}
-
-// WithStatus tells the query-builder to eager-load the nodes that are connected to
-// the "status" edge. The optional arguments are used to configure the query builder of the edge.
-func (prq *PackageRecordQuery) WithStatus(opts ...func(*VulnStatusQuery)) *PackageRecordQuery {
-	query := &VulnStatusQuery{config: prq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	prq.withStatus = query
 	return prq
 }
 
@@ -422,10 +386,9 @@ func (prq *PackageRecordQuery) sqlAll(ctx context.Context) ([]*PackageRecord, er
 	var (
 		nodes       = []*PackageRecord{}
 		_spec       = prq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [2]bool{
 			prq.withScan != nil,
 			prq.withVulnerabilities != nil,
-			prq.withStatus != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -575,35 +538,6 @@ func (prq *PackageRecordQuery) sqlAll(ctx context.Context) ([]*PackageRecord, er
 			for i := range nodes {
 				nodes[i].Edges.Vulnerabilities = append(nodes[i].Edges.Vulnerabilities, n)
 			}
-		}
-	}
-
-	if query := prq.withStatus; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int]*PackageRecord)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.Status = []*VulnStatus{}
-		}
-		query.withFKs = true
-		query.Where(predicate.VulnStatus(func(s *sql.Selector) {
-			s.Where(sql.InValues(packagerecord.StatusColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range neighbors {
-			fk := n.package_record_status
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "package_record_status" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "package_record_status" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.Status = append(node.Edges.Status, n)
 		}
 	}
 

@@ -27,8 +27,6 @@ const (
 	EdgeScan = "scan"
 	// EdgeVulnerabilities holds the string denoting the vulnerabilities edge name in mutations.
 	EdgeVulnerabilities = "vulnerabilities"
-	// EdgeStatus holds the string denoting the status edge name in mutations.
-	EdgeStatus = "status"
 	// Table holds the table name of the packagerecord in the database.
 	Table = "package_records"
 	// ScanTable is the table that holds the scan relation/edge. The primary key declared below.
@@ -41,13 +39,6 @@ const (
 	// VulnerabilitiesInverseTable is the table name for the Vulnerability entity.
 	// It exists in this package in order to avoid circular dependency with the "vulnerability" package.
 	VulnerabilitiesInverseTable = "vulnerabilities"
-	// StatusTable is the table that holds the status relation/edge.
-	StatusTable = "vuln_status"
-	// StatusInverseTable is the table name for the VulnStatus entity.
-	// It exists in this package in order to avoid circular dependency with the "vulnstatus" package.
-	StatusInverseTable = "vuln_status"
-	// StatusColumn is the table column denoting the status relation/edge.
-	StatusColumn = "package_record_status"
 )
 
 // Columns holds all SQL columns for packagerecord fields.
