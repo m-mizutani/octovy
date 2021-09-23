@@ -34,15 +34,15 @@ type Interface interface {
 	HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error
 
 	// Auth
-	GetGitHubAppClientID() (string, error)
-	CreateAuthState() (string, error)
-	AuthGitHubUser(code, state string) (*ent.User, error)
-	LookupUser(userID string) (*ent.User, error)
-	CreateSession(user *ent.User) (*ent.Session, error)
-	ValidateSession(token string) (*ent.Session, error)
-	RevokeSession(token string) error
+	CreateAuthState(ctx context.Context) (string, error)
+	AuthGitHubUser(ctx context.Context, code, state string) (*ent.User, error)
+	LookupUser(ctx context.Context, userID int) (*ent.User, error)
+	CreateSession(ctx context.Context, user *ent.User) (*ent.Session, error)
+	ValidateSession(ctx context.Context, ssnID string) (*ent.Session, error)
+	RevokeSession(ctx context.Context, token string) error
 
 	// Config proxy
+	GetGitHubAppClientID() string
 	FrontendURL() string
 }
 
@@ -78,35 +78,9 @@ func (x *usecase) Init() error {
 	return nil
 }
 
-// Auth
-func (x *usecase) GetGitHubAppClientID() (string, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) CreateAuthState() (string, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) AuthGitHubUser(code string, state string) (*ent.User, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) LookupUser(userID string) (*ent.User, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) CreateSession(user *ent.User) (*ent.Session, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) ValidateSession(token string) (*ent.Session, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (x *usecase) RevokeSession(token string) error {
-	panic("not implemented") // TODO: Implement
-}
-
 func (x *usecase) FrontendURL() string {
 	return x.config.FrontendURL
+}
+func (x *usecase) GetGitHubAppClientID() string {
+	return x.config.GitHubAppClientID
 }

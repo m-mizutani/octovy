@@ -26,7 +26,7 @@ func (x cacheMap) Read(fname string) *fileCache {
 	if !ok {
 		data, err := asset.ReadFile(filepath.Join("out", fname))
 		if err != nil {
-			logger.Debug().Str("path", fname).Err(err).Msg("failed to open requested file")
+			globalLogger.Debug().Str("path", fname).Err(err).Msg("failed to open requested file")
 			return nil
 		}
 
@@ -77,10 +77,15 @@ var nextRoutes = rewriteRoutes{
 		ptn:   regexp.MustCompile("^scan/[a-z0-9-]+$"),
 		fname: "scan/[id].html",
 	},
+	{
+		ptn:   regexp.MustCompile("^login$"),
+		fname: "login.html",
+	},
 }
 
 func getStaticFile(ctx *gin.Context) {
 	ctx.Next()
+	logger := getLogger(ctx)
 
 	if ctx.Writer.Status() != http.StatusNotFound {
 		return

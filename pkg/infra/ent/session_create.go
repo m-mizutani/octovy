@@ -22,6 +22,12 @@ type SessionCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetUserID sets the "user_id" field.
+func (sc *SessionCreate) SetUserID(i int) *SessionCreate {
+	sc.mutation.SetUserID(i)
+	return sc
+}
+
 // SetToken sets the "token" field.
 func (sc *SessionCreate) SetToken(s string) *SessionCreate {
 	sc.mutation.SetToken(s)
@@ -40,14 +46,20 @@ func (sc *SessionCreate) SetExpiresAt(i int64) *SessionCreate {
 	return sc
 }
 
+// SetID sets the "id" field.
+func (sc *SessionCreate) SetID(s string) *SessionCreate {
+	sc.mutation.SetID(s)
+	return sc
+}
+
 // SetLoginID sets the "login" edge to the User entity by ID.
-func (sc *SessionCreate) SetLoginID(id string) *SessionCreate {
+func (sc *SessionCreate) SetLoginID(id int) *SessionCreate {
 	sc.mutation.SetLoginID(id)
 	return sc
 }
 
 // SetNillableLoginID sets the "login" edge to the User entity by ID if the given value is not nil.
-func (sc *SessionCreate) SetNillableLoginID(id *string) *SessionCreate {
+func (sc *SessionCreate) SetNillableLoginID(id *int) *SessionCreate {
 	if id != nil {
 		sc = sc.SetLoginID(*id)
 	}
@@ -129,6 +141,9 @@ func (sc *SessionCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (sc *SessionCreate) check() error {
+	if _, ok := sc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "user_id"`)}
+	}
 	if _, ok := sc.mutation.Token(); !ok {
 		return &ValidationError{Name: "token", err: errors.New(`ent: missing required field "token"`)}
 	}
@@ -154,8 +169,6 @@ func (sc *SessionCreate) sqlSave(ctx context.Context) (*Session, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -165,12 +178,24 @@ func (sc *SessionCreate) createSpec() (*Session, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: session.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: session.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = sc.conflict
+	if id, ok := sc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := sc.mutation.UserID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: session.FieldUserID,
+		})
+		_node.UserID = value
+	}
 	if value, ok := sc.mutation.Token(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -204,7 +229,7 @@ func (sc *SessionCreate) createSpec() (*Session, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -222,7 +247,7 @@ func (sc *SessionCreate) createSpec() (*Session, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Session.Create().
-//		SetToken(v).
+//		SetUserID(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -231,7 +256,7 @@ func (sc *SessionCreate) createSpec() (*Session, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SessionUpsert) {
-//			SetToken(v+v).
+//			SetUserID(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -268,6 +293,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUserID sets the "user_id" field.
+func (u *SessionUpsert) SetUserID(v int) *SessionUpsert {
+	u.Set(session.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *SessionUpsert) UpdateUserID() *SessionUpsert {
+	u.SetExcluded(session.FieldUserID)
+	return u
+}
 
 // SetToken sets the "token" field.
 func (u *SessionUpsert) SetToken(v string) *SessionUpsert {
@@ -345,6 +382,20 @@ func (u *SessionUpsertOne) Update(set func(*SessionUpsert)) *SessionUpsertOne {
 	return u
 }
 
+// SetUserID sets the "user_id" field.
+func (u *SessionUpsertOne) SetUserID(v int) *SessionUpsertOne {
+	return u.Update(func(s *SessionUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *SessionUpsertOne) UpdateUserID() *SessionUpsertOne {
+	return u.Update(func(s *SessionUpsert) {
+		s.UpdateUserID()
+	})
+}
+
 // SetToken sets the "token" field.
 func (u *SessionUpsertOne) SetToken(v string) *SessionUpsertOne {
 	return u.Update(func(s *SessionUpsert) {
@@ -403,7 +454,7 @@ func (u *SessionUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *SessionUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *SessionUpsertOne) ID(ctx context.Context) (id string, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -412,7 +463,7 @@ func (u *SessionUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *SessionUpsertOne) IDX(ctx context.Context) int {
+func (u *SessionUpsertOne) IDX(ctx context.Context) string {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -463,10 +514,6 @@ func (scb *SessionCreateBulk) Save(ctx context.Context) ([]*Session, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {
@@ -517,7 +564,7 @@ func (scb *SessionCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SessionUpsert) {
-//			SetToken(v+v).
+//			SetUserID(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -586,6 +633,20 @@ func (u *SessionUpsertBulk) Update(set func(*SessionUpsert)) *SessionUpsertBulk 
 		set(&SessionUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *SessionUpsertBulk) SetUserID(v int) *SessionUpsertBulk {
+	return u.Update(func(s *SessionUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *SessionUpsertBulk) UpdateUserID() *SessionUpsertBulk {
+	return u.Update(func(s *SessionUpsert) {
+		s.UpdateUserID()
+	})
 }
 
 // SetToken sets the "token" field.

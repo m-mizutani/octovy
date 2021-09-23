@@ -9,6 +9,7 @@ import (
 
 	"github.com/m-mizutani/octovy/pkg/infra/ent/migrate"
 
+	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
@@ -27,6 +28,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// AuthStateCache is the client for interacting with the AuthStateCache builders.
+	AuthStateCache *AuthStateCacheClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
 	// Repository is the client for interacting with the Repository builders.
@@ -54,6 +57,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.AuthStateCache = NewAuthStateCacheClient(c.config)
 	c.PackageRecord = NewPackageRecordClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
 	c.Scan = NewScanClient(c.config)
@@ -92,15 +96,16 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		PackageRecord: NewPackageRecordClient(cfg),
-		Repository:    NewRepositoryClient(cfg),
-		Scan:          NewScanClient(cfg),
-		Session:       NewSessionClient(cfg),
-		User:          NewUserClient(cfg),
-		VulnStatus:    NewVulnStatusClient(cfg),
-		Vulnerability: NewVulnerabilityClient(cfg),
+		ctx:            ctx,
+		config:         cfg,
+		AuthStateCache: NewAuthStateCacheClient(cfg),
+		PackageRecord:  NewPackageRecordClient(cfg),
+		Repository:     NewRepositoryClient(cfg),
+		Scan:           NewScanClient(cfg),
+		Session:        NewSessionClient(cfg),
+		User:           NewUserClient(cfg),
+		VulnStatus:     NewVulnStatusClient(cfg),
+		Vulnerability:  NewVulnerabilityClient(cfg),
 	}, nil
 }
 
@@ -118,21 +123,22 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config:        cfg,
-		PackageRecord: NewPackageRecordClient(cfg),
-		Repository:    NewRepositoryClient(cfg),
-		Scan:          NewScanClient(cfg),
-		Session:       NewSessionClient(cfg),
-		User:          NewUserClient(cfg),
-		VulnStatus:    NewVulnStatusClient(cfg),
-		Vulnerability: NewVulnerabilityClient(cfg),
+		config:         cfg,
+		AuthStateCache: NewAuthStateCacheClient(cfg),
+		PackageRecord:  NewPackageRecordClient(cfg),
+		Repository:     NewRepositoryClient(cfg),
+		Scan:           NewScanClient(cfg),
+		Session:        NewSessionClient(cfg),
+		User:           NewUserClient(cfg),
+		VulnStatus:     NewVulnStatusClient(cfg),
+		Vulnerability:  NewVulnerabilityClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		PackageRecord.
+//		AuthStateCache.
 //		Query().
 //		Count(ctx)
 //
@@ -155,6 +161,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.AuthStateCache.Use(hooks...)
 	c.PackageRecord.Use(hooks...)
 	c.Repository.Use(hooks...)
 	c.Scan.Use(hooks...)
@@ -162,6 +169,96 @@ func (c *Client) Use(hooks ...Hook) {
 	c.User.Use(hooks...)
 	c.VulnStatus.Use(hooks...)
 	c.Vulnerability.Use(hooks...)
+}
+
+// AuthStateCacheClient is a client for the AuthStateCache schema.
+type AuthStateCacheClient struct {
+	config
+}
+
+// NewAuthStateCacheClient returns a client for the AuthStateCache from the given config.
+func NewAuthStateCacheClient(c config) *AuthStateCacheClient {
+	return &AuthStateCacheClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `authstatecache.Hooks(f(g(h())))`.
+func (c *AuthStateCacheClient) Use(hooks ...Hook) {
+	c.hooks.AuthStateCache = append(c.hooks.AuthStateCache, hooks...)
+}
+
+// Create returns a create builder for AuthStateCache.
+func (c *AuthStateCacheClient) Create() *AuthStateCacheCreate {
+	mutation := newAuthStateCacheMutation(c.config, OpCreate)
+	return &AuthStateCacheCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AuthStateCache entities.
+func (c *AuthStateCacheClient) CreateBulk(builders ...*AuthStateCacheCreate) *AuthStateCacheCreateBulk {
+	return &AuthStateCacheCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AuthStateCache.
+func (c *AuthStateCacheClient) Update() *AuthStateCacheUpdate {
+	mutation := newAuthStateCacheMutation(c.config, OpUpdate)
+	return &AuthStateCacheUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AuthStateCacheClient) UpdateOne(asc *AuthStateCache) *AuthStateCacheUpdateOne {
+	mutation := newAuthStateCacheMutation(c.config, OpUpdateOne, withAuthStateCache(asc))
+	return &AuthStateCacheUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AuthStateCacheClient) UpdateOneID(id string) *AuthStateCacheUpdateOne {
+	mutation := newAuthStateCacheMutation(c.config, OpUpdateOne, withAuthStateCacheID(id))
+	return &AuthStateCacheUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AuthStateCache.
+func (c *AuthStateCacheClient) Delete() *AuthStateCacheDelete {
+	mutation := newAuthStateCacheMutation(c.config, OpDelete)
+	return &AuthStateCacheDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *AuthStateCacheClient) DeleteOne(asc *AuthStateCache) *AuthStateCacheDeleteOne {
+	return c.DeleteOneID(asc.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *AuthStateCacheClient) DeleteOneID(id string) *AuthStateCacheDeleteOne {
+	builder := c.Delete().Where(authstatecache.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AuthStateCacheDeleteOne{builder}
+}
+
+// Query returns a query builder for AuthStateCache.
+func (c *AuthStateCacheClient) Query() *AuthStateCacheQuery {
+	return &AuthStateCacheQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a AuthStateCache entity by its id.
+func (c *AuthStateCacheClient) Get(ctx context.Context, id string) (*AuthStateCache, error) {
+	return c.Query().Where(authstatecache.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AuthStateCacheClient) GetX(ctx context.Context, id string) *AuthStateCache {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AuthStateCacheClient) Hooks() []Hook {
+	return c.hooks.AuthStateCache
 }
 
 // PackageRecordClient is a client for the PackageRecord schema.
@@ -570,7 +667,7 @@ func (c *SessionClient) UpdateOne(s *Session) *SessionUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *SessionClient) UpdateOneID(id int) *SessionUpdateOne {
+func (c *SessionClient) UpdateOneID(id string) *SessionUpdateOne {
 	mutation := newSessionMutation(c.config, OpUpdateOne, withSessionID(id))
 	return &SessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -587,7 +684,7 @@ func (c *SessionClient) DeleteOne(s *Session) *SessionDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *SessionClient) DeleteOneID(id int) *SessionDeleteOne {
+func (c *SessionClient) DeleteOneID(id string) *SessionDeleteOne {
 	builder := c.Delete().Where(session.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -602,12 +699,12 @@ func (c *SessionClient) Query() *SessionQuery {
 }
 
 // Get returns a Session entity by its id.
-func (c *SessionClient) Get(ctx context.Context, id int) (*Session, error) {
+func (c *SessionClient) Get(ctx context.Context, id string) (*Session, error) {
 	return c.Query().Where(session.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *SessionClient) GetX(ctx context.Context, id int) *Session {
+func (c *SessionClient) GetX(ctx context.Context, id string) *Session {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -676,7 +773,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id string) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -693,7 +790,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *UserClient) DeleteOneID(id string) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -708,12 +805,12 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id string) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id string) *User {
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

@@ -27,14 +27,27 @@ func (su *SessionUpdate) Where(ps ...predicate.Session) *SessionUpdate {
 	return su
 }
 
+// SetUserID sets the "user_id" field.
+func (su *SessionUpdate) SetUserID(i int) *SessionUpdate {
+	su.mutation.ResetUserID()
+	su.mutation.SetUserID(i)
+	return su
+}
+
+// AddUserID adds i to the "user_id" field.
+func (su *SessionUpdate) AddUserID(i int) *SessionUpdate {
+	su.mutation.AddUserID(i)
+	return su
+}
+
 // SetLoginID sets the "login" edge to the User entity by ID.
-func (su *SessionUpdate) SetLoginID(id string) *SessionUpdate {
+func (su *SessionUpdate) SetLoginID(id int) *SessionUpdate {
 	su.mutation.SetLoginID(id)
 	return su
 }
 
 // SetNillableLoginID sets the "login" edge to the User entity by ID if the given value is not nil.
-func (su *SessionUpdate) SetNillableLoginID(id *string) *SessionUpdate {
+func (su *SessionUpdate) SetNillableLoginID(id *int) *SessionUpdate {
 	if id != nil {
 		su = su.SetLoginID(*id)
 	}
@@ -117,7 +130,7 @@ func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   session.Table,
 			Columns: session.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: session.FieldID,
 			},
 		},
@@ -129,6 +142,20 @@ func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := su.mutation.UserID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: session.FieldUserID,
+		})
+	}
+	if value, ok := su.mutation.AddedUserID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: session.FieldUserID,
+		})
+	}
 	if su.mutation.LoginCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -138,7 +165,7 @@ func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -154,7 +181,7 @@ func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -183,14 +210,27 @@ type SessionUpdateOne struct {
 	mutation *SessionMutation
 }
 
+// SetUserID sets the "user_id" field.
+func (suo *SessionUpdateOne) SetUserID(i int) *SessionUpdateOne {
+	suo.mutation.ResetUserID()
+	suo.mutation.SetUserID(i)
+	return suo
+}
+
+// AddUserID adds i to the "user_id" field.
+func (suo *SessionUpdateOne) AddUserID(i int) *SessionUpdateOne {
+	suo.mutation.AddUserID(i)
+	return suo
+}
+
 // SetLoginID sets the "login" edge to the User entity by ID.
-func (suo *SessionUpdateOne) SetLoginID(id string) *SessionUpdateOne {
+func (suo *SessionUpdateOne) SetLoginID(id int) *SessionUpdateOne {
 	suo.mutation.SetLoginID(id)
 	return suo
 }
 
 // SetNillableLoginID sets the "login" edge to the User entity by ID if the given value is not nil.
-func (suo *SessionUpdateOne) SetNillableLoginID(id *string) *SessionUpdateOne {
+func (suo *SessionUpdateOne) SetNillableLoginID(id *int) *SessionUpdateOne {
 	if id != nil {
 		suo = suo.SetLoginID(*id)
 	}
@@ -280,7 +320,7 @@ func (suo *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err e
 			Table:   session.Table,
 			Columns: session.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeString,
 				Column: session.FieldID,
 			},
 		},
@@ -309,6 +349,20 @@ func (suo *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err e
 			}
 		}
 	}
+	if value, ok := suo.mutation.UserID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: session.FieldUserID,
+		})
+	}
+	if value, ok := suo.mutation.AddedUserID(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: session.FieldUserID,
+		})
+	}
 	if suo.mutation.LoginCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -318,7 +372,7 @@ func (suo *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -334,7 +388,7 @@ func (suo *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},

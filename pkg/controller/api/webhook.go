@@ -10,6 +10,7 @@ import (
 
 func postWebhookGitHub(c *gin.Context) {
 	uc := getUsecase(c)
+	logger := getLogger(c)
 
 	githubEventType := c.Request.Header.Get("X-GitHub-Event")
 	if githubEventType == "" {

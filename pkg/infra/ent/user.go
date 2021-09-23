@@ -14,7 +14,9 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// GithubID holds the value of the "github_id" field.
+	GithubID int64 `json:"github_id,omitempty"`
 	// Login holds the value of the "login" field.
 	Login string `json:"login,omitempty"`
 	// Name holds the value of the "name" field.
@@ -51,7 +53,9 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID, user.FieldLogin, user.FieldName, user.FieldAvatarURL, user.FieldURL:
+		case user.FieldID, user.FieldGithubID:
+			values[i] = new(sql.NullInt64)
+		case user.FieldLogin, user.FieldName, user.FieldAvatarURL, user.FieldURL:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type User", columns[i])
@@ -69,10 +73,16 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case user.FieldID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			u.ID = int(value.Int64)
+		case user.FieldGithubID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field github_id", values[i])
 			} else if value.Valid {
-				u.ID = value.String
+				u.GithubID = value.Int64
 			}
 		case user.FieldLogin:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -131,6 +141,8 @@ func (u *User) String() string {
 	var builder strings.Builder
 	builder.WriteString("User(")
 	builder.WriteString(fmt.Sprintf("id=%v", u.ID))
+	builder.WriteString(", github_id=")
+	builder.WriteString(fmt.Sprintf("%v", u.GithubID))
 	builder.WriteString(", login=")
 	builder.WriteString(u.Login)
 	builder.WriteString(", name=")

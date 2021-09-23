@@ -7,6 +7,8 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldGithubID holds the string denoting the github_id field in the database.
+	FieldGithubID = "github_id"
 	// FieldLogin holds the string denoting the login field in the database.
 	FieldLogin = "login"
 	// FieldName holds the string denoting the name field in the database.
@@ -31,6 +33,7 @@ const (
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
+	FieldGithubID,
 	FieldLogin,
 	FieldName,
 	FieldAvatarURL,
@@ -46,8 +49,3 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
-
-var (
-	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(string) error
-)

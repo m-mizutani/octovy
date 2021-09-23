@@ -87,7 +87,7 @@ export class vulnStatusDB {
   constructor(status: vulnStatus[]) {
     console.log({ status });
     this.vulnMap = {};
-    status.forEach((status) => {
+    (status || []).forEach((status) => {
       const key = vulnStatusDB.toKey(
         status.source,
         status.pkg_name,

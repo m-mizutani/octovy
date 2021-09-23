@@ -25,6 +25,8 @@ type ScanResult struct {
 
 type Interface interface {
 	Open(dbType, dbConfig string) error
+	Close() error
+
 	CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
 
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
@@ -35,7 +37,14 @@ type Interface interface {
 	GetScan(ctx context.Context, id string) (*ent.Scan, error)
 	GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error)
 
-	Close() error
+	// Auth
+	SaveAuthState(ctx context.Context, state string, expiresAt int64) error
+	HasAuthState(ctx context.Context, state string, now int64) (bool, error)
+	GetUser(ctx context.Context, userID int) (*ent.User, error)
+	PutUser(ctx context.Context, user *ent.User) (int, error)
+	PutSession(ctx context.Context, ssn *ent.Session) error
+	GetSession(ctx context.Context, ssnID string, now int64) (*ent.Session, error)
+	DeleteSession(ctx context.Context, ssnID string) error
 }
 
 type Factory func(dbType, dbConfig string) (Interface, error)

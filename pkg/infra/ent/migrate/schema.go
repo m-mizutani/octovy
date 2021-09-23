@@ -8,6 +8,17 @@ import (
 )
 
 var (
+	// AuthStateCachesColumns holds the columns for the "auth_state_caches" table.
+	AuthStateCachesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "expires_at", Type: field.TypeInt64},
+	}
+	// AuthStateCachesTable holds the schema information for the "auth_state_caches" table.
+	AuthStateCachesTable = &schema.Table{
+		Name:       "auth_state_caches",
+		Columns:    AuthStateCachesColumns,
+		PrimaryKey: []*schema.Column{AuthStateCachesColumns[0]},
+	}
 	// PackageRecordsColumns holds the columns for the "package_records" table.
 	PackageRecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -57,11 +68,12 @@ var (
 	}
 	// SessionsColumns holds the columns for the "sessions" table.
 	SessionsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeInt},
 		{Name: "token", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeInt64},
 		{Name: "expires_at", Type: field.TypeInt64},
-		{Name: "session_login", Type: field.TypeString, Nullable: true},
+		{Name: "session_login", Type: field.TypeInt, Nullable: true},
 	}
 	// SessionsTable holds the schema information for the "sessions" table.
 	SessionsTable = &schema.Table{
@@ -71,7 +83,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "sessions_users_login",
-				Columns:    []*schema.Column{SessionsColumns[4]},
+				Columns:    []*schema.Column{SessionsColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -79,7 +91,8 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "github_id", Type: field.TypeInt64, Unique: true},
 		{Name: "login", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "avatar_url", Type: field.TypeString},
@@ -103,7 +116,7 @@ var (
 		{Name: "created_at", Type: field.TypeInt64},
 		{Name: "comment", Type: field.TypeString},
 		{Name: "repository_status", Type: field.TypeInt, Nullable: true},
-		{Name: "user_edited_status", Type: field.TypeString, Nullable: true},
+		{Name: "user_edited_status", Type: field.TypeInt, Nullable: true},
 		{Name: "vulnerability_status", Type: field.TypeString, Nullable: true},
 	}
 	// VulnStatusTable holds the schema information for the "vuln_status" table.
@@ -227,6 +240,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AuthStateCachesTable,
 		PackageRecordsTable,
 		RepositoriesTable,
 		ScansTable,

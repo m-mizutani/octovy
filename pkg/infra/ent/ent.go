@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
@@ -35,13 +36,14 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		packagerecord.Table: packagerecord.ValidColumn,
-		repository.Table:    repository.ValidColumn,
-		scan.Table:          scan.ValidColumn,
-		session.Table:       session.ValidColumn,
-		user.Table:          user.ValidColumn,
-		vulnstatus.Table:    vulnstatus.ValidColumn,
-		vulnerability.Table: vulnerability.ValidColumn,
+		authstatecache.Table: authstatecache.ValidColumn,
+		packagerecord.Table:  packagerecord.ValidColumn,
+		repository.Table:     repository.ValidColumn,
+		scan.Table:           scan.ValidColumn,
+		session.Table:        session.ValidColumn,
+		user.Table:           user.ValidColumn,
+		vulnstatus.Table:     vulnstatus.ValidColumn,
+		vulnerability.Table:  vulnerability.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

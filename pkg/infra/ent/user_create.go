@@ -22,6 +22,12 @@ type UserCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetGithubID sets the "github_id" field.
+func (uc *UserCreate) SetGithubID(i int64) *UserCreate {
+	uc.mutation.SetGithubID(i)
+	return uc
+}
+
 // SetLogin sets the "login" field.
 func (uc *UserCreate) SetLogin(s string) *UserCreate {
 	uc.mutation.SetLogin(s)
@@ -43,12 +49,6 @@ func (uc *UserCreate) SetAvatarURL(s string) *UserCreate {
 // SetURL sets the "url" field.
 func (uc *UserCreate) SetURL(s string) *UserCreate {
 	uc.mutation.SetURL(s)
-	return uc
-}
-
-// SetID sets the "id" field.
-func (uc *UserCreate) SetID(s string) *UserCreate {
-	uc.mutation.SetID(s)
 	return uc
 }
 
@@ -137,6 +137,9 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (uc *UserCreate) check() error {
+	if _, ok := uc.mutation.GithubID(); !ok {
+		return &ValidationError{Name: "github_id", err: errors.New(`ent: missing required field "github_id"`)}
+	}
 	if _, ok := uc.mutation.Login(); !ok {
 		return &ValidationError{Name: "login", err: errors.New(`ent: missing required field "login"`)}
 	}
@@ -149,11 +152,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "url"`)}
 	}
-	if v, ok := uc.mutation.ID(); ok {
-		if err := user.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "id": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -165,6 +163,8 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -174,15 +174,19 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: user.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = uc.conflict
-	if id, ok := uc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := uc.mutation.GithubID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: user.FieldGithubID,
+		})
+		_node.GithubID = value
 	}
 	if value, ok := uc.mutation.Login(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -242,7 +246,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.User.Create().
-//		SetLogin(v).
+//		SetGithubID(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -251,7 +255,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.UserUpsert) {
-//			SetLogin(v+v).
+//			SetGithubID(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -288,6 +292,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetGithubID sets the "github_id" field.
+func (u *UserUpsert) SetGithubID(v int64) *UserUpsert {
+	u.Set(user.FieldGithubID, v)
+	return u
+}
+
+// UpdateGithubID sets the "github_id" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGithubID() *UserUpsert {
+	u.SetExcluded(user.FieldGithubID)
+	return u
+}
 
 // SetLogin sets the "login" field.
 func (u *UserUpsert) SetLogin(v string) *UserUpsert {
@@ -377,6 +393,20 @@ func (u *UserUpsertOne) Update(set func(*UserUpsert)) *UserUpsertOne {
 	return u
 }
 
+// SetGithubID sets the "github_id" field.
+func (u *UserUpsertOne) SetGithubID(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGithubID(v)
+	})
+}
+
+// UpdateGithubID sets the "github_id" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGithubID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGithubID()
+	})
+}
+
 // SetLogin sets the "login" field.
 func (u *UserUpsertOne) SetLogin(v string) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
@@ -449,7 +479,7 @@ func (u *UserUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *UserUpsertOne) ID(ctx context.Context) (id string, err error) {
+func (u *UserUpsertOne) ID(ctx context.Context) (id int, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -458,7 +488,7 @@ func (u *UserUpsertOne) ID(ctx context.Context) (id string, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *UserUpsertOne) IDX(ctx context.Context) string {
+func (u *UserUpsertOne) IDX(ctx context.Context) int {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -509,6 +539,10 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {
@@ -559,7 +593,7 @@ func (ucb *UserCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.UserUpsert) {
-//			SetLogin(v+v).
+//			SetGithubID(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -628,6 +662,20 @@ func (u *UserUpsertBulk) Update(set func(*UserUpsert)) *UserUpsertBulk {
 		set(&UserUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetGithubID sets the "github_id" field.
+func (u *UserUpsertBulk) SetGithubID(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGithubID(v)
+	})
+}
+
+// UpdateGithubID sets the "github_id" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGithubID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGithubID()
+	})
 }
 
 // SetLogin sets the "login" field.

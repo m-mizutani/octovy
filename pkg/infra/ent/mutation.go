@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/m-mizutani/octovy/pkg/domain/types"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
@@ -29,14 +30,349 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypePackageRecord = "PackageRecord"
-	TypeRepository    = "Repository"
-	TypeScan          = "Scan"
-	TypeSession       = "Session"
-	TypeUser          = "User"
-	TypeVulnStatus    = "VulnStatus"
-	TypeVulnerability = "Vulnerability"
+	TypeAuthStateCache = "AuthStateCache"
+	TypePackageRecord  = "PackageRecord"
+	TypeRepository     = "Repository"
+	TypeScan           = "Scan"
+	TypeSession        = "Session"
+	TypeUser           = "User"
+	TypeVulnStatus     = "VulnStatus"
+	TypeVulnerability  = "Vulnerability"
 )
+
+// AuthStateCacheMutation represents an operation that mutates the AuthStateCache nodes in the graph.
+type AuthStateCacheMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	expires_at    *int64
+	addexpires_at *int64
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*AuthStateCache, error)
+	predicates    []predicate.AuthStateCache
+}
+
+var _ ent.Mutation = (*AuthStateCacheMutation)(nil)
+
+// authstatecacheOption allows management of the mutation configuration using functional options.
+type authstatecacheOption func(*AuthStateCacheMutation)
+
+// newAuthStateCacheMutation creates new mutation for the AuthStateCache entity.
+func newAuthStateCacheMutation(c config, op Op, opts ...authstatecacheOption) *AuthStateCacheMutation {
+	m := &AuthStateCacheMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAuthStateCache,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAuthStateCacheID sets the ID field of the mutation.
+func withAuthStateCacheID(id string) authstatecacheOption {
+	return func(m *AuthStateCacheMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AuthStateCache
+		)
+		m.oldValue = func(ctx context.Context) (*AuthStateCache, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AuthStateCache.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAuthStateCache sets the old AuthStateCache of the mutation.
+func withAuthStateCache(node *AuthStateCache) authstatecacheOption {
+	return func(m *AuthStateCacheMutation) {
+		m.oldValue = func(context.Context) (*AuthStateCache, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AuthStateCacheMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AuthStateCacheMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of AuthStateCache entities.
+func (m *AuthStateCacheMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AuthStateCacheMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *AuthStateCacheMutation) SetExpiresAt(i int64) {
+	m.expires_at = &i
+	m.addexpires_at = nil
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *AuthStateCacheMutation) ExpiresAt() (r int64, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the AuthStateCache entity.
+// If the AuthStateCache object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AuthStateCacheMutation) OldExpiresAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// AddExpiresAt adds i to the "expires_at" field.
+func (m *AuthStateCacheMutation) AddExpiresAt(i int64) {
+	if m.addexpires_at != nil {
+		*m.addexpires_at += i
+	} else {
+		m.addexpires_at = &i
+	}
+}
+
+// AddedExpiresAt returns the value that was added to the "expires_at" field in this mutation.
+func (m *AuthStateCacheMutation) AddedExpiresAt() (r int64, exists bool) {
+	v := m.addexpires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *AuthStateCacheMutation) ResetExpiresAt() {
+	m.expires_at = nil
+	m.addexpires_at = nil
+}
+
+// Where appends a list predicates to the AuthStateCacheMutation builder.
+func (m *AuthStateCacheMutation) Where(ps ...predicate.AuthStateCache) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *AuthStateCacheMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (AuthStateCache).
+func (m *AuthStateCacheMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AuthStateCacheMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.expires_at != nil {
+		fields = append(fields, authstatecache.FieldExpiresAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AuthStateCacheMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case authstatecache.FieldExpiresAt:
+		return m.ExpiresAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AuthStateCacheMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case authstatecache.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown AuthStateCache field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AuthStateCacheMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case authstatecache.FieldExpiresAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AuthStateCache field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AuthStateCacheMutation) AddedFields() []string {
+	var fields []string
+	if m.addexpires_at != nil {
+		fields = append(fields, authstatecache.FieldExpiresAt)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AuthStateCacheMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case authstatecache.FieldExpiresAt:
+		return m.AddedExpiresAt()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AuthStateCacheMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case authstatecache.FieldExpiresAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExpiresAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AuthStateCache numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AuthStateCacheMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AuthStateCacheMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AuthStateCacheMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AuthStateCache nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AuthStateCacheMutation) ResetField(name string) error {
+	switch name {
+	case authstatecache.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	}
+	return fmt.Errorf("unknown AuthStateCache field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AuthStateCacheMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AuthStateCacheMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AuthStateCacheMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AuthStateCacheMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AuthStateCacheMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AuthStateCacheMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AuthStateCacheMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AuthStateCache unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AuthStateCacheMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AuthStateCache edge %s", name)
+}
 
 // PackageRecordMutation represents an operation that mutates the PackageRecord nodes in the graph.
 type PackageRecordMutation struct {
@@ -2469,14 +2805,16 @@ type SessionMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *string
+	user_id       *int
+	adduser_id    *int
 	token         *string
 	created_at    *int64
 	addcreated_at *int64
 	expires_at    *int64
 	addexpires_at *int64
 	clearedFields map[string]struct{}
-	login         *string
+	login         *int
 	clearedlogin  bool
 	done          bool
 	oldValue      func(context.Context) (*Session, error)
@@ -2503,7 +2841,7 @@ func newSessionMutation(c config, op Op, opts ...sessionOption) *SessionMutation
 }
 
 // withSessionID sets the ID field of the mutation.
-func withSessionID(id int) sessionOption {
+func withSessionID(id string) sessionOption {
 	return func(m *SessionMutation) {
 		var (
 			err   error
@@ -2553,13 +2891,75 @@ func (m SessionMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Session entities.
+func (m *SessionMutation) SetID(id string) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *SessionMutation) ID() (id int, exists bool) {
+func (m *SessionMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
 	return *m.id, true
+}
+
+// SetUserID sets the "user_id" field.
+func (m *SessionMutation) SetUserID(i int) {
+	m.user_id = &i
+	m.adduser_id = nil
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *SessionMutation) UserID() (r int, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Session entity.
+// If the Session object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SessionMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// AddUserID adds i to the "user_id" field.
+func (m *SessionMutation) AddUserID(i int) {
+	if m.adduser_id != nil {
+		*m.adduser_id += i
+	} else {
+		m.adduser_id = &i
+	}
+}
+
+// AddedUserID returns the value that was added to the "user_id" field in this mutation.
+func (m *SessionMutation) AddedUserID() (r int, exists bool) {
+	v := m.adduser_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *SessionMutation) ResetUserID() {
+	m.user_id = nil
+	m.adduser_id = nil
 }
 
 // SetToken sets the "token" field.
@@ -2711,7 +3111,7 @@ func (m *SessionMutation) ResetExpiresAt() {
 }
 
 // SetLoginID sets the "login" edge to the User entity by id.
-func (m *SessionMutation) SetLoginID(id string) {
+func (m *SessionMutation) SetLoginID(id int) {
 	m.login = &id
 }
 
@@ -2726,7 +3126,7 @@ func (m *SessionMutation) LoginCleared() bool {
 }
 
 // LoginID returns the "login" edge ID in the mutation.
-func (m *SessionMutation) LoginID() (id string, exists bool) {
+func (m *SessionMutation) LoginID() (id int, exists bool) {
 	if m.login != nil {
 		return *m.login, true
 	}
@@ -2736,7 +3136,7 @@ func (m *SessionMutation) LoginID() (id string, exists bool) {
 // LoginIDs returns the "login" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // LoginID instead. It exists only for internal usage by the builders.
-func (m *SessionMutation) LoginIDs() (ids []string) {
+func (m *SessionMutation) LoginIDs() (ids []int) {
 	if id := m.login; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2768,7 +3168,10 @@ func (m *SessionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SessionMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
+	if m.user_id != nil {
+		fields = append(fields, session.FieldUserID)
+	}
 	if m.token != nil {
 		fields = append(fields, session.FieldToken)
 	}
@@ -2786,6 +3189,8 @@ func (m *SessionMutation) Fields() []string {
 // schema.
 func (m *SessionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case session.FieldUserID:
+		return m.UserID()
 	case session.FieldToken:
 		return m.Token()
 	case session.FieldCreatedAt:
@@ -2801,6 +3206,8 @@ func (m *SessionMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *SessionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case session.FieldUserID:
+		return m.OldUserID(ctx)
 	case session.FieldToken:
 		return m.OldToken(ctx)
 	case session.FieldCreatedAt:
@@ -2816,6 +3223,13 @@ func (m *SessionMutation) OldField(ctx context.Context, name string) (ent.Value,
 // type.
 func (m *SessionMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case session.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
 	case session.FieldToken:
 		v, ok := value.(string)
 		if !ok {
@@ -2845,6 +3259,9 @@ func (m *SessionMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *SessionMutation) AddedFields() []string {
 	var fields []string
+	if m.adduser_id != nil {
+		fields = append(fields, session.FieldUserID)
+	}
 	if m.addcreated_at != nil {
 		fields = append(fields, session.FieldCreatedAt)
 	}
@@ -2859,6 +3276,8 @@ func (m *SessionMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *SessionMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case session.FieldUserID:
+		return m.AddedUserID()
 	case session.FieldCreatedAt:
 		return m.AddedCreatedAt()
 	case session.FieldExpiresAt:
@@ -2872,6 +3291,13 @@ func (m *SessionMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *SessionMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case session.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserID(v)
+		return nil
 	case session.FieldCreatedAt:
 		v, ok := value.(int64)
 		if !ok {
@@ -2913,6 +3339,9 @@ func (m *SessionMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *SessionMutation) ResetField(name string) error {
 	switch name {
+	case session.FieldUserID:
+		m.ResetUserID()
+		return nil
 	case session.FieldToken:
 		m.ResetToken()
 		return nil
@@ -3007,7 +3436,9 @@ type UserMutation struct {
 	config
 	op                   Op
 	typ                  string
-	id                   *string
+	id                   *int
+	github_id            *int64
+	addgithub_id         *int64
 	login                *string
 	name                 *string
 	avatar_url           *string
@@ -3041,7 +3472,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id string) userOption {
+func withUserID(id int) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -3091,19 +3522,69 @@ func (m UserMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of User entities.
-func (m *UserMutation) SetID(id string) {
-	m.id = &id
-}
-
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id string, exists bool) {
+func (m *UserMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
 	return *m.id, true
+}
+
+// SetGithubID sets the "github_id" field.
+func (m *UserMutation) SetGithubID(i int64) {
+	m.github_id = &i
+	m.addgithub_id = nil
+}
+
+// GithubID returns the value of the "github_id" field in the mutation.
+func (m *UserMutation) GithubID() (r int64, exists bool) {
+	v := m.github_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGithubID returns the old "github_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGithubID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldGithubID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldGithubID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGithubID: %w", err)
+	}
+	return oldValue.GithubID, nil
+}
+
+// AddGithubID adds i to the "github_id" field.
+func (m *UserMutation) AddGithubID(i int64) {
+	if m.addgithub_id != nil {
+		*m.addgithub_id += i
+	} else {
+		m.addgithub_id = &i
+	}
+}
+
+// AddedGithubID returns the value that was added to the "github_id" field in this mutation.
+func (m *UserMutation) AddedGithubID() (r int64, exists bool) {
+	v := m.addgithub_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetGithubID resets all changes to the "github_id" field.
+func (m *UserMutation) ResetGithubID() {
+	m.github_id = nil
+	m.addgithub_id = nil
 }
 
 // SetLogin sets the "login" field.
@@ -3323,7 +3804,10 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
+	if m.github_id != nil {
+		fields = append(fields, user.FieldGithubID)
+	}
 	if m.login != nil {
 		fields = append(fields, user.FieldLogin)
 	}
@@ -3344,6 +3828,8 @@ func (m *UserMutation) Fields() []string {
 // schema.
 func (m *UserMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case user.FieldGithubID:
+		return m.GithubID()
 	case user.FieldLogin:
 		return m.Login()
 	case user.FieldName:
@@ -3361,6 +3847,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case user.FieldGithubID:
+		return m.OldGithubID(ctx)
 	case user.FieldLogin:
 		return m.OldLogin(ctx)
 	case user.FieldName:
@@ -3378,6 +3866,13 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *UserMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldGithubID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGithubID(v)
+		return nil
 	case user.FieldLogin:
 		v, ok := value.(string)
 		if !ok {
@@ -3413,13 +3908,21 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addgithub_id != nil {
+		fields = append(fields, user.FieldGithubID)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldGithubID:
+		return m.AddedGithubID()
+	}
 	return nil, false
 }
 
@@ -3428,6 +3931,13 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldGithubID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGithubID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -3455,6 +3965,9 @@ func (m *UserMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *UserMutation) ResetField(name string) error {
 	switch name {
+	case user.FieldGithubID:
+		m.ResetGithubID()
+		return nil
 	case user.FieldLogin:
 		m.ResetLogin()
 		return nil

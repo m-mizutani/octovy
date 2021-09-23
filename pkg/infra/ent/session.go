@@ -15,7 +15,9 @@ import (
 type Session struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
+	// UserID holds the value of the "user_id" field.
+	UserID int `json:"user_id,omitempty"`
 	// Token holds the value of the "token" field.
 	Token string `json:"-"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -25,7 +27,7 @@ type Session struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SessionQuery when eager-loading is set.
 	Edges         SessionEdges `json:"edges"`
-	session_login *string
+	session_login *int
 }
 
 // SessionEdges holds the relations/edges for other nodes in the graph.
@@ -56,12 +58,12 @@ func (*Session) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case session.FieldID, session.FieldCreatedAt, session.FieldExpiresAt:
+		case session.FieldUserID, session.FieldCreatedAt, session.FieldExpiresAt:
 			values[i] = new(sql.NullInt64)
-		case session.FieldToken:
+		case session.FieldID, session.FieldToken:
 			values[i] = new(sql.NullString)
 		case session.ForeignKeys[0]: // session_login
-			values[i] = new(sql.NullString)
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Session", columns[i])
 		}
@@ -78,11 +80,17 @@ func (s *Session) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case session.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value.Valid {
+				s.ID = value.String
 			}
-			s.ID = int(value.Int64)
+		case session.FieldUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value.Valid {
+				s.UserID = int(value.Int64)
+			}
 		case session.FieldToken:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field token", values[i])
@@ -102,11 +110,11 @@ func (s *Session) assignValues(columns []string, values []interface{}) error {
 				s.ExpiresAt = value.Int64
 			}
 		case session.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field session_login", values[i])
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field session_login", value)
 			} else if value.Valid {
-				s.session_login = new(string)
-				*s.session_login = value.String
+				s.session_login = new(int)
+				*s.session_login = int(value.Int64)
 			}
 		}
 	}
@@ -141,6 +149,8 @@ func (s *Session) String() string {
 	var builder strings.Builder
 	builder.WriteString("Session(")
 	builder.WriteString(fmt.Sprintf("id=%v", s.ID))
+	builder.WriteString(", user_id=")
+	builder.WriteString(fmt.Sprintf("%v", s.UserID))
 	builder.WriteString(", token=<sensitive>")
 	builder.WriteString(", created_at=")
 	builder.WriteString(fmt.Sprintf("%v", s.CreatedAt))

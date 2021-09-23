@@ -7,6 +7,8 @@ const (
 	Label = "session"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
 	// FieldToken holds the string denoting the token field in the database.
 	FieldToken = "token"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -29,6 +31,7 @@ const (
 // Columns holds all SQL columns for session fields.
 var Columns = []string{
 	FieldID,
+	FieldUserID,
 	FieldToken,
 	FieldCreatedAt,
 	FieldExpiresAt,

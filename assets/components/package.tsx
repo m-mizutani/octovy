@@ -26,7 +26,7 @@ import Alert from "@mui/material/Alert";
 import { makeStyles } from "@mui/styles";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
-import theme from "../../components/theme";
+import theme from "./theme";
 
 const useStyles = makeStyles((theme) => ({
   vulnStatusIcon: {
@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-import * as model from "../../components/model";
+import * as model from "./model";
 import { Typography } from "@mui/material";
 
 type vulnStatusRequest = {

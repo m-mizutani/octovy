@@ -17,7 +17,7 @@ import TableRow from "@mui/material/TableRow";
 
 import * as model from "../../components/model";
 import * as app from "../../components/app";
-import Package from "./_package";
+import Package from "../../components/package";
 
 type scanStatus = {
   isLoaded: boolean;
