@@ -18,6 +18,7 @@ type Mock struct {
 
 	AuthenticateMock func(ctx context.Context, clientID string, clientSecret string, code string) (*model.GitHubToken, error)
 	GetUserMock      func(ctx context.Context, token *model.GitHubToken) (*github.User, error)
+	GetOrgsMock      func(ctx context.Context, token *model.GitHubToken) ([]*github.Organization, error)
 }
 
 func (x *Mock) ListReleases(ctx context.Context, owner string, repo string) ([]*github.RepositoryRelease, error) {
@@ -34,4 +35,8 @@ func (x *Mock) Authenticate(ctx context.Context, clientID string, clientSecret s
 
 func (x *Mock) GetUser(ctx context.Context, token *model.GitHubToken) (*github.User, error) {
 	return x.GetUserMock(ctx, token)
+}
+
+func (x *Mock) GetOrgs(ctx context.Context, token *model.GitHubToken) ([]*github.Organization, error) {
+	return x.GetOrgsMock(ctx, token)
 }
