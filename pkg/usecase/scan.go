@@ -119,6 +119,21 @@ func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanR
 }
 
 func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clients *scanClients) error {
+	var latest *ent.Scan
+	// TargetBranch should be destination branch of PR (PR opened event) OR
+	// PR branch (synchronized event).
+	if req.TargetBranch != "" {
+		// Retrieve latest scan report to compare with current one before inserting
+		scan, err := clients.DB.GetLatestScan(ctx, model.GitHubBranch{
+			GitHubRepo: req.GitHubRepo,
+			Branch:     req.TargetBranch,
+		})
+		if err != nil {
+			return goerr.Wrap(err)
+		}
+		latest = scan
+	}
+
 	check := newCheckRun(clients.GitHubApp)
 	if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
 		return err
@@ -146,16 +161,8 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 	logger.Debug().Str("scanID", newScan.ID).Msg("inserted scan report")
 
 	var changes *pkgChanges
-	if req.TargetBranch != "" {
-		// Retrieve latest scan report to compare with current one before inserting
-		latest, err := clients.DB.GetLatestScan(ctx, model.GitHubBranch{
-			GitHubRepo: req.GitHubRepo,
-			Branch:     req.TargetBranch,
-		})
-		if err != nil {
-			return goerr.Wrap(err)
-		}
 
+	if latest != nil {
 		var oldPkgs []*ent.PackageRecord
 		if latest != nil {
 			oldPkgs = latest.Edges.Packages

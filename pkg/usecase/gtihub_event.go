@@ -96,11 +96,15 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx context.Context, event *github.Pu
 	}
 
 	// Check only PR opened and synchronize
-	if *event.Action != "opened" && *event.Action != "synchronize" {
+	var targetBranch string
+	switch *event.Action {
+	case "opened":
+		targetBranch = *event.PullRequest.Base.Ref
+	case "synchronize":
+		targetBranch = *event.PullRequest.Head.Label
+	default:
 		return nil
 	}
-
-	logger.Warn().Msg("PR!")
 
 	req := model.ScanRepositoryRequest{
 		ScanTarget: model.ScanTarget{
@@ -115,7 +119,7 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx context.Context, event *github.Pu
 			UpdatedAt:     event.PullRequest.CreatedAt.Unix(),
 			URL:           *event.Repo.HTMLURL,
 			IsPullRequest: true,
-			TargetBranch:  *event.PullRequest.Base.Ref,
+			TargetBranch:  targetBranch,
 		},
 		InstallID: *event.Installation.ID,
 	}
