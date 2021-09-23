@@ -53,14 +53,14 @@ func (uc *UserCreate) SetURL(s string) *UserCreate {
 }
 
 // AddEditedStatuIDs adds the "edited_status" edge to the VulnStatus entity by IDs.
-func (uc *UserCreate) AddEditedStatuIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddEditedStatuIDs(ids ...int) *UserCreate {
 	uc.mutation.AddEditedStatuIDs(ids...)
 	return uc
 }
 
 // AddEditedStatus adds the "edited_status" edges to the VulnStatus entity.
 func (uc *UserCreate) AddEditedStatus(v ...*VulnStatus) *UserCreate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -229,7 +229,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},

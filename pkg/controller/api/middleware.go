@@ -109,7 +109,7 @@ func authControl(c *gin.Context) {
 	}
 
 	ssn.Token = "" // Erase token
-	c.Set(contextSession, ssn)
+	setSession(c, ssn)
 	setLogger(c, logger.With().Str("session_id", ssn.ID).Logger())
 	c.Next()
 }

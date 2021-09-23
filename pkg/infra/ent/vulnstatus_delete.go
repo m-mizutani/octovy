@@ -72,7 +72,7 @@ func (vsd *VulnStatusDelete) sqlExec(ctx context.Context) (int, error) {
 		Node: &sqlgraph.NodeSpec{
 			Table: vulnstatus.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: vulnstatus.FieldID,
 			},
 		},

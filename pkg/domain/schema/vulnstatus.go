@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
@@ -14,7 +15,6 @@ type VulnStatus struct {
 // Fields of the VulnStatus.
 func (VulnStatus) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").NotEmpty().Immutable().Unique(),
 		field.Enum("status").GoType(types.VulnStatusType("")),
 		field.String("source"),
 		field.String("pkg_name"),
@@ -28,5 +28,7 @@ func (VulnStatus) Fields() []ent.Field {
 
 // Edges of the VulnStatus.
 func (VulnStatus) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("author", User.Type).Unique(),
+	}
 }

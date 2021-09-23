@@ -24,14 +24,15 @@ type config struct {
 
 // hooks per client, for fast access.
 type hooks struct {
-	AuthStateCache []ent.Hook
-	PackageRecord  []ent.Hook
-	Repository     []ent.Hook
-	Scan           []ent.Hook
-	Session        []ent.Hook
-	User           []ent.Hook
-	VulnStatus     []ent.Hook
-	Vulnerability  []ent.Hook
+	AuthStateCache  []ent.Hook
+	PackageRecord   []ent.Hook
+	Repository      []ent.Hook
+	Scan            []ent.Hook
+	Session         []ent.Hook
+	User            []ent.Hook
+	VulnStatus      []ent.Hook
+	VulnStatusIndex []ent.Hook
+	Vulnerability   []ent.Hook
 }
 
 // Options applies the options on the config object.

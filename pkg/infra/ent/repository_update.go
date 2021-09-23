@@ -12,7 +12,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
 
 // RepositoryUpdate is the builder for updating Repository entities.
@@ -142,14 +142,14 @@ func (ru *RepositoryUpdate) AddScan(s ...*Scan) *RepositoryUpdate {
 	return ru.AddScanIDs(ids...)
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
+// AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ru *RepositoryUpdate) AddStatuIDs(ids ...string) *RepositoryUpdate {
 	ru.mutation.AddStatuIDs(ids...)
 	return ru
 }
 
-// AddStatus adds the "status" edges to the VulnStatus entity.
-func (ru *RepositoryUpdate) AddStatus(v ...*VulnStatus) *RepositoryUpdate {
+// AddStatus adds the "status" edges to the VulnStatusIndex entity.
+func (ru *RepositoryUpdate) AddStatus(v ...*VulnStatusIndex) *RepositoryUpdate {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -183,20 +183,20 @@ func (ru *RepositoryUpdate) RemoveScan(s ...*Scan) *RepositoryUpdate {
 	return ru.RemoveScanIDs(ids...)
 }
 
-// ClearStatus clears all "status" edges to the VulnStatus entity.
+// ClearStatus clears all "status" edges to the VulnStatusIndex entity.
 func (ru *RepositoryUpdate) ClearStatus() *RepositoryUpdate {
 	ru.mutation.ClearStatus()
 	return ru
 }
 
-// RemoveStatuIDs removes the "status" edge to VulnStatus entities by IDs.
+// RemoveStatuIDs removes the "status" edge to VulnStatusIndex entities by IDs.
 func (ru *RepositoryUpdate) RemoveStatuIDs(ids ...string) *RepositoryUpdate {
 	ru.mutation.RemoveStatuIDs(ids...)
 	return ru
 }
 
-// RemoveStatus removes "status" edges to VulnStatus entities.
-func (ru *RepositoryUpdate) RemoveStatus(v ...*VulnStatus) *RepositoryUpdate {
+// RemoveStatus removes "status" edges to VulnStatusIndex entities.
+func (ru *RepositoryUpdate) RemoveStatus(v ...*VulnStatusIndex) *RepositoryUpdate {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -413,7 +413,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}
@@ -429,7 +429,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}
@@ -448,7 +448,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}
@@ -590,14 +590,14 @@ func (ruo *RepositoryUpdateOne) AddScan(s ...*Scan) *RepositoryUpdateOne {
 	return ruo.AddScanIDs(ids...)
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
+// AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ruo *RepositoryUpdateOne) AddStatuIDs(ids ...string) *RepositoryUpdateOne {
 	ruo.mutation.AddStatuIDs(ids...)
 	return ruo
 }
 
-// AddStatus adds the "status" edges to the VulnStatus entity.
-func (ruo *RepositoryUpdateOne) AddStatus(v ...*VulnStatus) *RepositoryUpdateOne {
+// AddStatus adds the "status" edges to the VulnStatusIndex entity.
+func (ruo *RepositoryUpdateOne) AddStatus(v ...*VulnStatusIndex) *RepositoryUpdateOne {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -631,20 +631,20 @@ func (ruo *RepositoryUpdateOne) RemoveScan(s ...*Scan) *RepositoryUpdateOne {
 	return ruo.RemoveScanIDs(ids...)
 }
 
-// ClearStatus clears all "status" edges to the VulnStatus entity.
+// ClearStatus clears all "status" edges to the VulnStatusIndex entity.
 func (ruo *RepositoryUpdateOne) ClearStatus() *RepositoryUpdateOne {
 	ruo.mutation.ClearStatus()
 	return ruo
 }
 
-// RemoveStatuIDs removes the "status" edge to VulnStatus entities by IDs.
+// RemoveStatuIDs removes the "status" edge to VulnStatusIndex entities by IDs.
 func (ruo *RepositoryUpdateOne) RemoveStatuIDs(ids ...string) *RepositoryUpdateOne {
 	ruo.mutation.RemoveStatuIDs(ids...)
 	return ruo
 }
 
-// RemoveStatus removes "status" edges to VulnStatus entities.
-func (ruo *RepositoryUpdateOne) RemoveStatus(v ...*VulnStatus) *RepositoryUpdateOne {
+// RemoveStatus removes "status" edges to VulnStatusIndex entities.
+func (ruo *RepositoryUpdateOne) RemoveStatus(v ...*VulnStatusIndex) *RepositoryUpdateOne {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -885,7 +885,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}
@@ -901,7 +901,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}
@@ -920,7 +920,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}

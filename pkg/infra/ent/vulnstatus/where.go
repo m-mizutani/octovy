@@ -4,33 +4,34 @@ package vulnstatus
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.VulnStatus {
+func ID(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.VulnStatus {
+func IDEQ(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.VulnStatus {
+func IDNEQ(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.VulnStatus {
+func IDIn(ids ...int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -47,7 +48,7 @@ func IDIn(ids ...string) predicate.VulnStatus {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.VulnStatus {
+func IDNotIn(ids ...int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -64,28 +65,28 @@ func IDNotIn(ids ...string) predicate.VulnStatus {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.VulnStatus {
+func IDGT(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.VulnStatus {
+func IDGTE(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.VulnStatus {
+func IDLT(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.VulnStatus {
+func IDLTE(id int) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
 	})
@@ -826,6 +827,34 @@ func CommentEqualFold(v string) predicate.VulnStatus {
 func CommentContainsFold(v string) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldComment), v))
+	})
+}
+
+// HasAuthor applies the HasEdge predicate on the "author" edge.
+func HasAuthor() predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(AuthorTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, AuthorTable, AuthorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAuthorWith applies the HasEdge predicate on the "author" edge with a given conditions (other predicates).
+func HasAuthorWith(preds ...predicate.User) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(AuthorInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, AuthorTable, AuthorColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

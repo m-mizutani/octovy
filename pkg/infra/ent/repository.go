@@ -37,7 +37,7 @@ type RepositoryEdges struct {
 	// Scan holds the value of the scan edge.
 	Scan []*Scan `json:"scan,omitempty"`
 	// Status holds the value of the status edge.
-	Status []*VulnStatus `json:"status,omitempty"`
+	Status []*VulnStatusIndex `json:"status,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -54,7 +54,7 @@ func (e RepositoryEdges) ScanOrErr() ([]*Scan, error) {
 
 // StatusOrErr returns the Status value or an error if the edge
 // was not loaded in eager-loading.
-func (e RepositoryEdges) StatusOrErr() ([]*VulnStatus, error) {
+func (e RepositoryEdges) StatusOrErr() ([]*VulnStatusIndex, error) {
 	if e.loadedTypes[1] {
 		return e.Status, nil
 	}
@@ -140,7 +140,7 @@ func (r *Repository) QueryScan() *ScanQuery {
 }
 
 // QueryStatus queries the "status" edge of the Repository entity.
-func (r *Repository) QueryStatus() *VulnStatusQuery {
+func (r *Repository) QueryStatus() *VulnStatusIndexQuery {
 	return (&RepositoryClient{config: r.config}).QueryStatus(r)
 }
 

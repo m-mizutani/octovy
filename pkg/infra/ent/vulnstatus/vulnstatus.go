@@ -29,8 +29,17 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldComment holds the string denoting the comment field in the database.
 	FieldComment = "comment"
+	// EdgeAuthor holds the string denoting the author edge name in mutations.
+	EdgeAuthor = "author"
 	// Table holds the table name of the vulnstatus in the database.
 	Table = "vuln_status"
+	// AuthorTable is the table that holds the author relation/edge.
+	AuthorTable = "vuln_status"
+	// AuthorInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	AuthorInverseTable = "users"
+	// AuthorColumn is the table column denoting the author relation/edge.
+	AuthorColumn = "vuln_status_author"
 )
 
 // Columns holds all SQL columns for vulnstatus fields.
@@ -49,8 +58,9 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "vuln_status"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"repository_status",
 	"user_edited_status",
+	"vuln_status_author",
+	"vuln_status_index_status",
 	"vulnerability_status",
 }
 
@@ -68,11 +78,6 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
-
-var (
-	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(string) error
-)
 
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s types.VulnStatusType) error {

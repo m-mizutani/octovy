@@ -27,5 +27,8 @@ type User func(*sql.Selector)
 // VulnStatus is the predicate function for vulnstatus builders.
 type VulnStatus func(*sql.Selector)
 
+// VulnStatusIndex is the predicate function for vulnstatusindex builders.
+type VulnStatusIndex func(*sql.Selector)
+
 // Vulnerability is the predicate function for vulnerability builders.
 type Vulnerability func(*sql.Selector)

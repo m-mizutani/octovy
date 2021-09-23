@@ -106,7 +106,7 @@ var (
 	}
 	// VulnStatusColumns holds the columns for the "vuln_status" table.
 	VulnStatusColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Unique: true},
+		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"none", "snoozed", "mitigated", "unaffected", "fixed"}},
 		{Name: "source", Type: field.TypeString},
 		{Name: "pkg_name", Type: field.TypeString},
@@ -115,8 +115,9 @@ var (
 		{Name: "expires_at", Type: field.TypeInt64},
 		{Name: "created_at", Type: field.TypeInt64},
 		{Name: "comment", Type: field.TypeString},
-		{Name: "repository_status", Type: field.TypeInt, Nullable: true},
 		{Name: "user_edited_status", Type: field.TypeInt, Nullable: true},
+		{Name: "vuln_status_author", Type: field.TypeInt, Nullable: true},
+		{Name: "vuln_status_index_status", Type: field.TypeString, Nullable: true},
 		{Name: "vulnerability_status", Type: field.TypeString, Nullable: true},
 	}
 	// VulnStatusTable holds the schema information for the "vuln_status" table.
@@ -126,21 +127,46 @@ var (
 		PrimaryKey: []*schema.Column{VulnStatusColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "vuln_status_repositories_status",
+				Symbol:     "vuln_status_users_edited_status",
 				Columns:    []*schema.Column{VulnStatusColumns[9]},
-				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "vuln_status_users_edited_status",
+				Symbol:     "vuln_status_users_author",
 				Columns:    []*schema.Column{VulnStatusColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "vuln_status_vulnerabilities_status",
+				Symbol:     "vuln_status_vuln_status_indexes_status",
 				Columns:    []*schema.Column{VulnStatusColumns[11]},
+				RefColumns: []*schema.Column{VulnStatusIndexesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "vuln_status_vulnerabilities_status",
+				Columns:    []*schema.Column{VulnStatusColumns[12]},
 				RefColumns: []*schema.Column{VulnerabilitiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// VulnStatusIndexesColumns holds the columns for the "vuln_status_indexes" table.
+	VulnStatusIndexesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Unique: true},
+		{Name: "repository_status", Type: field.TypeInt, Nullable: true},
+	}
+	// VulnStatusIndexesTable holds the schema information for the "vuln_status_indexes" table.
+	VulnStatusIndexesTable = &schema.Table{
+		Name:       "vuln_status_indexes",
+		Columns:    VulnStatusIndexesColumns,
+		PrimaryKey: []*schema.Column{VulnStatusIndexesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "vuln_status_indexes_repositories_status",
+				Columns:    []*schema.Column{VulnStatusIndexesColumns[1]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -247,6 +273,7 @@ var (
 		SessionsTable,
 		UsersTable,
 		VulnStatusTable,
+		VulnStatusIndexesTable,
 		VulnerabilitiesTable,
 		PackageRecordVulnerabilitiesTable,
 		RepositoryScanTable,
@@ -256,9 +283,11 @@ var (
 
 func init() {
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
-	VulnStatusTable.ForeignKeys[0].RefTable = RepositoriesTable
+	VulnStatusTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[1].RefTable = UsersTable
-	VulnStatusTable.ForeignKeys[2].RefTable = VulnerabilitiesTable
+	VulnStatusTable.ForeignKeys[2].RefTable = VulnStatusIndexesTable
+	VulnStatusTable.ForeignKeys[3].RefTable = VulnerabilitiesTable
+	VulnStatusIndexesTable.ForeignKeys[0].RefTable = RepositoriesTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[0].RefTable = PackageRecordsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
 	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable

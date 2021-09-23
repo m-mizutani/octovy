@@ -100,6 +100,19 @@ func (f VulnStatusFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return f(ctx, mv)
 }
 
+// The VulnStatusIndexFunc type is an adapter to allow the use of ordinary
+// function as VulnStatusIndex mutator.
+type VulnStatusIndexFunc func(context.Context, *ent.VulnStatusIndexMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VulnStatusIndexFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.VulnStatusIndexMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VulnStatusIndexMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The VulnerabilityFunc type is an adapter to allow the use of ordinary
 // function as Vulnerability mutator.
 type VulnerabilityFunc func(context.Context, *ent.VulnerabilityMutation) (ent.Value, error)

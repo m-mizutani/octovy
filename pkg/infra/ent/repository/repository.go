@@ -31,10 +31,10 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "scan" package.
 	ScanInverseTable = "scans"
 	// StatusTable is the table that holds the status relation/edge.
-	StatusTable = "vuln_status"
-	// StatusInverseTable is the table name for the VulnStatus entity.
-	// It exists in this package in order to avoid circular dependency with the "vulnstatus" package.
-	StatusInverseTable = "vuln_status"
+	StatusTable = "vuln_status_indexes"
+	// StatusInverseTable is the table name for the VulnStatusIndex entity.
+	// It exists in this package in order to avoid circular dependency with the "vulnstatusindex" package.
+	StatusInverseTable = "vuln_status_indexes"
 	// StatusColumn is the table column denoting the status relation/edge.
 	StatusColumn = "repository_status"
 )

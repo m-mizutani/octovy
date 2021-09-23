@@ -16,6 +16,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -36,14 +37,15 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		authstatecache.Table: authstatecache.ValidColumn,
-		packagerecord.Table:  packagerecord.ValidColumn,
-		repository.Table:     repository.ValidColumn,
-		scan.Table:           scan.ValidColumn,
-		session.Table:        session.ValidColumn,
-		user.Table:           user.ValidColumn,
-		vulnstatus.Table:     vulnstatus.ValidColumn,
-		vulnerability.Table:  vulnerability.ValidColumn,
+		authstatecache.Table:  authstatecache.ValidColumn,
+		packagerecord.Table:   packagerecord.ValidColumn,
+		repository.Table:      repository.ValidColumn,
+		scan.Table:            scan.ValidColumn,
+		session.Table:         session.ValidColumn,
+		user.Table:            user.ValidColumn,
+		vulnstatus.Table:      vulnstatus.ValidColumn,
+		vulnstatusindex.Table: vulnstatusindex.ValidColumn,
+		vulnerability.Table:   vulnerability.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

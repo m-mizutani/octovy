@@ -6,7 +6,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/schema"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -19,12 +19,12 @@ func init() {
 	sessionDescToken := sessionFields[2].Descriptor()
 	// session.TokenValidator is a validator for the "token" field. It is called by the builders before save.
 	session.TokenValidator = sessionDescToken.Validators[0].(func(string) error)
-	vulnstatusFields := schema.VulnStatus{}.Fields()
-	_ = vulnstatusFields
-	// vulnstatusDescID is the schema descriptor for id field.
-	vulnstatusDescID := vulnstatusFields[0].Descriptor()
-	// vulnstatus.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	vulnstatus.IDValidator = vulnstatusDescID.Validators[0].(func(string) error)
+	vulnstatusindexFields := schema.VulnStatusIndex{}.Fields()
+	_ = vulnstatusindexFields
+	// vulnstatusindexDescID is the schema descriptor for id field.
+	vulnstatusindexDescID := vulnstatusindexFields[0].Descriptor()
+	// vulnstatusindex.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	vulnstatusindex.IDValidator = vulnstatusindexDescID.Validators[0].(func(string) error)
 	vulnerabilityFields := schema.Vulnerability{}.Fields()
 	_ = vulnerabilityFields
 	// vulnerabilityDescID is the schema descriptor for id field.

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
@@ -70,10 +71,23 @@ func (vsc *VulnStatusCreate) SetComment(s string) *VulnStatusCreate {
 	return vsc
 }
 
-// SetID sets the "id" field.
-func (vsc *VulnStatusCreate) SetID(s string) *VulnStatusCreate {
-	vsc.mutation.SetID(s)
+// SetAuthorID sets the "author" edge to the User entity by ID.
+func (vsc *VulnStatusCreate) SetAuthorID(id int) *VulnStatusCreate {
+	vsc.mutation.SetAuthorID(id)
 	return vsc
+}
+
+// SetNillableAuthorID sets the "author" edge to the User entity by ID if the given value is not nil.
+func (vsc *VulnStatusCreate) SetNillableAuthorID(id *int) *VulnStatusCreate {
+	if id != nil {
+		vsc = vsc.SetAuthorID(*id)
+	}
+	return vsc
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (vsc *VulnStatusCreate) SetAuthor(u *User) *VulnStatusCreate {
+	return vsc.SetAuthorID(u.ID)
 }
 
 // Mutation returns the VulnStatusMutation object of the builder.
@@ -180,11 +194,6 @@ func (vsc *VulnStatusCreate) check() error {
 	if _, ok := vsc.mutation.Comment(); !ok {
 		return &ValidationError{Name: "comment", err: errors.New(`ent: missing required field "comment"`)}
 	}
-	if v, ok := vsc.mutation.ID(); ok {
-		if err := vulnstatus.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "id": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -196,6 +205,8 @@ func (vsc *VulnStatusCreate) sqlSave(ctx context.Context) (*VulnStatus, error) {
 		}
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -205,16 +216,12 @@ func (vsc *VulnStatusCreate) createSpec() (*VulnStatus, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: vulnstatus.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: vulnstatus.FieldID,
 			},
 		}
 	)
 	_spec.OnConflict = vsc.conflict
-	if id, ok := vsc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
-	}
 	if value, ok := vsc.mutation.Status(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
@@ -278,6 +285,26 @@ func (vsc *VulnStatusCreate) createSpec() (*VulnStatus, *sqlgraph.CreateSpec) {
 			Column: vulnstatus.FieldComment,
 		})
 		_node.Comment = value
+	}
+	if nodes := vsc.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatus.AuthorTable,
+			Columns: []string{vulnstatus.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.vuln_status_author = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -597,7 +624,7 @@ func (u *VulnStatusUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *VulnStatusUpsertOne) ID(ctx context.Context) (id string, err error) {
+func (u *VulnStatusUpsertOne) ID(ctx context.Context) (id int, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -606,7 +633,7 @@ func (u *VulnStatusUpsertOne) ID(ctx context.Context) (id string, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *VulnStatusUpsertOne) IDX(ctx context.Context) string {
+func (u *VulnStatusUpsertOne) IDX(ctx context.Context) int {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -657,6 +684,10 @@ func (vscb *VulnStatusCreateBulk) Save(ctx context.Context) ([]*VulnStatus, erro
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

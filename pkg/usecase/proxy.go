@@ -39,7 +39,7 @@ func (x *usecase) UpdateVulnStatus(ctx context.Context, req *model.UpdateVulnSta
 		Comment:   req.Comment,
 	}
 
-	if err := x.infra.DB.PutVulnStatus(ctx, tgt, status); err != nil {
+	if err := x.infra.DB.PutVulnStatus(ctx, tgt, status, req.UserID); err != nil {
 		return err
 	}
 

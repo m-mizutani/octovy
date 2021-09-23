@@ -52,14 +52,14 @@ func (uu *UserUpdate) SetURL(s string) *UserUpdate {
 }
 
 // AddEditedStatuIDs adds the "edited_status" edge to the VulnStatus entity by IDs.
-func (uu *UserUpdate) AddEditedStatuIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddEditedStatuIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddEditedStatuIDs(ids...)
 	return uu
 }
 
 // AddEditedStatus adds the "edited_status" edges to the VulnStatus entity.
 func (uu *UserUpdate) AddEditedStatus(v ...*VulnStatus) *UserUpdate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -78,14 +78,14 @@ func (uu *UserUpdate) ClearEditedStatus() *UserUpdate {
 }
 
 // RemoveEditedStatuIDs removes the "edited_status" edge to VulnStatus entities by IDs.
-func (uu *UserUpdate) RemoveEditedStatuIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveEditedStatuIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveEditedStatuIDs(ids...)
 	return uu
 }
 
 // RemoveEditedStatus removes "edited_status" edges to VulnStatus entities.
 func (uu *UserUpdate) RemoveEditedStatus(v ...*VulnStatus) *UserUpdate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -201,7 +201,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},
@@ -217,7 +217,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},
@@ -236,7 +236,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},
@@ -290,14 +290,14 @@ func (uuo *UserUpdateOne) SetURL(s string) *UserUpdateOne {
 }
 
 // AddEditedStatuIDs adds the "edited_status" edge to the VulnStatus entity by IDs.
-func (uuo *UserUpdateOne) AddEditedStatuIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddEditedStatuIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddEditedStatuIDs(ids...)
 	return uuo
 }
 
 // AddEditedStatus adds the "edited_status" edges to the VulnStatus entity.
 func (uuo *UserUpdateOne) AddEditedStatus(v ...*VulnStatus) *UserUpdateOne {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -316,14 +316,14 @@ func (uuo *UserUpdateOne) ClearEditedStatus() *UserUpdateOne {
 }
 
 // RemoveEditedStatuIDs removes the "edited_status" edge to VulnStatus entities by IDs.
-func (uuo *UserUpdateOne) RemoveEditedStatuIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveEditedStatuIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveEditedStatuIDs(ids...)
 	return uuo
 }
 
 // RemoveEditedStatus removes "edited_status" edges to VulnStatus entities.
 func (uuo *UserUpdateOne) RemoveEditedStatus(v ...*VulnStatus) *UserUpdateOne {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -463,7 +463,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},
@@ -479,7 +479,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},
@@ -498,7 +498,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: vulnstatus.FieldID,
 				},
 			},

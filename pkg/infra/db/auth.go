@@ -5,6 +5,7 @@ import (
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
 )
 
 // Auth
@@ -74,7 +75,7 @@ func (x *Client) PutSession(ctx context.Context, ssn *ent.Session) error {
 }
 
 func (x *Client) GetSession(ctx context.Context, ssnID string, now int64) (*ent.Session, error) {
-	ssn, err := x.client.Session.Get(ctx, ssnID)
+	ssn, err := x.client.Session.Query().Where(session.ID(ssnID)).WithLogin().First(ctx)
 	if ent.IsNotFound(err) {
 		return nil, nil
 	} else if err != nil {

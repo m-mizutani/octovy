@@ -17,6 +17,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 
 	"entgo.io/ent"
 )
@@ -30,14 +31,15 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAuthStateCache = "AuthStateCache"
-	TypePackageRecord  = "PackageRecord"
-	TypeRepository     = "Repository"
-	TypeScan           = "Scan"
-	TypeSession        = "Session"
-	TypeUser           = "User"
-	TypeVulnStatus     = "VulnStatus"
-	TypeVulnerability  = "Vulnerability"
+	TypeAuthStateCache  = "AuthStateCache"
+	TypePackageRecord   = "PackageRecord"
+	TypeRepository      = "Repository"
+	TypeScan            = "Scan"
+	TypeSession         = "Session"
+	TypeUser            = "User"
+	TypeVulnStatus      = "VulnStatus"
+	TypeVulnStatusIndex = "VulnStatusIndex"
+	TypeVulnerability   = "Vulnerability"
 )
 
 // AuthStateCacheMutation represents an operation that mutates the AuthStateCache nodes in the graph.
@@ -1505,7 +1507,7 @@ func (m *RepositoryMutation) ResetScan() {
 	m.removedscan = nil
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
+// AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by ids.
 func (m *RepositoryMutation) AddStatuIDs(ids ...string) {
 	if m.status == nil {
 		m.status = make(map[string]struct{})
@@ -1515,17 +1517,17 @@ func (m *RepositoryMutation) AddStatuIDs(ids ...string) {
 	}
 }
 
-// ClearStatus clears the "status" edge to the VulnStatus entity.
+// ClearStatus clears the "status" edge to the VulnStatusIndex entity.
 func (m *RepositoryMutation) ClearStatus() {
 	m.clearedstatus = true
 }
 
-// StatusCleared reports if the "status" edge to the VulnStatus entity was cleared.
+// StatusCleared reports if the "status" edge to the VulnStatusIndex entity was cleared.
 func (m *RepositoryMutation) StatusCleared() bool {
 	return m.clearedstatus
 }
 
-// RemoveStatuIDs removes the "status" edge to the VulnStatus entity by IDs.
+// RemoveStatuIDs removes the "status" edge to the VulnStatusIndex entity by IDs.
 func (m *RepositoryMutation) RemoveStatuIDs(ids ...string) {
 	if m.removedstatus == nil {
 		m.removedstatus = make(map[string]struct{})
@@ -1536,7 +1538,7 @@ func (m *RepositoryMutation) RemoveStatuIDs(ids ...string) {
 	}
 }
 
-// RemovedStatus returns the removed IDs of the "status" edge to the VulnStatus entity.
+// RemovedStatus returns the removed IDs of the "status" edge to the VulnStatusIndex entity.
 func (m *RepositoryMutation) RemovedStatusIDs() (ids []string) {
 	for id := range m.removedstatus {
 		ids = append(ids, id)
@@ -3444,8 +3446,8 @@ type UserMutation struct {
 	avatar_url           *string
 	url                  *string
 	clearedFields        map[string]struct{}
-	edited_status        map[string]struct{}
-	removededited_status map[string]struct{}
+	edited_status        map[int]struct{}
+	removededited_status map[int]struct{}
 	clearededited_status bool
 	done                 bool
 	oldValue             func(context.Context) (*User, error)
@@ -3732,9 +3734,9 @@ func (m *UserMutation) ResetURL() {
 }
 
 // AddEditedStatuIDs adds the "edited_status" edge to the VulnStatus entity by ids.
-func (m *UserMutation) AddEditedStatuIDs(ids ...string) {
+func (m *UserMutation) AddEditedStatuIDs(ids ...int) {
 	if m.edited_status == nil {
-		m.edited_status = make(map[string]struct{})
+		m.edited_status = make(map[int]struct{})
 	}
 	for i := range ids {
 		m.edited_status[ids[i]] = struct{}{}
@@ -3752,9 +3754,9 @@ func (m *UserMutation) EditedStatusCleared() bool {
 }
 
 // RemoveEditedStatuIDs removes the "edited_status" edge to the VulnStatus entity by IDs.
-func (m *UserMutation) RemoveEditedStatuIDs(ids ...string) {
+func (m *UserMutation) RemoveEditedStatuIDs(ids ...int) {
 	if m.removededited_status == nil {
-		m.removededited_status = make(map[string]struct{})
+		m.removededited_status = make(map[int]struct{})
 	}
 	for i := range ids {
 		delete(m.edited_status, ids[i])
@@ -3763,7 +3765,7 @@ func (m *UserMutation) RemoveEditedStatuIDs(ids ...string) {
 }
 
 // RemovedEditedStatus returns the removed IDs of the "edited_status" edge to the VulnStatus entity.
-func (m *UserMutation) RemovedEditedStatusIDs() (ids []string) {
+func (m *UserMutation) RemovedEditedStatusIDs() (ids []int) {
 	for id := range m.removededited_status {
 		ids = append(ids, id)
 	}
@@ -3771,7 +3773,7 @@ func (m *UserMutation) RemovedEditedStatusIDs() (ids []string) {
 }
 
 // EditedStatusIDs returns the "edited_status" edge IDs in the mutation.
-func (m *UserMutation) EditedStatusIDs() (ids []string) {
+func (m *UserMutation) EditedStatusIDs() (ids []int) {
 	for id := range m.edited_status {
 		ids = append(ids, id)
 	}
@@ -4073,7 +4075,7 @@ type VulnStatusMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *string
+	id            *int
 	status        *types.VulnStatusType
 	source        *string
 	pkg_name      *string
@@ -4085,6 +4087,8 @@ type VulnStatusMutation struct {
 	addcreated_at *int64
 	comment       *string
 	clearedFields map[string]struct{}
+	author        *int
+	clearedauthor bool
 	done          bool
 	oldValue      func(context.Context) (*VulnStatus, error)
 	predicates    []predicate.VulnStatus
@@ -4110,7 +4114,7 @@ func newVulnStatusMutation(c config, op Op, opts ...vulnstatusOption) *VulnStatu
 }
 
 // withVulnStatusID sets the ID field of the mutation.
-func withVulnStatusID(id string) vulnstatusOption {
+func withVulnStatusID(id int) vulnstatusOption {
 	return func(m *VulnStatusMutation) {
 		var (
 			err   error
@@ -4160,15 +4164,9 @@ func (m VulnStatusMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of VulnStatus entities.
-func (m *VulnStatusMutation) SetID(id string) {
-	m.id = &id
-}
-
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *VulnStatusMutation) ID() (id string, exists bool) {
+func (m *VulnStatusMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -4503,6 +4501,45 @@ func (m *VulnStatusMutation) ResetComment() {
 	m.comment = nil
 }
 
+// SetAuthorID sets the "author" edge to the User entity by id.
+func (m *VulnStatusMutation) SetAuthorID(id int) {
+	m.author = &id
+}
+
+// ClearAuthor clears the "author" edge to the User entity.
+func (m *VulnStatusMutation) ClearAuthor() {
+	m.clearedauthor = true
+}
+
+// AuthorCleared reports if the "author" edge to the User entity was cleared.
+func (m *VulnStatusMutation) AuthorCleared() bool {
+	return m.clearedauthor
+}
+
+// AuthorID returns the "author" edge ID in the mutation.
+func (m *VulnStatusMutation) AuthorID() (id int, exists bool) {
+	if m.author != nil {
+		return *m.author, true
+	}
+	return
+}
+
+// AuthorIDs returns the "author" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AuthorID instead. It exists only for internal usage by the builders.
+func (m *VulnStatusMutation) AuthorIDs() (ids []int) {
+	if id := m.author; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAuthor resets all changes to the "author" edge.
+func (m *VulnStatusMutation) ResetAuthor() {
+	m.author = nil
+	m.clearedauthor = false
+}
+
 // Where appends a list predicates to the VulnStatusMutation builder.
 func (m *VulnStatusMutation) Where(ps ...predicate.VulnStatus) {
 	m.predicates = append(m.predicates, ps...)
@@ -4767,50 +4804,407 @@ func (m *VulnStatusMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *VulnStatusMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.author != nil {
+		edges = append(edges, vulnstatus.EdgeAuthor)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *VulnStatusMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case vulnstatus.EdgeAuthor:
+		if id := m.author; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *VulnStatusMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *VulnStatusMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *VulnStatusMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedauthor {
+		edges = append(edges, vulnstatus.EdgeAuthor)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *VulnStatusMutation) EdgeCleared(name string) bool {
+	switch name {
+	case vulnstatus.EdgeAuthor:
+		return m.clearedauthor
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *VulnStatusMutation) ClearEdge(name string) error {
+	switch name {
+	case vulnstatus.EdgeAuthor:
+		m.ClearAuthor()
+		return nil
+	}
 	return fmt.Errorf("unknown VulnStatus unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *VulnStatusMutation) ResetEdge(name string) error {
+	switch name {
+	case vulnstatus.EdgeAuthor:
+		m.ResetAuthor()
+		return nil
+	}
 	return fmt.Errorf("unknown VulnStatus edge %s", name)
+}
+
+// VulnStatusIndexMutation represents an operation that mutates the VulnStatusIndex nodes in the graph.
+type VulnStatusIndexMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	clearedFields map[string]struct{}
+	status        map[int]struct{}
+	removedstatus map[int]struct{}
+	clearedstatus bool
+	done          bool
+	oldValue      func(context.Context) (*VulnStatusIndex, error)
+	predicates    []predicate.VulnStatusIndex
+}
+
+var _ ent.Mutation = (*VulnStatusIndexMutation)(nil)
+
+// vulnstatusindexOption allows management of the mutation configuration using functional options.
+type vulnstatusindexOption func(*VulnStatusIndexMutation)
+
+// newVulnStatusIndexMutation creates new mutation for the VulnStatusIndex entity.
+func newVulnStatusIndexMutation(c config, op Op, opts ...vulnstatusindexOption) *VulnStatusIndexMutation {
+	m := &VulnStatusIndexMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeVulnStatusIndex,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withVulnStatusIndexID sets the ID field of the mutation.
+func withVulnStatusIndexID(id string) vulnstatusindexOption {
+	return func(m *VulnStatusIndexMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *VulnStatusIndex
+		)
+		m.oldValue = func(ctx context.Context) (*VulnStatusIndex, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().VulnStatusIndex.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withVulnStatusIndex sets the old VulnStatusIndex of the mutation.
+func withVulnStatusIndex(node *VulnStatusIndex) vulnstatusindexOption {
+	return func(m *VulnStatusIndexMutation) {
+		m.oldValue = func(context.Context) (*VulnStatusIndex, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m VulnStatusIndexMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m VulnStatusIndexMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of VulnStatusIndex entities.
+func (m *VulnStatusIndexMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *VulnStatusIndexMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
+func (m *VulnStatusIndexMutation) AddStatuIDs(ids ...int) {
+	if m.status == nil {
+		m.status = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.status[ids[i]] = struct{}{}
+	}
+}
+
+// ClearStatus clears the "status" edge to the VulnStatus entity.
+func (m *VulnStatusIndexMutation) ClearStatus() {
+	m.clearedstatus = true
+}
+
+// StatusCleared reports if the "status" edge to the VulnStatus entity was cleared.
+func (m *VulnStatusIndexMutation) StatusCleared() bool {
+	return m.clearedstatus
+}
+
+// RemoveStatuIDs removes the "status" edge to the VulnStatus entity by IDs.
+func (m *VulnStatusIndexMutation) RemoveStatuIDs(ids ...int) {
+	if m.removedstatus == nil {
+		m.removedstatus = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.status, ids[i])
+		m.removedstatus[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedStatus returns the removed IDs of the "status" edge to the VulnStatus entity.
+func (m *VulnStatusIndexMutation) RemovedStatusIDs() (ids []int) {
+	for id := range m.removedstatus {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// StatusIDs returns the "status" edge IDs in the mutation.
+func (m *VulnStatusIndexMutation) StatusIDs() (ids []int) {
+	for id := range m.status {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetStatus resets all changes to the "status" edge.
+func (m *VulnStatusIndexMutation) ResetStatus() {
+	m.status = nil
+	m.clearedstatus = false
+	m.removedstatus = nil
+}
+
+// Where appends a list predicates to the VulnStatusIndexMutation builder.
+func (m *VulnStatusIndexMutation) Where(ps ...predicate.VulnStatusIndex) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *VulnStatusIndexMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (VulnStatusIndex).
+func (m *VulnStatusIndexMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *VulnStatusIndexMutation) Fields() []string {
+	fields := make([]string, 0, 0)
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *VulnStatusIndexMutation) Field(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *VulnStatusIndexMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, fmt.Errorf("unknown VulnStatusIndex field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VulnStatusIndexMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown VulnStatusIndex field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *VulnStatusIndexMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *VulnStatusIndexMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VulnStatusIndexMutation) AddField(name string, value ent.Value) error {
+	return fmt.Errorf("unknown VulnStatusIndex numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *VulnStatusIndexMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *VulnStatusIndexMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *VulnStatusIndexMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown VulnStatusIndex nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *VulnStatusIndexMutation) ResetField(name string) error {
+	return fmt.Errorf("unknown VulnStatusIndex field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *VulnStatusIndexMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.status != nil {
+		edges = append(edges, vulnstatusindex.EdgeStatus)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *VulnStatusIndexMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case vulnstatusindex.EdgeStatus:
+		ids := make([]ent.Value, 0, len(m.status))
+		for id := range m.status {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *VulnStatusIndexMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedstatus != nil {
+		edges = append(edges, vulnstatusindex.EdgeStatus)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *VulnStatusIndexMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case vulnstatusindex.EdgeStatus:
+		ids := make([]ent.Value, 0, len(m.removedstatus))
+		for id := range m.removedstatus {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *VulnStatusIndexMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedstatus {
+		edges = append(edges, vulnstatusindex.EdgeStatus)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *VulnStatusIndexMutation) EdgeCleared(name string) bool {
+	switch name {
+	case vulnstatusindex.EdgeStatus:
+		return m.clearedstatus
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *VulnStatusIndexMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown VulnStatusIndex unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *VulnStatusIndexMutation) ResetEdge(name string) error {
+	switch name {
+	case vulnstatusindex.EdgeStatus:
+		m.ResetStatus()
+		return nil
+	}
+	return fmt.Errorf("unknown VulnStatusIndex edge %s", name)
 }
 
 // VulnerabilityMutation represents an operation that mutates the Vulnerability nodes in the graph.
@@ -4833,8 +5227,8 @@ type VulnerabilityMutation struct {
 	packages            map[int]struct{}
 	removedpackages     map[int]struct{}
 	clearedpackages     bool
-	status              map[string]struct{}
-	removedstatus       map[string]struct{}
+	status              map[int]struct{}
+	removedstatus       map[int]struct{}
 	clearedstatus       bool
 	done                bool
 	oldValue            func(context.Context) (*Vulnerability, error)
@@ -5387,9 +5781,9 @@ func (m *VulnerabilityMutation) ResetPackages() {
 }
 
 // AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
-func (m *VulnerabilityMutation) AddStatuIDs(ids ...string) {
+func (m *VulnerabilityMutation) AddStatuIDs(ids ...int) {
 	if m.status == nil {
-		m.status = make(map[string]struct{})
+		m.status = make(map[int]struct{})
 	}
 	for i := range ids {
 		m.status[ids[i]] = struct{}{}
@@ -5407,9 +5801,9 @@ func (m *VulnerabilityMutation) StatusCleared() bool {
 }
 
 // RemoveStatuIDs removes the "status" edge to the VulnStatus entity by IDs.
-func (m *VulnerabilityMutation) RemoveStatuIDs(ids ...string) {
+func (m *VulnerabilityMutation) RemoveStatuIDs(ids ...int) {
 	if m.removedstatus == nil {
-		m.removedstatus = make(map[string]struct{})
+		m.removedstatus = make(map[int]struct{})
 	}
 	for i := range ids {
 		delete(m.status, ids[i])
@@ -5418,7 +5812,7 @@ func (m *VulnerabilityMutation) RemoveStatuIDs(ids ...string) {
 }
 
 // RemovedStatus returns the removed IDs of the "status" edge to the VulnStatus entity.
-func (m *VulnerabilityMutation) RemovedStatusIDs() (ids []string) {
+func (m *VulnerabilityMutation) RemovedStatusIDs() (ids []int) {
 	for id := range m.removedstatus {
 		ids = append(ids, id)
 	}
@@ -5426,7 +5820,7 @@ func (m *VulnerabilityMutation) RemovedStatusIDs() (ids []string) {
 }
 
 // StatusIDs returns the "status" edge IDs in the mutation.
-func (m *VulnerabilityMutation) StatusIDs() (ids []string) {
+func (m *VulnerabilityMutation) StatusIDs() (ids []int) {
 	for id := range m.status {
 		ids = append(ids, id)
 	}

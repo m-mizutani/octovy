@@ -12,7 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
 
 // RepositoryCreate is the builder for creating a Repository entity.
@@ -106,14 +106,14 @@ func (rc *RepositoryCreate) AddScan(s ...*Scan) *RepositoryCreate {
 	return rc.AddScanIDs(ids...)
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
+// AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (rc *RepositoryCreate) AddStatuIDs(ids ...string) *RepositoryCreate {
 	rc.mutation.AddStatuIDs(ids...)
 	return rc
 }
 
-// AddStatus adds the "status" edges to the VulnStatus entity.
-func (rc *RepositoryCreate) AddStatus(v ...*VulnStatus) *RepositoryCreate {
+// AddStatus adds the "status" edges to the VulnStatusIndex entity.
+func (rc *RepositoryCreate) AddStatus(v ...*VulnStatusIndex) *RepositoryCreate {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -302,7 +302,7 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
-					Column: vulnstatus.FieldID,
+					Column: vulnstatusindex.FieldID,
 				},
 			},
 		}

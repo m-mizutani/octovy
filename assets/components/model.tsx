@@ -20,7 +20,7 @@ export type repository = {
   default_branch: string;
   edges: {
     scan: scan[];
-    status: vulnStatus[];
+    status: vulnStatusIndex[];
   };
 };
 
@@ -41,6 +41,12 @@ export type vulnStatusType =
   | "mitigated"
   | "unaffected"
   | "fixed";
+
+type vulnStatusIndex = {
+  edges: {
+    status: vulnStatus[];
+  };
+};
 
 export type vulnStatus = {
   comment: string;
@@ -84,10 +90,11 @@ export class vulnStatusDB {
   static toKey(src: string, pkgName: string, vulnID: string): string {
     return `${src}|${pkgName}|${vulnID}`;
   }
-  constructor(status: vulnStatus[]) {
-    console.log({ status });
+  constructor(statusIndex: vulnStatusIndex[]) {
+    console.log({ statusIndex });
     this.vulnMap = {};
-    (status || []).forEach((status) => {
+    (statusIndex || []).forEach((idx) => {
+      const status = idx.edges.status[0];
       const key = vulnStatusDB.toKey(
         status.source,
         status.pkg_name,

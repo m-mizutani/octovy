@@ -28,7 +28,7 @@ func (Repository) Fields() []ent.Field {
 func (Repository) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("scan", Scan.Type),
-		edge.To("status", VulnStatus.Type),
+		edge.To("status", VulnStatusIndex.Type),
 	}
 }
 

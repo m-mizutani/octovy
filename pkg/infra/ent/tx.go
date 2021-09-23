@@ -26,6 +26,8 @@ type Tx struct {
 	User *UserClient
 	// VulnStatus is the client for interacting with the VulnStatus builders.
 	VulnStatus *VulnStatusClient
+	// VulnStatusIndex is the client for interacting with the VulnStatusIndex builders.
+	VulnStatusIndex *VulnStatusIndexClient
 	// Vulnerability is the client for interacting with the Vulnerability builders.
 	Vulnerability *VulnerabilityClient
 
@@ -170,6 +172,7 @@ func (tx *Tx) init() {
 	tx.Session = NewSessionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.VulnStatus = NewVulnStatusClient(tx.config)
+	tx.VulnStatusIndex = NewVulnStatusIndexClient(tx.config)
 	tx.Vulnerability = NewVulnerabilityClient(tx.config)
 }
 

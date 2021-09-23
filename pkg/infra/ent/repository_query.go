@@ -15,7 +15,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
 
 // RepositoryQuery is the builder for querying Repository entities.
@@ -29,7 +29,7 @@ type RepositoryQuery struct {
 	predicates []predicate.Repository
 	// eager-loading edges.
 	withScan   *ScanQuery
-	withStatus *VulnStatusQuery
+	withStatus *VulnStatusIndexQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -89,8 +89,8 @@ func (rq *RepositoryQuery) QueryScan() *ScanQuery {
 }
 
 // QueryStatus chains the current query on the "status" edge.
-func (rq *RepositoryQuery) QueryStatus() *VulnStatusQuery {
-	query := &VulnStatusQuery{config: rq.config}
+func (rq *RepositoryQuery) QueryStatus() *VulnStatusIndexQuery {
+	query := &VulnStatusIndexQuery{config: rq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := rq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -101,7 +101,7 @@ func (rq *RepositoryQuery) QueryStatus() *VulnStatusQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
-			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.To(vulnstatusindex.Table, vulnstatusindex.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, repository.StatusTable, repository.StatusColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
@@ -312,8 +312,8 @@ func (rq *RepositoryQuery) WithScan(opts ...func(*ScanQuery)) *RepositoryQuery {
 
 // WithStatus tells the query-builder to eager-load the nodes that are connected to
 // the "status" edge. The optional arguments are used to configure the query builder of the edge.
-func (rq *RepositoryQuery) WithStatus(opts ...func(*VulnStatusQuery)) *RepositoryQuery {
-	query := &VulnStatusQuery{config: rq.config}
+func (rq *RepositoryQuery) WithStatus(opts ...func(*VulnStatusIndexQuery)) *RepositoryQuery {
+	query := &VulnStatusIndexQuery{config: rq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -482,10 +482,10 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.Status = []*VulnStatus{}
+			nodes[i].Edges.Status = []*VulnStatusIndex{}
 		}
 		query.withFKs = true
-		query.Where(predicate.VulnStatus(func(s *sql.Selector) {
+		query.Where(predicate.VulnStatusIndex(func(s *sql.Selector) {
 			s.Where(sql.InValues(repository.StatusColumn, fks...))
 		}))
 		neighbors, err := query.All(ctx)

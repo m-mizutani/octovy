@@ -17,6 +17,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -42,6 +43,8 @@ type Client struct {
 	User *UserClient
 	// VulnStatus is the client for interacting with the VulnStatus builders.
 	VulnStatus *VulnStatusClient
+	// VulnStatusIndex is the client for interacting with the VulnStatusIndex builders.
+	VulnStatusIndex *VulnStatusIndexClient
 	// Vulnerability is the client for interacting with the Vulnerability builders.
 	Vulnerability *VulnerabilityClient
 }
@@ -64,6 +67,7 @@ func (c *Client) init() {
 	c.Session = NewSessionClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.VulnStatus = NewVulnStatusClient(c.config)
+	c.VulnStatusIndex = NewVulnStatusIndexClient(c.config)
 	c.Vulnerability = NewVulnerabilityClient(c.config)
 }
 
@@ -96,16 +100,17 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		AuthStateCache: NewAuthStateCacheClient(cfg),
-		PackageRecord:  NewPackageRecordClient(cfg),
-		Repository:     NewRepositoryClient(cfg),
-		Scan:           NewScanClient(cfg),
-		Session:        NewSessionClient(cfg),
-		User:           NewUserClient(cfg),
-		VulnStatus:     NewVulnStatusClient(cfg),
-		Vulnerability:  NewVulnerabilityClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		AuthStateCache:  NewAuthStateCacheClient(cfg),
+		PackageRecord:   NewPackageRecordClient(cfg),
+		Repository:      NewRepositoryClient(cfg),
+		Scan:            NewScanClient(cfg),
+		Session:         NewSessionClient(cfg),
+		User:            NewUserClient(cfg),
+		VulnStatus:      NewVulnStatusClient(cfg),
+		VulnStatusIndex: NewVulnStatusIndexClient(cfg),
+		Vulnerability:   NewVulnerabilityClient(cfg),
 	}, nil
 }
 
@@ -123,15 +128,16 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config:         cfg,
-		AuthStateCache: NewAuthStateCacheClient(cfg),
-		PackageRecord:  NewPackageRecordClient(cfg),
-		Repository:     NewRepositoryClient(cfg),
-		Scan:           NewScanClient(cfg),
-		Session:        NewSessionClient(cfg),
-		User:           NewUserClient(cfg),
-		VulnStatus:     NewVulnStatusClient(cfg),
-		Vulnerability:  NewVulnerabilityClient(cfg),
+		config:          cfg,
+		AuthStateCache:  NewAuthStateCacheClient(cfg),
+		PackageRecord:   NewPackageRecordClient(cfg),
+		Repository:      NewRepositoryClient(cfg),
+		Scan:            NewScanClient(cfg),
+		Session:         NewSessionClient(cfg),
+		User:            NewUserClient(cfg),
+		VulnStatus:      NewVulnStatusClient(cfg),
+		VulnStatusIndex: NewVulnStatusIndexClient(cfg),
+		Vulnerability:   NewVulnerabilityClient(cfg),
 	}, nil
 }
 
@@ -168,6 +174,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Session.Use(hooks...)
 	c.User.Use(hooks...)
 	c.VulnStatus.Use(hooks...)
+	c.VulnStatusIndex.Use(hooks...)
 	c.Vulnerability.Use(hooks...)
 }
 
@@ -485,13 +492,13 @@ func (c *RepositoryClient) QueryScan(r *Repository) *ScanQuery {
 }
 
 // QueryStatus queries the status edge of a Repository.
-func (c *RepositoryClient) QueryStatus(r *Repository) *VulnStatusQuery {
-	query := &VulnStatusQuery{config: c.config}
+func (c *RepositoryClient) QueryStatus(r *Repository) *VulnStatusIndexQuery {
+	query := &VulnStatusIndexQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := r.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(repository.Table, repository.FieldID, id),
-			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.To(vulnstatusindex.Table, vulnstatusindex.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, repository.StatusTable, repository.StatusColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
@@ -879,7 +886,7 @@ func (c *VulnStatusClient) UpdateOne(vs *VulnStatus) *VulnStatusUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *VulnStatusClient) UpdateOneID(id string) *VulnStatusUpdateOne {
+func (c *VulnStatusClient) UpdateOneID(id int) *VulnStatusUpdateOne {
 	mutation := newVulnStatusMutation(c.config, OpUpdateOne, withVulnStatusID(id))
 	return &VulnStatusUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -896,7 +903,7 @@ func (c *VulnStatusClient) DeleteOne(vs *VulnStatus) *VulnStatusDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *VulnStatusClient) DeleteOneID(id string) *VulnStatusDeleteOne {
+func (c *VulnStatusClient) DeleteOneID(id int) *VulnStatusDeleteOne {
 	builder := c.Delete().Where(vulnstatus.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -911,12 +918,12 @@ func (c *VulnStatusClient) Query() *VulnStatusQuery {
 }
 
 // Get returns a VulnStatus entity by its id.
-func (c *VulnStatusClient) Get(ctx context.Context, id string) (*VulnStatus, error) {
+func (c *VulnStatusClient) Get(ctx context.Context, id int) (*VulnStatus, error) {
 	return c.Query().Where(vulnstatus.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *VulnStatusClient) GetX(ctx context.Context, id string) *VulnStatus {
+func (c *VulnStatusClient) GetX(ctx context.Context, id int) *VulnStatus {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -924,9 +931,131 @@ func (c *VulnStatusClient) GetX(ctx context.Context, id string) *VulnStatus {
 	return obj
 }
 
+// QueryAuthor queries the author edge of a VulnStatus.
+func (c *VulnStatusClient) QueryAuthor(vs *VulnStatus) *UserQuery {
+	query := &UserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := vs.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vulnstatus.Table, vulnstatus.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, vulnstatus.AuthorTable, vulnstatus.AuthorColumn),
+		)
+		fromV = sqlgraph.Neighbors(vs.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *VulnStatusClient) Hooks() []Hook {
 	return c.hooks.VulnStatus
+}
+
+// VulnStatusIndexClient is a client for the VulnStatusIndex schema.
+type VulnStatusIndexClient struct {
+	config
+}
+
+// NewVulnStatusIndexClient returns a client for the VulnStatusIndex from the given config.
+func NewVulnStatusIndexClient(c config) *VulnStatusIndexClient {
+	return &VulnStatusIndexClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `vulnstatusindex.Hooks(f(g(h())))`.
+func (c *VulnStatusIndexClient) Use(hooks ...Hook) {
+	c.hooks.VulnStatusIndex = append(c.hooks.VulnStatusIndex, hooks...)
+}
+
+// Create returns a create builder for VulnStatusIndex.
+func (c *VulnStatusIndexClient) Create() *VulnStatusIndexCreate {
+	mutation := newVulnStatusIndexMutation(c.config, OpCreate)
+	return &VulnStatusIndexCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VulnStatusIndex entities.
+func (c *VulnStatusIndexClient) CreateBulk(builders ...*VulnStatusIndexCreate) *VulnStatusIndexCreateBulk {
+	return &VulnStatusIndexCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VulnStatusIndex.
+func (c *VulnStatusIndexClient) Update() *VulnStatusIndexUpdate {
+	mutation := newVulnStatusIndexMutation(c.config, OpUpdate)
+	return &VulnStatusIndexUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VulnStatusIndexClient) UpdateOne(vsi *VulnStatusIndex) *VulnStatusIndexUpdateOne {
+	mutation := newVulnStatusIndexMutation(c.config, OpUpdateOne, withVulnStatusIndex(vsi))
+	return &VulnStatusIndexUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VulnStatusIndexClient) UpdateOneID(id string) *VulnStatusIndexUpdateOne {
+	mutation := newVulnStatusIndexMutation(c.config, OpUpdateOne, withVulnStatusIndexID(id))
+	return &VulnStatusIndexUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VulnStatusIndex.
+func (c *VulnStatusIndexClient) Delete() *VulnStatusIndexDelete {
+	mutation := newVulnStatusIndexMutation(c.config, OpDelete)
+	return &VulnStatusIndexDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *VulnStatusIndexClient) DeleteOne(vsi *VulnStatusIndex) *VulnStatusIndexDeleteOne {
+	return c.DeleteOneID(vsi.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *VulnStatusIndexClient) DeleteOneID(id string) *VulnStatusIndexDeleteOne {
+	builder := c.Delete().Where(vulnstatusindex.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VulnStatusIndexDeleteOne{builder}
+}
+
+// Query returns a query builder for VulnStatusIndex.
+func (c *VulnStatusIndexClient) Query() *VulnStatusIndexQuery {
+	return &VulnStatusIndexQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a VulnStatusIndex entity by its id.
+func (c *VulnStatusIndexClient) Get(ctx context.Context, id string) (*VulnStatusIndex, error) {
+	return c.Query().Where(vulnstatusindex.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VulnStatusIndexClient) GetX(ctx context.Context, id string) *VulnStatusIndex {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryStatus queries the status edge of a VulnStatusIndex.
+func (c *VulnStatusIndexClient) QueryStatus(vsi *VulnStatusIndex) *VulnStatusQuery {
+	query := &VulnStatusQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := vsi.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vulnstatusindex.Table, vulnstatusindex.FieldID, id),
+			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, vulnstatusindex.StatusTable, vulnstatusindex.StatusColumn),
+		)
+		fromV = sqlgraph.Neighbors(vsi.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *VulnStatusIndexClient) Hooks() []Hook {
+	return c.hooks.VulnStatusIndex
 }
 
 // VulnerabilityClient is a client for the Vulnerability schema.

@@ -28,6 +28,6 @@ type FeedbackOptions struct {
 
 type UpdateVulnStatusRequest struct {
 	GitHubRepo
-	UserID string
+	UserID int
 	ent.VulnStatus
 }

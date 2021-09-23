@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
@@ -24,6 +25,8 @@ type VulnStatusQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.VulnStatus
+	// eager-loading edges.
+	withAuthor *UserQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -61,6 +64,28 @@ func (vsq *VulnStatusQuery) Order(o ...OrderFunc) *VulnStatusQuery {
 	return vsq
 }
 
+// QueryAuthor chains the current query on the "author" edge.
+func (vsq *VulnStatusQuery) QueryAuthor() *UserQuery {
+	query := &UserQuery{config: vsq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := vsq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := vsq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vulnstatus.Table, vulnstatus.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, vulnstatus.AuthorTable, vulnstatus.AuthorColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(vsq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first VulnStatus entity from the query.
 // Returns a *NotFoundError when no VulnStatus was found.
 func (vsq *VulnStatusQuery) First(ctx context.Context) (*VulnStatus, error) {
@@ -85,8 +110,8 @@ func (vsq *VulnStatusQuery) FirstX(ctx context.Context) *VulnStatus {
 
 // FirstID returns the first VulnStatus ID from the query.
 // Returns a *NotFoundError when no VulnStatus ID was found.
-func (vsq *VulnStatusQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (vsq *VulnStatusQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = vsq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -98,7 +123,7 @@ func (vsq *VulnStatusQuery) FirstID(ctx context.Context) (id string, err error) 
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (vsq *VulnStatusQuery) FirstIDX(ctx context.Context) string {
+func (vsq *VulnStatusQuery) FirstIDX(ctx context.Context) int {
 	id, err := vsq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -136,8 +161,8 @@ func (vsq *VulnStatusQuery) OnlyX(ctx context.Context) *VulnStatus {
 // OnlyID is like Only, but returns the only VulnStatus ID in the query.
 // Returns a *NotSingularError when exactly one VulnStatus ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (vsq *VulnStatusQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (vsq *VulnStatusQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = vsq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -153,7 +178,7 @@ func (vsq *VulnStatusQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (vsq *VulnStatusQuery) OnlyIDX(ctx context.Context) string {
+func (vsq *VulnStatusQuery) OnlyIDX(ctx context.Context) int {
 	id, err := vsq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -179,8 +204,8 @@ func (vsq *VulnStatusQuery) AllX(ctx context.Context) []*VulnStatus {
 }
 
 // IDs executes the query and returns a list of VulnStatus IDs.
-func (vsq *VulnStatusQuery) IDs(ctx context.Context) ([]string, error) {
-	var ids []string
+func (vsq *VulnStatusQuery) IDs(ctx context.Context) ([]int, error) {
+	var ids []int
 	if err := vsq.Select(vulnstatus.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -188,7 +213,7 @@ func (vsq *VulnStatusQuery) IDs(ctx context.Context) ([]string, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (vsq *VulnStatusQuery) IDsX(ctx context.Context) []string {
+func (vsq *VulnStatusQuery) IDsX(ctx context.Context) []int {
 	ids, err := vsq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -242,10 +267,22 @@ func (vsq *VulnStatusQuery) Clone() *VulnStatusQuery {
 		offset:     vsq.offset,
 		order:      append([]OrderFunc{}, vsq.order...),
 		predicates: append([]predicate.VulnStatus{}, vsq.predicates...),
+		withAuthor: vsq.withAuthor.Clone(),
 		// clone intermediate query.
 		sql:  vsq.sql.Clone(),
 		path: vsq.path,
 	}
+}
+
+// WithAuthor tells the query-builder to eager-load the nodes that are connected to
+// the "author" edge. The optional arguments are used to configure the query builder of the edge.
+func (vsq *VulnStatusQuery) WithAuthor(opts ...func(*UserQuery)) *VulnStatusQuery {
+	query := &UserQuery{config: vsq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	vsq.withAuthor = query
+	return vsq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -311,10 +348,16 @@ func (vsq *VulnStatusQuery) prepareQuery(ctx context.Context) error {
 
 func (vsq *VulnStatusQuery) sqlAll(ctx context.Context) ([]*VulnStatus, error) {
 	var (
-		nodes   = []*VulnStatus{}
-		withFKs = vsq.withFKs
-		_spec   = vsq.querySpec()
+		nodes       = []*VulnStatus{}
+		withFKs     = vsq.withFKs
+		_spec       = vsq.querySpec()
+		loadedTypes = [1]bool{
+			vsq.withAuthor != nil,
+		}
 	)
+	if vsq.withAuthor != nil {
+		withFKs = true
+	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, vulnstatus.ForeignKeys...)
 	}
@@ -328,6 +371,7 @@ func (vsq *VulnStatusQuery) sqlAll(ctx context.Context) ([]*VulnStatus, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, vsq.driver, _spec); err != nil {
@@ -336,6 +380,36 @@ func (vsq *VulnStatusQuery) sqlAll(ctx context.Context) ([]*VulnStatus, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := vsq.withAuthor; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*VulnStatus)
+		for i := range nodes {
+			if nodes[i].vuln_status_author == nil {
+				continue
+			}
+			fk := *nodes[i].vuln_status_author
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "vuln_status_author" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Author = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
@@ -358,7 +432,7 @@ func (vsq *VulnStatusQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   vulnstatus.Table,
 			Columns: vulnstatus.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: vulnstatus.FieldID,
 			},
 		},

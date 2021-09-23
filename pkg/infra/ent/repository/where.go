@@ -861,7 +861,7 @@ func HasStatus() predicate.Repository {
 }
 
 // HasStatusWith applies the HasEdge predicate on the "status" edge with a given conditions (other predicates).
-func HasStatusWith(preds ...predicate.VulnStatus) predicate.Repository {
+func HasStatusWith(preds ...predicate.VulnStatusIndex) predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),

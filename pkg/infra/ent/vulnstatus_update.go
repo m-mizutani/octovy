@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 )
 
@@ -89,9 +90,34 @@ func (vsu *VulnStatusUpdate) SetComment(s string) *VulnStatusUpdate {
 	return vsu
 }
 
+// SetAuthorID sets the "author" edge to the User entity by ID.
+func (vsu *VulnStatusUpdate) SetAuthorID(id int) *VulnStatusUpdate {
+	vsu.mutation.SetAuthorID(id)
+	return vsu
+}
+
+// SetNillableAuthorID sets the "author" edge to the User entity by ID if the given value is not nil.
+func (vsu *VulnStatusUpdate) SetNillableAuthorID(id *int) *VulnStatusUpdate {
+	if id != nil {
+		vsu = vsu.SetAuthorID(*id)
+	}
+	return vsu
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (vsu *VulnStatusUpdate) SetAuthor(u *User) *VulnStatusUpdate {
+	return vsu.SetAuthorID(u.ID)
+}
+
 // Mutation returns the VulnStatusMutation object of the builder.
 func (vsu *VulnStatusUpdate) Mutation() *VulnStatusMutation {
 	return vsu.mutation
+}
+
+// ClearAuthor clears the "author" edge to the User entity.
+func (vsu *VulnStatusUpdate) ClearAuthor() *VulnStatusUpdate {
+	vsu.mutation.ClearAuthor()
+	return vsu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -175,7 +201,7 @@ func (vsu *VulnStatusUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   vulnstatus.Table,
 			Columns: vulnstatus.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: vulnstatus.FieldID,
 			},
 		},
@@ -256,6 +282,41 @@ func (vsu *VulnStatusUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Value:  value,
 			Column: vulnstatus.FieldComment,
 		})
+	}
+	if vsu.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatus.AuthorTable,
+			Columns: []string{vulnstatus.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vsu.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatus.AuthorTable,
+			Columns: []string{vulnstatus.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, vsu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -338,9 +399,34 @@ func (vsuo *VulnStatusUpdateOne) SetComment(s string) *VulnStatusUpdateOne {
 	return vsuo
 }
 
+// SetAuthorID sets the "author" edge to the User entity by ID.
+func (vsuo *VulnStatusUpdateOne) SetAuthorID(id int) *VulnStatusUpdateOne {
+	vsuo.mutation.SetAuthorID(id)
+	return vsuo
+}
+
+// SetNillableAuthorID sets the "author" edge to the User entity by ID if the given value is not nil.
+func (vsuo *VulnStatusUpdateOne) SetNillableAuthorID(id *int) *VulnStatusUpdateOne {
+	if id != nil {
+		vsuo = vsuo.SetAuthorID(*id)
+	}
+	return vsuo
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (vsuo *VulnStatusUpdateOne) SetAuthor(u *User) *VulnStatusUpdateOne {
+	return vsuo.SetAuthorID(u.ID)
+}
+
 // Mutation returns the VulnStatusMutation object of the builder.
 func (vsuo *VulnStatusUpdateOne) Mutation() *VulnStatusMutation {
 	return vsuo.mutation
+}
+
+// ClearAuthor clears the "author" edge to the User entity.
+func (vsuo *VulnStatusUpdateOne) ClearAuthor() *VulnStatusUpdateOne {
+	vsuo.mutation.ClearAuthor()
+	return vsuo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -431,7 +517,7 @@ func (vsuo *VulnStatusUpdateOne) sqlSave(ctx context.Context) (_node *VulnStatus
 			Table:   vulnstatus.Table,
 			Columns: vulnstatus.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: vulnstatus.FieldID,
 			},
 		},
@@ -529,6 +615,41 @@ func (vsuo *VulnStatusUpdateOne) sqlSave(ctx context.Context) (_node *VulnStatus
 			Value:  value,
 			Column: vulnstatus.FieldComment,
 		})
+	}
+	if vsuo.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatus.AuthorTable,
+			Columns: []string{vulnstatus.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vsuo.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatus.AuthorTable,
+			Columns: []string{vulnstatus.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &VulnStatus{config: vsuo.config}
 	_spec.Assign = _node.assignValues
