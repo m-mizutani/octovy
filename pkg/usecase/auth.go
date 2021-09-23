@@ -62,10 +62,6 @@ func (x *usecase) AuthGitHubUser(ctx context.Context, code, state string) (*ent.
 	if err != nil {
 		return nil, err
 	}
-	_, err = x.infra.GitHub.GetOrgs(ctx, token)
-	if err != nil {
-		return nil, err
-	}
 
 	if githubUser.ID == nil {
 		return nil, goerr.Wrap(model.ErrGitHubAPI, "user.ID is null")
