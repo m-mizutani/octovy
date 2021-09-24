@@ -2,9 +2,8 @@ ROOT_DIR := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 
 ASSET_DIR=./assets
 DIST_DIR=$(ASSET_DIR)/dist
-ASSET_JS=$(DIST_DIR)/bundle.js
+ASSET_OUT=$(DIST_DIR)/out/index.html
 ASSET_SRC=$(ASSET_DIR)/**/*.tsx
-ASSETS=$(ASSET_JS) $(DIST_DIR)/index.html
 
 SRC= \
 	cmd/octovy/*.go \
@@ -20,10 +19,9 @@ all: $(BINARY)
 
 ent: $(ENT_SRC)
 
-docker:
-	docker run -p 127.0.0.1:3306:3306 -e MYSQL_ROOT_PASSWORD -e MYSQL_DATABASE mysql
+asset: $(ASSET_OUT)
 
-$(ASSET_JS): $(ASSET_SRC)
+$(ASSET_OUT): $(ASSET_SRC)
 	cd $(ASSET_DIR) && npm run export && cd $(ROOT_DIR)
 
 $(ENT_SRC): $(ENT_SCHEMA_DIR)/*.go
@@ -32,13 +30,10 @@ $(ENT_SRC): $(ENT_SCHEMA_DIR)/*.go
 dev: $(SRC)
 	go run ./cmd/octovy/ serve -d "root:${MYSQL_ROOT_PASSWORD}@tcp(localhost:3306)/${MYSQL_DATABASE}"
 
-test: $(SRC) $(ENT_SRC)
+test: $(SRC) $(ENT_SRC) $(ASSET_OUT)
 	go test ./...
 
-$(CHAIN): $(EXAMPLE_SRC_DIR)/*.go $(SRC) $(ENT_SRC)
-	go build -buildmode=plugin -o chain.so $(EXAMPLE_SRC_DIR)
-
-octovy: $(SRC) $(ENT_SRC)
+octovy: $(SRC) $(ENT_SRC) $(ASSET_OUT)
 	go build -o $(BINARY) ./cmd/octovy
 
 clean:
