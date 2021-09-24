@@ -22,6 +22,7 @@ func (x *Controller) RunCmd(args []string) error {
 				Name:    "log-level",
 				Aliases: []string{"l"},
 				EnvVars: []string{"OCTOVY_LOG_LEVEL"},
+				Value:   "info",
 				Usage:   "LogLevel [trace|debug|info|warn|error]",
 			},
 		},
