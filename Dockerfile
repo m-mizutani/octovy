@@ -10,8 +10,8 @@ RUN go build .
 
 ## gcr.io/distroless/static is not enough because of github.com/mattn/go-sqlite3
 FROM gcr.io/distroless/base
-COPY --from=build-go /app /app
-WORKDIR /app
+COPY --from=build-go /app/octovy /
+WORKDIR /
 ENV OCTOVY_ADDR="0.0.0.0"
 EXPOSE 9080
-ENTRYPOINT ["/app/octovy"]
+ENTRYPOINT ["/octovy"]
