@@ -6,24 +6,18 @@ import (
 
 type ScanTarget struct {
 	GitHubBranch
-	CommitID      string
-	UpdatedAt     int64
-	RequestedAt   int64
-	URL           string
-	IsPullRequest bool
-	TargetBranch  string
+	CommitID     string
+	UpdatedAt    int64
+	RequestedAt  int64
+	URL          string
+	TargetBranch string
 }
 
 type ScanRepositoryRequest struct {
 	ScanTarget
-	InstallID int64
-	Feedback  *FeedbackOptions
-}
-
-type FeedbackOptions struct {
-	PullReqID     *int
-	PullReqBranch string
-	CheckID       *int64
+	InstallID     int64
+	PullReqID     *int64
+	PullReqAction string
 }
 
 type UpdateVulnStatusRequest struct {

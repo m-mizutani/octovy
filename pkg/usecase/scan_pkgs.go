@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"archive/zip"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -71,44 +70,4 @@ func crawlPackages(req *model.ScanRepositoryRequest, clients *scanClients) ([]*e
 	}
 
 	return newPkgs, nil
-}
-
-type pkgChanges struct {
-	Added    []*ent.PackageRecord
-	Modified []*ent.PackageRecord
-	Deleted  []*ent.PackageRecord
-}
-
-func diffPackages(oldPkgs, newPkgs []*ent.PackageRecord) *pkgChanges {
-	var changes pkgChanges
-
-	oldMap := mapPackages(oldPkgs)
-	newMap := mapPackages(newPkgs)
-
-	for oldKey, oldPkg := range oldMap {
-		if newPkg, ok := newMap[oldKey]; !ok {
-			changes.Deleted = append(changes.Deleted, oldPkg)
-		} else {
-			if !matchVulnerabilities(oldPkg, newPkg) {
-				changes.Modified = append(changes.Modified, newPkg)
-			}
-		}
-	}
-
-	for newKey, newPkg := range newMap {
-		if _, ok := oldMap[newKey]; !ok {
-			changes.Added = append(changes.Added, newPkg)
-		}
-	}
-
-	return &changes
-}
-
-func mapPackages(pkgs []*ent.PackageRecord) map[string]*ent.PackageRecord {
-	resp := make(map[string]*ent.PackageRecord)
-	for _, pkg := range pkgs {
-		key := fmt.Sprintf("%s|%s|%s", pkg.Source, pkg.Name, pkg.Version)
-		resp[key] = pkg
-	}
-	return resp
 }

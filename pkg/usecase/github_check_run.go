@@ -1,11 +1,6 @@
 package usecase
 
-import (
-	"github.com/google/go-github/v39/github"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
-	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
-)
-
+/*
 type checkRun struct {
 	repo    *model.GitHubRepo
 	checkID int64
@@ -53,3 +48,4 @@ func (x *checkRun) complete(scanID string, changes *pkgChanges, frontendURL stri
 
 	return nil
 }
+*/

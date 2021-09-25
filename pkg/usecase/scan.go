@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"path/filepath"
-	"sort"
 	"time"
 
 	"github.com/m-mizutani/goerr"
@@ -134,11 +133,13 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 		latest = scan
 	}
 
-	check := newCheckRun(clients.GitHubApp)
-	if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
-		return err
-	}
-
+	/*
+		// Disabled check run temporary
+		check := newCheckRun(clients.GitHubApp)
+		if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
+			return err
+		}
+	*/
 	if err := clients.Detector.RefreshDB(); err != nil {
 		return err
 	}
@@ -160,25 +161,39 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 	}
 	logger.Debug().Str("scanID", newScan.ID).Msg("inserted scan report")
 
-	var changes *pkgChanges
+	if req.PullReqID != nil {
+		status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)
+		if err != nil {
+			return err
+		}
 
-	if latest != nil {
-		var oldPkgs []*ent.PackageRecord
+		oldPkgs := []*ent.PackageRecord{}
 		if latest != nil {
 			oldPkgs = latest.Edges.Packages
 		}
 
-		changes = diffPackages(oldPkgs, newPkgs)
+		changes := pkgToVulnRecordMap(oldPkgs).Diff(pkgToVulnRecordMap(newPkgs))
 
-		if err := postGitHubComment(clients.GitHubApp, newScan.ID, changes, clients.FrontendURL); err != nil {
+		input := &postGitHubCommentInput{
+			App:         clients.GitHubApp,
+			Target:      &req.ScanTarget,
+			Scan:        newScan,
+			Changes:     changes,
+			FrontendURL: clients.FrontendURL,
+			PullReqID:   req.PullReqID,
+			DB:          newVulnStatusDB(status, scannedAt.Unix()),
+		}
+
+		if err := postGitHubComment(input); err != nil {
 			return err
 		}
 	}
 
-	if err := check.complete(newScan.ID, changes, clients.FrontendURL); err != nil {
-		return err
-	}
-
+	/*
+		if err := check.complete(newScan.ID, changes, clients.FrontendURL); err != nil {
+			return err
+		}
+	*/
 	return nil
 }
 
@@ -225,31 +240,6 @@ func annotateVulnerability(dt *vulnDetector, pkgs []*ent.PackageRecord, seenAt i
 	}
 
 	return vulnList, nil
-}
-
-func matchVulnerabilities(a, b *ent.PackageRecord) bool {
-	copyVulnList := func(p *ent.PackageRecord) []string {
-		v := make([]string, len(p.VulnIds))
-		for i := range p.VulnIds {
-			v[i] = p.VulnIds[i]
-		}
-		sort.Slice(v, func(i int, j int) bool {
-			return v[i] < v[j]
-		})
-		return v
-	}
-
-	v1 := copyVulnList(a)
-	v2 := copyVulnList(b)
-	if len(v1) != len(v2) {
-		return false
-	}
-	for i := range v1 {
-		if v1[i] != v2[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func stepDownDirectory(fpath string) string {
