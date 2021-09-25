@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/controller/api"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/urfave/cli/v2"
 )
@@ -16,7 +17,8 @@ var logger = utils.Logger
 func (x *Controller) RunCmd(args []string) error {
 	app := &cli.App{
 		Name:        "octovy",
-		Description: "Utility command of octovy",
+		Version:     model.Version,
+		Description: "Vulnerability management service for GitHub repository",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
