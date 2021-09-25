@@ -10,13 +10,13 @@ import (
 )
 
 type postGitHubCommentInput struct {
-	App         githubapp.Interface
-	Target      *model.ScanTarget
-	PullReqID   *int64
-	Scan        *ent.Scan
-	Changes     vulnChanges
-	FrontendURL string
-	DB          *vulnStatusDB
+	App           githubapp.Interface
+	Target        *model.ScanTarget
+	PullReqNumber *int
+	Scan          *ent.Scan
+	Changes       vulnChanges
+	FrontendURL   string
+	DB            *vulnStatusDB
 }
 
 type githubCommentBody struct {
@@ -27,7 +27,7 @@ func (x *githubCommentBody) Add(s ...string) { x.lines = append(x.lines, s...) }
 func (x *githubCommentBody) Join() string    { return strings.Join(x.lines, "\n") }
 
 func postGitHubComment(input *postGitHubCommentInput) error {
-	if input.PullReqID == nil {
+	if input.PullReqNumber == nil {
 		return goerr.Wrap(model.ErrInvalidSystemValue).With("input", input)
 	}
 
@@ -44,8 +44,7 @@ func postGitHubComment(input *postGitHubCommentInput) error {
 	var b githubCommentBody
 	b.Add("## Octovy scan result", "")
 
-	id := int(*input.PullReqID)
-	if err := input.App.CreateIssueComment(&input.Target.GitHubRepo, id, b.Join()); err != nil {
+	if err := input.App.CreateIssueComment(&input.Target.GitHubRepo, *input.PullReqNumber, b.Join()); err != nil {
 		return err
 	}
 

@@ -1,3 +1,6 @@
+//go:build !github
+// +build !github
+
 package assets_test
 
 import (
@@ -10,11 +13,11 @@ import (
 )
 
 func TestAssets(t *testing.T) {
-	t.Run("index.html loadable", func(t *testing.T) {
-		if _, ok := os.LookupEnv("GITHUB_WORKFLOW"); ok {
-			t.Skip("bundle.js is not generated in GitHub Actions")
-		}
+	if _, ok := os.LookupEnv("GITHUB_WORKFLOW"); ok {
+		t.Skip("bundle.js is not generated in GitHub Actions")
+	}
 
+	t.Run("index.html loadable", func(t *testing.T) {
 		raw, err := assets.Assets().ReadFile("out/index.html")
 		require.NoError(t, err)
 		assert.Contains(t, string(raw), "<html>")

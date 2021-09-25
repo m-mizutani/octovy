@@ -161,7 +161,7 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 	}
 	logger.Debug().Str("scanID", newScan.ID).Msg("inserted scan report")
 
-	if req.PullReqID != nil {
+	if req.PullReqNumber != nil {
 		status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)
 		if err != nil {
 			return err
@@ -175,13 +175,13 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 		changes := pkgToVulnRecordMap(oldPkgs).Diff(pkgToVulnRecordMap(newPkgs))
 
 		input := &postGitHubCommentInput{
-			App:         clients.GitHubApp,
-			Target:      &req.ScanTarget,
-			Scan:        newScan,
-			Changes:     changes,
-			FrontendURL: clients.FrontendURL,
-			PullReqID:   req.PullReqID,
-			DB:          newVulnStatusDB(status, scannedAt.Unix()),
+			App:           clients.GitHubApp,
+			Target:        &req.ScanTarget,
+			Scan:          newScan,
+			Changes:       changes,
+			FrontendURL:   clients.FrontendURL,
+			PullReqNumber: req.PullReqNumber,
+			DB:            newVulnStatusDB(status, scannedAt.Unix()),
 		}
 
 		if err := postGitHubComment(input); err != nil {

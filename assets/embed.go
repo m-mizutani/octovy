@@ -1,3 +1,6 @@
+//go:build !github
+// +build !github
+
 package assets
 
 import "embed"

@@ -152,7 +152,7 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 		assert.Equal(t, 1, calledListReleasesMock)
 		assert.Equal(t, 1, calledDownloadReleaseAssetMock)
 		assert.Equal(t, 1, calledGetCodeZipMock)
-		assert.Equal(t, 1, calledCreateCheckRunMock)
-		assert.Equal(t, 1, calledUpdateCheckRunMock)
+		assert.Equal(t, 0, calledCreateCheckRunMock)
+		assert.Equal(t, 0, calledUpdateCheckRunMock)
 	})
 }

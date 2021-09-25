@@ -16,7 +16,7 @@ type ScanTarget struct {
 type ScanRepositoryRequest struct {
 	ScanTarget
 	InstallID     int64
-	PullReqID     *int64
+	PullReqNumber *int
 	PullReqAction string
 }
 

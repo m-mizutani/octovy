@@ -120,7 +120,7 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx context.Context, event *github.Pu
 			TargetBranch: targetBranch,
 		},
 		InstallID:     *event.Installation.ID,
-		PullReqID:     event.PullRequest.ID,
+		PullReqNumber: event.PullRequest.Number,
 		PullReqAction: *event.Action,
 	}
 
