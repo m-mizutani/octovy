@@ -65,6 +65,21 @@ func authControl(c *gin.Context) {
 	logger := getLogger(c)
 	loginURL := "/login"
 
+	if c.Request.URL.Path == "/auth/logout" {
+		if ssnID, err := c.Cookie(cookieSessionID); err == nil {
+			// Revoke session if session ID exists,
+			uc := getUsecase(c)
+			if err := uc.RevokeSession(c, ssnID); err != nil {
+				c.Error(err)
+				return
+			}
+		}
+		c.SetCookie(cookieSessionID, "", 0, "", "/", true, true)
+		c.SetCookie(cookieSessionSecret, "", 0, "", "/", true, true)
+		c.Redirect(http.StatusFound, loginURL)
+		return
+	}
+
 	// Pass through settings
 	if strings.HasPrefix(c.Request.URL.Path, "/auth/") ||
 		strings.HasPrefix(c.Request.URL.Path, "/_next/") ||
@@ -73,16 +88,22 @@ func authControl(c *gin.Context) {
 		return
 	}
 
+	notAuthResp := func() {
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			errResp(c, http.StatusUnauthorized, goerr.New("auth error"))
+		} else {
+			c.Redirect(http.StatusFound, loginURL)
+		}
+	}
+
 	ssnID, err := c.Cookie(cookieSessionID)
 	if err != nil || ssnID == "" {
-		logger.Warn().Err(err).Msg("No session ID, redirect to /login")
-		c.Redirect(http.StatusFound, loginURL)
+		notAuthResp()
 		return
 	}
 	secret, err := c.Cookie(cookieSessionSecret)
 	if err != nil || secret == "" {
-		logger.Warn().Err(err).Msg("No secret, redirect to /login")
-		c.Redirect(http.StatusFound, loginURL)
+		notAuthResp()
 		return
 	}
 
@@ -99,13 +120,8 @@ func authControl(c *gin.Context) {
 
 	// Not authenticated
 	if ssn == nil || ssn.Token != secret {
-		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
-			errResp(c, http.StatusUnauthorized, goerr.New("auth error"))
-			return
-		} else {
-			c.Redirect(http.StatusFound, loginURL)
-			return
-		}
+		notAuthResp()
+		return
 	}
 
 	ssn.Token = "" // Erase token

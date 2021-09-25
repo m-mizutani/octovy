@@ -7,9 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
 func getAuthGitHub(c *gin.Context) {
@@ -72,22 +70,4 @@ func getAuthGitHubCallback(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusFound, redirectTo)
-}
-
-func getLogout(c *gin.Context) {
-	uc := getUsecase(c)
-
-	ssnID, err := c.Cookie(cookieSessionID)
-	if err != nil {
-		c.Error(goerr.Wrap(model.ErrAuthenticationFailed, "No valid session ID"))
-		return
-	}
-
-	if err := uc.RevokeSession(c, ssnID); err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.SetCookie(cookieSessionID, "", 0, "", "/", true, true)
-	c.Redirect(http.StatusFound, uc.FrontendURL())
 }

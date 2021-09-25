@@ -72,11 +72,11 @@ export type vulnerability = {
 };
 
 export interface user {
-  UserID: string;
-  Login: string;
-  Name: string;
-  AvatarURL: string;
-  URL: string;
+  id: string;
+  login: string;
+  name: string;
+  avatar_url: string;
+  url: string;
 }
 
 export type vulnStatusAttrs = {

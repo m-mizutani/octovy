@@ -1,16 +1,22 @@
 package server
 
-/*
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
+)
+
 func getUser(c *gin.Context) {
-	ssn, err := isAuthenticated(c)
-	if err != nil {
-		c.Error(err)
+	ssn := getSession(c)
+	if ssn == nil {
+		c.Error(goerr.Wrap(model.ErrAuthenticationFailed))
 		return
 	}
 
-	cfg := getConfig(c)
-
-	user, err := cfg.Usecase.LookupUser(ssn.UserID)
+	uc := getUsecase(c)
+	user, err := uc.LookupUser(c, ssn.UserID)
 	if err != nil {
 		c.Error(err)
 		return
@@ -18,4 +24,3 @@ func getUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, baseResponse{Data: user})
 }
-*/

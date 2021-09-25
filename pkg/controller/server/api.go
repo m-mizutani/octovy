@@ -4,8 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
 
-	"github.com/m-mizutani/octovy/pkg/domain/model"
-	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/pkg/errors"
@@ -62,7 +60,6 @@ func New(uc usecase.Interface) *gin.Engine {
 
 	engine.GET("/auth/github", getAuthGitHub)
 	engine.GET("/auth/github/callback", getAuthGitHubCallback)
-	engine.GET("/auth/logout", getLogout)
 	engine.POST("/webhook/github", postWebhookGitHub)
 
 	r := engine.Group("/api/v1")
@@ -70,7 +67,7 @@ func New(uc usecase.Interface) *gin.Engine {
 	r.GET("/scan/:scan_id", getScanReport)
 
 	r.POST("/status/:owner/:repo_name", postVulnStatus)
-	// r.GET("/user", getUser)
+	r.GET("/user", getUser)
 
 	return engine
 }
@@ -85,30 +82,4 @@ func getUsecase(c *gin.Context) usecase.Interface {
 		panic("Type mismatch for contextUsecase")
 	}
 	return uc
-}
-
-func isAuthenticated(c *gin.Context) (*ent.Session, error) {
-	ssnID, err := c.Cookie(cookieSessionID)
-	if err != nil || ssnID == "" {
-		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "No session ID in cookie")
-	}
-	secret, err := c.Cookie(cookieSessionSecret)
-	if err != nil || secret == "" {
-		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "No session secret in cookie")
-	}
-
-	uc := getUsecase(c)
-	ssn, err := uc.ValidateSession(c, ssnID)
-	if err != nil {
-		return nil, err
-	}
-	if ssn == nil {
-		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "session not found")
-	}
-	if ssn.Token != secret {
-		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "invalid session secret")
-	}
-
-	ssn.Token = "" // Erase token
-	return ssn, nil
 }

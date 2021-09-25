@@ -29,7 +29,7 @@ const theme = createTheme({
     h5: {
       fontFamily: "Kanit",
       fontWeight: "bold",
-      fontSize: 20,
+      fontSize: 24,
       letterSpacing: 0.1,
     },
     h6: {
