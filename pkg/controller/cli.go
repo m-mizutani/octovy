@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/pkg/controller/api"
+	"github.com/m-mizutani/octovy/pkg/controller/server"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/urfave/cli/v2"
@@ -145,7 +145,7 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 func serveCommand(c *cli.Context, ctrl *Controller) error {
 	serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)
 
-	engine := api.New(ctrl.usecase)
+	engine := server.New(ctrl.usecase)
 
 	gin.SetMode(gin.DebugMode)
 	logger.Info().Interface("config", ctrl.Config).Msg("Starting server...")

@@ -1,4 +1,4 @@
-package api
+package server
 
 /*
 func getUser(c *gin.Context) {
