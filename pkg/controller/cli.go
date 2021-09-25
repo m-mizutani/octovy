@@ -80,45 +80,54 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Usage:       "Database type [postgres|sqlite3]",
 				EnvVars:     []string{"OCTOVY_DB_TYPE"},
 				Destination: &ctrl.Config.DBType,
+				Value:       "sqlite3",
 			},
 			&cli.StringFlag{
 				Name:        "db-config",
 				Usage:       "Database config as DSN",
 				EnvVars:     []string{"OCTOVY_DB_CONFIG"},
 				Destination: &ctrl.Config.DBConfig,
+				Value:       "file:ent?mode=memory&cache=shared&_fk=1",
 			},
 
 			&cli.StringFlag{
 				Name:        "frontend-url",
 				EnvVars:     []string{"OCTOVY_FRONTEND_URL"},
 				Destination: &ctrl.Config.FrontendURL,
+				Required:    true,
 			},
 
 			&cli.Int64Flag{
 				Name:        "github-app-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},
 				Destination: &ctrl.Config.GitHubAppID,
+				Required:    true,
 			},
 			&cli.PathFlag{
 				Name:        "github-app-pem",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
 				Usage:       "GitHub App private key file path",
 				Destination: &ctrl.Config.GitHubAppPrivateKeyPath,
+				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "github-app-client-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_CLIENT_ID"},
 				Destination: &ctrl.Config.GitHubAppClientID,
+				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "github-app-client-secret",
 				EnvVars:     []string{"OCTOVY_GITHUB_SECRET"},
 				Destination: &ctrl.Config.GitHubAppSecret,
+				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "trivy-db-path",
 				EnvVars:     []string{"OCTOVY_TRIVY_DB_PATH"},
 				Destination: &ctrl.Config.TrivyDBPath,
+				Value:       "/tmp/trivy.db",
+				Required:    true,
 			},
 		},
 		Action: func(c *cli.Context) error {
