@@ -12,12 +12,12 @@ import (
 
 type postGitHubCommentInput struct {
 	App           githubapp.Interface
+	GitHubEvent   string
 	Target        *model.ScanTarget
 	PullReqNumber *int
 	Scan          *ent.Scan
-	Changes       vulnChanges
+	Report        *model.Report
 	FrontendURL   string
-	DB            *vulnStatusDB
 }
 
 type githubCommentBody struct {
@@ -37,13 +37,8 @@ func postGitHubComment(input *postGitHubCommentInput) error {
 		return goerr.Wrap(model.ErrInvalidSystemValue).With("input", input)
 	}
 
-	q := input.Changes.Qualified(input.DB)
-	qAdded := q.FilterByType(vulnAdded)
-	qRemained := q.FilterByType(vulnRemained)
-	rDeleted := input.Changes.FilterByType(vulnDeleted)
-
-	if len(qAdded) == 0 && len(qRemained) == 0 && len(rDeleted) == 0 {
-		logger.Debug().Interface("input", input).Msg("nothing to notify, returning")
+	if input.Report.NothingToNotify(input.GitHubEvent) {
+		logger.Debug().Msg("nothing to notify, returning")
 		return nil
 	}
 
@@ -51,23 +46,23 @@ func postGitHubComment(input *postGitHubCommentInput) error {
 	b.Add("## Octovy scan result")
 	b.Break()
 
-	for _, src := range input.Changes.Sources() {
-		b.Add("### "+src, "")
+	for src, changes := range input.Report.Sources {
+		b.Add("### " + src)
 		b.Break()
 
-		for _, v := range qAdded.FilterBySource(src) {
+		for _, v := range changes.Added {
 			b.Add("- 🚨 **New** %s (%s): %s", v.Vuln.ID, v.Pkg.Name, v.Vuln.Title)
 		}
-		for _, v := range rDeleted.FilterBySource(src) {
+		for _, v := range changes.Deleted {
 			b.Add("- ✅ **Fixed** %s (%s): %s", v.Vuln.ID, v.Pkg.Name, v.Vuln.Title)
 		}
-		if remained := qRemained.FilterBySource(src); len(remained) > 0 {
-			b.Add("- ⚠️ %d vulnerabilities remained", len(remained))
+		if len(changes.Remained) > 0 {
+			b.Add("- ⚠️ %d vulnerabilities are remained", len(changes.Remained))
 		}
 		b.Break()
 	}
 
-	b.Add("🗒️ See [report](%s/scan/%s) more detail", input.FrontendURL, input.Scan.ID)
+	b.Add("🗒️ See [report](%s/scan/%s) more detail", strings.Trim(input.FrontendURL, "/"), input.Scan.ID)
 
 	if err := input.App.CreateIssueComment(&input.Target.GitHubRepo, *input.PullReqNumber, b.Join()); err != nil {
 		return err

@@ -57,6 +57,7 @@ func (x *usecase) runScanThread() error {
 	detector := newVulnDetector(x.infra.GitHub, x.infra.NewTrivyDB, x.config.TrivyDBPath)
 
 	for req := range x.scanQueue {
+		logger.Debug().Interface("req", req).Msg("Recv scan request")
 		ctx := context.Background()
 
 		clients := &scanClients{
@@ -109,12 +110,18 @@ func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanR
 		RequestedAt: req.RequestedAt,
 		ScannedAt:   now.Unix(),
 	}
-	scan, err := client.PutScan(ctx, report, repo, addedPkgs)
+	added, err := client.PutScan(ctx, report, repo, addedPkgs)
 	if err != nil {
 		return nil, err
 	}
 
-	return scan, nil
+	// Re-get scan result to retrieve all related records
+	got, err := client.GetScan(ctx, added.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return got, nil
 }
 
 func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clients *scanClients) error {
@@ -131,6 +138,7 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 			return goerr.Wrap(err)
 		}
 		latest = scan
+		logger.Debug().Interface("scanID", scan.ID).Msg("Got latest scan")
 	}
 
 	/*
@@ -172,16 +180,16 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 			oldPkgs = latest.Edges.Packages
 		}
 
-		changes := pkgToVulnRecordMap(oldPkgs).Diff(pkgToVulnRecordMap(newPkgs))
-
+		changes := model.DiffVulnRecords(oldPkgs, newScan.Edges.Packages)
+		db := model.NewVulnStatusDB(status, scannedAt.Unix())
 		input := &postGitHubCommentInput{
 			App:           clients.GitHubApp,
 			Target:        &req.ScanTarget,
 			Scan:          newScan,
-			Changes:       changes,
 			FrontendURL:   clients.FrontendURL,
 			PullReqNumber: req.PullReqNumber,
-			DB:            newVulnStatusDB(status, scannedAt.Unix()),
+			Report:        model.MakeReport(changes, db),
+			GitHubEvent:   req.PullReqAction,
 		}
 
 		if err := postGitHubComment(input); err != nil {

@@ -85,6 +85,7 @@ export type vulnStatusAttrs = {
   status: vulnStatusType;
 };
 
+// TODO: Migrate vulnStatusDB to backend pkg/domain/model
 export class vulnStatusDB {
   readonly vulnMap: { [key: string]: vulnStatusAttrs };
   static toKey(src: string, pkgName: string, vulnID: string): string {

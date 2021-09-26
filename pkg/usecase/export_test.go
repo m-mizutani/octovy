@@ -26,3 +26,10 @@ func RunScanThread(uc Interface) error {
 func CloseScanQueue(uc Interface) {
 	close(uc.(*usecase).scanQueue)
 }
+
+type PostGitHubCommentInput postGitHubCommentInput
+
+func PostGitHubComment(input *PostGitHubCommentInput) error {
+	d := postGitHubCommentInput(*input)
+	return postGitHubComment(&d)
+}

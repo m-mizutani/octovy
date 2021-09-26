@@ -84,6 +84,7 @@ func authControl(c *gin.Context) {
 	// Pass through settings
 	if strings.HasPrefix(c.Request.URL.Path, "/auth/") ||
 		strings.HasPrefix(c.Request.URL.Path, "/_next/") ||
+		strings.HasPrefix(c.Request.URL.Path, "/webhook/") ||
 		c.Request.URL.Path == loginURL {
 		c.Next()
 		return
