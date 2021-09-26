@@ -8,6 +8,8 @@ import (
 )
 
 func getScanReport(c *gin.Context) {
+	logger := getLogger(c)
+	logger.Debug().Msg("hello getScanReport")
 	uc := getUsecase(c)
 	scanID := c.Param("scan_id")
 

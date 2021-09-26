@@ -44,12 +44,16 @@ function Scan() {
       .then(
         (result) => {
           console.log("result:", { result });
-          const scan: model.scan = result.data;
-          setStatus({
-            isLoaded: true,
-            data: scan,
-            db: new model.vulnStatusDB(scan.edges.repository[0].edges.status),
-          });
+          if (result.error) {
+            setStatus({ isLoaded: true, err: result.error });
+          } else {
+            const scan: model.scan = result.data;
+            setStatus({
+              isLoaded: true,
+              data: scan,
+              db: new model.vulnStatusDB(scan.edges.repository[0].edges.status),
+            });
+          }
         },
         (error) => {
           console.log("error:", { error });
@@ -64,11 +68,15 @@ function Scan() {
   React.useEffect(updatePackages, [router.query.id]);
 
   if (!status.isLoaded) {
-    return <app.Main>Loading...</app.Main>;
+    return (
+      <app.Main>
+        <Typography variant="h5">Loading...</Typography>
+      </app.Main>
+    );
   } else if (status.err) {
     return (
       <app.Main>
-        <Alert>{status.err}</Alert>
+        <Alert severity="error">{status.err}</Alert>
       </app.Main>
     );
   }

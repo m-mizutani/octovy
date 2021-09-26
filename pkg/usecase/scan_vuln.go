@@ -32,7 +32,7 @@ func (x vulnChanges) Qualified(db *vulnStatusDB) vulnChanges {
 	return resp
 }
 
-func (x vulnChanges) Filter(t vulnChangeType) vulnChanges {
+func (x vulnChanges) FilterByType(t vulnChangeType) vulnChanges {
 	var resp vulnChanges
 	for i := range x {
 		if x[i].Type == t {
@@ -40,6 +40,28 @@ func (x vulnChanges) Filter(t vulnChangeType) vulnChanges {
 		}
 	}
 	return resp
+}
+
+func (x vulnChanges) FilterBySource(src string) vulnChanges {
+	var resp vulnChanges
+	for i := range x {
+		if x[i].Pkg.Source == src {
+			resp = append(resp, x[i])
+		}
+	}
+	return resp
+}
+func (x vulnChanges) Sources() []string {
+	src := map[string]struct{}{}
+	for i := range x {
+		src[x[i].Pkg.Source] = struct{}{}
+	}
+
+	var srcList []string
+	for s := range src {
+		srcList = append(srcList, s)
+	}
+	return srcList
 }
 
 type vulnRecordMap map[string]*vulnRecord

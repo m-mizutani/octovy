@@ -77,6 +77,7 @@ func authControl(c *gin.Context) {
 		c.SetCookie(cookieSessionID, "", 0, "", "/", true, true)
 		c.SetCookie(cookieSessionSecret, "", 0, "", "/", true, true)
 		c.Redirect(http.StatusFound, loginURL)
+		c.Abort()
 		return
 	}
 
@@ -89,11 +90,13 @@ func authControl(c *gin.Context) {
 	}
 
 	notAuthResp := func() {
+		logger.Debug().Msg("notAuthResp")
 		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
-			errResp(c, http.StatusUnauthorized, goerr.New("auth error"))
+			errResp(c, http.StatusUnauthorized, goerr.Wrap(model.ErrNotAuthenticated))
 		} else {
 			c.Redirect(http.StatusFound, loginURL)
 		}
+		c.Abort()
 	}
 
 	ssnID, err := c.Cookie(cookieSessionID)
@@ -110,11 +113,7 @@ func authControl(c *gin.Context) {
 	uc := getUsecase(c)
 	ssn, err := uc.ValidateSession(c, ssnID)
 	if err != nil {
-		if errors.Is(err, model.ErrAuthenticationFailed) {
-			c.Redirect(http.StatusFound, loginURL)
-		} else {
-			c.Error(err)
-		}
+		notAuthResp()
 		return
 	}
 
