@@ -149,7 +149,7 @@ function renderPackageSource(
                   <TableCell>Vulnerability</TableCell>
                   <TableCell>Title</TableCell>
                   <TableCell style={{ minWidth: 160 }}>Status</TableCell>
-                  <TableCell>Comment</TableCell>
+                  <TableCell style={{ minWidth: 120 }}>Comment</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

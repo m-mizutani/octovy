@@ -123,7 +123,9 @@ export function Main(props: mainProp) {
                 background: "#eaeff1",
               }}>
               <Container>
-                <Paper elevation={3} style={{ padding: 20, height: "100vh" }}>
+                <Paper
+                  elevation={3}
+                  style={{ padding: 20, minHeight: "100vh" }}>
                   {props.children}
                 </Paper>
               </Container>

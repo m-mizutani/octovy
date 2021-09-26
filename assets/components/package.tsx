@@ -267,7 +267,7 @@ export default function Package(props: packageProps) {
         </Grid>
       </TableCell>
       <TableCell>
-        <Typography>{vulnStatus.comment}</Typography>
+        <Typography style={{ fontSize: 14 }}>{vulnStatus.comment}</Typography>
       </TableCell>
     </TableRow>
   );
