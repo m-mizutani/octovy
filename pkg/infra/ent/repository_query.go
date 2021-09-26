@@ -29,6 +29,7 @@ type RepositoryQuery struct {
 	predicates []predicate.Repository
 	// eager-loading edges.
 	withScan   *ScanQuery
+	withMain   *ScanQuery
 	withStatus *VulnStatusIndexQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -81,6 +82,28 @@ func (rq *RepositoryQuery) QueryScan() *ScanQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(scan.Table, scan.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, repository.ScanTable, repository.ScanPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMain chains the current query on the "main" edge.
+func (rq *RepositoryQuery) QueryMain() *ScanQuery {
+	query := &ScanQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(scan.Table, scan.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.MainTable, repository.MainColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -292,6 +315,7 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		order:      append([]OrderFunc{}, rq.order...),
 		predicates: append([]predicate.Repository{}, rq.predicates...),
 		withScan:   rq.withScan.Clone(),
+		withMain:   rq.withMain.Clone(),
 		withStatus: rq.withStatus.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
@@ -307,6 +331,17 @@ func (rq *RepositoryQuery) WithScan(opts ...func(*ScanQuery)) *RepositoryQuery {
 		opt(query)
 	}
 	rq.withScan = query
+	return rq
+}
+
+// WithMain tells the query-builder to eager-load the nodes that are connected to
+// the "main" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithMain(opts ...func(*ScanQuery)) *RepositoryQuery {
+	query := &ScanQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withMain = query
 	return rq
 }
 
@@ -386,8 +421,9 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 	var (
 		nodes       = []*Repository{}
 		_spec       = rq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			rq.withScan != nil,
+			rq.withMain != nil,
 			rq.withStatus != nil,
 		}
 	)
@@ -473,6 +509,35 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 			for i := range nodes {
 				nodes[i].Edges.Scan = append(nodes[i].Edges.Scan, n)
 			}
+		}
+	}
+
+	if query := rq.withMain; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Repository)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Main = []*Scan{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Scan(func(s *sql.Selector) {
+			s.Where(sql.InValues(repository.MainColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.repository_main
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "repository_main" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "repository_main" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Main = append(node.Edges.Main, n)
 		}
 	}
 

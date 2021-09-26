@@ -848,6 +848,34 @@ func HasScanWith(preds ...predicate.Scan) predicate.Repository {
 	})
 }
 
+// HasMain applies the HasEdge predicate on the "main" edge.
+func HasMain() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(MainTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, MainTable, MainColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMainWith applies the HasEdge predicate on the "main" edge with a given conditions (other predicates).
+func HasMainWith(preds ...predicate.Scan) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(MainInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, MainTable, MainColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasStatus applies the HasEdge predicate on the "status" edge.
 func HasStatus() predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {

@@ -59,12 +59,21 @@ var (
 		{Name: "scanned_at", Type: field.TypeInt64},
 		{Name: "check_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "pull_request_target", Type: field.TypeString, Nullable: true},
+		{Name: "repository_main", Type: field.TypeInt, Nullable: true},
 	}
 	// ScansTable holds the schema information for the "scans" table.
 	ScansTable = &schema.Table{
 		Name:       "scans",
 		Columns:    ScansColumns,
 		PrimaryKey: []*schema.Column{ScansColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "scans_repositories_main",
+				Columns:    []*schema.Column{ScansColumns[7]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// SessionsColumns holds the columns for the "sessions" table.
 	SessionsColumns = []*schema.Column{
@@ -282,6 +291,7 @@ var (
 )
 
 func init() {
+	ScansTable.ForeignKeys[0].RefTable = RepositoriesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[1].RefTable = UsersTable

@@ -37,6 +37,7 @@ type Interface interface {
 
 	GetScan(ctx context.Context, id string) (*ent.Scan, error)
 	GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error)
+	GetLatestScans(ctx context.Context) ([]*ent.Scan, error)
 
 	// Auth
 	SaveAuthState(ctx context.Context, state string, expiresAt int64) error

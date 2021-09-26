@@ -106,6 +106,21 @@ func (rc *RepositoryCreate) AddScan(s ...*Scan) *RepositoryCreate {
 	return rc.AddScanIDs(ids...)
 }
 
+// AddMainIDs adds the "main" edge to the Scan entity by IDs.
+func (rc *RepositoryCreate) AddMainIDs(ids ...string) *RepositoryCreate {
+	rc.mutation.AddMainIDs(ids...)
+	return rc
+}
+
+// AddMain adds the "main" edges to the Scan entity.
+func (rc *RepositoryCreate) AddMain(s ...*Scan) *RepositoryCreate {
+	ids := make([]string, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return rc.AddMainIDs(ids...)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (rc *RepositoryCreate) AddStatuIDs(ids ...string) *RepositoryCreate {
 	rc.mutation.AddStatuIDs(ids...)
@@ -279,6 +294,25 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			Inverse: false,
 			Table:   repository.ScanTable,
 			Columns: repository.ScanPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.MainIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

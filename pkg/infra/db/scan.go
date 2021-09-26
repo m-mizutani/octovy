@@ -35,13 +35,25 @@ func (x *Client) PutPackages(ctx context.Context, packages []*ent.PackageRecord)
 	return added, nil
 }
 
+func txRollback(tx *ent.Tx, err error) error {
+	if rerr := tx.Rollback(); rerr != nil {
+		err = goerr.Wrap(rerr).With("original", err)
+	}
+	return err
+}
+
 func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
 
-	scan, err := x.client.Scan.Create().
+	tx, err := x.client.Tx(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err)
+	}
+
+	added, err := tx.Scan.Create().
 		SetID(uuid.NewString()).
 		SetCommitID(scan.CommitID).
 		SetBranch(scan.Branch).
@@ -53,10 +65,20 @@ func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Reposito
 		AddPackages(packages...).
 		Save(ctx)
 	if err != nil {
+		return nil, txRollback(tx, err)
+	}
+
+	if repo.DefaultBranch != nil && scan.Branch == *repo.DefaultBranch {
+		if err := tx.Repository.UpdateOneID(repo.ID).AddMainIDs(added.ID).Exec(ctx); err != nil {
+			return nil, txRollback(tx, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
 		return nil, goerr.Wrap(err)
 	}
 
-	return scan, nil
+	return added, nil
 }
 
 func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
@@ -93,6 +115,30 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 		return nil, nil
 	}
 	return x.GetScan(ctx, latest.ID)
+}
+
+func (x *Client) GetLatestScans(ctx context.Context) ([]*ent.Scan, error) {
+	repos, err := x.client.Repository.Query().
+		WithMain(func(sq *ent.ScanQuery) {
+			sq.Order(ent.Desc("scanned_at")).Limit(1).
+				WithPackages(func(prq *ent.PackageRecordQuery) {
+					prq.WithVulnerabilities()
+				}).
+				WithRepository()
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err)
+	}
+
+	var scans []*ent.Scan
+	for _, repo := range repos {
+		if len(repo.Edges.Main) > 0 {
+			scans = append(scans, repo.Edges.Main[0])
+		}
+	}
+
+	return scans, nil
 }
 
 func (x *Client) getLatestScanEntity(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error) {

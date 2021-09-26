@@ -142,6 +142,21 @@ func (ru *RepositoryUpdate) AddScan(s ...*Scan) *RepositoryUpdate {
 	return ru.AddScanIDs(ids...)
 }
 
+// AddMainIDs adds the "main" edge to the Scan entity by IDs.
+func (ru *RepositoryUpdate) AddMainIDs(ids ...string) *RepositoryUpdate {
+	ru.mutation.AddMainIDs(ids...)
+	return ru
+}
+
+// AddMain adds the "main" edges to the Scan entity.
+func (ru *RepositoryUpdate) AddMain(s ...*Scan) *RepositoryUpdate {
+	ids := make([]string, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ru.AddMainIDs(ids...)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ru *RepositoryUpdate) AddStatuIDs(ids ...string) *RepositoryUpdate {
 	ru.mutation.AddStatuIDs(ids...)
@@ -181,6 +196,27 @@ func (ru *RepositoryUpdate) RemoveScan(s ...*Scan) *RepositoryUpdate {
 		ids[i] = s[i].ID
 	}
 	return ru.RemoveScanIDs(ids...)
+}
+
+// ClearMain clears all "main" edges to the Scan entity.
+func (ru *RepositoryUpdate) ClearMain() *RepositoryUpdate {
+	ru.mutation.ClearMain()
+	return ru
+}
+
+// RemoveMainIDs removes the "main" edge to Scan entities by IDs.
+func (ru *RepositoryUpdate) RemoveMainIDs(ids ...string) *RepositoryUpdate {
+	ru.mutation.RemoveMainIDs(ids...)
+	return ru
+}
+
+// RemoveMain removes "main" edges to Scan entities.
+func (ru *RepositoryUpdate) RemoveMain(s ...*Scan) *RepositoryUpdate {
+	ids := make([]string, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ru.RemoveMainIDs(ids...)
 }
 
 // ClearStatus clears all "status" edges to the VulnStatusIndex entity.
@@ -403,6 +439,60 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.MainCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedMainIDs(); len(nodes) > 0 && !ru.mutation.MainCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.MainIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if ru.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -590,6 +680,21 @@ func (ruo *RepositoryUpdateOne) AddScan(s ...*Scan) *RepositoryUpdateOne {
 	return ruo.AddScanIDs(ids...)
 }
 
+// AddMainIDs adds the "main" edge to the Scan entity by IDs.
+func (ruo *RepositoryUpdateOne) AddMainIDs(ids ...string) *RepositoryUpdateOne {
+	ruo.mutation.AddMainIDs(ids...)
+	return ruo
+}
+
+// AddMain adds the "main" edges to the Scan entity.
+func (ruo *RepositoryUpdateOne) AddMain(s ...*Scan) *RepositoryUpdateOne {
+	ids := make([]string, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ruo.AddMainIDs(ids...)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ruo *RepositoryUpdateOne) AddStatuIDs(ids ...string) *RepositoryUpdateOne {
 	ruo.mutation.AddStatuIDs(ids...)
@@ -629,6 +734,27 @@ func (ruo *RepositoryUpdateOne) RemoveScan(s ...*Scan) *RepositoryUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return ruo.RemoveScanIDs(ids...)
+}
+
+// ClearMain clears all "main" edges to the Scan entity.
+func (ruo *RepositoryUpdateOne) ClearMain() *RepositoryUpdateOne {
+	ruo.mutation.ClearMain()
+	return ruo
+}
+
+// RemoveMainIDs removes the "main" edge to Scan entities by IDs.
+func (ruo *RepositoryUpdateOne) RemoveMainIDs(ids ...string) *RepositoryUpdateOne {
+	ruo.mutation.RemoveMainIDs(ids...)
+	return ruo
+}
+
+// RemoveMain removes "main" edges to Scan entities.
+func (ruo *RepositoryUpdateOne) RemoveMain(s ...*Scan) *RepositoryUpdateOne {
+	ids := make([]string, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ruo.RemoveMainIDs(ids...)
 }
 
 // ClearStatus clears all "status" edges to the VulnStatusIndex entity.
@@ -862,6 +988,60 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Inverse: false,
 			Table:   repository.ScanTable,
 			Columns: repository.ScanPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.MainCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedMainIDs(); len(nodes) > 0 && !ruo.mutation.MainCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.MainIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.MainTable,
+			Columns: []string{repository.MainColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

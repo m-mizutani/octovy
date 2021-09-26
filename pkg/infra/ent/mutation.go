@@ -1077,6 +1077,9 @@ type RepositoryMutation struct {
 	scan           map[string]struct{}
 	removedscan    map[string]struct{}
 	clearedscan    bool
+	main           map[string]struct{}
+	removedmain    map[string]struct{}
+	clearedmain    bool
 	status         map[string]struct{}
 	removedstatus  map[string]struct{}
 	clearedstatus  bool
@@ -1507,6 +1510,60 @@ func (m *RepositoryMutation) ResetScan() {
 	m.removedscan = nil
 }
 
+// AddMainIDs adds the "main" edge to the Scan entity by ids.
+func (m *RepositoryMutation) AddMainIDs(ids ...string) {
+	if m.main == nil {
+		m.main = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.main[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMain clears the "main" edge to the Scan entity.
+func (m *RepositoryMutation) ClearMain() {
+	m.clearedmain = true
+}
+
+// MainCleared reports if the "main" edge to the Scan entity was cleared.
+func (m *RepositoryMutation) MainCleared() bool {
+	return m.clearedmain
+}
+
+// RemoveMainIDs removes the "main" edge to the Scan entity by IDs.
+func (m *RepositoryMutation) RemoveMainIDs(ids ...string) {
+	if m.removedmain == nil {
+		m.removedmain = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.main, ids[i])
+		m.removedmain[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMain returns the removed IDs of the "main" edge to the Scan entity.
+func (m *RepositoryMutation) RemovedMainIDs() (ids []string) {
+	for id := range m.removedmain {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MainIDs returns the "main" edge IDs in the mutation.
+func (m *RepositoryMutation) MainIDs() (ids []string) {
+	for id := range m.main {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMain resets all changes to the "main" edge.
+func (m *RepositoryMutation) ResetMain() {
+	m.main = nil
+	m.clearedmain = false
+	m.removedmain = nil
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by ids.
 func (m *RepositoryMutation) AddStatuIDs(ids ...string) {
 	if m.status == nil {
@@ -1806,9 +1863,12 @@ func (m *RepositoryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RepositoryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.scan != nil {
 		edges = append(edges, repository.EdgeScan)
+	}
+	if m.main != nil {
+		edges = append(edges, repository.EdgeMain)
 	}
 	if m.status != nil {
 		edges = append(edges, repository.EdgeStatus)
@@ -1826,6 +1886,12 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgeMain:
+		ids := make([]ent.Value, 0, len(m.main))
+		for id := range m.main {
+			ids = append(ids, id)
+		}
+		return ids
 	case repository.EdgeStatus:
 		ids := make([]ent.Value, 0, len(m.status))
 		for id := range m.status {
@@ -1838,9 +1904,12 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RepositoryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedscan != nil {
 		edges = append(edges, repository.EdgeScan)
+	}
+	if m.removedmain != nil {
+		edges = append(edges, repository.EdgeMain)
 	}
 	if m.removedstatus != nil {
 		edges = append(edges, repository.EdgeStatus)
@@ -1858,6 +1927,12 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgeMain:
+		ids := make([]ent.Value, 0, len(m.removedmain))
+		for id := range m.removedmain {
+			ids = append(ids, id)
+		}
+		return ids
 	case repository.EdgeStatus:
 		ids := make([]ent.Value, 0, len(m.removedstatus))
 		for id := range m.removedstatus {
@@ -1870,9 +1945,12 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RepositoryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedscan {
 		edges = append(edges, repository.EdgeScan)
+	}
+	if m.clearedmain {
+		edges = append(edges, repository.EdgeMain)
 	}
 	if m.clearedstatus {
 		edges = append(edges, repository.EdgeStatus)
@@ -1886,6 +1964,8 @@ func (m *RepositoryMutation) EdgeCleared(name string) bool {
 	switch name {
 	case repository.EdgeScan:
 		return m.clearedscan
+	case repository.EdgeMain:
+		return m.clearedmain
 	case repository.EdgeStatus:
 		return m.clearedstatus
 	}
@@ -1906,6 +1986,9 @@ func (m *RepositoryMutation) ResetEdge(name string) error {
 	switch name {
 	case repository.EdgeScan:
 		m.ResetScan()
+		return nil
+	case repository.EdgeMain:
+		m.ResetMain()
 		return nil
 	case repository.EdgeStatus:
 		m.ResetStatus()

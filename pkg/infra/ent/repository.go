@@ -36,11 +36,13 @@ type Repository struct {
 type RepositoryEdges struct {
 	// Scan holds the value of the scan edge.
 	Scan []*Scan `json:"scan,omitempty"`
+	// Main holds the value of the main edge.
+	Main []*Scan `json:"main,omitempty"`
 	// Status holds the value of the status edge.
 	Status []*VulnStatusIndex `json:"status,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // ScanOrErr returns the Scan value or an error if the edge
@@ -52,10 +54,19 @@ func (e RepositoryEdges) ScanOrErr() ([]*Scan, error) {
 	return nil, &NotLoadedError{edge: "scan"}
 }
 
+// MainOrErr returns the Main value or an error if the edge
+// was not loaded in eager-loading.
+func (e RepositoryEdges) MainOrErr() ([]*Scan, error) {
+	if e.loadedTypes[1] {
+		return e.Main, nil
+	}
+	return nil, &NotLoadedError{edge: "main"}
+}
+
 // StatusOrErr returns the Status value or an error if the edge
 // was not loaded in eager-loading.
 func (e RepositoryEdges) StatusOrErr() ([]*VulnStatusIndex, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Status, nil
 	}
 	return nil, &NotLoadedError{edge: "status"}
@@ -137,6 +148,11 @@ func (r *Repository) assignValues(columns []string, values []interface{}) error 
 // QueryScan queries the "scan" edge of the Repository entity.
 func (r *Repository) QueryScan() *ScanQuery {
 	return (&RepositoryClient{config: r.config}).QueryScan(r)
+}
+
+// QueryMain queries the "main" edge of the Repository entity.
+func (r *Repository) QueryMain() *ScanQuery {
+	return (&RepositoryClient{config: r.config}).QueryMain(r)
 }
 
 // QueryStatus queries the "status" edge of the Repository entity.

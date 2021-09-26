@@ -21,6 +21,8 @@ const (
 	FieldDefaultBranch = "default_branch"
 	// EdgeScan holds the string denoting the scan edge name in mutations.
 	EdgeScan = "scan"
+	// EdgeMain holds the string denoting the main edge name in mutations.
+	EdgeMain = "main"
 	// EdgeStatus holds the string denoting the status edge name in mutations.
 	EdgeStatus = "status"
 	// Table holds the table name of the repository in the database.
@@ -30,6 +32,13 @@ const (
 	// ScanInverseTable is the table name for the Scan entity.
 	// It exists in this package in order to avoid circular dependency with the "scan" package.
 	ScanInverseTable = "scans"
+	// MainTable is the table that holds the main relation/edge.
+	MainTable = "scans"
+	// MainInverseTable is the table name for the Scan entity.
+	// It exists in this package in order to avoid circular dependency with the "scan" package.
+	MainInverseTable = "scans"
+	// MainColumn is the table column denoting the main relation/edge.
+	MainColumn = "repository_main"
 	// StatusTable is the table that holds the status relation/edge.
 	StatusTable = "vuln_status_indexes"
 	// StatusInverseTable is the table name for the VulnStatusIndex entity.

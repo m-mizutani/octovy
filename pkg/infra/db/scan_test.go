@@ -148,4 +148,48 @@ func TestScan(t *testing.T) {
 		require.Len(t, latest.Edges.Packages, 1)
 		assert.Equal(t, "x", latest.Edges.Packages[0].Name)
 	})
+
+	t.Run("save default branch latest", func(t *testing.T) {
+		client := setupDB(t)
+		defaultBranch := "main"
+		repo, err := client.CreateRepo(ctx, &ent.Repository{
+			Owner:         "blue",
+			Name:          "five",
+			InstallID:     1,
+			DefaultBranch: &defaultBranch,
+		})
+		require.NoError(t, err)
+
+		s1, err := client.PutScan(ctx, &ent.Scan{
+			Branch:      defaultBranch,
+			CommitID:    "aaa",
+			RequestedAt: 100,
+			ScannedAt:   200,
+			CheckID:     999,
+		}, repo, nil)
+		require.NoError(t, err)
+
+		_, err = client.PutScan(ctx, &ent.Scan{
+			Branch:      defaultBranch,
+			CommitID:    "345",
+			RequestedAt: 100,
+			ScannedAt:   100, // older than s1
+			CheckID:     999,
+		}, repo, nil)
+		require.NoError(t, err)
+
+		_, err = client.PutScan(ctx, &ent.Scan{
+			Branch:      "not-default-branch",
+			CommitID:    "a12",
+			RequestedAt: 100,
+			ScannedAt:   300, // newer than s1, but not default
+			CheckID:     999,
+		}, repo, nil)
+		require.NoError(t, err)
+
+		scans, err := client.GetLatestScans(ctx)
+		require.NoError(t, err)
+		require.Len(t, scans, 1)
+		assert.Equal(t, s1.ID, scans[0].ID)
+	})
 }

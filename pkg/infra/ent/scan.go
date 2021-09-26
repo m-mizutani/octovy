@@ -29,7 +29,8 @@ type Scan struct {
 	PullRequestTarget string `json:"pull_request_target,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ScanQuery when eager-loading is set.
-	Edges ScanEdges `json:"edges"`
+	Edges           ScanEdges `json:"edges"`
+	repository_main *int
 }
 
 // ScanEdges holds the relations/edges for other nodes in the graph.
@@ -70,6 +71,8 @@ func (*Scan) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case scan.FieldID, scan.FieldBranch, scan.FieldCommitID, scan.FieldPullRequestTarget:
 			values[i] = new(sql.NullString)
+		case scan.ForeignKeys[0]: // repository_main
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Scan", columns[i])
 		}
@@ -126,6 +129,13 @@ func (s *Scan) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field pull_request_target", values[i])
 			} else if value.Valid {
 				s.PullRequestTarget = value.String
+			}
+		case scan.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field repository_main", value)
+			} else if value.Valid {
+				s.repository_main = new(int)
+				*s.repository_main = int(value.Int64)
 			}
 		}
 	}

@@ -491,6 +491,22 @@ func (c *RepositoryClient) QueryScan(r *Repository) *ScanQuery {
 	return query
 }
 
+// QueryMain queries the main edge of a Repository.
+func (c *RepositoryClient) QueryMain(r *Repository) *ScanQuery {
+	query := &ScanQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, id),
+			sqlgraph.To(scan.Table, scan.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.MainTable, repository.MainColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryStatus queries the status edge of a Repository.
 func (c *RepositoryClient) QueryStatus(r *Repository) *VulnStatusIndexQuery {
 	query := &VulnStatusIndexQuery{config: c.config}
