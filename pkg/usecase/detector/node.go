@@ -12,7 +12,7 @@ import (
 func matchNode(constraints, version string) (bool, error) {
 	c, err := npm.NewConstraints(constraints)
 	if err != nil {
-		logger.With("err", err).Warn("Invalid patched version, ignore")
+		logger.Warn().Err(err).Msg("Invalid patched version, ignore")
 		return false, nil
 		// return false, goerr.Wrap(err, "Invalid patched version").With("ver", constraints)
 	}

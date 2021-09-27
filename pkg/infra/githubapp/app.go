@@ -126,7 +126,7 @@ func (x *Client) CreateIssueComment(repo *model.GitHubRepo, prID int, body strin
 	if resp.StatusCode != http.StatusCreated {
 		return goerr.Wrap(err, "Failed to ")
 	}
-	logger.With("comment", ret).Info("Commented to PR")
+	logger.Debug().Interface("comment", ret).Msg("Commented to PR")
 
 	return nil
 }
@@ -151,7 +151,7 @@ func (x *Client) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, e
 	if resp.StatusCode != http.StatusCreated {
 		return 0, goerr.Wrap(err, "Failed to ")
 	}
-	logger.With("run", run).Info("Created check run")
+	logger.Debug().Interface("run", run).Msg("Created check run")
 
 	return *run.ID, nil
 }
@@ -171,7 +171,7 @@ func (x *Client) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *gith
 	if resp.StatusCode != http.StatusOK {
 		return goerr.Wrap(err, "Failed to update status to complete")
 	}
-	logger.With("repo", repo).With("id", checkID).Info("Created check run")
+	logger.Debug().Interface("repo", repo).Int64("id", checkID).Msg("Created check run")
 
 	return nil
 }
