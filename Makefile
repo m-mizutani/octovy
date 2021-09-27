@@ -25,7 +25,7 @@ ent: $(ENT_SRC)
 asset: $(ASSET_OUT)
 
 $(ASSET_OUT): $(ASSET_SRC)
-	cd $(ASSET_DIR) && npm run export && cd $(ROOT_DIR)
+	cd $(ASSET_DIR) && npm i && npm run export && cd $(ROOT_DIR)
 
 $(ENT_SRC): $(ENT_SCHEMA_DIR)/*.go
 	ent generate $(ENT_SCHEMA_DIR) --target $(ENT_DIR) --feature sql/upsert
@@ -42,7 +42,7 @@ test: $(SRC) $(ENT_SRC)
 	xargs go test
 
 octovy: $(SRC) $(ENT_SRC) $(ASSET_OUT)
-	go build -o $(BINARY) ./cmd/octovy
+	go build -o $(BINARY) .
 
 clean:
 	rm -f $(ENT_SRC)
