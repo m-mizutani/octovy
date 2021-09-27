@@ -20,7 +20,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/m-mizutani/goerr v0.1.2
-	github.com/m-mizutani/golambda v1.1.3
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/pkg/errors v0.9.1

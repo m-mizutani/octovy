@@ -9,11 +9,11 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v39/github"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-var logger = golambda.Logger
+var logger = utils.Logger
 
 type Interface interface {
 	GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error
@@ -68,12 +68,12 @@ func (x *Client) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteC
 	}
 	ctx := context.Background()
 
-	logger.
-		With("appID", x.appID).
-		With("repo", repo).
-		With("installID", x.installID).
-		With("privateKey.length", len(x.pem)).
-		Debug("Sending GetArchiveLink request")
+	logger.Debug().
+		Interface("appID", x.appID).
+		Interface("repo", repo).
+		Interface("installID", x.installID).
+		Interface("privateKey.length", len(x.pem)).
+		Msg("Sending GetArchiveLink request")
 
 	// https://docs.github.com/en/rest/reference/repos#downloads
 	url, r, err := client.Repositories.GetArchiveLink(ctx, repo.Owner, repo.RepoName, github.Zipball, opt, false)
@@ -81,7 +81,7 @@ func (x *Client) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteC
 		return goerr.Wrap(err)
 	}
 
-	logger.With("code", r.StatusCode).Debug("")
+	logger.Debug().Interface("code", r.StatusCode).Send()
 
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {

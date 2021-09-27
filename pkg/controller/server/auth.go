@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/m-mizutani/golambda"
 )
 
 func getAuthGitHub(c *gin.Context) {
@@ -50,7 +49,6 @@ func getAuthGitHubCallback(c *gin.Context) {
 		v := url.Values{}
 		v.Set("login_error", errMsg)
 		c.Redirect(http.StatusFound, uc.FrontendURL()+"/login?"+v.Encode())
-		golambda.EmitError(err)
 		return
 	}
 
@@ -59,7 +57,6 @@ func getAuthGitHubCallback(c *gin.Context) {
 		v := url.Values{}
 		v.Set("login_error", "Failed to issue session token")
 		c.Redirect(http.StatusFound, uc.FrontendURL()+"/login?"+v.Encode())
-		golambda.EmitError(err)
 	}
 
 	c.SetCookie(cookieSessionID, ssn.ID, 86400*7, "", "", true, true)

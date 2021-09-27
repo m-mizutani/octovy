@@ -1,14 +1,13 @@
 package detector
 
 import (
-	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/trivydb"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-var logger = golambda.Logger
+var logger = utils.Logger
 
 type Detector struct {
 	trivyDB trivydb.Interface
@@ -50,7 +49,7 @@ func init() {
 func (x *Detector) Detect(pkgType types.PkgType, pkgName, version string) ([]*model.Vulnerability, error) {
 	options, ok := pkgTypeSourceMap[pkgType]
 	if !ok {
-		logger.With("pkgType", pkgType).Warn("Unsupported pkgType")
+		logger.Warn().Interface("pkgType", pkgType).Msg("Unsupported pkgType")
 		return nil, nil
 	}
 
@@ -63,7 +62,7 @@ func (x *Detector) Detect(pkgType types.PkgType, pkgName, version string) ([]*mo
 
 		for _, adv := range advisories {
 			if vulnerable, err := isVulnerable(adv, version); err != nil {
-				golambda.EmitError(goerr.Wrap(err).With("pkg", pkgName).With("adv", adv))
+				logger.Warn().Err(err).Interface("pkg", pkgName).Interface("adv", adv).Err(err).Send()
 				continue
 			} else if vulnerable {
 				affected = append(affected, adv)

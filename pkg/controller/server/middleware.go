@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/pkg/errors"
@@ -146,11 +145,9 @@ func errorHandler(c *gin.Context) {
 			case errors.Is(err, model.ErrUserNotFound):
 				errResp(c, http.StatusNotFound, err)
 			default:
-				golambda.EmitError(err)
 				errResp(c, http.StatusInternalServerError, err)
 			}
 		} else {
-			golambda.EmitError(err)
 			errResp(c, http.StatusInternalServerError, ginError)
 		}
 	}
