@@ -1,6 +1,7 @@
 FROM node AS build-node
 ADD . /app
 WORKDIR /app/assets
+RUN npm i
 RUN npm run export
 
 FROM golang AS build-go
