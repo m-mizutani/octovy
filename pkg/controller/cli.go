@@ -99,6 +99,13 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Required:    true,
 			},
 
+			&cli.BoolFlag{
+				Name:        "webhook-only",
+				Usage:       "Enable only webhook from GitHub. Frontend and API will be disabled",
+				Destination: &ctrl.Config.WebhookOnly,
+				EnvVars:     []string{"OCTOVY_WEBHOOK_ONLY"},
+			},
+
 			&cli.Int64Flag{
 				Name:        "github-app-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},

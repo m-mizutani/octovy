@@ -48,6 +48,7 @@ type Interface interface {
 	// Config proxy
 	GetGitHubAppClientID() string
 	FrontendURL() string
+	WebhookOnly() bool
 }
 
 func New(cfg *model.Config) Interface {
@@ -96,4 +97,7 @@ func (x *usecase) FrontendURL() string {
 }
 func (x *usecase) GetGitHubAppClientID() string {
 	return x.config.GitHubAppClientID
+}
+func (x *usecase) WebhookOnly() bool {
+	return x.config.WebhookOnly
 }

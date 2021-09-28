@@ -4,6 +4,7 @@ type Config struct {
 	DBType      string
 	DBConfig    string
 	FrontendURL string
+	WebhookOnly bool
 
 	ServerAddr string
 	ServerPort int
