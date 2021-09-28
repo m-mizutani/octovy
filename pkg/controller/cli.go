@@ -131,6 +131,17 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Value:       "/tmp/trivy.db",
 				Required:    true,
 			},
+
+			&cli.StringFlag{
+				Name:        "sentry-dsn",
+				EnvVars:     []string{"SENTRY_DSN"},
+				Destination: &ctrl.Config.SentryDSN,
+			},
+			&cli.StringFlag{
+				Name:        "sentry-env",
+				EnvVars:     []string{"SENTRY_ENV"},
+				Destination: &ctrl.Config.SentryEnv,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			if err := ctrl.usecase.Init(); err != nil {
@@ -138,6 +149,10 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			}
 
 			return serveCommand(c, ctrl)
+		},
+		After: func(c *cli.Context) error {
+			ctrl.usecase.Shutdown()
+			return nil
 		},
 	}
 }

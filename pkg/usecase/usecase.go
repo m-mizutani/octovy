@@ -16,6 +16,7 @@ var logger = utils.Logger
 
 type Interface interface {
 	Init() error
+	Shutdown()
 
 	// Scan
 	SendScanRequest(req *model.ScanRepositoryRequest) error
@@ -40,6 +41,9 @@ type Interface interface {
 	CreateSession(ctx context.Context, user *ent.User) (*ent.Session, error)
 	ValidateSession(ctx context.Context, ssnID string) (*ent.Session, error)
 	RevokeSession(ctx context.Context, token string) error
+
+	// Error handling
+	HandleError(err error)
 
 	// Config proxy
 	GetGitHubAppClientID() string
@@ -68,7 +72,12 @@ type usecase struct {
 }
 
 func (x *usecase) Init() error {
+	if err := x.initErrorHandler(); err != nil {
+		return err
+	}
+
 	if err := x.infra.DB.Open(x.config.DBType, x.config.DBConfig); err != nil {
+		x.HandleError(err)
 		return goerr.Wrap(err)
 	}
 
@@ -76,6 +85,10 @@ func (x *usecase) Init() error {
 
 	x.initialized = true
 	return nil
+}
+
+func (x *usecase) Shutdown() {
+	x.flushError()
 }
 
 func (x *usecase) FrontendURL() string {

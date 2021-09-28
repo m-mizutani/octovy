@@ -43,7 +43,7 @@ func (x *usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
 func (x *usecase) InvokeScanThread() {
 	go func() {
 		if err := x.runScanThread(); err != nil {
-			x.handleError(err)
+			x.HandleError(err)
 		}
 	}()
 }
@@ -70,7 +70,7 @@ func (x *usecase) runScanThread() error {
 		}
 
 		if err := scanRepository(ctx, req, clients); err != nil {
-			x.handleError(goerr.Wrap(err).With("request", req))
+			x.HandleError(goerr.Wrap(err).With("request", req))
 		}
 	}
 

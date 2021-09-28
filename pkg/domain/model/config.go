@@ -14,4 +14,7 @@ type Config struct {
 	GitHubAppSecret         string
 
 	TrivyDBPath string
+
+	SentryDSN string
+	SentryEnv string
 }

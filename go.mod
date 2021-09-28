@@ -12,6 +12,7 @@ require (
 	github.com/aquasecurity/go-version v0.0.0-20210121072130-637058cfe492
 	github.com/aquasecurity/trivy-db v0.0.0-20210907100132-2ec74c43526d
 	github.com/bradleyfalzon/ghinstallation v1.1.1
+	github.com/getsentry/sentry-go v0.11.0
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
