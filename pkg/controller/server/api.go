@@ -58,16 +58,18 @@ func New(uc usecase.Interface) *gin.Engine {
 	engine.Use(getStaticFile)
 	engine.Use(errorHandler)
 
-	engine.GET("/auth/github", getAuthGitHub)
-	engine.GET("/auth/github/callback", getAuthGitHubCallback)
 	engine.POST("/webhook/github", postWebhookGitHub)
+	if !uc.WebhookOnly() {
+		engine.GET("/auth/github", getAuthGitHub)
+		engine.GET("/auth/github/callback", getAuthGitHubCallback)
 
-	r := engine.Group("/api/v1")
-	r.POST("/webhook/github", postWebhookGitHub)
-	r.GET("/scan/:scan_id", getScanReport)
+		r := engine.Group("/api/v1")
+		r.POST("/webhook/github", postWebhookGitHub)
+		r.GET("/scan/:scan_id", getScanReport)
 
-	r.POST("/status/:owner/:repo_name", postVulnStatus)
-	r.GET("/user", getUser)
+		r.POST("/status/:owner/:repo_name", postVulnStatus)
+		r.GET("/user", getUser)
+	}
 
 	return engine
 }

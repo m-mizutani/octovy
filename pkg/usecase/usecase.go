@@ -16,6 +16,7 @@ var logger = utils.Logger
 
 type Interface interface {
 	Init() error
+	Shutdown()
 
 	// Scan
 	SendScanRequest(req *model.ScanRepositoryRequest) error
@@ -32,6 +33,7 @@ type Interface interface {
 	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error
 	HandleGitHubPullReqEvent(ctx context.Context, event *github.PullRequestEvent) error
 	HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error
+	VerifyGitHubSecret(sigSHA256 string, body []byte) error
 
 	// Auth
 	CreateAuthState(ctx context.Context) (string, error)
@@ -41,9 +43,13 @@ type Interface interface {
 	ValidateSession(ctx context.Context, ssnID string) (*ent.Session, error)
 	RevokeSession(ctx context.Context, token string) error
 
+	// Error handling
+	HandleError(err error)
+
 	// Config proxy
 	GetGitHubAppClientID() string
 	FrontendURL() string
+	WebhookOnly() bool
 }
 
 func New(cfg *model.Config) Interface {
@@ -68,7 +74,12 @@ type usecase struct {
 }
 
 func (x *usecase) Init() error {
+	if err := x.initErrorHandler(); err != nil {
+		return err
+	}
+
 	if err := x.infra.DB.Open(x.config.DBType, x.config.DBConfig); err != nil {
+		x.HandleError(err)
 		return goerr.Wrap(err)
 	}
 
@@ -78,9 +89,16 @@ func (x *usecase) Init() error {
 	return nil
 }
 
+func (x *usecase) Shutdown() {
+	x.flushError()
+}
+
 func (x *usecase) FrontendURL() string {
 	return x.config.FrontendURL
 }
 func (x *usecase) GetGitHubAppClientID() string {
 	return x.config.GitHubAppClientID
+}
+func (x *usecase) WebhookOnly() bool {
+	return x.config.WebhookOnly
 }

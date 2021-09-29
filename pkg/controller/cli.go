@@ -99,6 +99,13 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Required:    true,
 			},
 
+			&cli.BoolFlag{
+				Name:        "webhook-only",
+				Usage:       "Enable only webhook from GitHub. Frontend and API will be disabled",
+				Destination: &ctrl.Config.WebhookOnly,
+				EnvVars:     []string{"OCTOVY_WEBHOOK_ONLY"},
+			},
+
 			&cli.Int64Flag{
 				Name:        "github-app-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},
@@ -106,10 +113,10 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Required:    true,
 			},
 			&cli.PathFlag{
-				Name:        "github-app-pem",
+				Name:        "github-app-private-key",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
-				Usage:       "GitHub App private key file path",
-				Destination: &ctrl.Config.GitHubAppPrivateKeyPath,
+				Usage:       "GitHub App private key data (not file path)",
+				Destination: &ctrl.Config.GitHubAppPrivateKey,
 				Required:    true,
 			},
 			&cli.StringFlag{
@@ -125,11 +132,29 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Required:    true,
 			},
 			&cli.StringFlag{
+				Name:        "github-webhook-secret",
+				EnvVars:     []string{"OCTOVY_GITHUB_WEBHOOK_SECRET"},
+				Destination: &ctrl.Config.GitHubWebhookSecret,
+				Usage:       "Verify webhook request with the secret",
+			},
+
+			&cli.StringFlag{
 				Name:        "trivy-db-path",
 				EnvVars:     []string{"OCTOVY_TRIVY_DB_PATH"},
 				Destination: &ctrl.Config.TrivyDBPath,
 				Value:       "/tmp/trivy.db",
 				Required:    true,
+			},
+
+			&cli.StringFlag{
+				Name:        "sentry-dsn",
+				EnvVars:     []string{"SENTRY_DSN"},
+				Destination: &ctrl.Config.SentryDSN,
+			},
+			&cli.StringFlag{
+				Name:        "sentry-env",
+				EnvVars:     []string{"SENTRY_ENV"},
+				Destination: &ctrl.Config.SentryEnv,
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -138,6 +163,10 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			}
 
 			return serveCommand(c, ctrl)
+		},
+		After: func(c *cli.Context) error {
+			ctrl.usecase.Shutdown()
+			return nil
 		},
 	}
 }
@@ -148,7 +177,10 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 	engine := server.New(ctrl.usecase)
 
 	gin.SetMode(gin.DebugMode)
-	logger.Info().Interface("config", ctrl.Config).Msg("Starting server...")
+	copiedConfig := *ctrl.Config
+	copiedConfig.GitHubAppPrivateKey = "[Removed]" // Remove sensitive data
+
+	logger.Info().Interface("config", copiedConfig).Msg("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
 		logger.Error().Err(err).Interface("config", ctrl.Config).Msg("Server error")
 	}

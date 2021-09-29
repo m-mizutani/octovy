@@ -24,6 +24,11 @@ func postWebhookGitHub(c *gin.Context) {
 		return
 	}
 
+	if err := uc.VerifyGitHubSecret(c.GetHeader("X-Hub-Signature-256"), eventBody); err != nil {
+		_ = c.Error(err)
+		return
+	}
+
 	// github.com/google/go-github/v29/github have not support integration_installation
 	if githubEventType == "integration_installation" {
 		return
