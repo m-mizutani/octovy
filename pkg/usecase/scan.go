@@ -49,11 +49,6 @@ func (x *usecase) InvokeScanThread() {
 }
 
 func (x *usecase) runScanThread() error {
-	githubAppPEM, err := x.infra.Utils.ReadFile(x.config.GitHubAppPrivateKeyPath)
-	if err != nil {
-		return goerr.Wrap(err, "Failed to read github private key file")
-	}
-
 	detector := newVulnDetector(x.infra.GitHub, x.infra.NewTrivyDB, x.config.TrivyDBPath)
 
 	for req := range x.scanQueue {
@@ -62,7 +57,7 @@ func (x *usecase) runScanThread() error {
 
 		clients := &scanClients{
 			DB:        x.infra.DB,
-			GitHubApp: x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, githubAppPEM),
+			GitHubApp: x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
 			Detector:  detector,
 			Utils:     x.infra.Utils,
 
@@ -130,15 +125,20 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 	// PR branch (synchronized event).
 	if req.TargetBranch != "" {
 		// Retrieve latest scan report to compare with current one before inserting
-		scan, err := clients.DB.GetLatestScan(ctx, model.GitHubBranch{
+		branch := model.GitHubBranch{
 			GitHubRepo: req.GitHubRepo,
 			Branch:     req.TargetBranch,
-		})
+		}
+		scan, err := clients.DB.GetLatestScan(ctx, branch)
 		if err != nil {
 			return goerr.Wrap(err)
 		}
 		latest = scan
-		logger.Debug().Interface("scanID", scan.ID).Msg("Got latest scan")
+		if scan != nil {
+			logger.Debug().Interface("scanID", scan.ID).Interface("branch", branch).Msg("Got latest scan")
+		} else {
+			logger.Debug().Interface("branch", branch).Msg("No previous scan")
+		}
 	}
 
 	/*

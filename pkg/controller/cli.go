@@ -113,10 +113,10 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Required:    true,
 			},
 			&cli.PathFlag{
-				Name:        "github-app-pem",
+				Name:        "github-app-private-key",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
-				Usage:       "GitHub App private key file path",
-				Destination: &ctrl.Config.GitHubAppPrivateKeyPath,
+				Usage:       "GitHub App private key data (not file path)",
+				Destination: &ctrl.Config.GitHubAppPrivateKey,
 				Required:    true,
 			},
 			&cli.StringFlag{
@@ -177,7 +177,10 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 	engine := server.New(ctrl.usecase)
 
 	gin.SetMode(gin.DebugMode)
-	logger.Info().Interface("config", ctrl.Config).Msg("Starting server...")
+	copiedConfig := *ctrl.Config
+	copiedConfig.GitHubAppPrivateKey = "[Removed]" // Remove sensitive data
+
+	logger.Info().Interface("config", copiedConfig).Msg("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
 		logger.Error().Err(err).Interface("config", ctrl.Config).Msg("Server error")
 	}
