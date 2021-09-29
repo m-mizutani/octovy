@@ -33,6 +33,7 @@ type Interface interface {
 	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error
 	HandleGitHubPullReqEvent(ctx context.Context, event *github.PullRequestEvent) error
 	HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error
+	VerifyGitHubSecret(sigSHA256 string, body []byte) error
 
 	// Auth
 	CreateAuthState(ctx context.Context) (string, error)

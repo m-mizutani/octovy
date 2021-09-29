@@ -132,6 +132,13 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Required:    true,
 			},
 			&cli.StringFlag{
+				Name:        "github-webhook-secret",
+				EnvVars:     []string{"OCTOVY_GITHUB_WEBHOOK_SECRET"},
+				Destination: &ctrl.Config.GitHubWebhookSecret,
+				Usage:       "Verify webhook request with the secret",
+			},
+
+			&cli.StringFlag{
 				Name:        "trivy-db-path",
 				EnvVars:     []string{"OCTOVY_TRIVY_DB_PATH"},
 				Destination: &ctrl.Config.TrivyDBPath,

@@ -178,3 +178,19 @@ func (x *usecase) HandleGitHubInstallationEvent(ctx context.Context, event *gith
 	logger.Debug().Interface("event", event).Msg("Recv github installation event")
 	return nil
 }
+
+func (x *usecase) VerifyGitHubSecret(sigSHA256 string, body []byte) error {
+	if x.config.GitHubWebhookSecret == "" {
+		if sigSHA256 == "" {
+			return nil // No secret and no signature
+		}
+		logger.Warn().Str("signature", sigSHA256).Msg("Verifying X-Hub-Signature-256, but no secret is configured. Octovy ignore the signature and continue processing")
+		return nil
+	}
+
+	if err := github.ValidateSignature(sigSHA256, body, []byte(x.config.GitHubWebhookSecret)); err != nil {
+		return model.ErrInvalidWebhookData.Wrap(err)
+	}
+
+	return nil
+}
