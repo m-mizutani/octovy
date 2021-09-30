@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-      - run: echo hoge | wc
+      - run: echo ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }} | wc
       - name: GCP Authenticate
         uses: google-github-actions/setup-gcloud@v0.2.0
         with:
