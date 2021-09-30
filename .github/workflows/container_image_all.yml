@@ -4,6 +4,8 @@ on:
   push:
 env:
   TAG_NAME: octovy:${{ github.sha }}
+  GITHUB_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/octovy:${{ github.sha }}
+  GCP_IMAGE_NAME: gcr.io/octovy/octovy:${{ github.sha }}
 
 jobs:
   build:
@@ -19,8 +21,6 @@ jobs:
   ghcr:
     runs-on: ubuntu-latest
     needs: build
-    env:
-      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ env.TAG_NAME }}
     steps:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
@@ -29,18 +29,16 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Rename image
-        run: docker tag ${{ env.TAG_NAME }} ${{ env.IMAGE_NAME }}
+        run: docker tag ${{ env.TAG_NAME }} ${{ env.GITHUB_IMAGE_NAME }}
       - name: Push image
-        run: docker push ${{ env.IMAGE_NAME }}
+        run: docker push ${{ env.GITHUB_IMAGE_NAME }}
+
   gcp:
     runs-on: ubuntu-latest
     needs: build
-    env:
-      IMAGE_NAME: gcr.io/octovy/${{ env.TAG_NAME }}
-      GCP_PROJECT_ID: octovy
     steps:
       - name: Rename image
-        run: docker tag ${{ env.TAG_NAME }} ${{ env.IMAGE_NAME }}
+        run: docker tag ${{ env.TAG_NAME }} ${{ env.GCP_IMAGE_NAME }}
       - name: GCP Authenticate
         uses: google-github-actions/setup-gcloud@master
         with:
@@ -50,4 +48,4 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker --quiet
       - name: Push Docker image
-        run: docker push ${{ env.IMAGE_NAME }}
+        run: docker push ${{ env.GCP_IMAGE_NAME }}
