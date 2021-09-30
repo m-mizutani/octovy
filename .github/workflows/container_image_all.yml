@@ -30,15 +30,15 @@ jobs:
 
   gcp:
     runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT_ID: octovy
     steps:
       - name: checkout
         uses: actions/checkout@v2
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v1
       - name: Build Docker image
-        run: docker build . -t ${{ env.TAG_NAME }}
-      - name: Rename image
-        run: docker tag ${{ env.TAG_NAME }} ${{ env.GCP_IMAGE_NAME }}
+        run: docker build . -t ${{ env.GCP_IMAGE_NAME }}
       - name: GCP Authenticate
         uses: google-github-actions/setup-gcloud@master
         with:
