@@ -41,11 +41,11 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: GCP Authenticate
-        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@master
         with:
-          version: "275.0.0"
-          service_account_email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          project_id: octovy
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true
 
       - name: Build and push
         uses: docker/build-push-action@v2
