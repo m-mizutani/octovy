@@ -36,16 +36,17 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-      - name: Set up Docker buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Build Docker image
-        run: docker build . -t ${{ env.GCP_IMAGE_NAME }}
       - name: GCP Authenticate
         uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build Docker image
+        run: docker build . -t ${{ env.GCP_IMAGE_NAME }}
+
       - name: Configure Docker
         run: gcloud auth configure-docker --quiet
       - name: Push Docker image
