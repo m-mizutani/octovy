@@ -41,7 +41,7 @@ jobs:
       - name: Build Docker image
         run: docker build . -t ${{ env.GCP_IMAGE_NAME }}
       - name: GCP Authenticate
-        uses: google-github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
