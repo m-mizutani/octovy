@@ -178,7 +178,19 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 
 	gin.SetMode(gin.DebugMode)
 	copiedConfig := *ctrl.Config
-	copiedConfig.GitHubAppPrivateKey = "[Removed]" // Remove sensitive data
+	// Removing sensitive data
+	if copiedConfig.GitHubAppPrivateKey != "" {
+		copiedConfig.GitHubAppPrivateKey = "[Removed]"
+	}
+	if copiedConfig.GitHubAppSecret != "" {
+		copiedConfig.GitHubAppSecret = "[Removed]"
+	}
+	if copiedConfig.DBConfig != "" {
+		copiedConfig.DBConfig = "[Removed]"
+	}
+	if copiedConfig.GitHubWebhookSecret != "" {
+		copiedConfig.GitHubWebhookSecret = "[Removed]"
+	}
 
 	logger.Info().Interface("config", copiedConfig).Msg("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
