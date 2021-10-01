@@ -40,7 +40,7 @@ func (x *Controller) RunCmd(args []string) error {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Error().Interface("config", x.Config).Err(err).Msg("Failed")
+		logger.Error().Interface("config", x.Config.CopyWithoutSensitives()).Err(err).Msg("Failed")
 		return err
 	}
 
@@ -177,10 +177,8 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 	engine := server.New(ctrl.usecase)
 
 	gin.SetMode(gin.DebugMode)
-	copiedConfig := *ctrl.Config
-	copiedConfig.GitHubAppPrivateKey = "[Removed]" // Remove sensitive data
 
-	logger.Info().Interface("config", copiedConfig).Msg("Starting server...")
+	logger.Info().Interface("config", ctrl.Config.CopyWithoutSensitives()).Msg("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
 		logger.Error().Err(err).Interface("config", ctrl.Config).Msg("Server error")
 	}
