@@ -64,23 +64,33 @@ func (x *Client) GetRepositories(ctx context.Context) ([]*ent.Repository, error)
 		defer x.mutex.Unlock()
 	}
 
-	repos, err := x.client.Repository.Query().
-		WithMain(func(sq *ent.ScanQuery) {
-			sq.Order(ent.Desc("scanned_at")).Limit(1).
-				WithPackages(func(prq *ent.PackageRecordQuery) {
-					prq.WithVulnerabilities()
-				})
-		}).
-		WithScan(func(sq *ent.ScanQuery) {
-			sq.Order(ent.Desc("scanned_at")).Limit(1).
-				WithPackages(func(prq *ent.PackageRecordQuery) {
-					prq.WithVulnerabilities()
-				})
-		}).
-		All(ctx)
+	allRepos, err := x.client.Repository.Query().All(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
 
-	return repos, nil
+	resp := make([]*ent.Repository, len(allRepos))
+	for i := range allRepos {
+		got, err := x.client.Repository.Query().
+			Where(repository.ID(allRepos[i].ID)).
+			WithMain(func(sq *ent.ScanQuery) {
+				sq.Order(ent.Desc("scanned_at")).Limit(1).
+					WithPackages(func(prq *ent.PackageRecordQuery) {
+						prq.WithVulnerabilities()
+					})
+			}).
+			WithScan(func(sq *ent.ScanQuery) {
+				sq.Order(ent.Desc("scanned_at")).Limit(1).
+					WithPackages(func(prq *ent.PackageRecordQuery) {
+						prq.WithVulnerabilities()
+					})
+			}).
+			All(ctx)
+		if err != nil {
+			return nil, goerr.Wrap(err)
+		}
+		resp[i] = got[0]
+	}
+
+	return resp, nil
 }
