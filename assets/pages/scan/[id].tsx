@@ -84,14 +84,17 @@ function Scan() {
   const scan = status.data;
   const repo = scan.edges.repository[0];
   const vulnPkgMap = {};
-  status.data.edges.packages.forEach((pkg) => {
-    if (!vulnPkgMap[pkg.source]) {
-      vulnPkgMap[pkg.source] = new Array<model.packageRecord>();
-    }
-    if (pkg.vuln_ids !== undefined) {
-      vulnPkgMap[pkg.source].push(pkg);
-    }
-  });
+
+  if (status.data.edges.packages) {
+    status.data.edges.packages.forEach((pkg) => {
+      if (!vulnPkgMap[pkg.source]) {
+        vulnPkgMap[pkg.source] = new Array<model.packageRecord>();
+      }
+      if (pkg.vuln_ids !== undefined) {
+        vulnPkgMap[pkg.source].push(pkg);
+      }
+    });
+  }
 
   return (
     <app.Main>
@@ -111,10 +114,20 @@ function Scan() {
           </Grid>
         </Grid>
       </Container>
-      {Object.keys(vulnPkgMap).map((key) => {
-        const url = `${repo.url}/blob/${scan.commit_id}/${key}`;
-        return renderPackageSource(repo, key, vulnPkgMap[key], url, status.db);
-      })}
+      {vulnPkgMap ? (
+        Object.keys(vulnPkgMap).map((key) => {
+          const url = `${repo.url}/blob/${scan.commit_id}/${key}`;
+          return renderPackageSource(
+            repo,
+            key,
+            vulnPkgMap[key],
+            url,
+            status.db
+          );
+        })
+      ) : (
+        <Typography>✅ No vulnerable package</Typography>
+      )}
     </app.Main>
   );
 }
