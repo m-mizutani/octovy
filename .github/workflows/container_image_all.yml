@@ -30,7 +30,12 @@ jobs:
         run: docker tag ${{ env.TAG_NAME }} ${{ env.GITHUB_IMAGE_NAME }}
       - name: Push image
         run: docker push ${{ env.GITHUB_IMAGE_NAME }}
-
+      - uses: actions/checkout@v2
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: "Pushed to ${{ env.GITHUB_IMAGE_NAME }}"
   gcp:
     runs-on: ubuntu-latest
     env:
@@ -53,3 +58,8 @@ jobs:
         run: gcloud auth configure-docker --quiet
       - name: Push Docker image
         run: docker push ${{ env.GCP_IMAGE_NAME }}
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: "Pushed to ${{ env.GCP_IMAGE_NAME }}"
