@@ -16,7 +16,6 @@ import Menu from "@mui/material/Menu";
 import { ThemeProvider } from "@mui/material/styles";
 
 import Link from "next/link";
-import { useRouter } from "next/router";
 
 import theme from "./theme";
 import Head from "./head";
@@ -29,7 +28,6 @@ type mainProp = {
 export function Main(props: mainProp) {
   const [user, setUser] = React.useState<model.user>();
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const router = useRouter();
 
   const getUser = () => {
     fetch(`/api/v1/user`)

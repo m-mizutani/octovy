@@ -71,6 +71,12 @@ func (x *Client) GetRepositories(ctx context.Context) ([]*ent.Repository, error)
 					prq.WithVulnerabilities()
 				})
 		}).
+		WithScan(func(sq *ent.ScanQuery) {
+			sq.Order(ent.Desc("scanned_at")).Limit(1).
+				WithPackages(func(prq *ent.PackageRecordQuery) {
+					prq.WithVulnerabilities()
+				})
+		}).
 		All(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
