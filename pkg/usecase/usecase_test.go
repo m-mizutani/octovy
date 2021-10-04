@@ -43,6 +43,7 @@ func setupUsecase(t *testing.T) (usecase.Interface, *mockSet) {
 	newTrivyDB, trivyDB := trivydb.NewMock()
 	util := infra.NewUtils()
 
+	uc.DisableInvokeThread()
 	uc.InjectInfra(&infra.Interfaces{
 		DB:           dbClient,
 		GitHub:       ghClient,

@@ -10,6 +10,9 @@ type Usecase usecase
 func (x *usecase) InjectInfra(inject *infra.Interfaces) {
 	x.infra = inject
 }
+func (x *usecase) DisableInvokeThread() {
+	x.disableInvokeThread = true
+}
 
 func SetErrorHandler(uc Interface, handler func(error)) {
 	uc.(*usecase).testErrorHandler = handler

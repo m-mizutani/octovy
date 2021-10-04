@@ -57,3 +57,24 @@ func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Rep
 
 	return updated, nil
 }
+
+func (x *Client) GetRepositories(ctx context.Context) ([]*ent.Repository, error) {
+	if x.lock {
+		x.mutex.Lock()
+		defer x.mutex.Unlock()
+	}
+
+	repos, err := x.client.Repository.Query().
+		WithMain(func(sq *ent.ScanQuery) {
+			sq.Order(ent.Desc("scanned_at")).Limit(1).
+				WithPackages(func(prq *ent.PackageRecordQuery) {
+					prq.WithVulnerabilities()
+				})
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err)
+	}
+
+	return repos, nil
+}

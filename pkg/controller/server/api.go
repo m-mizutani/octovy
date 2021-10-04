@@ -64,7 +64,8 @@ func New(uc usecase.Interface) *gin.Engine {
 		engine.GET("/auth/github/callback", getAuthGitHubCallback)
 
 		r := engine.Group("/api/v1")
-		r.POST("/webhook/github", postWebhookGitHub)
+
+		r.GET("/repository", getRepositories)
 		r.GET("/scan/:scan_id", getScanReport)
 
 		r.POST("/status/:owner/:repo_name", postVulnStatus)
