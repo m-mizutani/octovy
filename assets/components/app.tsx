@@ -108,13 +108,17 @@ export function Main(props: mainProp) {
           <Box sx={{ flexGrow: 1 }}>
             <AppBar position="static">
               <Toolbar>
-                <Typography variant="h5">
+                <Link href="/">
                   <a
-                    href="/"
-                    style={{ color: "inherit", textDecoration: "inherit" }}>
+                    style={{
+                      color: "inherit",
+                      textDecoration: "none",
+                      fontFamily: "Kanit",
+                      fontSize: 32,
+                    }}>
                     Octovy
                   </a>
-                </Typography>
+                </Link>
 
                 <Box sx={{ flexGrow: 1 }} />
                 <Box sx={{ display: { xs: "none", md: "flex" } }}>
