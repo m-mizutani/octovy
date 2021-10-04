@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
@@ -109,7 +110,14 @@ export function Main(props: mainProp) {
           <Box sx={{ flexGrow: 1 }}>
             <AppBar position="static">
               <Toolbar>
-                <Typography variant="h5">Octovy</Typography>
+                <Typography variant="h5">
+                  <a
+                    href="/"
+                    style={{ color: "inherit", textDecoration: "inherit" }}>
+                    Octovy
+                  </a>
+                </Typography>
+
                 <Box sx={{ flexGrow: 1 }} />
                 <Box sx={{ display: { xs: "none", md: "flex" } }}>
                   {renderAvatar()}
