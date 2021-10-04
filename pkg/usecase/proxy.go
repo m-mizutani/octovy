@@ -53,3 +53,11 @@ func (x *usecase) LookupScanReport(ctx context.Context, scanID string) (*ent.Sca
 
 	return x.infra.DB.GetScan(ctx, scanID)
 }
+
+func (x *usecase) GetRepositories(ctx context.Context) ([]*ent.Repository, error) {
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	return x.infra.DB.GetRepositories(ctx)
+}

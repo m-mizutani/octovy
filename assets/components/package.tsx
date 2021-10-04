@@ -24,7 +24,6 @@ import Slider from "@mui/material/Slider";
 import Alert from "@mui/material/Alert";
 
 import { makeStyles } from "@mui/styles";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import theme from "./theme";
 

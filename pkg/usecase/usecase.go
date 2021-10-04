@@ -28,6 +28,7 @@ type Interface interface {
 	RegisterRepository(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
 	UpdateVulnStatus(ctx context.Context, req *model.UpdateVulnStatusRequest) error
 	LookupScanReport(ctx context.Context, scanID string) (*ent.Scan, error)
+	GetRepositories(ctx context.Context) ([]*ent.Repository, error)
 
 	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error
@@ -70,7 +71,8 @@ type usecase struct {
 	infra  *infra.Interfaces
 
 	// Control usecase for test
-	testErrorHandler func(error)
+	testErrorHandler    func(error)
+	disableInvokeThread bool
 }
 
 func (x *usecase) Init() error {
@@ -83,7 +85,9 @@ func (x *usecase) Init() error {
 		return goerr.Wrap(err)
 	}
 
-	x.InvokeScanThread()
+	if !x.disableInvokeThread {
+		x.InvokeScanThread()
+	}
 
 	x.initialized = true
 	return nil
