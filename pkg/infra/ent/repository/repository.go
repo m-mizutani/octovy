@@ -23,6 +23,8 @@ const (
 	EdgeScan = "scan"
 	// EdgeMain holds the string denoting the main edge name in mutations.
 	EdgeMain = "main"
+	// EdgeLatest holds the string denoting the latest edge name in mutations.
+	EdgeLatest = "latest"
 	// EdgeStatus holds the string denoting the status edge name in mutations.
 	EdgeStatus = "status"
 	// Table holds the table name of the repository in the database.
@@ -39,6 +41,13 @@ const (
 	MainInverseTable = "scans"
 	// MainColumn is the table column denoting the main relation/edge.
 	MainColumn = "repository_main"
+	// LatestTable is the table that holds the latest relation/edge.
+	LatestTable = "repositories"
+	// LatestInverseTable is the table name for the Scan entity.
+	// It exists in this package in order to avoid circular dependency with the "scan" package.
+	LatestInverseTable = "scans"
+	// LatestColumn is the table column denoting the latest relation/edge.
+	LatestColumn = "repository_latest"
 	// StatusTable is the table that holds the status relation/edge.
 	StatusTable = "vuln_status_indexes"
 	// StatusInverseTable is the table name for the VulnStatusIndex entity.
@@ -59,6 +68,12 @@ var Columns = []string{
 	FieldDefaultBranch,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "repositories"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"repository_latest",
+}
+
 var (
 	// ScanPrimaryKey and ScanColumn2 are the table columns denoting the
 	// primary key for the scan relation (M2M).
@@ -69,6 +84,11 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}

@@ -43,12 +43,21 @@ var (
 		{Name: "url", Type: field.TypeString, Nullable: true},
 		{Name: "avatar_url", Type: field.TypeString, Nullable: true},
 		{Name: "default_branch", Type: field.TypeString, Nullable: true},
+		{Name: "repository_latest", Type: field.TypeString, Nullable: true},
 	}
 	// RepositoriesTable holds the schema information for the "repositories" table.
 	RepositoriesTable = &schema.Table{
 		Name:       "repositories",
 		Columns:    RepositoriesColumns,
 		PrimaryKey: []*schema.Column{RepositoriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "repositories_scans_latest",
+				Columns:    []*schema.Column{RepositoriesColumns[7]},
+				RefColumns: []*schema.Column{ScansColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// ScansColumns holds the columns for the "scans" table.
 	ScansColumns = []*schema.Column{
@@ -291,6 +300,7 @@ var (
 )
 
 func init() {
+	RepositoriesTable.ForeignKeys[0].RefTable = ScansTable
 	ScansTable.ForeignKeys[0].RefTable = RepositoriesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[0].RefTable = UsersTable

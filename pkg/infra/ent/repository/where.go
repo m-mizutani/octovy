@@ -876,6 +876,34 @@ func HasMainWith(preds ...predicate.Scan) predicate.Repository {
 	})
 }
 
+// HasLatest applies the HasEdge predicate on the "latest" edge.
+func HasLatest() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LatestTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, LatestTable, LatestColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLatestWith applies the HasEdge predicate on the "latest" edge with a given conditions (other predicates).
+func HasLatestWith(preds ...predicate.Scan) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LatestInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, LatestTable, LatestColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasStatus applies the HasEdge predicate on the "status" edge.
 func HasStatus() predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {

@@ -27,8 +27,9 @@ func (Repository) Fields() []ent.Field {
 // Edges of the Repository.
 func (Repository) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("scan", Scan.Type),
-		edge.To("main", Scan.Type),
+		edge.To("scan", Scan.Type).Comment("All scan results"),
+		edge.To("main", Scan.Type).Comment("Scan results for default branch"),
+		edge.To("latest", Scan.Type).Unique().Comment("A latest Scan result for default branch"),
 		edge.To("status", VulnStatusIndex.Type),
 	}
 }

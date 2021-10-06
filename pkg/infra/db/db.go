@@ -30,6 +30,9 @@ type Interface interface {
 	CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
 
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
+	GetVulnerability(ctx context.Context, id string) (*ent.Vulnerability, error)
+	GetLatestVulnerabilities(ctx context.Context, offset, limit int) ([]*ent.Vulnerability, error)
+
 	PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
 	PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
 	PutVulnStatus(ctx context.Context, repo *ent.Repository, status *ent.VulnStatus, userID int) error
@@ -70,7 +73,9 @@ func New() *Client {
 
 func NewMock(t *testing.T) *Client {
 	db := newClient()
-	db.client = enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	dsn := "file:ent?mode=memory&cache=shared&_fk=1"
+	t.Log(dsn)
+	db.client = enttest.Open(t, "sqlite3", dsn)
 	db.disableOpen = true
 	db.lock = true
 	return db
