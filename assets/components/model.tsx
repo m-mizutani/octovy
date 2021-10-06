@@ -19,6 +19,7 @@ export type repository = {
   url: string;
   default_branch: string;
   edges: {
+    latest: scan;
     scan: scan[];
     main: scan[];
     status: vulnStatusIndex[];

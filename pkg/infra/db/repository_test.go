@@ -11,6 +11,7 @@ import (
 )
 
 func TestGetRepositories(t *testing.T) {
+	str := func(s string) *string { return &s }
 	ctx := context.Background()
 
 	t.Run("got inserted scan report by ID", func(t *testing.T) {
@@ -38,15 +39,17 @@ func TestGetRepositories(t *testing.T) {
 		require.NoError(t, err)
 
 		r1, err := client.CreateRepo(ctx, &ent.Repository{
-			Owner:     "blue",
-			Name:      "five",
-			InstallID: 1,
+			Owner:         "blue",
+			Name:          "five",
+			InstallID:     1,
+			DefaultBranch: str("main"),
 		})
 		require.NoError(t, err)
 		r2, err := client.CreateRepo(ctx, &ent.Repository{
-			Owner:     "orange",
-			Name:      "puppet",
-			InstallID: 1,
+			Owner:         "orange",
+			Name:          "puppet",
+			InstallID:     1,
+			DefaultBranch: str("main"),
 		})
 		require.NoError(t, err)
 
@@ -58,8 +61,8 @@ func TestGetRepositories(t *testing.T) {
 		got, err := client.GetRepositories(ctx)
 		require.NoError(t, err)
 		require.Len(t, got, 2)
-		assert.Len(t, got[0].Edges.Scan, 1)
-		assert.Len(t, got[1].Edges.Scan, 1)
+		assert.NotNil(t, got[0].Edges.Latest)
+		assert.NotNil(t, got[1].Edges.Latest)
 	})
 
 }

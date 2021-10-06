@@ -72,6 +72,9 @@ func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Reposito
 		if err := tx.Repository.UpdateOneID(repo.ID).AddMainIDs(added.ID).Exec(ctx); err != nil {
 			return nil, txRollback(tx, err)
 		}
+		if err := tx.Repository.UpdateOneID(repo.ID).SetLatestID(added.ID).Exec(ctx); err != nil {
+			return nil, txRollback(tx, err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
