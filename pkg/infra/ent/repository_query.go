@@ -30,7 +30,9 @@ type RepositoryQuery struct {
 	// eager-loading edges.
 	withScan   *ScanQuery
 	withMain   *ScanQuery
+	withLatest *ScanQuery
 	withStatus *VulnStatusIndexQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -104,6 +106,28 @@ func (rq *RepositoryQuery) QueryMain() *ScanQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(scan.Table, scan.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, repository.MainTable, repository.MainColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLatest chains the current query on the "latest" edge.
+func (rq *RepositoryQuery) QueryLatest() *ScanQuery {
+	query := &ScanQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(scan.Table, scan.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, repository.LatestTable, repository.LatestColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -316,6 +340,7 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		predicates: append([]predicate.Repository{}, rq.predicates...),
 		withScan:   rq.withScan.Clone(),
 		withMain:   rq.withMain.Clone(),
+		withLatest: rq.withLatest.Clone(),
 		withStatus: rq.withStatus.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
@@ -342,6 +367,17 @@ func (rq *RepositoryQuery) WithMain(opts ...func(*ScanQuery)) *RepositoryQuery {
 		opt(query)
 	}
 	rq.withMain = query
+	return rq
+}
+
+// WithLatest tells the query-builder to eager-load the nodes that are connected to
+// the "latest" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithLatest(opts ...func(*ScanQuery)) *RepositoryQuery {
+	query := &ScanQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withLatest = query
 	return rq
 }
 
@@ -420,13 +456,21 @@ func (rq *RepositoryQuery) prepareQuery(ctx context.Context) error {
 func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 	var (
 		nodes       = []*Repository{}
+		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			rq.withScan != nil,
 			rq.withMain != nil,
+			rq.withLatest != nil,
 			rq.withStatus != nil,
 		}
 	)
+	if rq.withLatest != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, repository.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Repository{config: rq.config}
 		nodes = append(nodes, node)
@@ -538,6 +582,35 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "repository_main" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Main = append(node.Edges.Main, n)
+		}
+	}
+
+	if query := rq.withLatest; query != nil {
+		ids := make([]string, 0, len(nodes))
+		nodeids := make(map[string][]*Repository)
+		for i := range nodes {
+			if nodes[i].repository_latest == nil {
+				continue
+			}
+			fk := *nodes[i].repository_latest
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(scan.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "repository_latest" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Latest = n
+			}
 		}
 	}
 

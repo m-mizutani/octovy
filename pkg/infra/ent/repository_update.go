@@ -157,6 +157,25 @@ func (ru *RepositoryUpdate) AddMain(s ...*Scan) *RepositoryUpdate {
 	return ru.AddMainIDs(ids...)
 }
 
+// SetLatestID sets the "latest" edge to the Scan entity by ID.
+func (ru *RepositoryUpdate) SetLatestID(id string) *RepositoryUpdate {
+	ru.mutation.SetLatestID(id)
+	return ru
+}
+
+// SetNillableLatestID sets the "latest" edge to the Scan entity by ID if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableLatestID(id *string) *RepositoryUpdate {
+	if id != nil {
+		ru = ru.SetLatestID(*id)
+	}
+	return ru
+}
+
+// SetLatest sets the "latest" edge to the Scan entity.
+func (ru *RepositoryUpdate) SetLatest(s *Scan) *RepositoryUpdate {
+	return ru.SetLatestID(s.ID)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ru *RepositoryUpdate) AddStatuIDs(ids ...string) *RepositoryUpdate {
 	ru.mutation.AddStatuIDs(ids...)
@@ -217,6 +236,12 @@ func (ru *RepositoryUpdate) RemoveMain(s ...*Scan) *RepositoryUpdate {
 		ids[i] = s[i].ID
 	}
 	return ru.RemoveMainIDs(ids...)
+}
+
+// ClearLatest clears the "latest" edge to the Scan entity.
+func (ru *RepositoryUpdate) ClearLatest() *RepositoryUpdate {
+	ru.mutation.ClearLatest()
+	return ru
 }
 
 // ClearStatus clears all "status" edges to the VulnStatusIndex entity.
@@ -493,6 +518,41 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.LatestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   repository.LatestTable,
+			Columns: []string{repository.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.LatestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   repository.LatestTable,
+			Columns: []string{repository.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if ru.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -695,6 +755,25 @@ func (ruo *RepositoryUpdateOne) AddMain(s ...*Scan) *RepositoryUpdateOne {
 	return ruo.AddMainIDs(ids...)
 }
 
+// SetLatestID sets the "latest" edge to the Scan entity by ID.
+func (ruo *RepositoryUpdateOne) SetLatestID(id string) *RepositoryUpdateOne {
+	ruo.mutation.SetLatestID(id)
+	return ruo
+}
+
+// SetNillableLatestID sets the "latest" edge to the Scan entity by ID if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableLatestID(id *string) *RepositoryUpdateOne {
+	if id != nil {
+		ruo = ruo.SetLatestID(*id)
+	}
+	return ruo
+}
+
+// SetLatest sets the "latest" edge to the Scan entity.
+func (ruo *RepositoryUpdateOne) SetLatest(s *Scan) *RepositoryUpdateOne {
+	return ruo.SetLatestID(s.ID)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ruo *RepositoryUpdateOne) AddStatuIDs(ids ...string) *RepositoryUpdateOne {
 	ruo.mutation.AddStatuIDs(ids...)
@@ -755,6 +834,12 @@ func (ruo *RepositoryUpdateOne) RemoveMain(s ...*Scan) *RepositoryUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return ruo.RemoveMainIDs(ids...)
+}
+
+// ClearLatest clears the "latest" edge to the Scan entity.
+func (ruo *RepositoryUpdateOne) ClearLatest() *RepositoryUpdateOne {
+	ruo.mutation.ClearLatest()
+	return ruo
 }
 
 // ClearStatus clears all "status" edges to the VulnStatusIndex entity.
@@ -1042,6 +1127,41 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Inverse: false,
 			Table:   repository.MainTable,
 			Columns: []string{repository.MainColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.LatestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   repository.LatestTable,
+			Columns: []string{repository.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.LatestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   repository.LatestTable,
+			Columns: []string{repository.LatestColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

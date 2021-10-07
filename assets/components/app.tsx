@@ -12,6 +12,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 import { ThemeProvider } from "@mui/material/styles";
 
@@ -121,6 +122,13 @@ export function Main(props: mainProp) {
                 </Link>
 
                 <Box sx={{ flexGrow: 1 }} />
+                <Box sx={{ display: { xs: "none", md: "flex" } }}>
+                  <Link href="/vulnerability">
+                    <a style={{ color: "inherit" }}>
+                      <ErrorOutlineIcon fontSize="large" />
+                    </a>
+                  </Link>
+                </Box>
                 <Box sx={{ display: { xs: "none", md: "flex" } }}>
                   {renderAvatar()}
                 </Box>

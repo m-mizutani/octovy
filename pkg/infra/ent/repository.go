@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
 // Repository is the model entity for the Repository schema.
@@ -29,7 +30,8 @@ type Repository struct {
 	DefaultBranch *string `json:"default_branch,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RepositoryQuery when eager-loading is set.
-	Edges RepositoryEdges `json:"edges"`
+	Edges             RepositoryEdges `json:"edges"`
+	repository_latest *string
 }
 
 // RepositoryEdges holds the relations/edges for other nodes in the graph.
@@ -38,11 +40,13 @@ type RepositoryEdges struct {
 	Scan []*Scan `json:"scan,omitempty"`
 	// Main holds the value of the main edge.
 	Main []*Scan `json:"main,omitempty"`
+	// Latest holds the value of the latest edge.
+	Latest *Scan `json:"latest,omitempty"`
 	// Status holds the value of the status edge.
 	Status []*VulnStatusIndex `json:"status,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // ScanOrErr returns the Scan value or an error if the edge
@@ -63,10 +67,24 @@ func (e RepositoryEdges) MainOrErr() ([]*Scan, error) {
 	return nil, &NotLoadedError{edge: "main"}
 }
 
+// LatestOrErr returns the Latest value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RepositoryEdges) LatestOrErr() (*Scan, error) {
+	if e.loadedTypes[2] {
+		if e.Latest == nil {
+			// The edge latest was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: scan.Label}
+		}
+		return e.Latest, nil
+	}
+	return nil, &NotLoadedError{edge: "latest"}
+}
+
 // StatusOrErr returns the Status value or an error if the edge
 // was not loaded in eager-loading.
 func (e RepositoryEdges) StatusOrErr() ([]*VulnStatusIndex, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Status, nil
 	}
 	return nil, &NotLoadedError{edge: "status"}
@@ -80,6 +98,8 @@ func (*Repository) scanValues(columns []string) ([]interface{}, error) {
 		case repository.FieldID, repository.FieldInstallID:
 			values[i] = new(sql.NullInt64)
 		case repository.FieldOwner, repository.FieldName, repository.FieldURL, repository.FieldAvatarURL, repository.FieldDefaultBranch:
+			values[i] = new(sql.NullString)
+		case repository.ForeignKeys[0]: // repository_latest
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Repository", columns[i])
@@ -140,6 +160,13 @@ func (r *Repository) assignValues(columns []string, values []interface{}) error 
 				r.DefaultBranch = new(string)
 				*r.DefaultBranch = value.String
 			}
+		case repository.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field repository_latest", values[i])
+			} else if value.Valid {
+				r.repository_latest = new(string)
+				*r.repository_latest = value.String
+			}
 		}
 	}
 	return nil
@@ -153,6 +180,11 @@ func (r *Repository) QueryScan() *ScanQuery {
 // QueryMain queries the "main" edge of the Repository entity.
 func (r *Repository) QueryMain() *ScanQuery {
 	return (&RepositoryClient{config: r.config}).QueryMain(r)
+}
+
+// QueryLatest queries the "latest" edge of the Repository entity.
+func (r *Repository) QueryLatest() *ScanQuery {
+	return (&RepositoryClient{config: r.config}).QueryLatest(r)
 }
 
 // QueryStatus queries the "status" edge of the Repository entity.

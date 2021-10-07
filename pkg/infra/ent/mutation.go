@@ -1080,6 +1080,8 @@ type RepositoryMutation struct {
 	main           map[string]struct{}
 	removedmain    map[string]struct{}
 	clearedmain    bool
+	latest         *string
+	clearedlatest  bool
 	status         map[string]struct{}
 	removedstatus  map[string]struct{}
 	clearedstatus  bool
@@ -1564,6 +1566,45 @@ func (m *RepositoryMutation) ResetMain() {
 	m.removedmain = nil
 }
 
+// SetLatestID sets the "latest" edge to the Scan entity by id.
+func (m *RepositoryMutation) SetLatestID(id string) {
+	m.latest = &id
+}
+
+// ClearLatest clears the "latest" edge to the Scan entity.
+func (m *RepositoryMutation) ClearLatest() {
+	m.clearedlatest = true
+}
+
+// LatestCleared reports if the "latest" edge to the Scan entity was cleared.
+func (m *RepositoryMutation) LatestCleared() bool {
+	return m.clearedlatest
+}
+
+// LatestID returns the "latest" edge ID in the mutation.
+func (m *RepositoryMutation) LatestID() (id string, exists bool) {
+	if m.latest != nil {
+		return *m.latest, true
+	}
+	return
+}
+
+// LatestIDs returns the "latest" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LatestID instead. It exists only for internal usage by the builders.
+func (m *RepositoryMutation) LatestIDs() (ids []string) {
+	if id := m.latest; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLatest resets all changes to the "latest" edge.
+func (m *RepositoryMutation) ResetLatest() {
+	m.latest = nil
+	m.clearedlatest = false
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by ids.
 func (m *RepositoryMutation) AddStatuIDs(ids ...string) {
 	if m.status == nil {
@@ -1863,12 +1904,15 @@ func (m *RepositoryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RepositoryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.scan != nil {
 		edges = append(edges, repository.EdgeScan)
 	}
 	if m.main != nil {
 		edges = append(edges, repository.EdgeMain)
+	}
+	if m.latest != nil {
+		edges = append(edges, repository.EdgeLatest)
 	}
 	if m.status != nil {
 		edges = append(edges, repository.EdgeStatus)
@@ -1892,6 +1936,10 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgeLatest:
+		if id := m.latest; id != nil {
+			return []ent.Value{*id}
+		}
 	case repository.EdgeStatus:
 		ids := make([]ent.Value, 0, len(m.status))
 		for id := range m.status {
@@ -1904,7 +1952,7 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RepositoryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedscan != nil {
 		edges = append(edges, repository.EdgeScan)
 	}
@@ -1945,12 +1993,15 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RepositoryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedscan {
 		edges = append(edges, repository.EdgeScan)
 	}
 	if m.clearedmain {
 		edges = append(edges, repository.EdgeMain)
+	}
+	if m.clearedlatest {
+		edges = append(edges, repository.EdgeLatest)
 	}
 	if m.clearedstatus {
 		edges = append(edges, repository.EdgeStatus)
@@ -1966,6 +2017,8 @@ func (m *RepositoryMutation) EdgeCleared(name string) bool {
 		return m.clearedscan
 	case repository.EdgeMain:
 		return m.clearedmain
+	case repository.EdgeLatest:
+		return m.clearedlatest
 	case repository.EdgeStatus:
 		return m.clearedstatus
 	}
@@ -1976,6 +2029,9 @@ func (m *RepositoryMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *RepositoryMutation) ClearEdge(name string) error {
 	switch name {
+	case repository.EdgeLatest:
+		m.ClearLatest()
+		return nil
 	}
 	return fmt.Errorf("unknown Repository unique edge %s", name)
 }
@@ -1989,6 +2045,9 @@ func (m *RepositoryMutation) ResetEdge(name string) error {
 		return nil
 	case repository.EdgeMain:
 		m.ResetMain()
+		return nil
+	case repository.EdgeLatest:
+		m.ResetLatest()
 		return nil
 	case repository.EdgeStatus:
 		m.ResetStatus()

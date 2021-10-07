@@ -78,6 +78,14 @@ var nextRoutes = rewriteRoutes{
 		fname: "scan/[id].html",
 	},
 	{
+		ptn:   regexp.MustCompile("^vulnerability$"),
+		fname: "vulnerability/index.html",
+	},
+	{
+		ptn:   regexp.MustCompile("^vulnerability/[A-Z0-9-]+$"),
+		fname: "vulnerability/[id].html",
+	},
+	{
 		ptn:   regexp.MustCompile("^login$"),
 		fname: "login.html",
 	},

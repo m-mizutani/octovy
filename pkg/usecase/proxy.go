@@ -61,3 +61,19 @@ func (x *usecase) GetRepositories(ctx context.Context) ([]*ent.Repository, error
 
 	return x.infra.DB.GetRepositories(ctx)
 }
+
+func (x *usecase) GetVulnerabilities(ctx context.Context, offset, limit int64) ([]*ent.Vulnerability, error) {
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	return x.infra.DB.GetLatestVulnerabilities(ctx, int(offset), int(limit))
+}
+
+func (x *usecase) GetVulnerabilityCount(ctx context.Context) (int, error) {
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	return x.infra.DB.GetVulnerabilityCount(ctx)
+}

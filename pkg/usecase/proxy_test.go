@@ -56,7 +56,7 @@ func TestGetRepositories(t *testing.T) {
 		require.Len(t, resp, 1)
 		assert.Equal(t, "blue", resp[0].Owner)
 		assert.Equal(t, "five", resp[0].Name)
-		require.Len(t, resp[0].Edges.Main, 1)
-		assert.Equal(t, "1234567", resp[0].Edges.Main[0].CommitID)
+		require.NotNil(t, resp[0].Edges.Latest, 1)
+		assert.Equal(t, "1234567", resp[0].Edges.Latest.CommitID)
 	})
 }

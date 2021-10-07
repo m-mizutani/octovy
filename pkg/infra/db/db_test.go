@@ -38,3 +38,14 @@ func setupDB(t *testing.T) db.Interface {
 
 	return client
 }
+
+func setupDBWithoutDefault(t *testing.T) db.Interface {
+	client := db.NewMock(t)
+	t.Cleanup(func() {
+		if err := client.Close(); err != nil {
+			t.Logf("Warning failed to close DB: %+v", err)
+		}
+	})
+
+	return client
+}

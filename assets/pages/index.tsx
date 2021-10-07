@@ -101,7 +101,6 @@ function Body(props: bodyProps) {
           <TableRow style={{ background: "#eee" }}>
             <TableCell>Repository</TableCell>
             <TableCell>Recent scan of default branch</TableCell>
-            <TableCell>Recent scan of repository</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>{props.status.repositories.map(Repository)}</TableBody>
@@ -117,22 +116,19 @@ function Repository(repo: model.repository) {
         <Link href={repo.url}>{repo.owner + "/" + repo.name}</Link>
       </TableCell>
       <TableCell>
-        <Scan repo={repo} scans={repo.edges.main} />
-      </TableCell>
-      <TableCell>
-        <Scan repo={repo} scans={repo.edges.scan} />
+        <Scan repo={repo} scan={repo.edges.latest} />
       </TableCell>
     </TableRow>
   );
 }
 
-function Scan(props: { repo: model.repository; scans: model.scan[] }) {
-  if (!props.scans) {
+function Scan(props: { repo: model.repository; scan: model.scan }) {
+  if (!props.scan) {
     return <Typography style={{ fontSize: 14 }}>No scan</Typography>;
   }
 
   const timeAgo = new TimeAgo("en-US");
-  const scan = props.scans[0];
+  const scan = props.scan;
   const ts = new Date(scan.scanned_at * 1000);
   const vulnPkgs: model.packageRecord[] = scan.edges.packages
     ? scan.edges.packages.filter((pkg) => {

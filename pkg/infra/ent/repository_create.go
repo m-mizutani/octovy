@@ -121,6 +121,25 @@ func (rc *RepositoryCreate) AddMain(s ...*Scan) *RepositoryCreate {
 	return rc.AddMainIDs(ids...)
 }
 
+// SetLatestID sets the "latest" edge to the Scan entity by ID.
+func (rc *RepositoryCreate) SetLatestID(id string) *RepositoryCreate {
+	rc.mutation.SetLatestID(id)
+	return rc
+}
+
+// SetNillableLatestID sets the "latest" edge to the Scan entity by ID if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableLatestID(id *string) *RepositoryCreate {
+	if id != nil {
+		rc = rc.SetLatestID(*id)
+	}
+	return rc
+}
+
+// SetLatest sets the "latest" edge to the Scan entity.
+func (rc *RepositoryCreate) SetLatest(s *Scan) *RepositoryCreate {
+	return rc.SetLatestID(s.ID)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (rc *RepositoryCreate) AddStatuIDs(ids ...string) *RepositoryCreate {
 	rc.mutation.AddStatuIDs(ids...)
@@ -324,6 +343,26 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.LatestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   repository.LatestTable,
+			Columns: []string{repository.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.repository_latest = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := rc.mutation.StatusIDs(); len(nodes) > 0 {
