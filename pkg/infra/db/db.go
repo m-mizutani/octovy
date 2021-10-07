@@ -32,6 +32,7 @@ type Interface interface {
 	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
 	GetVulnerability(ctx context.Context, id string) (*ent.Vulnerability, error)
 	GetLatestVulnerabilities(ctx context.Context, offset, limit int) ([]*ent.Vulnerability, error)
+	GetVulnerabilityCount(ctx context.Context) (int, error)
 
 	PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
 	PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)

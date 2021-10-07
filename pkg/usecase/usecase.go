@@ -29,6 +29,8 @@ type Interface interface {
 	UpdateVulnStatus(ctx context.Context, req *model.UpdateVulnStatusRequest) error
 	LookupScanReport(ctx context.Context, scanID string) (*ent.Scan, error)
 	GetRepositories(ctx context.Context) ([]*ent.Repository, error)
+	GetVulnerabilities(ctx context.Context, offset, limit int64) ([]*ent.Vulnerability, error)
+	GetVulnerabilityCount(ctx context.Context) (int, error)
 
 	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error
