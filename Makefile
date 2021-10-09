@@ -39,7 +39,7 @@ test: $(SRC) $(ENT_SRC)
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra/ent/" | \
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra/domain/types$$" | \
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra$$" | \
-	xargs go test
+	env WITH_TRIVY_COMMAND=1 xargs go test
 
 octovy: $(SRC) $(ENT_SRC) $(ASSET_OUT)
 	go build -o $(BINARY) .
