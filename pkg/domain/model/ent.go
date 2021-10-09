@@ -4,14 +4,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aquasecurity/trivy/pkg/report"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 var logger = utils.Logger
 
-func TrivyReportToEnt(report *report.Report, now time.Time) (pkgList []*ent.PackageRecord, vulnList []*ent.Vulnerability) {
+func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.PackageRecord, vulnList []*ent.Vulnerability) {
 	ptrKey := func(name, ver string) string {
 		return name + "|" + ver
 	}

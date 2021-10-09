@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/aquasecurity/trivy/pkg/report"
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
@@ -19,7 +19,7 @@ const (
 
 type Interface interface {
 	SetPath(path string)
-	Scan(dir string) (*report.Report, error)
+	Scan(dir string) (*model.TrivyReport, error)
 }
 
 type Trivy struct {
@@ -36,7 +36,7 @@ func (x *Trivy) SetPath(path string) {
 	x.path = path
 }
 
-func (x *Trivy) Scan(dir string) (*report.Report, error) {
+func (x *Trivy) Scan(dir string) (*model.TrivyReport, error) {
 	temp, err := ioutil.TempFile("", "*.json")
 	if err != nil {
 		return nil, goerr.Wrap(err)
@@ -66,7 +66,7 @@ func (x *Trivy) Scan(dir string) (*report.Report, error) {
 		return nil, goerr.Wrap(err)
 	}
 
-	var result report.Report
+	var result model.TrivyReport
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return nil, goerr.Wrap(err)
 	}

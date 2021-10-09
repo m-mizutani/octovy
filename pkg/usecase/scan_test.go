@@ -4,11 +4,7 @@ import (
 	"context"
 	"testing"
 
-	ftypes "github.com/aquasecurity/fanal/types"
 	dtypes "github.com/aquasecurity/trivy-db/pkg/types"
-
-	"github.com/aquasecurity/trivy/pkg/report"
-	"github.com/aquasecurity/trivy/pkg/types"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/usecase"
@@ -21,18 +17,18 @@ func TestScanProcedure(t *testing.T) {
 	uc, mock := setupUsecase(t)
 	injectGitHubMock(t, mock)
 
-	mock.Trivy.ScanMock = func(dir string) (*report.Report, error) {
-		return &report.Report{
-			Results: report.Results{
+	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
+		return &model.TrivyReport{
+			Results: model.TrivyResults{
 				{
 					Target: "Gemfile.lock",
-					Packages: []ftypes.Package{
+					Packages: []model.TrivyPackage{
 						{
 							Name:    "example",
 							Version: "6.1.4",
 						},
 					},
-					Vulnerabilities: []types.DetectedVulnerability{
+					Vulnerabilities: []model.DetectedVulnerability{
 						{
 							VulnerabilityID:  "CVE-1000",
 							PkgName:          "example",

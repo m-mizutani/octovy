@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/aquasecurity/trivy/pkg/report"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/usecase"
@@ -19,12 +18,12 @@ func TestGetRepositories(t *testing.T) {
 	ctx := context.Background()
 	branch := "main"
 	var calledScan int
-	mock.Trivy.ScanMock = func(dir string) (*report.Report, error) {
+	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
 		calledScan++
 		assert.FileExists(t, filepath.Join(dir, "Gemfile"))
 		assert.FileExists(t, filepath.Join(dir, "Gemfile.lock"))
-		return &report.Report{
-			Results: report.Results{
+		return &model.TrivyReport{
+			Results: model.TrivyResults{
 				{
 					Target: "Gemfile",
 				},
