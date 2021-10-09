@@ -15,7 +15,7 @@ type Config struct {
 	GitHubAppSecret     string
 	GitHubWebhookSecret string
 
-	TrivyDBPath string
+	TrivyPath string
 
 	SentryDSN string
 	SentryEnv string

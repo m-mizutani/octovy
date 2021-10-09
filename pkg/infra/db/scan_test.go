@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestScan(t *testing.T) {
 
 		pkgSet := []*ent.PackageRecord{
 			{
-				Type:    types.PkgGoModule,
+				Type:    "gomod",
 				Source:  "go.mod",
 				Name:    "xxx",
 				Version: "v0.1.1",
@@ -72,7 +71,7 @@ func TestScan(t *testing.T) {
 
 		pkgSet1, err := client.PutPackages(ctx, []*ent.PackageRecord{
 			{
-				Type:    types.PkgGoModule,
+				Type:    "gomod",
 				Source:  "go.mod",
 				Name:    "x",
 				Version: "v0.1.1",
@@ -82,7 +81,7 @@ func TestScan(t *testing.T) {
 		require.NoError(t, err)
 		pkgSet2, err := client.PutPackages(ctx, []*ent.PackageRecord{
 			{
-				Type:    types.PkgGoModule,
+				Type:    "gomod",
 				Source:  "go.mod",
 				Name:    "y",
 				Version: "v0.1.1",

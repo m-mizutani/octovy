@@ -88,13 +88,3 @@ func StatusValidator(s types.VulnStatusType) error {
 		return fmt.Errorf("vulnstatus: invalid enum value for status field: %q", s)
 	}
 }
-
-// PkgTypeValidator is a validator for the "pkg_type" field enum values. It is called by the builders before save.
-func PkgTypeValidator(pt types.PkgType) error {
-	switch pt {
-	case "rubygems", "npm", "gomod", "pypi":
-		return nil
-	default:
-		return fmt.Errorf("vulnstatus: invalid enum value for pkg_type field: %q", pt)
-	}
-}

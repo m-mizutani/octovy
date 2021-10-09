@@ -139,11 +139,9 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.StringFlag{
-				Name:        "trivy-db-path",
-				EnvVars:     []string{"OCTOVY_TRIVY_DB_PATH"},
-				Destination: &ctrl.Config.TrivyDBPath,
-				Value:       "/tmp/trivy.db",
-				Required:    true,
+				Name:        "trivy-path",
+				EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
+				Destination: &ctrl.Config.TrivyPath,
 			},
 
 			&cli.StringFlag{

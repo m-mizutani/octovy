@@ -1,0 +1,39 @@
+name: Vuln scan
+
+on: [push]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout upstream repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          ignore-unfixed: true
+          format: "template"
+          template: "@/contrib/sarif.tpl"
+          output: "trivy-results.sarif"
+      - run: cat trivy-results.sarif
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: "trivy-results.sarif"
+  notify:
+    runs-on: ubuntu-latset
+    if: ${{ github.head_ref != '' }}
+    needs: scan
+    steps:
+      - uses: m-mizutani/code-scanning-notify@33f157c512c492c3b4a1f306e48885da46548f70
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          head-ref: ${{ github.head_ref }}
+          base-ref: ${{ github.base_ref }}
+          repo: ${{ github.repository }}
+          issue-id: github.event.number
+    

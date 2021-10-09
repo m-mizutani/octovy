@@ -47,8 +47,8 @@ func (vsu *VulnStatusUpdate) SetPkgName(s string) *VulnStatusUpdate {
 }
 
 // SetPkgType sets the "pkg_type" field.
-func (vsu *VulnStatusUpdate) SetPkgType(tt types.PkgType) *VulnStatusUpdate {
-	vsu.mutation.SetPkgType(tt)
+func (vsu *VulnStatusUpdate) SetPkgType(s string) *VulnStatusUpdate {
+	vsu.mutation.SetPkgType(s)
 	return vsu
 }
 
@@ -187,11 +187,6 @@ func (vsu *VulnStatusUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf("ent: validator failed for field \"status\": %w", err)}
 		}
 	}
-	if v, ok := vsu.mutation.PkgType(); ok {
-		if err := vulnstatus.PkgTypeValidator(v); err != nil {
-			return &ValidationError{Name: "pkg_type", err: fmt.Errorf("ent: validator failed for field \"pkg_type\": %w", err)}
-		}
-	}
 	return nil
 }
 
@@ -236,7 +231,7 @@ func (vsu *VulnStatusUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := vsu.mutation.PkgType(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: vulnstatus.FieldPkgType,
 		})
@@ -356,8 +351,8 @@ func (vsuo *VulnStatusUpdateOne) SetPkgName(s string) *VulnStatusUpdateOne {
 }
 
 // SetPkgType sets the "pkg_type" field.
-func (vsuo *VulnStatusUpdateOne) SetPkgType(tt types.PkgType) *VulnStatusUpdateOne {
-	vsuo.mutation.SetPkgType(tt)
+func (vsuo *VulnStatusUpdateOne) SetPkgType(s string) *VulnStatusUpdateOne {
+	vsuo.mutation.SetPkgType(s)
 	return vsuo
 }
 
@@ -503,11 +498,6 @@ func (vsuo *VulnStatusUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf("ent: validator failed for field \"status\": %w", err)}
 		}
 	}
-	if v, ok := vsuo.mutation.PkgType(); ok {
-		if err := vulnstatus.PkgTypeValidator(v); err != nil {
-			return &ValidationError{Name: "pkg_type", err: fmt.Errorf("ent: validator failed for field \"pkg_type\": %w", err)}
-		}
-	}
 	return nil
 }
 
@@ -569,7 +559,7 @@ func (vsuo *VulnStatusUpdateOne) sqlSave(ctx context.Context) (_node *VulnStatus
 	}
 	if value, ok := vsuo.mutation.PkgType(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: vulnstatus.FieldPkgType,
 		})

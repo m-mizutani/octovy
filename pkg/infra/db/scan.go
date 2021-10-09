@@ -47,13 +47,8 @@ func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Reposito
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
-
-	tx, err := x.client.Tx(ctx)
-	if err != nil {
-		return nil, goerr.Wrap(err)
-	}
-
-	added, err := tx.Scan.Create().
+	// logger.Debug().Interface("pkg", packages).Send()
+	added, err := x.client.Scan.Create().
 		SetID(uuid.NewString()).
 		SetCommitID(scan.CommitID).
 		SetBranch(scan.Branch).
@@ -65,20 +60,16 @@ func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Reposito
 		AddPackages(packages...).
 		Save(ctx)
 	if err != nil {
-		return nil, txRollback(tx, err)
+		return nil, goerr.Wrap(err)
 	}
 
 	if repo.DefaultBranch != nil && scan.Branch == *repo.DefaultBranch {
-		if err := tx.Repository.UpdateOneID(repo.ID).AddMainIDs(added.ID).Exec(ctx); err != nil {
-			return nil, txRollback(tx, err)
+		if err := x.client.Repository.UpdateOneID(repo.ID).AddMainIDs(added.ID).Exec(ctx); err != nil {
+			return nil, goerr.Wrap(err)
 		}
-		if err := tx.Repository.UpdateOneID(repo.ID).SetLatestID(added.ID).Exec(ctx); err != nil {
-			return nil, txRollback(tx, err)
+		if err := x.client.Repository.UpdateOneID(repo.ID).SetLatestID(added.ID).Exec(ctx); err != nil {
+			return nil, goerr.Wrap(err)
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, goerr.Wrap(err)
 	}
 
 	return added, nil
@@ -121,6 +112,11 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 }
 
 func (x *Client) GetLatestScans(ctx context.Context) ([]*ent.Scan, error) {
+	if x.lock {
+		x.mutex.Lock()
+		defer x.mutex.Unlock()
+	}
+
 	repos, err := x.client.Repository.Query().
 		WithMain(func(sq *ent.ScanQuery) {
 			sq.Order(ent.Desc("scanned_at")).Limit(1).
@@ -145,7 +141,6 @@ func (x *Client) GetLatestScans(ctx context.Context) ([]*ent.Scan, error) {
 }
 
 func (x *Client) getLatestScanEntity(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error) {
-
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()

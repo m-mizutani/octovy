@@ -18,7 +18,7 @@ func (VulnStatus) Fields() []ent.Field {
 		field.Enum("status").GoType(types.VulnStatusType("")),
 		field.String("source"),
 		field.String("pkg_name"),
-		field.Enum("pkg_type").GoType(types.PkgType("")),
+		field.String("pkg_type"),
 		field.String("vuln_id"),
 		field.Int64("expires_at"),
 		field.Int64("created_at"),

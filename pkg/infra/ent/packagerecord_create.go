@@ -10,7 +10,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
@@ -25,8 +24,8 @@ type PackageRecordCreate struct {
 }
 
 // SetType sets the "type" field.
-func (prc *PackageRecordCreate) SetType(tt types.PkgType) *PackageRecordCreate {
-	prc.mutation.SetType(tt)
+func (prc *PackageRecordCreate) SetType(s string) *PackageRecordCreate {
+	prc.mutation.SetType(s)
 	return prc
 }
 
@@ -157,11 +156,6 @@ func (prc *PackageRecordCreate) check() error {
 	if _, ok := prc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "type"`)}
 	}
-	if v, ok := prc.mutation.GetType(); ok {
-		if err := packagerecord.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "type": %w`, err)}
-		}
-	}
 	if _, ok := prc.mutation.Source(); !ok {
 		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "source"`)}
 	}
@@ -204,7 +198,7 @@ func (prc *PackageRecordCreate) createSpec() (*PackageRecord, *sqlgraph.CreateSp
 	_spec.OnConflict = prc.conflict
 	if value, ok := prc.mutation.GetType(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: packagerecord.FieldType,
 		})
@@ -335,7 +329,7 @@ type (
 )
 
 // SetType sets the "type" field.
-func (u *PackageRecordUpsert) SetType(v types.PkgType) *PackageRecordUpsert {
+func (u *PackageRecordUpsert) SetType(v string) *PackageRecordUpsert {
 	u.Set(packagerecord.FieldType, v)
 	return u
 }
@@ -435,7 +429,7 @@ func (u *PackageRecordUpsertOne) Update(set func(*PackageRecordUpsert)) *Package
 }
 
 // SetType sets the "type" field.
-func (u *PackageRecordUpsertOne) SetType(v types.PkgType) *PackageRecordUpsertOne {
+func (u *PackageRecordUpsertOne) SetType(v string) *PackageRecordUpsertOne {
 	return u.Update(func(s *PackageRecordUpsert) {
 		s.SetType(v)
 	})
@@ -706,7 +700,7 @@ func (u *PackageRecordUpsertBulk) Update(set func(*PackageRecordUpsert)) *Packag
 }
 
 // SetType sets the "type" field.
-func (u *PackageRecordUpsertBulk) SetType(v types.PkgType) *PackageRecordUpsertBulk {
+func (u *PackageRecordUpsertBulk) SetType(v string) *PackageRecordUpsertBulk {
 	return u.Update(func(s *PackageRecordUpsert) {
 		s.SetType(v)
 	})

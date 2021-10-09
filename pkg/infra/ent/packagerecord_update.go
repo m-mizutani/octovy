@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
@@ -26,12 +25,6 @@ type PackageRecordUpdate struct {
 // Where appends a list predicates to the PackageRecordUpdate builder.
 func (pru *PackageRecordUpdate) Where(ps ...predicate.PackageRecord) *PackageRecordUpdate {
 	pru.mutation.Where(ps...)
-	return pru
-}
-
-// SetType sets the "type" field.
-func (pru *PackageRecordUpdate) SetType(tt types.PkgType) *PackageRecordUpdate {
-	pru.mutation.SetType(tt)
 	return pru
 }
 
@@ -125,18 +118,12 @@ func (pru *PackageRecordUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(pru.hooks) == 0 {
-		if err = pru.check(); err != nil {
-			return 0, err
-		}
 		affected, err = pru.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*PackageRecordMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = pru.check(); err != nil {
-				return 0, err
 			}
 			pru.mutation = mutation
 			affected, err = pru.sqlSave(ctx)
@@ -178,16 +165,6 @@ func (pru *PackageRecordUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (pru *PackageRecordUpdate) check() error {
-	if v, ok := pru.mutation.GetType(); ok {
-		if err := packagerecord.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf("ent: validator failed for field \"type\": %w", err)}
-		}
-	}
-	return nil
-}
-
 func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -205,13 +182,6 @@ func (pru *PackageRecordUpdate) sqlSave(ctx context.Context) (n int, err error) 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := pru.mutation.GetType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: packagerecord.FieldType,
-		})
 	}
 	if value, ok := pru.mutation.VulnIds(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -347,12 +317,6 @@ type PackageRecordUpdateOne struct {
 	mutation *PackageRecordMutation
 }
 
-// SetType sets the "type" field.
-func (pruo *PackageRecordUpdateOne) SetType(tt types.PkgType) *PackageRecordUpdateOne {
-	pruo.mutation.SetType(tt)
-	return pruo
-}
-
 // SetVulnIds sets the "vuln_ids" field.
 func (pruo *PackageRecordUpdateOne) SetVulnIds(s []string) *PackageRecordUpdateOne {
 	pruo.mutation.SetVulnIds(s)
@@ -450,18 +414,12 @@ func (pruo *PackageRecordUpdateOne) Save(ctx context.Context) (*PackageRecord, e
 		node *PackageRecord
 	)
 	if len(pruo.hooks) == 0 {
-		if err = pruo.check(); err != nil {
-			return nil, err
-		}
 		node, err = pruo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*PackageRecordMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = pruo.check(); err != nil {
-				return nil, err
 			}
 			pruo.mutation = mutation
 			node, err = pruo.sqlSave(ctx)
@@ -503,16 +461,6 @@ func (pruo *PackageRecordUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (pruo *PackageRecordUpdateOne) check() error {
-	if v, ok := pruo.mutation.GetType(); ok {
-		if err := packagerecord.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf("ent: validator failed for field \"type\": %w", err)}
-		}
-	}
-	return nil
-}
-
 func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *PackageRecord, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -547,13 +495,6 @@ func (pruo *PackageRecordUpdateOne) sqlSave(ctx context.Context) (_node *Package
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := pruo.mutation.GetType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
-			Value:  value,
-			Column: packagerecord.FieldType,
-		})
 	}
 	if value, ok := pruo.mutation.VulnIds(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{

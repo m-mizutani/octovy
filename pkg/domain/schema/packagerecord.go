@@ -4,8 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
 // PackageRecord holds the schema definition for the PackageRecord entity.
@@ -16,7 +14,7 @@ type PackageRecord struct {
 // Fields of the PackageRecord.
 func (PackageRecord) Fields() []ent.Field {
 	return []ent.Field{
-		field.Enum("type").GoType(types.PkgType("")),
+		field.String("type").Immutable(),
 		field.String("source").Immutable(),
 		field.String("name").Immutable(),
 		field.String("version").Immutable(),

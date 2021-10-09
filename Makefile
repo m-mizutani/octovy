@@ -35,11 +35,14 @@ dev: $(SRC)
 
 test: $(SRC) $(ENT_SRC)
 	go list ./... | \
+	grep -v "^github.com/m-mizutani/octovy$$" | \
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra/ent$$" | \
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra/ent/" | \
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra/domain/types$$" | \
 	grep -v "^github.com/m-mizutani/octovy/pkg/infra$$" | \
-	xargs go test
+	grep -v "^github.com/m-mizutani/octovy/pkg/domain/schema$$" | \
+	grep -v "^github.com/m-mizutani/octovy/pkg/domain/types$$" | \
+	env WITH_TRIVY_COMMAND=1 xargs go test
 
 octovy: $(SRC) $(ENT_SRC) $(ASSET_OUT)
 	go build -o $(BINARY) .

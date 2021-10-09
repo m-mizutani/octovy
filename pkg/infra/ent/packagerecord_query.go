@@ -327,7 +327,7 @@ func (prq *PackageRecordQuery) WithVulnerabilities(opts ...func(*VulnerabilityQu
 // Example:
 //
 //	var v []struct {
-//		Type types.PkgType `json:"type,omitempty"`
+//		Type string `json:"type,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -354,7 +354,7 @@ func (prq *PackageRecordQuery) GroupBy(field string, fields ...string) *PackageR
 // Example:
 //
 //	var v []struct {
-//		Type types.PkgType `json:"type,omitempty"`
+//		Type string `json:"type,omitempty"`
 //	}
 //
 //	client.PackageRecord.Query().

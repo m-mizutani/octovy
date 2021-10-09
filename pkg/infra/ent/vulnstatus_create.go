@@ -42,8 +42,8 @@ func (vsc *VulnStatusCreate) SetPkgName(s string) *VulnStatusCreate {
 }
 
 // SetPkgType sets the "pkg_type" field.
-func (vsc *VulnStatusCreate) SetPkgType(tt types.PkgType) *VulnStatusCreate {
-	vsc.mutation.SetPkgType(tt)
+func (vsc *VulnStatusCreate) SetPkgType(s string) *VulnStatusCreate {
+	vsc.mutation.SetPkgType(s)
 	return vsc
 }
 
@@ -177,11 +177,6 @@ func (vsc *VulnStatusCreate) check() error {
 	if _, ok := vsc.mutation.PkgType(); !ok {
 		return &ValidationError{Name: "pkg_type", err: errors.New(`ent: missing required field "pkg_type"`)}
 	}
-	if v, ok := vsc.mutation.PkgType(); ok {
-		if err := vulnstatus.PkgTypeValidator(v); err != nil {
-			return &ValidationError{Name: "pkg_type", err: fmt.Errorf(`ent: validator failed for field "pkg_type": %w`, err)}
-		}
-	}
 	if _, ok := vsc.mutation.VulnID(); !ok {
 		return &ValidationError{Name: "vuln_id", err: errors.New(`ent: missing required field "vuln_id"`)}
 	}
@@ -248,7 +243,7 @@ func (vsc *VulnStatusCreate) createSpec() (*VulnStatus, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := vsc.mutation.PkgType(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: vulnstatus.FieldPkgType,
 		})
@@ -397,7 +392,7 @@ func (u *VulnStatusUpsert) UpdatePkgName() *VulnStatusUpsert {
 }
 
 // SetPkgType sets the "pkg_type" field.
-func (u *VulnStatusUpsert) SetPkgType(v types.PkgType) *VulnStatusUpsert {
+func (u *VulnStatusUpsert) SetPkgType(v string) *VulnStatusUpsert {
 	u.Set(vulnstatus.FieldPkgType, v)
 	return u
 }
@@ -539,7 +534,7 @@ func (u *VulnStatusUpsertOne) UpdatePkgName() *VulnStatusUpsertOne {
 }
 
 // SetPkgType sets the "pkg_type" field.
-func (u *VulnStatusUpsertOne) SetPkgType(v types.PkgType) *VulnStatusUpsertOne {
+func (u *VulnStatusUpsertOne) SetPkgType(v string) *VulnStatusUpsertOne {
 	return u.Update(func(s *VulnStatusUpsert) {
 		s.SetPkgType(v)
 	})
@@ -852,7 +847,7 @@ func (u *VulnStatusUpsertBulk) UpdatePkgName() *VulnStatusUpsertBulk {
 }
 
 // SetPkgType sets the "pkg_type" field.
-func (u *VulnStatusUpsertBulk) SetPkgType(v types.PkgType) *VulnStatusUpsertBulk {
+func (u *VulnStatusUpsertBulk) SetPkgType(v string) *VulnStatusUpsertBulk {
 	return u.Update(func(s *VulnStatusUpsert) {
 		s.SetPkgType(v)
 	})
