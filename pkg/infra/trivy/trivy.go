@@ -57,8 +57,7 @@ func (x *Trivy) Scan(dir string) (*report.Report, error) {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		cwd, _ := os.Getwd()
-		logger.Error().Err(err).Str("out", string(out)).Str("cwd", cwd).Msg("failed")
+		logger.Error().Err(err).Str("out", string(out)).Msg("failed")
 		return nil, goerr.Wrap(err).With("path", x.path).With("out", string(out))
 	}
 
