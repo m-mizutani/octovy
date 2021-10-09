@@ -82,6 +82,10 @@ func (x *usecase) Init() error {
 		return err
 	}
 
+	if x.config.TrivyPath != "" {
+		x.infra.Trivy.SetPath(x.config.TrivyPath)
+	}
+
 	if err := x.infra.DB.Open(x.config.DBType, x.config.DBConfig); err != nil {
 		x.HandleError(err)
 		return goerr.Wrap(err)
