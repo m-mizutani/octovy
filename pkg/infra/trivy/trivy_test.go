@@ -14,11 +14,10 @@ func TestTrivy(t *testing.T) {
 		t.Skip()
 	}
 
-	cmd := trivy.New(trivy.DefaultName)
+	cmd := trivy.New()
 	result, err := cmd.Scan("./testdata")
 	require.NoError(t, err)
 	require.Len(t, result.Results, 1)
 	assert.Equal(t, "Gemfile.lock", result.Results[0].Target)
 	assert.Len(t, result.Results[0].Packages, 42)
-
 }

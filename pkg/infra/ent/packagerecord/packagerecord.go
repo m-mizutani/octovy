@@ -2,12 +2,6 @@
 
 package packagerecord
 
-import (
-	"fmt"
-
-	"github.com/m-mizutani/octovy/pkg/domain/types"
-)
-
 const (
 	// Label holds the string label denoting the packagerecord type in the database.
 	Label = "package_record"
@@ -68,14 +62,4 @@ func ValidColumn(column string) bool {
 		}
 	}
 	return false
-}
-
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type types.PkgType) error {
-	switch _type {
-	case "rubygems", "npm", "gomod", "pypi":
-		return nil
-	default:
-		return fmt.Errorf("packagerecord: invalid enum value for type field: %q", _type)
-	}
 }

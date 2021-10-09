@@ -75,7 +75,6 @@ func New() *Client {
 func NewMock(t *testing.T) *Client {
 	db := newClient()
 	dsn := "file:ent?mode=memory&cache=shared&_fk=1"
-	t.Log(dsn)
 	db.client = enttest.Open(t, "sqlite3", dsn)
 	db.disableOpen = true
 	db.lock = true

@@ -2,8 +2,6 @@ package usecase_test
 
 import (
 	"bytes"
-	"compress/gzip"
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -17,7 +15,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
-	"github.com/m-mizutani/octovy/pkg/infra/trivydb"
+	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 
 	gh "github.com/google/go-github/v39/github"
@@ -30,7 +28,7 @@ type mockSet struct {
 	DB        *db.Client
 	GitHub    *github.Mock
 	GtiHubApp *githubapp.Mock
-	TrivyDB   *trivydb.Mock
+	Trivy     *trivy.Mock
 	Utils     *infra.Utils
 }
 
@@ -40,15 +38,15 @@ func setupUsecase(t *testing.T) (usecase.Interface, *mockSet) {
 	dbClient := db.NewMock(t)
 	ghClient := github.NewMock()
 	newGitHubApp, ghApp := githubapp.NewMock()
-	newTrivyDB, trivyDB := trivydb.NewMock()
 	util := infra.NewUtils()
+	trivyClient := trivy.NewMock()
 
 	uc.DisableInvokeThread()
 	uc.InjectInfra(&infra.Interfaces{
 		DB:           dbClient,
 		GitHub:       ghClient,
 		NewGitHubApp: newGitHubApp,
-		NewTrivyDB:   newTrivyDB,
+		Trivy:        trivyClient,
 		Utils:        util,
 	})
 
@@ -60,7 +58,7 @@ func setupUsecase(t *testing.T) (usecase.Interface, *mockSet) {
 		DB:        dbClient,
 		GitHub:    ghClient,
 		GtiHubApp: ghApp,
-		TrivyDB:   trivyDB,
+		Trivy:     trivyClient,
 		Utils:     util,
 	}
 }
@@ -82,47 +80,9 @@ func genRSAKey(t *testing.T) []byte {
 }
 
 func injectGitHubMock(t *testing.T, mock *mockSet) {
-	var calledListReleasesMock,
-		calledDownloadReleaseAssetMock,
-		calledGetCodeZipMock,
+	var calledGetCodeZipMock,
 		calledCreateCheckRunMock,
 		calledUpdateCheckRunMock int
-
-	mock.GitHub.ListReleasesMock = func(ctx context.Context, owner, repo string) ([]*gh.RepositoryRelease, error) {
-		calledListReleasesMock++
-
-		assert.Equal(t, "aquasecurity", owner)
-		assert.Equal(t, "trivy-db", repo)
-
-		return []*gh.RepositoryRelease{
-			{
-				Name: gh.String("v1-20000000"),
-				Assets: []*gh.ReleaseAsset{
-					{
-						Name: gh.String("xxx.db.gz"),
-						ID:   gh.Int64(2345),
-					},
-					{
-						Name: gh.String("trivy.db.gz"),
-						ID:   gh.Int64(3456),
-					},
-				},
-			},
-		}, nil
-	}
-
-	mock.GitHub.DownloadReleaseAssetMock = func(ctx context.Context, owner, repo string, assetID int64) (io.ReadCloser, error) {
-		calledDownloadReleaseAssetMock++
-		assert.Equal(t, "aquasecurity", owner)
-		assert.Equal(t, "trivy-db", repo)
-		assert.Equal(t, int64(3456), assetID)
-
-		buf := &bytes.Buffer{}
-		gz := gzip.NewWriter(buf)
-		gz.Write([]byte("boom!"))
-		require.NoError(t, gz.Close())
-		return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
-	}
 
 	mock.GtiHubApp.GetCodeZipMock = func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
 		calledGetCodeZipMock++
@@ -131,10 +91,6 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 		w.Write(raw)
 		w.Close()
 		return nil
-	}
-
-	mock.Utils.ReadFile = func(fname string) ([]byte, error) {
-		return genRSAKey(t), nil
 	}
 
 	const dummyCheckID int64 = 999
@@ -150,8 +106,6 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 	}
 
 	t.Cleanup(func() {
-		assert.Equal(t, 1, calledListReleasesMock)
-		assert.Equal(t, 1, calledDownloadReleaseAssetMock)
 		assert.Equal(t, 1, calledGetCodeZipMock)
 		assert.Equal(t, 0, calledCreateCheckRunMock)
 		assert.Equal(t, 0, calledUpdateCheckRunMock)

@@ -8,6 +8,8 @@ var (
 	ErrItemNotFound         = goerr.New("item not found")
 	ErrInvalidSystemValue   = goerr.New("invalid system value")
 
+	ErrInvalidGitHubData = goerr.New("invalid github data")
+
 	ErrInvalidInput         = goerr.New("invalid input data")
 	ErrAuthenticationFailed = goerr.New("authentication failed")
 	ErrNotAuthenticated     = goerr.New("not authenticated request")

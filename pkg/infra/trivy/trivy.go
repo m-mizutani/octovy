@@ -18,6 +18,7 @@ const (
 )
 
 type Interface interface {
+	SetPath(path string)
 	Scan(dir string) (*report.Report, error)
 }
 
@@ -25,10 +26,14 @@ type Trivy struct {
 	path string
 }
 
-func New(path string) *Trivy {
+func New() *Trivy {
 	return &Trivy{
-		path: path,
+		path: DefaultName,
 	}
+}
+
+func (x *Trivy) SetPath(path string) {
+	x.path = path
 }
 
 func (x *Trivy) Scan(dir string) (*report.Report, error) {

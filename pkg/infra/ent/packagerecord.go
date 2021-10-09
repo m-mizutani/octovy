@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 )
 
@@ -18,7 +17,7 @@ type PackageRecord struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Type holds the value of the "type" field.
-	Type types.PkgType `json:"type,omitempty"`
+	Type string `json:"type,omitempty"`
 	// Source holds the value of the "source" field.
 	Source string `json:"source,omitempty"`
 	// Name holds the value of the "name" field.
@@ -97,7 +96,7 @@ func (pr *PackageRecord) assignValues(columns []string, values []interface{}) er
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
-				pr.Type = types.PkgType(value.String)
+				pr.Type = value.String
 			}
 		case packagerecord.FieldSource:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -164,7 +163,7 @@ func (pr *PackageRecord) String() string {
 	builder.WriteString("PackageRecord(")
 	builder.WriteString(fmt.Sprintf("id=%v", pr.ID))
 	builder.WriteString(", type=")
-	builder.WriteString(fmt.Sprintf("%v", pr.Type))
+	builder.WriteString(pr.Type)
 	builder.WriteString(", source=")
 	builder.WriteString(pr.Source)
 	builder.WriteString(", name=")

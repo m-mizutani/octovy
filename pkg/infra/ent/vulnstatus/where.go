@@ -106,6 +106,13 @@ func PkgName(v string) predicate.VulnStatus {
 	})
 }
 
+// PkgType applies equality check predicate on the "pkg_type" field. It's identical to PkgTypeEQ.
+func PkgType(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldPkgType), v))
+	})
+}
+
 // VulnID applies equality check predicate on the "vuln_id" field. It's identical to VulnIDEQ.
 func VulnID(v string) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
@@ -407,23 +414,21 @@ func PkgNameContainsFold(v string) predicate.VulnStatus {
 }
 
 // PkgTypeEQ applies the EQ predicate on the "pkg_type" field.
-func PkgTypeEQ(v types.PkgType) predicate.VulnStatus {
-	vc := v
+func PkgTypeEQ(v string) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPkgType), vc))
+		s.Where(sql.EQ(s.C(FieldPkgType), v))
 	})
 }
 
 // PkgTypeNEQ applies the NEQ predicate on the "pkg_type" field.
-func PkgTypeNEQ(v types.PkgType) predicate.VulnStatus {
-	vc := v
+func PkgTypeNEQ(v string) predicate.VulnStatus {
 	return predicate.VulnStatus(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldPkgType), vc))
+		s.Where(sql.NEQ(s.C(FieldPkgType), v))
 	})
 }
 
 // PkgTypeIn applies the In predicate on the "pkg_type" field.
-func PkgTypeIn(vs ...types.PkgType) predicate.VulnStatus {
+func PkgTypeIn(vs ...string) predicate.VulnStatus {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -440,7 +445,7 @@ func PkgTypeIn(vs ...types.PkgType) predicate.VulnStatus {
 }
 
 // PkgTypeNotIn applies the NotIn predicate on the "pkg_type" field.
-func PkgTypeNotIn(vs ...types.PkgType) predicate.VulnStatus {
+func PkgTypeNotIn(vs ...string) predicate.VulnStatus {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -453,6 +458,69 @@ func PkgTypeNotIn(vs ...types.PkgType) predicate.VulnStatus {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldPkgType), v...))
+	})
+}
+
+// PkgTypeGT applies the GT predicate on the "pkg_type" field.
+func PkgTypeGT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeGTE applies the GTE predicate on the "pkg_type" field.
+func PkgTypeGTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeLT applies the LT predicate on the "pkg_type" field.
+func PkgTypeLT(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeLTE applies the LTE predicate on the "pkg_type" field.
+func PkgTypeLTE(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeContains applies the Contains predicate on the "pkg_type" field.
+func PkgTypeContains(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeHasPrefix applies the HasPrefix predicate on the "pkg_type" field.
+func PkgTypeHasPrefix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeHasSuffix applies the HasSuffix predicate on the "pkg_type" field.
+func PkgTypeHasSuffix(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeEqualFold applies the EqualFold predicate on the "pkg_type" field.
+func PkgTypeEqualFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldPkgType), v))
+	})
+}
+
+// PkgTypeContainsFold applies the ContainsFold predicate on the "pkg_type" field.
+func PkgTypeContainsFold(v string) predicate.VulnStatus {
+	return predicate.VulnStatus(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldPkgType), v))
 	})
 }
 

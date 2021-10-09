@@ -18,8 +18,6 @@ var logger = utils.Logger
 
 // This package is used to download trivy database, not used by GitHub App.
 type Interface interface {
-	ListReleases(ctx context.Context, owner string, repo string) ([]*github.RepositoryRelease, error)
-	DownloadReleaseAsset(ctx context.Context, owner string, repo string, assetID int64) (io.ReadCloser, error)
 	Authenticate(ctx context.Context, clientID, clientSecret, code string) (*model.GitHubToken, error)
 	GetUser(ctx context.Context, token *model.GitHubToken) (*github.User, error)
 }

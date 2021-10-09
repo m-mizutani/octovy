@@ -2,8 +2,10 @@ package usecase_test
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
+	"github.com/aquasecurity/trivy/pkg/report"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/usecase"
@@ -16,6 +18,22 @@ func TestGetRepositories(t *testing.T) {
 	injectGitHubMock(t, mock)
 	ctx := context.Background()
 	branch := "main"
+	var calledScan int
+	mock.Trivy.ScanMock = func(dir string) (*report.Report, error) {
+		calledScan++
+		assert.FileExists(t, filepath.Join(dir, "Gemfile"))
+		assert.FileExists(t, filepath.Join(dir, "Gemfile.lock"))
+		return &report.Report{
+			Results: report.Results{
+				{
+					Target: "Gemfile",
+				},
+				{
+					Target: "Gemfile.lock",
+				},
+			},
+		}, nil
+	}
 
 	uc.SendScanRequest(&model.ScanRepositoryRequest{
 		InstallID: 1,
@@ -59,4 +77,5 @@ func TestGetRepositories(t *testing.T) {
 		require.NotNil(t, resp[0].Edges.Latest, 1)
 		assert.Equal(t, "1234567", resp[0].Edges.Latest.CommitID)
 	})
+	assert.Equal(t, calledScan, 1)
 }

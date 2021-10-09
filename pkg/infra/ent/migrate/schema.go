@@ -22,7 +22,7 @@ var (
 	// PackageRecordsColumns holds the columns for the "package_records" table.
 	PackageRecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"rubygems", "npm", "gomod", "pypi"}},
+		{Name: "type", Type: field.TypeString},
 		{Name: "source", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "version", Type: field.TypeString},
@@ -128,7 +128,7 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"none", "snoozed", "mitigated", "unaffected", "fixed"}},
 		{Name: "source", Type: field.TypeString},
 		{Name: "pkg_name", Type: field.TypeString},
-		{Name: "pkg_type", Type: field.TypeEnum, Enums: []string{"rubygems", "npm", "gomod", "pypi"}},
+		{Name: "pkg_type", Type: field.TypeString},
 		{Name: "vuln_id", Type: field.TypeString},
 		{Name: "expires_at", Type: field.TypeInt64},
 		{Name: "created_at", Type: field.TypeInt64},
@@ -200,6 +200,7 @@ var (
 		{Name: "severity", Type: field.TypeString, Nullable: true},
 		{Name: "cvss", Type: field.TypeJSON, Nullable: true},
 		{Name: "references", Type: field.TypeJSON, Nullable: true},
+		{Name: "fixed_version", Type: field.TypeString, Nullable: true},
 	}
 	// VulnerabilitiesTable holds the schema information for the "vulnerabilities" table.
 	VulnerabilitiesTable = &schema.Table{

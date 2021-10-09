@@ -24,7 +24,7 @@ type VulnStatus struct {
 	// PkgName holds the value of the "pkg_name" field.
 	PkgName string `json:"pkg_name,omitempty"`
 	// PkgType holds the value of the "pkg_type" field.
-	PkgType types.PkgType `json:"pkg_type,omitempty"`
+	PkgType string `json:"pkg_type,omitempty"`
 	// VulnID holds the value of the "vuln_id" field.
 	VulnID string `json:"vuln_id,omitempty"`
 	// ExpiresAt holds the value of the "expires_at" field.
@@ -125,7 +125,7 @@ func (vs *VulnStatus) assignValues(columns []string, values []interface{}) error
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field pkg_type", values[i])
 			} else if value.Valid {
-				vs.PkgType = types.PkgType(value.String)
+				vs.PkgType = value.String
 			}
 		case vulnstatus.FieldVulnID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -219,7 +219,7 @@ func (vs *VulnStatus) String() string {
 	builder.WriteString(", pkg_name=")
 	builder.WriteString(vs.PkgName)
 	builder.WriteString(", pkg_type=")
-	builder.WriteString(fmt.Sprintf("%v", vs.PkgType))
+	builder.WriteString(vs.PkgType)
 	builder.WriteString(", vuln_id=")
 	builder.WriteString(vs.VulnID)
 	builder.WriteString(", expires_at=")

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestGetRepositories(t *testing.T) {
 
 		pkgSet := []*ent.PackageRecord{
 			{
-				Type:    types.PkgGoModule,
+				Type:    "gomod",
 				Source:  "go.mod",
 				Name:    "xxx",
 				Version: "v0.1.1",

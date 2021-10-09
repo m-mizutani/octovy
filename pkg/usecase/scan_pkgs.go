@@ -1,16 +1,6 @@
 package usecase
 
-import (
-	"archive/zip"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
-	"github.com/m-mizutani/octovy/pkg/infra/ent"
-)
-
+/*
 func crawlPackages(req *model.ScanRepositoryRequest, clients *scanClients) ([]*ent.PackageRecord, error) {
 	tmp, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
@@ -71,3 +61,4 @@ func crawlPackages(req *model.ScanRepositoryRequest, clients *scanClients) ([]*e
 
 	return newPkgs, nil
 }
+*/
