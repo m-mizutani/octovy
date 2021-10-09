@@ -16,8 +16,9 @@ import (
 func TestScanProcedure(t *testing.T) {
 	uc, mock := setupUsecase(t)
 	injectGitHubMock(t, mock)
-
+	var calledScan int
 	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
+		calledScan++
 		return &model.TrivyReport{
 			Results: model.TrivyResults{
 				{
@@ -65,6 +66,8 @@ func TestScanProcedure(t *testing.T) {
 
 	require.NoError(t, uc.Init())
 	require.NoError(t, usecase.RunScanThread(uc))
+
+	assert.Equal(t, 1, calledScan)
 
 	ctx := context.Background()
 	scan, err := mock.DB.GetLatestScan(ctx, model.GitHubBranch{

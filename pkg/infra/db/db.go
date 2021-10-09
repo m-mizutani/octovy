@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
@@ -74,7 +75,7 @@ func New() *Client {
 
 func NewMock(t *testing.T) *Client {
 	db := newClient()
-	dsn := "file:ent?mode=memory&cache=shared&_fk=1"
+	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared&_fk=1"
 	db.client = enttest.Open(t, "sqlite3", dsn)
 	db.disableOpen = true
 	db.lock = true
