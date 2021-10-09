@@ -8,14 +8,12 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
-	"github.com/m-mizutani/octovy/pkg/infra/trivydb"
 )
 
 type Interfaces struct {
 	DB           db.Interface
 	GitHub       github.Interface
 	NewGitHubApp githubapp.Factory
-	NewTrivyDB   trivydb.Factory
 	Trivy        trivy.Interface
 	Utils        *Utils
 }
@@ -37,7 +35,6 @@ func New() *Interfaces {
 		DB:           db.New(),
 		GitHub:       github.New(),
 		NewGitHubApp: githubapp.New,
-		NewTrivyDB:   trivydb.New,
 		Trivy:        trivy.New(),
 		Utils:        NewUtils(),
 	}
