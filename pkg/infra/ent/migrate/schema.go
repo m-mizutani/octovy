@@ -200,7 +200,6 @@ var (
 		{Name: "severity", Type: field.TypeString, Nullable: true},
 		{Name: "cvss", Type: field.TypeJSON, Nullable: true},
 		{Name: "references", Type: field.TypeJSON, Nullable: true},
-		{Name: "fixed_version", Type: field.TypeString, Nullable: true},
 	}
 	// VulnerabilitiesTable holds the schema information for the "vulnerabilities" table.
 	VulnerabilitiesTable = &schema.Table{

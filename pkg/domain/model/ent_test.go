@@ -87,7 +87,6 @@ func TestTrivyReportToEnt(t *testing.T) {
 			References: []string{
 				"https://example.com",
 			},
-			FixedVersion: "6.1.5",
 		}, vuln[0])
 	})
 
