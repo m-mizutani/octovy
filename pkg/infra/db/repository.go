@@ -77,3 +77,43 @@ func (x *Client) GetRepositories(ctx context.Context) ([]*ent.Repository, error)
 
 	return resp, nil
 }
+
+func (x *Client) GetRepositoriesWithVuln(ctx context.Context, vulnID string) ([]*ent.Repository, error) {
+	if x.lock {
+		x.mutex.Lock()
+		defer x.mutex.Unlock()
+	}
+
+	repos, err := x.client.Repository.Query().
+		WithStatus().
+		WithLatest(func(sq *ent.ScanQuery) {
+			sq.WithPackages()
+		}).All(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err)
+	}
+
+	hasVulnID := func(vulnIDs []string) bool {
+		for i := range vulnIDs {
+			if vulnIDs[i] == vulnID {
+				return true
+			}
+		}
+		return false
+	}
+
+	var resp []*ent.Repository
+	for _, repo := range repos {
+		if repo.Edges.Latest == nil {
+			continue
+		}
+
+		for _, pkg := range repo.Edges.Latest.Edges.Packages {
+			if hasVulnID(pkg.VulnIds) {
+				resp = append(resp, repo)
+			}
+		}
+	}
+
+	return resp, nil
+}

@@ -77,3 +77,23 @@ func (x *usecase) GetVulnerabilityCount(ctx context.Context) (int, error) {
 
 	return x.infra.DB.GetVulnerabilityCount(ctx)
 }
+
+func (x *usecase) GetVulnerability(ctx context.Context, vulnID string) (*model.RespVulnerability, error) {
+	vuln, err := x.infra.DB.GetVulnerability(ctx, vulnID)
+	if err != nil {
+		return nil, err
+	}
+	if vuln == nil {
+		return nil, nil
+	}
+
+	repos, err := x.infra.DB.GetRepositoriesWithVuln(ctx, vulnID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.RespVulnerability{
+		Vulnerability: vuln,
+		Affected:      repos,
+	}, nil
+}
