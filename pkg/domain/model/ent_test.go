@@ -147,4 +147,48 @@ func TestTrivyReportToEnt(t *testing.T) {
 			assert.Len(t, pkg[0].VulnIds, 0)
 		})
 	})
+
+	t.Run("vulnerability not duplicated", func(t *testing.T) {
+		pkg, vuln := model.TrivyReportToEnt(&model.TrivyReport{
+			Results: model.TrivyResults{
+				{
+					Target: "Gemfile.lock",
+					Type:   "bundler",
+					Packages: []model.TrivyPackage{
+						{
+							Name:    "example",
+							Version: "6.1.4",
+						},
+					},
+					Vulnerabilities: []model.DetectedVulnerability{
+						{
+							VulnerabilityID:  "CVE-1000",
+							PkgName:          "example",
+							InstalledVersion: "6.1.4",
+						},
+					},
+				},
+				{
+					Target: "tmp/Gemfile.lock",
+					Type:   "bundler",
+					Packages: []model.TrivyPackage{
+						{
+							Name:    "example",
+							Version: "6.1.4",
+						},
+					},
+					Vulnerabilities: []model.DetectedVulnerability{
+						{
+							VulnerabilityID:  "CVE-1000",
+							PkgName:          "example",
+							InstalledVersion: "6.1.4",
+						},
+					},
+				},
+			},
+		}, time.Now())
+
+		require.Len(t, pkg, 2)
+		require.Len(t, vuln, 1)
+	})
 }

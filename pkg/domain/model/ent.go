@@ -14,6 +14,7 @@ func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.Packag
 	ptrKey := func(name, ver string) string {
 		return name + "|" + ver
 	}
+	vulnMap := map[string]*ent.Vulnerability{}
 
 	for _, result := range report.Results {
 		pkgPtr := map[string]*ent.PackageRecord{}
@@ -53,7 +54,7 @@ func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.Packag
 				v.LastModifiedAt = vuln.LastModifiedDate.Unix()
 			}
 
-			vulnList = append(vulnList, v)
+			vulnMap[v.ID] = v
 
 			if pkg, ok := pkgPtr[ptrKey(vuln.PkgName, vuln.InstalledVersion)]; ok {
 				pkg.VulnIds = append(pkg.VulnIds, vuln.VulnerabilityID)
@@ -62,5 +63,10 @@ func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.Packag
 			}
 		}
 	}
+
+	for _, v := range vulnMap {
+		vulnList = append(vulnList, v)
+	}
+
 	return
 }
