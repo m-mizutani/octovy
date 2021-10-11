@@ -111,6 +111,7 @@ func (x *Client) GetRepositoriesWithVuln(ctx context.Context, vulnID string) ([]
 		for _, pkg := range repo.Edges.Latest.Edges.Packages {
 			if hasVulnID(pkg.VulnIds) {
 				resp = append(resp, repo)
+				break
 			}
 		}
 	}
