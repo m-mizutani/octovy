@@ -51,6 +51,8 @@ jobs:
           project_id: ${{ env.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
+      - name: Configure Docker
+        run: gcloud auth configure-docker --quiet
       - name: Push Docker image
         run: docker pull ${{ env.GITHUB_IMAGE_NAME }}
       - name: Rename Docker image
