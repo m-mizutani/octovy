@@ -82,7 +82,7 @@ var nextRoutes = rewriteRoutes{
 		fname: "vulnerability.html",
 	},
 	{
-		ptn:   regexp.MustCompile("^vulnerability/[A-Z0-9-]+$"),
+		ptn:   regexp.MustCompile("^vulnerability/[A-Za-z0-9-]+$"),
 		fname: "vulnerability/[id].html",
 	},
 	{

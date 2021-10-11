@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -234,12 +235,14 @@ export default function Package(props: packageProps) {
         {props.idx === 0 ? props.pkg.version : ""}
       </TableCell>
       <TableCell>
-        <Chip
-          size="small"
-          label={props.vuln.id}
-          color={vulnStatus.status === "none" ? "secondary" : "default"}
-          clickable
-        />
+        <Link href={`/vulnerability/${props.vuln.id}`}>
+          <Chip
+            size="small"
+            label={props.vuln.id}
+            color={vulnStatus.status === "none" ? "secondary" : "default"}
+            clickable
+          />
+        </Link>
       </TableCell>
       <TableCell>{props.vuln.title}</TableCell>
       <TableCell>

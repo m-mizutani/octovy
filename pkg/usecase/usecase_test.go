@@ -106,7 +106,7 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 	}
 
 	t.Cleanup(func() {
-		assert.Equal(t, 1, calledGetCodeZipMock)
+		assert.GreaterOrEqual(t, calledGetCodeZipMock, 1)
 		assert.Equal(t, 0, calledCreateCheckRunMock)
 		assert.Equal(t, 0, calledUpdateCheckRunMock)
 	})

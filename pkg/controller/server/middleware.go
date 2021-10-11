@@ -144,6 +144,8 @@ func errorHandler(c *gin.Context) {
 				errResp(c, http.StatusUnauthorized, err)
 			case errors.Is(err, model.ErrUserNotFound):
 				errResp(c, http.StatusNotFound, err)
+			case errors.Is(err, model.ErrVulnerabilityNotFound):
+				errResp(c, http.StatusNotFound, err)
 			default:
 				errResp(c, http.StatusInternalServerError, err)
 			}

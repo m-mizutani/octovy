@@ -40,15 +40,14 @@ func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.Packag
 			}
 
 			v := &ent.Vulnerability{
-				ID:           vuln.VulnerabilityID,
-				FirstSeenAt:  now.Unix(),
-				Title:        vuln.Title,
-				Description:  vuln.Description,
-				CweID:        vuln.CweIDs,
-				Severity:     vuln.Severity,
-				Cvss:         cvss,
-				References:   vuln.References,
-				FixedVersion: vuln.FixedVersion,
+				ID:          vuln.VulnerabilityID,
+				FirstSeenAt: now.Unix(),
+				Title:       vuln.Title,
+				Description: vuln.Description,
+				CweID:       vuln.CweIDs,
+				Severity:    vuln.Severity,
+				Cvss:        cvss,
+				References:  vuln.References,
 			}
 			if vuln.LastModifiedDate != nil {
 				v.LastModifiedAt = vuln.LastModifiedDate.Unix()

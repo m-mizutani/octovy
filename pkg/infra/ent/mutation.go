@@ -5365,7 +5365,6 @@ type VulnerabilityMutation struct {
 	severity            *string
 	cvss                *[]string
 	references          *[]string
-	fixed_version       *string
 	clearedFields       map[string]struct{}
 	packages            map[int]struct{}
 	removedpackages     map[int]struct{}
@@ -5869,55 +5868,6 @@ func (m *VulnerabilityMutation) ResetReferences() {
 	delete(m.clearedFields, vulnerability.FieldReferences)
 }
 
-// SetFixedVersion sets the "fixed_version" field.
-func (m *VulnerabilityMutation) SetFixedVersion(s string) {
-	m.fixed_version = &s
-}
-
-// FixedVersion returns the value of the "fixed_version" field in the mutation.
-func (m *VulnerabilityMutation) FixedVersion() (r string, exists bool) {
-	v := m.fixed_version
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFixedVersion returns the old "fixed_version" field's value of the Vulnerability entity.
-// If the Vulnerability object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VulnerabilityMutation) OldFixedVersion(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldFixedVersion is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldFixedVersion requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFixedVersion: %w", err)
-	}
-	return oldValue.FixedVersion, nil
-}
-
-// ClearFixedVersion clears the value of the "fixed_version" field.
-func (m *VulnerabilityMutation) ClearFixedVersion() {
-	m.fixed_version = nil
-	m.clearedFields[vulnerability.FieldFixedVersion] = struct{}{}
-}
-
-// FixedVersionCleared returns if the "fixed_version" field was cleared in this mutation.
-func (m *VulnerabilityMutation) FixedVersionCleared() bool {
-	_, ok := m.clearedFields[vulnerability.FieldFixedVersion]
-	return ok
-}
-
-// ResetFixedVersion resets all changes to the "fixed_version" field.
-func (m *VulnerabilityMutation) ResetFixedVersion() {
-	m.fixed_version = nil
-	delete(m.clearedFields, vulnerability.FieldFixedVersion)
-}
-
 // AddPackageIDs adds the "packages" edge to the PackageRecord entity by ids.
 func (m *VulnerabilityMutation) AddPackageIDs(ids ...int) {
 	if m.packages == nil {
@@ -6045,7 +5995,7 @@ func (m *VulnerabilityMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VulnerabilityMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 8)
 	if m.first_seen_at != nil {
 		fields = append(fields, vulnerability.FieldFirstSeenAt)
 	}
@@ -6069,9 +6019,6 @@ func (m *VulnerabilityMutation) Fields() []string {
 	}
 	if m.references != nil {
 		fields = append(fields, vulnerability.FieldReferences)
-	}
-	if m.fixed_version != nil {
-		fields = append(fields, vulnerability.FieldFixedVersion)
 	}
 	return fields
 }
@@ -6097,8 +6044,6 @@ func (m *VulnerabilityMutation) Field(name string) (ent.Value, bool) {
 		return m.Cvss()
 	case vulnerability.FieldReferences:
 		return m.References()
-	case vulnerability.FieldFixedVersion:
-		return m.FixedVersion()
 	}
 	return nil, false
 }
@@ -6124,8 +6069,6 @@ func (m *VulnerabilityMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldCvss(ctx)
 	case vulnerability.FieldReferences:
 		return m.OldReferences(ctx)
-	case vulnerability.FieldFixedVersion:
-		return m.OldFixedVersion(ctx)
 	}
 	return nil, fmt.Errorf("unknown Vulnerability field %s", name)
 }
@@ -6190,13 +6133,6 @@ func (m *VulnerabilityMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetReferences(v)
-		return nil
-	case vulnerability.FieldFixedVersion:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFixedVersion(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability field %s", name)
@@ -6273,9 +6209,6 @@ func (m *VulnerabilityMutation) ClearedFields() []string {
 	if m.FieldCleared(vulnerability.FieldReferences) {
 		fields = append(fields, vulnerability.FieldReferences)
 	}
-	if m.FieldCleared(vulnerability.FieldFixedVersion) {
-		fields = append(fields, vulnerability.FieldFixedVersion)
-	}
 	return fields
 }
 
@@ -6308,9 +6241,6 @@ func (m *VulnerabilityMutation) ClearField(name string) error {
 	case vulnerability.FieldReferences:
 		m.ClearReferences()
 		return nil
-	case vulnerability.FieldFixedVersion:
-		m.ClearFixedVersion()
-		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability nullable field %s", name)
 }
@@ -6342,9 +6272,6 @@ func (m *VulnerabilityMutation) ResetField(name string) error {
 		return nil
 	case vulnerability.FieldReferences:
 		m.ResetReferences()
-		return nil
-	case vulnerability.FieldFixedVersion:
-		m.ResetFixedVersion()
 		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability field %s", name)

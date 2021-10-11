@@ -44,6 +44,7 @@ type Interface interface {
 	GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error)
 	GetLatestScans(ctx context.Context) ([]*ent.Scan, error)
 	GetRepositories(ctx context.Context) ([]*ent.Repository, error)
+	GetRepositoriesWithVuln(ctx context.Context, vulnID string) ([]*ent.Repository, error)
 
 	// Auth
 	SaveAuthState(ctx context.Context, state string, expiresAt int64) error

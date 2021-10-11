@@ -31,6 +31,7 @@ type Interface interface {
 	GetRepositories(ctx context.Context) ([]*ent.Repository, error)
 	GetVulnerabilities(ctx context.Context, offset, limit int64) ([]*ent.Vulnerability, error)
 	GetVulnerabilityCount(ctx context.Context) (int, error)
+	GetVulnerability(ctx context.Context, vulnID string) (*model.RespVulnerability, error)
 
 	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error

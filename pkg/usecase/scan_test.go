@@ -83,5 +83,4 @@ func TestScanProcedure(t *testing.T) {
 	assert.Equal(t, "example", scan.Edges.Packages[0].Name)
 	require.Len(t, scan.Edges.Packages[0].Edges.Vulnerabilities, 1)
 	assert.Equal(t, "test vuln", scan.Edges.Packages[0].Edges.Vulnerabilities[0].Title)
-	assert.Equal(t, "6.1.5", scan.Edges.Packages[0].Edges.Vulnerabilities[0].FixedVersion)
 }
