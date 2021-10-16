@@ -1,7 +1,6 @@
 package usecase_test
 
 import (
-	"context"
 	"testing"
 
 	dtypes "github.com/aquasecurity/trivy-db/pkg/types"
@@ -69,7 +68,7 @@ func TestScanProcedure(t *testing.T) {
 
 	assert.Equal(t, 1, calledScan)
 
-	ctx := context.Background()
+	ctx := model.NewContext()
 	scan, err := mock.DB.GetLatestScan(ctx, model.GitHubBranch{
 		GitHubRepo: model.GitHubRepo{
 			Owner:    "blue",

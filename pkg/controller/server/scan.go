@@ -5,15 +5,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
 func getScanReport(c *gin.Context) {
-	logger := getLogger(c)
-	logger.Debug().Msg("hello getScanReport")
 	uc := getUsecase(c)
 	scanID := c.Param("scan_id")
 
-	report, err := uc.LookupScanReport(c, scanID)
+	report, err := uc.LookupScanReport(model.NewContextWith(c), scanID)
 	if err != nil {
 		_ = c.Error(err)
 		return

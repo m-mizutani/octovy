@@ -59,7 +59,7 @@ func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.Packag
 			if pkg, ok := pkgPtr[ptrKey(vuln.PkgName, vuln.InstalledVersion)]; ok {
 				pkg.VulnIds = append(pkg.VulnIds, vuln.VulnerabilityID)
 			} else {
-				logger.Warn().Interface("vuln", vuln).Msg("package is not inserted")
+				logger.With("vuln", vuln).Warn("package is not inserted")
 			}
 		}
 	}

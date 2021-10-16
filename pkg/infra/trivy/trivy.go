@@ -46,10 +46,11 @@ func (x *Trivy) Scan(dir string) (*model.TrivyReport, error) {
 	}
 	defer func() {
 		if err := os.Remove(temp.Name()); err != nil {
-			logger.Error().Err(err).Msg("Failed to remove temp file")
+			utils.Logger.With("err", err).Error("Failed to remove temp file")
 		}
 	}()
 
+	// #nosec
 	cmd := exec.Command(x.path, "fs", "--list-all-pkgs", "-f", "json", "-o", temp.Name(), dir)
 	cmd.Env = os.Environ()
 	// https://github.com/aquasecurity/trivy/discussions/1050
@@ -57,7 +58,7 @@ func (x *Trivy) Scan(dir string) (*model.TrivyReport, error) {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logger.Error().Err(err).Str("out", string(out)).Msg("failed")
+		utils.Logger.With("err", err).With("out", string(out)).Error("failed")
 		return nil, goerr.Wrap(err).With("path", x.path).With("out", string(out))
 	}
 

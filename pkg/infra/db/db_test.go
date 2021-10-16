@@ -1,9 +1,9 @@
 package db_test
 
 import (
-	"context"
 	"testing"
 
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/require"
@@ -33,7 +33,7 @@ func setupDB(t *testing.T) db.Interface {
 			Title:          "orange",
 		},
 	}
-	ctx := context.Background()
+	ctx := model.NewContext()
 	require.NoError(t, client.PutVulnerabilities(ctx, vulnSet))
 
 	return client

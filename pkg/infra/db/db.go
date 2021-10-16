@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"sync"
 	"testing"
 
@@ -28,32 +27,32 @@ type Interface interface {
 	Open(dbType, dbConfig string) error
 	Close() error
 
-	CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
+	CreateRepo(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error)
 
-	PutVulnerabilities(ctx context.Context, vulnerabilities []*ent.Vulnerability) error
-	GetVulnerability(ctx context.Context, id string) (*ent.Vulnerability, error)
-	GetLatestVulnerabilities(ctx context.Context, offset, limit int) ([]*ent.Vulnerability, error)
-	GetVulnerabilityCount(ctx context.Context) (int, error)
+	PutVulnerabilities(ctx *model.Context, vulnerabilities []*ent.Vulnerability) error
+	GetVulnerability(ctx *model.Context, id string) (*ent.Vulnerability, error)
+	GetLatestVulnerabilities(ctx *model.Context, offset, limit int) ([]*ent.Vulnerability, error)
+	GetVulnerabilityCount(ctx *model.Context) (int, error)
 
-	PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
-	PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
-	PutVulnStatus(ctx context.Context, repo *ent.Repository, status *ent.VulnStatus, userID int) error
-	GetVulnStatus(ctx context.Context, repo *model.GitHubRepo) ([]*ent.VulnStatus, error)
+	PutPackages(ctx *model.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
+	PutScan(ctx *model.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
+	PutVulnStatus(ctx *model.Context, repo *ent.Repository, status *ent.VulnStatus, userID int) error
+	GetVulnStatus(ctx *model.Context, repo *model.GitHubRepo) ([]*ent.VulnStatus, error)
 
-	GetScan(ctx context.Context, id string) (*ent.Scan, error)
-	GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error)
-	GetLatestScans(ctx context.Context) ([]*ent.Scan, error)
-	GetRepositories(ctx context.Context) ([]*ent.Repository, error)
-	GetRepositoriesWithVuln(ctx context.Context, vulnID string) ([]*ent.Repository, error)
+	GetScan(ctx *model.Context, id string) (*ent.Scan, error)
+	GetLatestScan(ctx *model.Context, branch model.GitHubBranch) (*ent.Scan, error)
+	GetLatestScans(ctx *model.Context) ([]*ent.Scan, error)
+	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
+	GetRepositoriesWithVuln(ctx *model.Context, vulnID string) ([]*ent.Repository, error)
 
 	// Auth
-	SaveAuthState(ctx context.Context, state string, expiresAt int64) error
-	HasAuthState(ctx context.Context, state string, now int64) (bool, error)
-	GetUser(ctx context.Context, userID int) (*ent.User, error)
-	PutUser(ctx context.Context, user *ent.User) (int, error)
-	PutSession(ctx context.Context, ssn *ent.Session) error
-	GetSession(ctx context.Context, ssnID string, now int64) (*ent.Session, error)
-	DeleteSession(ctx context.Context, ssnID string) error
+	SaveAuthState(ctx *model.Context, state string, expiresAt int64) error
+	HasAuthState(ctx *model.Context, state string, now int64) (bool, error)
+	GetUser(ctx *model.Context, userID int) (*ent.User, error)
+	PutUser(ctx *model.Context, user *ent.User) (int, error)
+	PutSession(ctx *model.Context, ssn *ent.Session) error
+	GetSession(ctx *model.Context, ssnID string, now int64) (*ent.Session, error)
+	DeleteSession(ctx *model.Context, ssnID string) error
 }
 
 type Factory func(dbType, dbConfig string) (Interface, error)
@@ -94,7 +93,7 @@ func (x *Client) Open(dbType, dbConfig string) error {
 	}
 	x.client = client
 
-	if err := client.Schema.Create(context.Background()); err != nil {
+	if err := client.Schema.Create(model.NewContext()); err != nil {
 		return model.ErrDatabaseUnexpected.Wrap(err)
 	}
 

@@ -1,8 +1,6 @@
 package db
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
@@ -11,7 +9,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
-func (x *Client) PutPackages(ctx context.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error) {
+func (x *Client) PutPackages(ctx *model.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -42,7 +40,7 @@ func txRollback(tx *ent.Tx, err error) error {
 	return err
 }
 
-func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error) {
+func (x *Client) PutScan(ctx *model.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -75,7 +73,7 @@ func (x *Client) PutScan(ctx context.Context, scan *ent.Scan, repo *ent.Reposito
 	return added, nil
 }
 
-func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
+func (x *Client) GetScan(ctx *model.Context, id string) (*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -100,7 +98,7 @@ func (x *Client) GetScan(ctx context.Context, id string) (*ent.Scan, error) {
 	return got, nil
 }
 
-func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error) {
+func (x *Client) GetLatestScan(ctx *model.Context, branch model.GitHubBranch) (*ent.Scan, error) {
 	latest, err := x.getLatestScanEntity(ctx, branch)
 	if err != nil {
 		return nil, err
@@ -111,7 +109,7 @@ func (x *Client) GetLatestScan(ctx context.Context, branch model.GitHubBranch) (
 	return x.GetScan(ctx, latest.ID)
 }
 
-func (x *Client) GetLatestScans(ctx context.Context) ([]*ent.Scan, error) {
+func (x *Client) GetLatestScans(ctx *model.Context) ([]*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -140,7 +138,7 @@ func (x *Client) GetLatestScans(ctx context.Context) ([]*ent.Scan, error) {
 	return scans, nil
 }
 
-func (x *Client) getLatestScanEntity(ctx context.Context, branch model.GitHubBranch) (*ent.Scan, error) {
+func (x *Client) getLatestScanEntity(ctx *model.Context, branch model.GitHubBranch) (*ent.Scan, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()

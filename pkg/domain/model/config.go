@@ -2,7 +2,7 @@ package model
 
 type Config struct {
 	DBType      string
-	DBConfig    string
+	DBConfig    string `zlog:"secret"`
 	FrontendURL string
 	WebhookOnly bool
 
@@ -10,10 +10,10 @@ type Config struct {
 	ServerPort int
 
 	GitHubAppID         int64
-	GitHubAppPrivateKey string
+	GitHubAppPrivateKey string `zlog:"secret"`
 	GitHubAppClientID   string
-	GitHubAppSecret     string
-	GitHubWebhookSecret string
+	GitHubAppSecret     string `zlog:"secret"`
+	GitHubWebhookSecret string `zlog:"secret"`
 
 	TrivyPath string
 

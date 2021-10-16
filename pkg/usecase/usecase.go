@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"context"
-
 	"github.com/google/go-github/v39/github"
 
 	"github.com/m-mizutani/goerr"
@@ -25,30 +23,30 @@ type Interface interface {
 	InvokeScanThread()
 
 	// DB access proxy
-	RegisterRepository(ctx context.Context, repo *ent.Repository) (*ent.Repository, error)
-	UpdateVulnStatus(ctx context.Context, req *model.UpdateVulnStatusRequest) error
-	LookupScanReport(ctx context.Context, scanID string) (*ent.Scan, error)
-	GetRepositories(ctx context.Context) ([]*ent.Repository, error)
-	GetVulnerabilities(ctx context.Context, offset, limit int64) ([]*ent.Vulnerability, error)
-	GetVulnerabilityCount(ctx context.Context) (int, error)
-	GetVulnerability(ctx context.Context, vulnID string) (*model.RespVulnerability, error)
+	RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error)
+	UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) error
+	LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error)
+	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
+	GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error)
+	GetVulnerabilityCount(ctx *model.Context) (int, error)
+	GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error)
 
 	// Handle GitHub App Webhook event
-	HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error
-	HandleGitHubPullReqEvent(ctx context.Context, event *github.PullRequestEvent) error
-	HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error
+	HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error
+	HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error
+	HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error
 	VerifyGitHubSecret(sigSHA256 string, body []byte) error
 
 	// Auth
-	CreateAuthState(ctx context.Context) (string, error)
-	AuthGitHubUser(ctx context.Context, code, state string) (*ent.User, error)
-	LookupUser(ctx context.Context, userID int) (*ent.User, error)
-	CreateSession(ctx context.Context, user *ent.User) (*ent.Session, error)
-	ValidateSession(ctx context.Context, ssnID string) (*ent.Session, error)
-	RevokeSession(ctx context.Context, token string) error
+	CreateAuthState(ctx *model.Context) (string, error)
+	AuthGitHubUser(ctx *model.Context, code, state string) (*ent.User, error)
+	LookupUser(ctx *model.Context, userID int) (*ent.User, error)
+	CreateSession(ctx *model.Context, user *ent.User) (*ent.Session, error)
+	ValidateSession(ctx *model.Context, ssnID string) (*ent.Session, error)
+	RevokeSession(ctx *model.Context, token string) error
 
 	// Error handling
-	HandleError(err error)
+	HandleError(ctx *model.Context, err error)
 
 	// Config proxy
 	GetGitHubAppClientID() string
@@ -88,7 +86,7 @@ func (x *usecase) Init() error {
 	}
 
 	if err := x.infra.DB.Open(x.config.DBType, x.config.DBConfig); err != nil {
-		x.HandleError(err)
+		x.HandleError(model.NewContext(), err)
 		return goerr.Wrap(err)
 	}
 

@@ -16,7 +16,7 @@ func getUser(c *gin.Context) {
 	}
 
 	uc := getUsecase(c)
-	user, err := uc.LookupUser(c, ssn.UserID)
+	user, err := uc.LookupUser(model.NewContextWith(c), ssn.UserID)
 	if err != nil {
 		c.Error(err)
 		return

@@ -27,6 +27,12 @@ func (x *Controller) RunCmd(args []string) error {
 				Value:   "info",
 				Usage:   "LogLevel [trace|debug|info|warn|error]",
 			},
+			&cli.StringFlag{
+				Name:    "log-format",
+				EnvVars: []string{"OCTOVY_LOG_FORMAT"},
+				Value:   "console",
+				Usage:   "LogFormat [console|json]",
+			},
 		},
 		Commands: []*cli.Command{
 			newServeCommand(x),
@@ -40,7 +46,7 @@ func (x *Controller) RunCmd(args []string) error {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Error().Interface("config", x.Config.CopyWithoutSensitives()).Err(err).Msg("Failed")
+		logger.With("config", x.Config.CopyWithoutSensitives()).With("err", err).Error("Failed")
 		return err
 	}
 
@@ -50,6 +56,9 @@ func (x *Controller) RunCmd(args []string) error {
 func globalSetup(c *cli.Context) error {
 	// Setup logger
 	if err := utils.SetLogLevel(c.String("log-level")); err != nil {
+		return goerr.Wrap(err)
+	}
+	if err := utils.SetLogFormat(c.String("log-format")); err != nil {
 		return goerr.Wrap(err)
 	}
 
@@ -176,9 +185,9 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 
 	gin.SetMode(gin.DebugMode)
 
-	logger.Info().Interface("config", ctrl.Config.CopyWithoutSensitives()).Msg("Starting server...")
+	logger.With("config", ctrl.Config.CopyWithoutSensitives()).Info("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
-		logger.Error().Err(err).Interface("config", ctrl.Config).Msg("Server error")
+		logger.With("err", err).With("config", ctrl.Config.CopyWithoutSensitives()).Error("Server error")
 	}
 
 	return nil

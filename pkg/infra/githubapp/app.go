@@ -68,12 +68,12 @@ func (x *Client) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteC
 	}
 	ctx := context.Background()
 
-	logger.Debug().
-		Interface("appID", x.appID).
-		Interface("repo", repo).
-		Interface("installID", x.installID).
-		Interface("privateKey.length", len(x.pem)).
-		Msg("Sending GetArchiveLink request")
+	utils.Logger.
+		With("appID", x.appID).
+		With("repo", repo).
+		With("installID", x.installID).
+		With("privateKey.length", len(x.pem)).
+		Debug("Sending GetArchiveLink request")
 
 	// https://docs.github.com/en/rest/reference/repos#downloads
 	url, r, err := client.Repositories.GetArchiveLink(ctx, repo.Owner, repo.RepoName, github.Zipball, opt, false)
@@ -81,7 +81,7 @@ func (x *Client) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteC
 		return goerr.Wrap(err)
 	}
 
-	logger.Debug().Interface("code", r.StatusCode).Send()
+	utils.Logger.With("code", r.StatusCode).Debug("resp of GetArchiveLink")
 
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
@@ -126,7 +126,7 @@ func (x *Client) CreateIssueComment(repo *model.GitHubRepo, prID int, body strin
 	if resp.StatusCode != http.StatusCreated {
 		return goerr.Wrap(err, "Failed to ")
 	}
-	logger.Debug().Interface("comment", ret).Msg("Commented to PR")
+	utils.Logger.With("comment", ret).Debug("Commented to PR")
 
 	return nil
 }
@@ -151,7 +151,7 @@ func (x *Client) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, e
 	if resp.StatusCode != http.StatusCreated {
 		return 0, goerr.Wrap(err, "Failed to ")
 	}
-	logger.Debug().Interface("run", run).Msg("Created check run")
+	utils.Logger.With("run", run).Debug("Created check run")
 
 	return *run.ID, nil
 }
@@ -171,7 +171,7 @@ func (x *Client) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *gith
 	if resp.StatusCode != http.StatusOK {
 		return goerr.Wrap(err, "Failed to update status to complete")
 	}
-	logger.Debug().Interface("repo", repo).Int64("id", checkID).Msg("Created check run")
+	utils.Logger.With("repo", repo).With("id", checkID).Debug("Created check run")
 
 	return nil
 }

@@ -20,6 +20,7 @@ var randomTokenChars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW
 func GenerateToken(n int) string {
 	s := make([]rune, n)
 	for i := 0; i < n; i++ {
+		// #nosec, use crypto/rand to generate seed of math/rand
 		v := mathRand.Int63() % int64(len(randomTokenChars))
 		s[i] = randomTokenChars[v]
 	}

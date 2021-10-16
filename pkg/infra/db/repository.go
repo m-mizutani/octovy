@@ -1,19 +1,18 @@
 package db
 
 import (
-	"context"
-
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 )
 
-func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Repository, error) {
+func (x *Client) CreateRepo(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
 	}
-	logger.Debug().Interface("repo", repo).Send()
+	logger.With("repo", repo).Trace("starting CreateRepo")
 
 	repoID, err := x.client.Repository.Query().
 		Where(repository.Owner(repo.Owner)).
@@ -53,12 +52,12 @@ func (x *Client) CreateRepo(ctx context.Context, repo *ent.Repository) (*ent.Rep
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
-	logger.Debug().Interface("updated", updated).Msg("done CreateRepo")
+	logger.With("updated", updated).Trace("done CreateRepo")
 
 	return updated, nil
 }
 
-func (x *Client) GetRepositories(ctx context.Context) ([]*ent.Repository, error) {
+func (x *Client) GetRepositories(ctx *model.Context) ([]*ent.Repository, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()
@@ -78,7 +77,7 @@ func (x *Client) GetRepositories(ctx context.Context) ([]*ent.Repository, error)
 	return resp, nil
 }
 
-func (x *Client) GetRepositoriesWithVuln(ctx context.Context, vulnID string) ([]*ent.Repository, error) {
+func (x *Client) GetRepositoriesWithVuln(ctx *model.Context, vulnID string) ([]*ent.Repository, error) {
 	if x.lock {
 		x.mutex.Lock()
 		defer x.mutex.Unlock()

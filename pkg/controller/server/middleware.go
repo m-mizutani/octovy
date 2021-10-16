@@ -9,25 +9,10 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/utils"
+	"github.com/m-mizutani/zlog"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 )
-
-func setLogger(c *gin.Context, logger zerolog.Logger) {
-	c.Set(contextLogger, logger)
-}
-
-func getLogger(c *gin.Context) zerolog.Logger {
-	obj, ok := c.Get(contextLogger)
-	if !ok {
-		return globalLogger
-	}
-	logger, ok := obj.(zerolog.Logger)
-	if !ok {
-		return globalLogger
-	}
-	return logger
-}
 
 func setSession(c *gin.Context, ssn *ent.Session) {
 	c.Set(contextSession, ssn)
@@ -45,30 +30,61 @@ func getSession(c *gin.Context) *ent.Session {
 	return ssn
 }
 
+type httpLog struct {
+	Method    string
+	Path      string
+	Params    gin.Params
+	RequestID string
+	Remote    string
+}
+
+func setLog(c *gin.Context, key string, value interface{}) {
+	log := getLog(c)
+	if log == nil {
+		log = utils.Logger.Log()
+	}
+	c.Set(model.ContextKeyLogger, log.With(key, value))
+}
+
+func getLog(c *gin.Context) *zlog.LogEntity {
+	obj, ok := c.Get(model.ContextKeyLogger)
+	if !ok {
+		return nil
+	}
+	log, ok := obj.(*zlog.LogEntity)
+	if !ok {
+		panic("not matched with zlog.LogEntity")
+	}
+	return log
+}
+
 func requestLogging(c *gin.Context) {
 	reqID := uuid.New().String()
-	globalLogger.Info().
-		Str("method", c.Request.Method).
-		Str("path", c.Request.URL.Path).
-		Interface("params", c.Params).
-		Str("request_id", reqID).
-		Str("remote", c.ClientIP()).
-		Str("ua", c.Request.UserAgent()).
-		Msg("Request")
+	reqLog := httpLog{
+		Method:    c.Request.Method,
+		Path:      c.Request.URL.Path,
+		Params:    c.Params,
+		RequestID: reqID,
+		Remote:    c.ClientIP(),
+	}
+	utils.Logger.
+		With("http", reqLog).
+		With("user-agent", c.Request.UserAgent()).
+		Info("HTTP Request")
 	c.Set(contextRequestIDKey, reqID)
-	c.Set(contextLogger, globalLogger.With().Str("request_id", reqID).Logger())
+	setLog(c, "http", reqLog)
 	c.Next()
 }
 
 func authControl(c *gin.Context) {
-	logger := getLogger(c)
 	loginURL := "/login"
+	ctx := model.NewContextWith(c)
 
 	if c.Request.URL.Path == "/auth/logout" {
 		if ssnID, err := c.Cookie(cookieSessionID); err == nil {
 			// Revoke session if session ID exists,
 			uc := getUsecase(c)
-			if err := uc.RevokeSession(c, ssnID); err != nil {
+			if err := uc.RevokeSession(ctx, ssnID); err != nil {
 				c.Error(err)
 				return
 			}
@@ -90,7 +106,6 @@ func authControl(c *gin.Context) {
 	}
 
 	notAuthResp := func() {
-		logger.Debug().Msg("notAuthResp")
 		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
 			errResp(c, http.StatusUnauthorized, goerr.Wrap(model.ErrNotAuthenticated))
 		} else {
@@ -111,7 +126,7 @@ func authControl(c *gin.Context) {
 	}
 
 	uc := getUsecase(c)
-	ssn, err := uc.ValidateSession(c, ssnID)
+	ssn, err := uc.ValidateSession(ctx, ssnID)
 	if err != nil {
 		notAuthResp()
 		return
@@ -125,7 +140,7 @@ func authControl(c *gin.Context) {
 
 	ssn.Token = "" // Erase token
 	setSession(c, ssn)
-	setLogger(c, logger.With().Str("session_id", ssn.ID).Logger())
+	setLog(c, "session_id", ssn.ID)
 	c.Next()
 }
 

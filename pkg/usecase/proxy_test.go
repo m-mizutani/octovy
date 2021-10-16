@@ -1,7 +1,6 @@
 package usecase_test
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -15,7 +14,7 @@ import (
 func TestGetRepositories(t *testing.T) {
 	uc, mock := setupUsecase(t)
 	injectGitHubMock(t, mock)
-	ctx := context.Background()
+	ctx := model.NewContext()
 	branch := "main"
 	var calledScan int
 	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
@@ -82,7 +81,7 @@ func TestGetRepositories(t *testing.T) {
 func TestGetVulnerability(t *testing.T) {
 	uc, mock := setupUsecase(t)
 	injectGitHubMock(t, mock)
-	ctx := context.Background()
+	ctx := model.NewContext()
 	branch := "main"
 	var calledScan int
 

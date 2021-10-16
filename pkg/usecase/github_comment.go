@@ -8,6 +8,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 type postGitHubCommentInput struct {
@@ -38,7 +39,7 @@ func postGitHubComment(input *postGitHubCommentInput) error {
 	}
 
 	if input.Report.NothingToNotify(input.GitHubEvent) {
-		logger.Debug().Msg("nothing to notify, returning")
+		utils.Logger.Debug("nothing to notify, returning")
 		return nil
 	}
 

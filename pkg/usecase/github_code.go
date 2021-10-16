@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"archive/zip"
-	"context"
 	"io"
 	"io/ioutil"
 	"os"
@@ -45,18 +44,29 @@ func extractCode(f *zip.File, dst string) error {
 		return goerr.Wrap(err).With("fpath", fpath)
 	}
 
+	// #nosec
 	out, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 	if err != nil {
 		return goerr.Wrap(err).With("fpath", fpath)
 	}
-	defer out.Close()
+	// #nosec, avoiding false positive
+	defer func() {
+		if err := out.Close(); err != nil {
+			logger.With("err", err).Error("Close zip output file")
+		}
+	}()
 
 	rc, err := f.Open()
 	if err != nil {
 		return goerr.Wrap(err)
 	}
-	defer rc.Close()
+	defer func() {
+		if err := rc.Close(); err != nil {
+			logger.With("err", err).Error("Close zip input file")
+		}
+	}()
 
+	// #nosec
 	_, err = io.Copy(out, rc)
 	if err != nil {
 		return goerr.Wrap(err)
@@ -65,14 +75,14 @@ func extractCode(f *zip.File, dst string) error {
 	return nil
 }
 
-func setupGitHubCodes(ctx context.Context, req *model.ScanRepositoryRequest, app githubapp.Interface) (*codes, error) {
+func setupGitHubCodes(ctx *model.Context, req *model.ScanRepositoryRequest, app githubapp.Interface) (*codes, error) {
 	tmp, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
 	defer func() {
 		if err := os.Remove(tmp.Name()); err != nil {
-			logger.Error().Interface("filename", tmp.Name()).Msg("Failed to remove zip file")
+			ctx.Log().With("filename", tmp.Name()).Error("Failed to remove zip file")
 		}
 	}()
 
@@ -92,7 +102,7 @@ func setupGitHubCodes(ctx context.Context, req *model.ScanRepositoryRequest, app
 	}
 	defer func() {
 		if err := zipFile.Close(); err != nil {
-			logger.Error().Interface("zip", zipFile).Err(err).Msg("Failed to close zip file")
+			ctx.Log().With("zip", zipFile).With("err", err).Error("Failed to close zip file")
 		}
 	}()
 

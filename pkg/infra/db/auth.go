@@ -1,15 +1,14 @@
 package db
 
 import (
-	"context"
-
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
 )
 
 // Auth
-func (x *Client) SaveAuthState(ctx context.Context, state string, expiresAt int64) error {
+func (x *Client) SaveAuthState(ctx *model.Context, state string, expiresAt int64) error {
 	_, err := x.client.AuthStateCache.Create().
 		SetID(state).
 		SetExpiresAt(expiresAt).
@@ -20,7 +19,7 @@ func (x *Client) SaveAuthState(ctx context.Context, state string, expiresAt int6
 	return nil
 }
 
-func (x *Client) HasAuthState(ctx context.Context, state string, now int64) (bool, error) {
+func (x *Client) HasAuthState(ctx *model.Context, state string, now int64) (bool, error) {
 	cache, err := x.client.AuthStateCache.Get(ctx, state)
 	switch {
 	case err == nil:
@@ -32,7 +31,7 @@ func (x *Client) HasAuthState(ctx context.Context, state string, now int64) (boo
 	}
 }
 
-func (x *Client) GetUser(ctx context.Context, userID int) (*ent.User, error) {
+func (x *Client) GetUser(ctx *model.Context, userID int) (*ent.User, error) {
 	got, err := x.client.User.Get(ctx, userID)
 	if ent.IsNotFound(err) {
 		return nil, nil
@@ -43,7 +42,7 @@ func (x *Client) GetUser(ctx context.Context, userID int) (*ent.User, error) {
 	return got, nil
 }
 
-func (x *Client) PutUser(ctx context.Context, user *ent.User) (int, error) {
+func (x *Client) PutUser(ctx *model.Context, user *ent.User) (int, error) {
 	userID, err := x.client.User.Create().
 		SetGithubID(user.GithubID).
 		SetLogin(user.Login).
@@ -59,7 +58,7 @@ func (x *Client) PutUser(ctx context.Context, user *ent.User) (int, error) {
 	return userID, nil
 }
 
-func (x *Client) PutSession(ctx context.Context, ssn *ent.Session) error {
+func (x *Client) PutSession(ctx *model.Context, ssn *ent.Session) error {
 	_, err := x.client.Session.Create().
 		SetID(ssn.ID).
 		SetUserID(ssn.UserID).
@@ -74,7 +73,7 @@ func (x *Client) PutSession(ctx context.Context, ssn *ent.Session) error {
 	return nil
 }
 
-func (x *Client) GetSession(ctx context.Context, ssnID string, now int64) (*ent.Session, error) {
+func (x *Client) GetSession(ctx *model.Context, ssnID string, now int64) (*ent.Session, error) {
 	ssn, err := x.client.Session.Query().Where(session.ID(ssnID)).WithLogin().First(ctx)
 	if ent.IsNotFound(err) {
 		return nil, nil
@@ -85,7 +84,7 @@ func (x *Client) GetSession(ctx context.Context, ssnID string, now int64) (*ent.
 	return ssn, nil
 }
 
-func (x *Client) DeleteSession(ctx context.Context, ssnID string) error {
+func (x *Client) DeleteSession(ctx *model.Context, ssnID string) error {
 	if err := x.client.Session.DeleteOneID(ssnID).Exec(ctx); err != nil {
 		return goerr.Wrap(err)
 	}

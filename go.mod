@@ -17,6 +17,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/m-mizutani/goerr v0.1.2
+	github.com/m-mizutani/zlog v0.0.0-20211016022323-7594b5172111 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/pkg/errors v0.9.1

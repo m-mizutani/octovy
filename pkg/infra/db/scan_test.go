@@ -1,7 +1,6 @@
 package db_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
@@ -11,7 +10,7 @@ import (
 )
 
 func TestScan(t *testing.T) {
-	ctx := context.Background()
+	ctx := model.NewContext()
 
 	t.Run("got inserted scan report by ID", func(t *testing.T) {
 		client := setupDB(t)

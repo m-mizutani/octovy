@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/octovy/assets"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 type fileCache struct {
@@ -26,7 +27,7 @@ func (x cacheMap) Read(fname string) *fileCache {
 	if !ok {
 		data, err := asset.ReadFile(filepath.Join("out", fname))
 		if err != nil {
-			globalLogger.Debug().Str("path", fname).Err(err).Msg("failed to open requested file")
+			utils.Logger.With("path", fname).With("error", err).Debug("failed to open requested file")
 			return nil
 		}
 
@@ -91,16 +92,16 @@ var nextRoutes = rewriteRoutes{
 	},
 }
 
-func getStaticFile(ctx *gin.Context) {
-	ctx.Next()
-	logger := getLogger(ctx)
+func getStaticFile(c *gin.Context) {
+	c.Next()
+	logger := getLog(c)
 
-	if ctx.Writer.Status() != http.StatusNotFound {
+	if c.Writer.Status() != http.StatusNotFound {
 		return
 	}
 
-	fname := nextRoutes.Rewrite(strings.Trim(ctx.Request.URL.Path, "/"))
-	logger.Debug().Interface("req", ctx.Request.URL).Str("rewrite", fname).Msg("accessing static file")
+	fname := nextRoutes.Rewrite(strings.Trim(c.Request.URL.Path, "/"))
+	logger.With("req", c.Request.URL).With("rewrite", fname).Debug("accessing static file")
 
 	if fname == "" {
 		fname = "index.html"
@@ -111,15 +112,15 @@ func getStaticFile(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Header("Cache-Control", "public, max-age=31536000")
-	ctx.Header("ETag", cache.eTag)
+	c.Header("Cache-Control", "public, max-age=31536000")
+	c.Header("ETag", cache.eTag)
 
-	if match := ctx.GetHeader("If-None-Match"); match != "" {
+	if match := c.GetHeader("If-None-Match"); match != "" {
 		if strings.Contains(match, cache.eTag) {
-			ctx.Status(http.StatusNotModified)
+			c.Status(http.StatusNotModified)
 			return
 		}
 	}
 
-	ctx.Data(http.StatusOK, extMap.Find(fname), cache.data)
+	c.Data(http.StatusOK, extMap.Find(fname), cache.data)
 }

@@ -2,7 +2,6 @@ package github
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -17,8 +16,8 @@ var logger = utils.Logger
 
 // This package is used to download trivy database, not used by GitHub App.
 type Interface interface {
-	Authenticate(ctx context.Context, clientID, clientSecret, code string) (*model.GitHubToken, error)
-	GetUser(ctx context.Context, token *model.GitHubToken) (*github.User, error)
+	Authenticate(ctx *model.Context, clientID, clientSecret, code string) (*model.GitHubToken, error)
+	GetUser(ctx *model.Context, token *model.GitHubToken) (*github.User, error)
 }
 
 type Client struct {
@@ -31,7 +30,7 @@ func New() *Client {
 	}
 }
 
-func (x *Client) Authenticate(ctx context.Context, clientID, clientSecret, code string) (*model.GitHubToken, error) {
+func (x *Client) Authenticate(ctx *model.Context, clientID, clientSecret, code string) (*model.GitHubToken, error) {
 	if clientID == "" {
 		return nil, goerr.Wrap(model.ErrInvalidSystemValue, "clientID is empty")
 	}
@@ -81,11 +80,12 @@ func (x *Client) Authenticate(ctx context.Context, clientID, clientSecret, code 
 	if err := json.Unmarshal(body, &token); err != nil {
 		return nil, goerr.Wrap(err, "Failed to parse GitHub access token").With("url", webURL)
 	}
+	ctx.Log().Trace("GitHub Authenticated")
 
 	return &token, nil
 }
 
-func (x *Client) GetUser(ctx context.Context, token *model.GitHubToken) (*github.User, error) {
+func (x *Client) GetUser(ctx *model.Context, token *model.GitHubToken) (*github.User, error) {
 	body, err := getRequest(ctx, token, "https://api.github.com/user")
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (x *Client) GetUser(ctx context.Context, token *model.GitHubToken) (*github
 		return nil, goerr.Wrap(err, "Failed to parse github user").With("body", string(body))
 	}
 
-	logger.Debug().Interface("user", user).Msg("Got github user")
+	ctx.Log().With("user", user).Trace("Got github user")
 
 	if user.ID == nil {
 		return nil, goerr.New("No GitHub user ID").With("user", user)
@@ -105,7 +105,7 @@ func (x *Client) GetUser(ctx context.Context, token *model.GitHubToken) (*github
 	return &user, nil
 }
 
-func getRequest(ctx context.Context, token *model.GitHubToken, url string) ([]byte, error) {
+func getRequest(ctx *model.Context, token *model.GitHubToken, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, goerr.Wrap(err)

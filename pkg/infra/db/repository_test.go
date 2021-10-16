@@ -1,9 +1,9 @@
 package db_test
 
 import (
-	"context"
 	"testing"
 
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,7 +11,7 @@ import (
 
 func TestGetRepositories(t *testing.T) {
 	str := func(s string) *string { return &s }
-	ctx := context.Background()
+	ctx := model.NewContext()
 
 	t.Run("got inserted scan report by ID", func(t *testing.T) {
 		client := setupDB(t)

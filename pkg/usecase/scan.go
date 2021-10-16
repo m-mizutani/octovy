@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"context"
 	"time"
 
 	"github.com/m-mizutani/goerr"
@@ -21,15 +20,16 @@ func (x *usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
 func (x *usecase) InvokeScanThread() {
 	go func() {
 		if err := x.runScanThread(); err != nil {
-			x.HandleError(err)
+			x.HandleError(model.NewContext(), err)
 		}
 	}()
 }
 
 func (x *usecase) runScanThread() error {
 	for req := range x.scanQueue {
-		logger.Debug().Interface("req", req).Msg("Recv scan request")
-		ctx := context.Background()
+		ctx := model.NewContext()
+		ctx.With("scan_req", req)
+		ctx.Log().Debug("recv scan request")
 
 		clients := &scanClients{
 			DB:          x.infra.DB,
@@ -40,7 +40,7 @@ func (x *usecase) runScanThread() error {
 		}
 
 		if err := scanRepository(ctx, req, clients); err != nil {
-			x.HandleError(goerr.Wrap(err).With("request", req))
+			x.HandleError(ctx, goerr.Wrap(err).With("request", req))
 		}
 	}
 
@@ -56,7 +56,7 @@ type scanClients struct {
 	FrontendURL string
 }
 
-func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanRepositoryRequest, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) (*ent.Scan, error) {
+func insertScanReport(ctx *model.Context, client db.Interface, req *model.ScanRepositoryRequest, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) (*ent.Scan, error) {
 	if err := client.PutVulnerabilities(ctx, vulnList); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func insertScanReport(ctx context.Context, client db.Interface, req *model.ScanR
 	return got, nil
 }
 
-func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clients *scanClients) error {
+func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, clients *scanClients) error {
 	var latest *ent.Scan
 	// TargetBranch should be destination branch of PR (PR opened event) OR
 	// PR branch (synchronized event).
@@ -110,9 +110,9 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 		}
 		latest = scan
 		if scan != nil {
-			logger.Debug().Interface("scanID", scan.ID).Interface("branch", branch).Msg("Got latest scan")
+			ctx.Log().With("scanID", scan.ID).With("branch", branch).Debug("Got latest scan")
 		} else {
-			logger.Debug().Interface("branch", branch).Msg("No previous scan")
+			ctx.Log().With("branch", branch).Debug("No previous scan")
 		}
 	}
 
@@ -144,7 +144,7 @@ func scanRepository(ctx context.Context, req *model.ScanRepositoryRequest, clien
 	if err != nil {
 		return err
 	}
-	logger.Debug().Str("scanID", newScan.ID).Msg("inserted scan report")
+	ctx.Log().With("scanID", newScan.ID).Debug("inserted scan report")
 
 	if req.PullReqNumber != nil {
 		status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)

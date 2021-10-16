@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"context"
 	"sort"
 	"strings"
 
@@ -9,9 +8,10 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-func (x *usecase) HandleGitHubPushEvent(ctx context.Context, event *github.PushEvent) error {
+func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error {
 	if event == nil ||
 		event.Repo == nil ||
 		event.Repo.HTMLURL == nil ||
@@ -25,7 +25,7 @@ func (x *usecase) HandleGitHubPushEvent(ctx context.Context, event *github.PushE
 	}
 
 	if len(event.Commits) == 0 {
-		logger.Warn().Interface("event", event).Msg("No commit push")
+		ctx.Log().With("event", event).Warn("No commit push")
 		return nil
 	}
 
@@ -67,12 +67,12 @@ func (x *usecase) HandleGitHubPushEvent(ctx context.Context, event *github.PushE
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 	}
 
-	logger.Debug().Interface("event", event).Msg("Recv github push event")
+	ctx.Log().With("event", event).Debug("Recv github push event")
 	return nil
 
 }
 
-func (x *usecase) HandleGitHubPullReqEvent(ctx context.Context, event *github.PullRequestEvent) error {
+func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error {
 	if event == nil ||
 		event.Action == nil ||
 		event.Repo == nil ||
@@ -141,11 +141,11 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx context.Context, event *github.Pu
 		return goerr.Wrap(err, "Failed RegisterRepository").With("repo", repo)
 	}
 
-	logger.Debug().Interface("event", event).Msg("Recv github PR event")
+	ctx.Log().With("event", event).Debug("Recv github PR event")
 	return nil
 }
 
-func (x *usecase) HandleGitHubInstallationEvent(ctx context.Context, event *github.InstallationEvent) error {
+func (x *usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error {
 	if event == nil ||
 		event.Installation == nil ||
 		event.Installation.ID == nil ||
@@ -175,7 +175,7 @@ func (x *usecase) HandleGitHubInstallationEvent(ctx context.Context, event *gith
 		}
 	}
 
-	logger.Debug().Interface("event", event).Msg("Recv github installation event")
+	ctx.Log().With("event", event).Debug("Recv github installation event")
 	return nil
 }
 
@@ -184,7 +184,7 @@ func (x *usecase) VerifyGitHubSecret(sigSHA256 string, body []byte) error {
 		if sigSHA256 == "" {
 			return nil // No secret and no signature
 		}
-		logger.Warn().Str("signature", sigSHA256).Msg("Verifying X-Hub-Signature-256, but no secret is configured. Octovy ignore the signature and continue processing")
+		utils.Logger.With("signature", sigSHA256).Warn("Got X-Hub-Signature-256, but no secret is configured. Octovy ignore the signature and continue processing")
 		return nil
 	}
 

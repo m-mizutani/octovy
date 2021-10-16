@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
 func getAuthGitHub(c *gin.Context) {
 	uc := getUsecase(c)
 
-	state, err := uc.CreateAuthState(c)
+	state, err := uc.CreateAuthState(model.NewContextWith(c))
 	if err != nil {
 		c.Error(err)
 		return
@@ -37,7 +38,7 @@ func getAuthGitHubCallback(c *gin.Context) {
 	code := c.Query("code")
 	state := c.Query("state")
 
-	user, err := uc.AuthGitHubUser(c, code, state)
+	user, err := uc.AuthGitHubUser(model.NewContextWith(c), code, state)
 	if err != nil {
 		errMsg := "Authentication failed in GitHub OAuth procedure, requestID: "
 		if id, ok := c.Get(contextRequestIDKey); ok {
@@ -52,7 +53,7 @@ func getAuthGitHubCallback(c *gin.Context) {
 		return
 	}
 
-	ssn, err := uc.CreateSession(c, user)
+	ssn, err := uc.CreateSession(model.NewContextWith(c), user)
 	if err != nil {
 		v := url.Values{}
 		v.Set("login_error", "Failed to issue session token")

@@ -6,6 +6,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 func (x *usecase) initErrorHandler() error {
@@ -17,34 +19,34 @@ func (x *usecase) initErrorHandler() error {
 		if err != nil {
 			return goerr.Wrap(err)
 		}
-		logger.Debug().Str("dsn", x.config.SentryDSN).Str("env", x.config.SentryEnv).Msg("sentry initialized")
+		utils.Logger.With("dsn", x.config.SentryDSN).With("env", x.config.SentryEnv).Debug("sentry initialized")
 	}
 	return nil
 }
 
 func (x *usecase) flushError() {
 	sentry.Flush(2 * time.Second)
-	logger.Debug().Msg("sentry flushed")
+	utils.Logger.Debug("sentry flushed")
 }
 
 // HandleError handles a notable error. Logging error and send it to sentry if configured. It should handle an error caused by system, not a user.
-func (x *usecase) HandleError(err error) {
+func (x *usecase) HandleError(ctx *model.Context, err error) {
 	// Logging
-	entry := logger.Error()
+	entry := ctx.Log()
 	var gerr *goerr.Error
 	if errors.As(err, &gerr) {
 		for key, value := range gerr.Values() {
-			entry = entry.Interface(key, value)
+			entry = entry.With(key, value)
 		}
-		entry = entry.Interface("stacktrace", gerr.Stacks())
+		entry = entry.With("stacktrace", gerr.Stacks())
 	}
 
 	if x.config.SentryDSN != "" {
 		evID := sentry.CaptureException(err)
-		entry = entry.Interface("sentry.EventID", evID)
+		entry = entry.With("sentry.EventID", evID)
 	}
 
-	entry.Msg(err.Error())
+	entry.Error(err.Error())
 
 	if x.testErrorHandler != nil {
 		x.testErrorHandler(err)
