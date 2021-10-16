@@ -17,11 +17,9 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/m-mizutani/goerr v0.1.2
-	github.com/m-mizutani/zlog v0.0.0-20211016022323-7594b5172111 // indirect
-	github.com/mattn/go-colorable v0.1.11 // indirect
+	github.com/m-mizutani/zlog v0.0.0-20211016022323-7594b5172111
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/pkg/errors v0.9.1
-	github.com/rs/zerolog v1.20.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
