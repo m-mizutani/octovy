@@ -143,7 +143,7 @@ function Scan(props: { repo: model.repository; scan: model.scan }) {
           : "✅ No vulnerabilities"}
       </Link>
       {" / "}
-      <Link href={props.repo.url + "/blob/" + scan.commit_id}>
+      <Link href={props.repo.url + "/tree/" + scan.commit_id}>
         {scan.commit_id.substr(0, 7)}
       </Link>
       <span> {timeAgo.format(ts)}</span>
