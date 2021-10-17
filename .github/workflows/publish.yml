@@ -86,10 +86,14 @@ jobs:
         run: gcloud auth configure-docker --quiet
       - name: Push Docker image
         run: docker pull ${{ env.GITHUB_IMAGE_NAME }}
-      - name: Rename Docker image
+      - name: Rename Docker image (tag name)
         run: docker tag ${{ env.GITHUB_IMAGE_NAME }} "${{ env.GCP_IMAGE_REPO }}:${{ steps.tag.outputs.tag }}"
-      - name: Push Docker image
+      - name: Rename Docker image (latest)
+        run: docker tag ${{ env.GITHUB_IMAGE_NAME }} "${{ env.GCP_IMAGE_REPO }}:latest"
+      - name: Push Docker image (tag name)
         run: docker push "${{ env.GCP_IMAGE_REPO }}:${{ steps.tag.outputs.tag }}"
+      - name: Push Docker image (latest)
+        run: docker push "${{ env.GCP_IMAGE_REPO }}:latest"
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
