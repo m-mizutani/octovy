@@ -5,22 +5,27 @@ Demo site: https://octovy.dev
 
 ## Overview
 
-`Octovy` is a vulnerability management tool for 3rd party OSS packages based on [Trivy](https://github.com/aquasecurity/trivy).
-
-![Comment to PR](https://user-images.githubusercontent.com/605953/137613080-ba866f19-cfa6-40b8-ab41-d7e2269356f2.png)
+`Octovy` is a vulnerability management tool for 3rd party OSS packages based on [Trivy](https://github.com/aquasecurity/trivy). It works as GitHub App and scan source code of a repository that is installed the GitHub App by Trivy. The scan result is stored into database and developer and security administrator can see and manage vulnerability via Web console.
 
 ## Features
 
-- **Package vulnerability detection in organization-wide**: Vulnerability detection and handling needs an organization-wide effort. As the law of the "weakest link", the weakest product, service or system determines the level of security in an organization. Octovy stores this data and presents the necessary information to security administrator.
-- **Vulnerability management**:
+- **Organization-wide vulnerability detection**: Vulnerability detection and handling needs an organization-wide effort. Octovy scans all repositories that are installed GitHub App. It prepends misconfiguration of each repository. Also Octovy stores all scanned vulnerability package list and presents the necessary information to security administrator.
+    - List newly detected vulnerabilities in your organization
+    - List all repositories that have specified vulnerability
+- **Vulnerability management**: Octovy provides Web user interface to manage vulnerability status. A user can change status and put a comment to share vulnerability handling decision with a team. Status can be selected from below:
+  - `To be fixed`: Vulnerability should be fixed later
+  - `Snoozed`: Waiting vulnerability fix. E.g.) a package author have not update vulnerable code.
+  - `Unaffected`: The vulnerability is not used in your product.
+  - `Mitigated`: Developer have changed settings to disable the vulnerability.
+
+Also, Octovy notifies changes of vulnerability in Pull Request of GitHub. Developer can see new/fixed package vulnerabilities by own commit in a comment of the PR.
+
+![Comment to PR](https://user-images.githubusercontent.com/605953/137613080-ba866f19-cfa6-40b8-ab41-d7e2269356f2.png)
+
 
 ## Architecture
 
 ![architecture](https://user-images.githubusercontent.com/605953/137614140-f5005f39-0ead-49bf-a097-fc6507697305.jpg)
-
-Octovy runs as individual container with [Trivy](https://github.com/aquasecurity/trivy).
-
-
 
 ## Usage
 
@@ -56,6 +61,15 @@ Please note to remember to push `Save changes` button.
 
 Octovy container image is published into both of GitHub Container Registry `ghcr.io/m-mizutani/octovy` and Google Container Registry `gcr.io/octovy/octovy`.
 
+| Registry                  | Commit | Release | Latest |
+|:--------------------------|:------:|:-------:|:------:|
+| GitHub Container Registry |   x    |    x    |   x    |
+| Google Container Registry |        |    x    |   x    |
+
+- Commit: Images built by all push event. Tag is commit ID (e.g. `ghcr.io/m-mizutani/octovy:2e96dedacb63c7c8ddf51fccac7780822081057a`)
+- Release: Image built by release. Tag is version number (e.g. `ghcr.io/m-mizutani/octovy:v0.1.0`)
+- Latest: Image built by latest release. Tag is `latest`.
+
 Run container image with following environment variables.
 
 - General
@@ -76,6 +90,8 @@ Run container image with following environment variables.
     - `OCTOVY_DB_CONFIG`: DSN of your database. Example: `host=x.x.x.x port=5432 user=octovy_app dbname=octovy_db password=xxxxxx`
 
 `OCTOVY_GITHUB_APP_PRIVATE_KEY`, `OCTOVY_GITHUB_SECRET`, `OCTOVY_GITHUB_WEBHOOK_SECRET` and `OCTOVY_DB_CONFIG` may contain secret values. I highly recommend to use secret variable management service (e.g. [Secret Manager](https://cloud.google.com/secret-manager) of Google Cloud and [AWS Secrets Manager](https://aws.amazon.com/jp/secrets-manager/)).
+
+An example of deploy script to Cloud Run is available in [tools/deploy_cloud_run.sh](tools/deploy_cloud_run.sh).
 
 ## License
 

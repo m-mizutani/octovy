@@ -6,14 +6,9 @@ node_modules
 assets/out
 assets/.next
 
-# CDK asset staging directory
-.cdk.staging
-cdk.out
-build
-.vscode
-*.sh
 tmp
 
 trivy.db
 octovy
-.env
+.env*
+.vscode
