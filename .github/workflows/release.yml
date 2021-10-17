@@ -16,13 +16,11 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-      - name: extract tag name
+      - name: extract tag
         id: tag
-        uses: actions/github-script@0.2.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            return context.payload.ref.replace(/\/refs\/tags\//, '');
+        run: |
+          TAG=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
+          echo ::set-output name=tag::$TAG
       - name: GCP Authenticate
         uses: google-github-actions/setup-gcloud@master
         with:
