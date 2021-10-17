@@ -27,6 +27,7 @@ type VulnStatusIndexQuery struct {
 	fields     []string
 	predicates []predicate.VulnStatusIndex
 	// eager-loading edges.
+	withLatest *VulnStatusQuery
 	withStatus *VulnStatusQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
@@ -63,6 +64,28 @@ func (vsiq *VulnStatusIndexQuery) Unique(unique bool) *VulnStatusIndexQuery {
 func (vsiq *VulnStatusIndexQuery) Order(o ...OrderFunc) *VulnStatusIndexQuery {
 	vsiq.order = append(vsiq.order, o...)
 	return vsiq
+}
+
+// QueryLatest chains the current query on the "latest" edge.
+func (vsiq *VulnStatusIndexQuery) QueryLatest() *VulnStatusQuery {
+	query := &VulnStatusQuery{config: vsiq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := vsiq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := vsiq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vulnstatusindex.Table, vulnstatusindex.FieldID, selector),
+			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, vulnstatusindex.LatestTable, vulnstatusindex.LatestColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(vsiq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryStatus chains the current query on the "status" edge.
@@ -268,11 +291,23 @@ func (vsiq *VulnStatusIndexQuery) Clone() *VulnStatusIndexQuery {
 		offset:     vsiq.offset,
 		order:      append([]OrderFunc{}, vsiq.order...),
 		predicates: append([]predicate.VulnStatusIndex{}, vsiq.predicates...),
+		withLatest: vsiq.withLatest.Clone(),
 		withStatus: vsiq.withStatus.Clone(),
 		// clone intermediate query.
 		sql:  vsiq.sql.Clone(),
 		path: vsiq.path,
 	}
+}
+
+// WithLatest tells the query-builder to eager-load the nodes that are connected to
+// the "latest" edge. The optional arguments are used to configure the query builder of the edge.
+func (vsiq *VulnStatusIndexQuery) WithLatest(opts ...func(*VulnStatusQuery)) *VulnStatusIndexQuery {
+	query := &VulnStatusQuery{config: vsiq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	vsiq.withLatest = query
+	return vsiq
 }
 
 // WithStatus tells the query-builder to eager-load the nodes that are connected to
@@ -328,10 +363,14 @@ func (vsiq *VulnStatusIndexQuery) sqlAll(ctx context.Context) ([]*VulnStatusInde
 		nodes       = []*VulnStatusIndex{}
 		withFKs     = vsiq.withFKs
 		_spec       = vsiq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
+			vsiq.withLatest != nil,
 			vsiq.withStatus != nil,
 		}
 	)
+	if vsiq.withLatest != nil {
+		withFKs = true
+	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, vulnstatusindex.ForeignKeys...)
 	}
@@ -353,6 +392,35 @@ func (vsiq *VulnStatusIndexQuery) sqlAll(ctx context.Context) ([]*VulnStatusInde
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
+	}
+
+	if query := vsiq.withLatest; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*VulnStatusIndex)
+		for i := range nodes {
+			if nodes[i].vuln_status_index_latest == nil {
+				continue
+			}
+			fk := *nodes[i].vuln_status_index_latest
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(vulnstatus.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "vuln_status_index_latest" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Latest = n
+			}
+		}
 	}
 
 	if query := vsiq.withStatus; query != nil {

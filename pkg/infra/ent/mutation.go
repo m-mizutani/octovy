@@ -5027,6 +5027,8 @@ type VulnStatusIndexMutation struct {
 	typ           string
 	id            *string
 	clearedFields map[string]struct{}
+	latest        *int
+	clearedlatest bool
 	status        map[int]struct{}
 	removedstatus map[int]struct{}
 	clearedstatus bool
@@ -5118,6 +5120,45 @@ func (m *VulnStatusIndexMutation) ID() (id string, exists bool) {
 		return
 	}
 	return *m.id, true
+}
+
+// SetLatestID sets the "latest" edge to the VulnStatus entity by id.
+func (m *VulnStatusIndexMutation) SetLatestID(id int) {
+	m.latest = &id
+}
+
+// ClearLatest clears the "latest" edge to the VulnStatus entity.
+func (m *VulnStatusIndexMutation) ClearLatest() {
+	m.clearedlatest = true
+}
+
+// LatestCleared reports if the "latest" edge to the VulnStatus entity was cleared.
+func (m *VulnStatusIndexMutation) LatestCleared() bool {
+	return m.clearedlatest
+}
+
+// LatestID returns the "latest" edge ID in the mutation.
+func (m *VulnStatusIndexMutation) LatestID() (id int, exists bool) {
+	if m.latest != nil {
+		return *m.latest, true
+	}
+	return
+}
+
+// LatestIDs returns the "latest" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LatestID instead. It exists only for internal usage by the builders.
+func (m *VulnStatusIndexMutation) LatestIDs() (ids []int) {
+	if id := m.latest; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLatest resets all changes to the "latest" edge.
+func (m *VulnStatusIndexMutation) ResetLatest() {
+	m.latest = nil
+	m.clearedlatest = false
 }
 
 // AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
@@ -5267,7 +5308,10 @@ func (m *VulnStatusIndexMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *VulnStatusIndexMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.latest != nil {
+		edges = append(edges, vulnstatusindex.EdgeLatest)
+	}
 	if m.status != nil {
 		edges = append(edges, vulnstatusindex.EdgeStatus)
 	}
@@ -5278,6 +5322,10 @@ func (m *VulnStatusIndexMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *VulnStatusIndexMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case vulnstatusindex.EdgeLatest:
+		if id := m.latest; id != nil {
+			return []ent.Value{*id}
+		}
 	case vulnstatusindex.EdgeStatus:
 		ids := make([]ent.Value, 0, len(m.status))
 		for id := range m.status {
@@ -5290,7 +5338,7 @@ func (m *VulnStatusIndexMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *VulnStatusIndexMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedstatus != nil {
 		edges = append(edges, vulnstatusindex.EdgeStatus)
 	}
@@ -5313,7 +5361,10 @@ func (m *VulnStatusIndexMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *VulnStatusIndexMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.clearedlatest {
+		edges = append(edges, vulnstatusindex.EdgeLatest)
+	}
 	if m.clearedstatus {
 		edges = append(edges, vulnstatusindex.EdgeStatus)
 	}
@@ -5324,6 +5375,8 @@ func (m *VulnStatusIndexMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *VulnStatusIndexMutation) EdgeCleared(name string) bool {
 	switch name {
+	case vulnstatusindex.EdgeLatest:
+		return m.clearedlatest
 	case vulnstatusindex.EdgeStatus:
 		return m.clearedstatus
 	}
@@ -5334,6 +5387,9 @@ func (m *VulnStatusIndexMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *VulnStatusIndexMutation) ClearEdge(name string) error {
 	switch name {
+	case vulnstatusindex.EdgeLatest:
+		m.ClearLatest()
+		return nil
 	}
 	return fmt.Errorf("unknown VulnStatusIndex unique edge %s", name)
 }
@@ -5342,6 +5398,9 @@ func (m *VulnStatusIndexMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *VulnStatusIndexMutation) ResetEdge(name string) error {
 	switch name {
+	case vulnstatusindex.EdgeLatest:
+		m.ResetLatest()
+		return nil
 	case vulnstatusindex.EdgeStatus:
 		m.ResetStatus()
 		return nil

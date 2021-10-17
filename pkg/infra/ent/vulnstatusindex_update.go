@@ -27,6 +27,25 @@ func (vsiu *VulnStatusIndexUpdate) Where(ps ...predicate.VulnStatusIndex) *VulnS
 	return vsiu
 }
 
+// SetLatestID sets the "latest" edge to the VulnStatus entity by ID.
+func (vsiu *VulnStatusIndexUpdate) SetLatestID(id int) *VulnStatusIndexUpdate {
+	vsiu.mutation.SetLatestID(id)
+	return vsiu
+}
+
+// SetNillableLatestID sets the "latest" edge to the VulnStatus entity by ID if the given value is not nil.
+func (vsiu *VulnStatusIndexUpdate) SetNillableLatestID(id *int) *VulnStatusIndexUpdate {
+	if id != nil {
+		vsiu = vsiu.SetLatestID(*id)
+	}
+	return vsiu
+}
+
+// SetLatest sets the "latest" edge to the VulnStatus entity.
+func (vsiu *VulnStatusIndexUpdate) SetLatest(v *VulnStatus) *VulnStatusIndexUpdate {
+	return vsiu.SetLatestID(v.ID)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
 func (vsiu *VulnStatusIndexUpdate) AddStatuIDs(ids ...int) *VulnStatusIndexUpdate {
 	vsiu.mutation.AddStatuIDs(ids...)
@@ -45,6 +64,12 @@ func (vsiu *VulnStatusIndexUpdate) AddStatus(v ...*VulnStatus) *VulnStatusIndexU
 // Mutation returns the VulnStatusIndexMutation object of the builder.
 func (vsiu *VulnStatusIndexUpdate) Mutation() *VulnStatusIndexMutation {
 	return vsiu.mutation
+}
+
+// ClearLatest clears the "latest" edge to the VulnStatus entity.
+func (vsiu *VulnStatusIndexUpdate) ClearLatest() *VulnStatusIndexUpdate {
+	vsiu.mutation.ClearLatest()
+	return vsiu
 }
 
 // ClearStatus clears all "status" edges to the VulnStatus entity.
@@ -140,6 +165,41 @@ func (vsiu *VulnStatusIndexUpdate) sqlSave(ctx context.Context) (n int, err erro
 			}
 		}
 	}
+	if vsiu.mutation.LatestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatusindex.LatestTable,
+			Columns: []string{vulnstatusindex.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vsiu.mutation.LatestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatusindex.LatestTable,
+			Columns: []string{vulnstatusindex.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if vsiu.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -213,6 +273,25 @@ type VulnStatusIndexUpdateOne struct {
 	mutation *VulnStatusIndexMutation
 }
 
+// SetLatestID sets the "latest" edge to the VulnStatus entity by ID.
+func (vsiuo *VulnStatusIndexUpdateOne) SetLatestID(id int) *VulnStatusIndexUpdateOne {
+	vsiuo.mutation.SetLatestID(id)
+	return vsiuo
+}
+
+// SetNillableLatestID sets the "latest" edge to the VulnStatus entity by ID if the given value is not nil.
+func (vsiuo *VulnStatusIndexUpdateOne) SetNillableLatestID(id *int) *VulnStatusIndexUpdateOne {
+	if id != nil {
+		vsiuo = vsiuo.SetLatestID(*id)
+	}
+	return vsiuo
+}
+
+// SetLatest sets the "latest" edge to the VulnStatus entity.
+func (vsiuo *VulnStatusIndexUpdateOne) SetLatest(v *VulnStatus) *VulnStatusIndexUpdateOne {
+	return vsiuo.SetLatestID(v.ID)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
 func (vsiuo *VulnStatusIndexUpdateOne) AddStatuIDs(ids ...int) *VulnStatusIndexUpdateOne {
 	vsiuo.mutation.AddStatuIDs(ids...)
@@ -231,6 +310,12 @@ func (vsiuo *VulnStatusIndexUpdateOne) AddStatus(v ...*VulnStatus) *VulnStatusIn
 // Mutation returns the VulnStatusIndexMutation object of the builder.
 func (vsiuo *VulnStatusIndexUpdateOne) Mutation() *VulnStatusIndexMutation {
 	return vsiuo.mutation
+}
+
+// ClearLatest clears the "latest" edge to the VulnStatus entity.
+func (vsiuo *VulnStatusIndexUpdateOne) ClearLatest() *VulnStatusIndexUpdateOne {
+	vsiuo.mutation.ClearLatest()
+	return vsiuo
 }
 
 // ClearStatus clears all "status" edges to the VulnStatus entity.
@@ -349,6 +434,41 @@ func (vsiuo *VulnStatusIndexUpdateOne) sqlSave(ctx context.Context) (_node *Vuln
 				ps[i](selector)
 			}
 		}
+	}
+	if vsiuo.mutation.LatestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatusindex.LatestTable,
+			Columns: []string{vulnstatusindex.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vsiuo.mutation.LatestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatusindex.LatestTable,
+			Columns: []string{vulnstatusindex.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if vsiuo.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{

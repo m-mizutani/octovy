@@ -1,4 +1,4 @@
-# Octovy [![Go Report Card](https://goreportcard.com/badge/github.com/m-mizutani/octovy)](https://goreportcard.com/report/github.com/m-mizutani/octovy) [![Build Status](https://travis-ci.com/m-mizutani/octovy.svg?branch=master)](https://travis-ci.com/m-mizutani/octovy)
+# Octovy [![Go Report Card](https://goreportcard.com/badge/github.com/m-mizutani/octovy)](https://goreportcard.com/report/github.com/m-mizutani/octovy) [![Unit test](https://github.com/m-mizutani/octovy/actions/workflows/test.yml/badge.svg)](https://github.com/m-mizutani/octovy/actions/workflows/test.yml) [![Vulnerability scan](https://github.com/m-mizutani/octovy/actions/workflows/trivy.yml/badge.svg)](https://github.com/m-mizutani/octovy/actions/workflows/trivy.yml) [![Security scan](https://github.com/m-mizutani/octovy/actions/workflows/gosec.yml/badge.svg)](https://github.com/m-mizutani/octovy/actions/workflows/gosec.yml)
 
 ![SampleView](https://user-images.githubusercontent.com/605953/120887167-48f7eb80-c62c-11eb-877d-79f081367c81.png)
 https://octovy.io

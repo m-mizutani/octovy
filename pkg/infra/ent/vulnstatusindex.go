@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
 
@@ -17,23 +18,40 @@ type VulnStatusIndex struct {
 	ID string `json:"id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VulnStatusIndexQuery when eager-loading is set.
-	Edges             VulnStatusIndexEdges `json:"edges"`
-	repository_status *int
+	Edges                    VulnStatusIndexEdges `json:"edges"`
+	repository_status        *int
+	vuln_status_index_latest *int
 }
 
 // VulnStatusIndexEdges holds the relations/edges for other nodes in the graph.
 type VulnStatusIndexEdges struct {
+	// Latest holds the value of the latest edge.
+	Latest *VulnStatus `json:"latest,omitempty"`
 	// Status holds the value of the status edge.
 	Status []*VulnStatus `json:"status,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
+}
+
+// LatestOrErr returns the Latest value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e VulnStatusIndexEdges) LatestOrErr() (*VulnStatus, error) {
+	if e.loadedTypes[0] {
+		if e.Latest == nil {
+			// The edge latest was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: vulnstatus.Label}
+		}
+		return e.Latest, nil
+	}
+	return nil, &NotLoadedError{edge: "latest"}
 }
 
 // StatusOrErr returns the Status value or an error if the edge
 // was not loaded in eager-loading.
 func (e VulnStatusIndexEdges) StatusOrErr() ([]*VulnStatus, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.Status, nil
 	}
 	return nil, &NotLoadedError{edge: "status"}
@@ -47,6 +65,8 @@ func (*VulnStatusIndex) scanValues(columns []string) ([]interface{}, error) {
 		case vulnstatusindex.FieldID:
 			values[i] = new(sql.NullString)
 		case vulnstatusindex.ForeignKeys[0]: // repository_status
+			values[i] = new(sql.NullInt64)
+		case vulnstatusindex.ForeignKeys[1]: // vuln_status_index_latest
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type VulnStatusIndex", columns[i])
@@ -76,9 +96,21 @@ func (vsi *VulnStatusIndex) assignValues(columns []string, values []interface{})
 				vsi.repository_status = new(int)
 				*vsi.repository_status = int(value.Int64)
 			}
+		case vulnstatusindex.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field vuln_status_index_latest", value)
+			} else if value.Valid {
+				vsi.vuln_status_index_latest = new(int)
+				*vsi.vuln_status_index_latest = int(value.Int64)
+			}
 		}
 	}
 	return nil
+}
+
+// QueryLatest queries the "latest" edge of the VulnStatusIndex entity.
+func (vsi *VulnStatusIndex) QueryLatest() *VulnStatusQuery {
+	return (&VulnStatusIndexClient{config: vsi.config}).QueryLatest(vsi)
 }
 
 // QueryStatus queries the "status" edge of the VulnStatusIndex entity.

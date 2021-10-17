@@ -174,6 +174,7 @@ var (
 	VulnStatusIndexesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
 		{Name: "repository_status", Type: field.TypeInt, Nullable: true},
+		{Name: "vuln_status_index_latest", Type: field.TypeInt, Nullable: true},
 	}
 	// VulnStatusIndexesTable holds the schema information for the "vuln_status_indexes" table.
 	VulnStatusIndexesTable = &schema.Table{
@@ -185,6 +186,12 @@ var (
 				Symbol:     "vuln_status_indexes_repositories_status",
 				Columns:    []*schema.Column{VulnStatusIndexesColumns[1]},
 				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "vuln_status_indexes_vuln_status_latest",
+				Columns:    []*schema.Column{VulnStatusIndexesColumns[2]},
+				RefColumns: []*schema.Column{VulnStatusColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -308,6 +315,7 @@ func init() {
 	VulnStatusTable.ForeignKeys[2].RefTable = VulnStatusIndexesTable
 	VulnStatusTable.ForeignKeys[3].RefTable = VulnerabilitiesTable
 	VulnStatusIndexesTable.ForeignKeys[0].RefTable = RepositoriesTable
+	VulnStatusIndexesTable.ForeignKeys[1].RefTable = VulnStatusTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[0].RefTable = PackageRecordsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
 	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable

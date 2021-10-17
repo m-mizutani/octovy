@@ -21,6 +21,7 @@ func (VulnStatusIndex) Fields() []ent.Field {
 // Edges of the VulnStatusIndex.
 func (VulnStatusIndex) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("latest", VulnStatus.Type).Unique(),
 		edge.To("status", VulnStatus.Type),
 	}
 }

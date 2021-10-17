@@ -1069,6 +1069,22 @@ func (c *VulnStatusIndexClient) GetX(ctx context.Context, id string) *VulnStatus
 	return obj
 }
 
+// QueryLatest queries the latest edge of a VulnStatusIndex.
+func (c *VulnStatusIndexClient) QueryLatest(vsi *VulnStatusIndex) *VulnStatusQuery {
+	query := &VulnStatusQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := vsi.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vulnstatusindex.Table, vulnstatusindex.FieldID, id),
+			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, vulnstatusindex.LatestTable, vulnstatusindex.LatestColumn),
+		)
+		fromV = sqlgraph.Neighbors(vsi.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryStatus queries the status edge of a VulnStatusIndex.
 func (c *VulnStatusIndexClient) QueryStatus(vsi *VulnStatusIndex) *VulnStatusQuery {
 	query := &VulnStatusQuery{config: c.config}

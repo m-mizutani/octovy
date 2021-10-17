@@ -46,6 +46,7 @@ export type vulnStatusType =
 
 type vulnStatusIndex = {
   edges: {
+    latest?: vulnStatus;
     status: vulnStatus[];
   };
 };
@@ -94,10 +95,13 @@ export class vulnStatusDB {
     return `${src}|${pkgName}|${vulnID}`;
   }
   constructor(statusIndex: vulnStatusIndex[]) {
-    console.log({ statusIndex });
     this.vulnMap = {};
     (statusIndex || []).forEach((idx) => {
-      const status = idx.edges.status[0];
+      if (!idx.edges.latest) {
+        return;
+      }
+
+      const status = idx.edges.latest;
       const key = vulnStatusDB.toKey(
         status.source,
         status.pkg_name,
