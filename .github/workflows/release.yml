@@ -5,7 +5,7 @@ on:
 
 env:
   GITHUB_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/octovy:${{ github.sha }}
-  GCP_IMAGE_NAME: gcr.io/octovy/octovy:${GITHUB_REF##*/}
+  GCP_IMAGE_BASE: "gcr.io/octovy/octovy:"
 
 jobs:
   publish:
@@ -16,6 +16,13 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
+      - name: extract tag name
+        id: tag
+        uses: actions/github-script@0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            return context.payload.ref.replace(/\/refs\/tags\//, '');
       - name: GCP Authenticate
         uses: google-github-actions/setup-gcloud@master
         with:
@@ -27,11 +34,11 @@ jobs:
       - name: Push Docker image
         run: docker pull ${{ env.GITHUB_IMAGE_NAME }}
       - name: Rename Docker image
-        run: docker tag ${{ env.GITHUB_IMAGE_NAME }} ${{ env.GCP_IMAGE_NAME }}
+        run: docker tag ${{ env.GITHUB_IMAGE_NAME }} ${{ env.GCP_IMAGE_NAME }}${{ steps.tag.outputs.result }}
       - name: Push Docker image
-        run: docker push ${{ env.GCP_IMAGE_NAME }}
+        run: docker push ${{ env.GCP_IMAGE_NAME }}${{ steps.tag.outputs.result }}
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "Pushed to ${{ env.GCP_IMAGE_NAME }}"
+          SLACK_MESSAGE: "Pushed to ${{ env.GCP_IMAGE_NAME }}${{ steps.tag.outputs.result }}"
