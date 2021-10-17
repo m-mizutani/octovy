@@ -66,7 +66,7 @@ Octovy container image is published into both of GitHub Container Registry `ghcr
 | GitHub Container Registry |   x    |    x    |   x    |
 | Google Container Registry |        |    x    |   x    |
 
-- Commit: Images built by all push event. Tag is commit ID (e.g. `ghcr.io/m-mizutani/octovy:2e96dedacb63c7c8ddf51fccac7780822081057a`)
+- Commit: Images built by all push event on `main` branch. Tag is commit ID (e.g. `ghcr.io/m-mizutani/octovy:2e96dedacb63c7c8ddf51fccac7780822081057a`)
 - Release: Image built by release. Tag is version number (e.g. `ghcr.io/m-mizutani/octovy:v0.1.0`)
 - Latest: Image built by latest release. Tag is `latest`.
 
