@@ -2,10 +2,11 @@ name: Build and publish container image
 
 on:
   release:
+    types: [published]
 
 env:
   GITHUB_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/octovy:${{ github.sha }}
-  GCP_IMAGE_BASE: "gcr.io/octovy/octovy:"
+  GCP_IMAGE_REPO: "gcr.io/octovy/octovy"
 
 jobs:
   publish:
@@ -32,11 +33,11 @@ jobs:
       - name: Push Docker image
         run: docker pull ${{ env.GITHUB_IMAGE_NAME }}
       - name: Rename Docker image
-        run: docker tag ${{ env.GITHUB_IMAGE_NAME }} ${{ env.GCP_IMAGE_NAME }}${{ steps.tag.outputs.result }}
+        run: docker tag ${{ env.GITHUB_IMAGE_NAME }} "${{ env.GCP_IMAGE_REPO }}:${{ steps.tag.outputs.tag }}"
       - name: Push Docker image
-        run: docker push ${{ env.GCP_IMAGE_NAME }}${{ steps.tag.outputs.result }}
+        run: docker push "${{ env.GCP_IMAGE_REPO }}:${{ steps.tag.outputs.tag }}"
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "Pushed to ${{ env.GCP_IMAGE_NAME }}${{ steps.tag.outputs.result }}"
+          SLACK_MESSAGE: "Pushed to ${{ env.GCP_IMAGE_REPO }}:${{ steps.tag.outputs.tag }}"
