@@ -46,6 +46,7 @@ export type vulnStatusType =
 
 type vulnStatusIndex = {
   edges: {
+    latest?: vulnStatus;
     status: vulnStatus[];
   };
 };
@@ -59,6 +60,9 @@ export type vulnStatus = {
   source: string;
   status: vulnStatusType;
   vuln_id: string;
+  edges: {
+    author: user;
+  };
 };
 
 export type vulnerability = {
@@ -84,7 +88,11 @@ export interface user {
 export type vulnStatusAttrs = {
   comment: string;
   expires_at: number;
+  created_at: number;
   status: vulnStatusType;
+  author_name: string;
+  author_url: string;
+  author_avatar: string;
 };
 
 // TODO: Migrate vulnStatusDB to backend pkg/domain/model
@@ -94,19 +102,26 @@ export class vulnStatusDB {
     return `${src}|${pkgName}|${vulnID}`;
   }
   constructor(statusIndex: vulnStatusIndex[]) {
-    console.log({ statusIndex });
     this.vulnMap = {};
     (statusIndex || []).forEach((idx) => {
-      const status = idx.edges.status[0];
+      if (!idx.edges.latest) {
+        return;
+      }
+
+      const status = idx.edges.latest;
       const key = vulnStatusDB.toKey(
         status.source,
         status.pkg_name,
         status.vuln_id
       );
-      const attrs = {
+      const attrs: vulnStatusAttrs = {
         comment: status.comment,
         expires_at: status.expires_at,
+        created_at: status.created_at,
         status: status.status,
+        author_name: status.edges.author.login,
+        author_url: status.edges.author.url,
+        author_avatar: status.edges.author.avatar_url,
       };
       console.log("insert", { key }, { attrs });
       this.vulnMap[key] = attrs;
@@ -119,7 +134,11 @@ export class vulnStatusDB {
       this.vulnMap[key] || {
         comment: "",
         expires_at: 0,
+        created_at: 0,
         status: "none",
+        author_name: "",
+        author_url: "",
+        author_avatar: "",
       }
     );
   }

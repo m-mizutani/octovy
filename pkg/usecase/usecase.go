@@ -24,7 +24,7 @@ type Interface interface {
 
 	// DB access proxy
 	RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error)
-	UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) error
+	UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error)
 	LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error)
 	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error)

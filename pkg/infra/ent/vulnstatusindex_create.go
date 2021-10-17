@@ -28,6 +28,25 @@ func (vsic *VulnStatusIndexCreate) SetID(s string) *VulnStatusIndexCreate {
 	return vsic
 }
 
+// SetLatestID sets the "latest" edge to the VulnStatus entity by ID.
+func (vsic *VulnStatusIndexCreate) SetLatestID(id int) *VulnStatusIndexCreate {
+	vsic.mutation.SetLatestID(id)
+	return vsic
+}
+
+// SetNillableLatestID sets the "latest" edge to the VulnStatus entity by ID if the given value is not nil.
+func (vsic *VulnStatusIndexCreate) SetNillableLatestID(id *int) *VulnStatusIndexCreate {
+	if id != nil {
+		vsic = vsic.SetLatestID(*id)
+	}
+	return vsic
+}
+
+// SetLatest sets the "latest" edge to the VulnStatus entity.
+func (vsic *VulnStatusIndexCreate) SetLatest(v *VulnStatus) *VulnStatusIndexCreate {
+	return vsic.SetLatestID(v.ID)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatus entity by IDs.
 func (vsic *VulnStatusIndexCreate) AddStatuIDs(ids ...int) *VulnStatusIndexCreate {
 	vsic.mutation.AddStatuIDs(ids...)
@@ -147,6 +166,26 @@ func (vsic *VulnStatusIndexCreate) createSpec() (*VulnStatusIndex, *sqlgraph.Cre
 	if id, ok := vsic.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if nodes := vsic.mutation.LatestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   vulnstatusindex.LatestTable,
+			Columns: []string{vulnstatusindex.LatestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: vulnstatus.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.vuln_status_index_latest = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := vsic.mutation.StatusIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

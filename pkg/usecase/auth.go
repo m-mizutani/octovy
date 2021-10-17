@@ -70,8 +70,8 @@ func (x *usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.U
 	if githubUser.Name == nil {
 		return nil, goerr.Wrap(model.ErrGitHubAPI, "user.Name is null")
 	}
-	if githubUser.URL == nil {
-		return nil, goerr.Wrap(model.ErrGitHubAPI, "user.URL is null")
+	if githubUser.HTMLURL == nil {
+		return nil, goerr.Wrap(model.ErrGitHubAPI, "user.HTMLURL is null")
 	}
 	if githubUser.AvatarURL == nil {
 		return nil, goerr.Wrap(model.ErrGitHubAPI, "user.AvatarURL is null")
@@ -80,7 +80,7 @@ func (x *usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.U
 		GithubID:  *githubUser.ID,
 		Login:     *githubUser.Login,
 		Name:      *githubUser.Name,
-		URL:       *githubUser.URL,
+		URL:       *githubUser.HTMLURL,
 		AvatarURL: *githubUser.AvatarURL,
 	}
 
