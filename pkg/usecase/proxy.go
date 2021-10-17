@@ -13,7 +13,7 @@ func (x *usecase) RegisterRepository(ctx *model.Context, repo *ent.Repository) (
 	return x.infra.DB.CreateRepo(ctx, repo)
 }
 
-func (x *usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) error {
+func (x *usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -23,7 +23,7 @@ func (x *usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStat
 		Name:  req.RepoName,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	status := &ent.VulnStatus{
@@ -37,11 +37,12 @@ func (x *usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStat
 		Comment:   req.Comment,
 	}
 
-	if err := x.infra.DB.PutVulnStatus(ctx, tgt, status, req.UserID); err != nil {
-		return err
+	added, err := x.infra.DB.PutVulnStatus(ctx, tgt, status, req.UserID)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return added, nil
 }
 
 func (x *usecase) LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error) {

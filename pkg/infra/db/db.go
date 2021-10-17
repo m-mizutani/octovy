@@ -36,7 +36,7 @@ type Interface interface {
 
 	PutPackages(ctx *model.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
 	PutScan(ctx *model.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)
-	PutVulnStatus(ctx *model.Context, repo *ent.Repository, status *ent.VulnStatus, userID int) error
+	PutVulnStatus(ctx *model.Context, repo *ent.Repository, status *ent.VulnStatus, userID int) (*ent.VulnStatus, error)
 	GetVulnStatus(ctx *model.Context, repo *model.GitHubRepo) ([]*ent.VulnStatus, error)
 
 	GetScan(ctx *model.Context, id string) (*ent.Scan, error)

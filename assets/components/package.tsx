@@ -13,6 +13,7 @@ import BuildIcon from "@mui/icons-material/Build";
 import BeenhereIcon from "@mui/icons-material/Beenhere";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
+import Avatar from "@mui/material/Avatar";
 
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -25,8 +26,6 @@ import Slider from "@mui/material/Slider";
 import Alert from "@mui/material/Alert";
 
 import { makeStyles } from "@mui/styles";
-
-import theme from "./theme";
 
 const useStyles = makeStyles((theme) => ({
   vulnStatusIcon: {
@@ -204,10 +203,15 @@ export default function Package(props: packageProps) {
           if (result.error) {
             setErr(result.error);
           } else {
+            const added: model.vulnStatus = result.data;
             setVulnStatus({
-              status: result.data.status,
-              expires_at: result.data.expires_at,
-              comment: result.data.comment,
+              status: added.status,
+              expires_at: added.expires_at,
+              created_at: added.created_at,
+              comment: added.comment,
+              author_name: added.edges.author.login,
+              author_url: added.edges.author.url,
+              author_avatar: added.edges.author.avatar_url,
             });
             clearStatusDialog();
           }
@@ -246,26 +250,51 @@ export default function Package(props: packageProps) {
       </TableCell>
       <TableCell>{props.vuln.title}</TableCell>
       <TableCell>
-        <Grid container>
-          <Grid item>
-            <StatusIcon status={vulnStatus} />
+        <Grid>
+          <Grid container>
+            <Grid item>
+              <StatusIcon status={vulnStatus} />
+            </Grid>
+            <Grid item>
+              <Select
+                value={vulnStatus.status}
+                onChange={onChangeStatus}
+                style={{
+                  fontSize: "12px",
+                  height: 28,
+                  marginBottom: 5,
+                  marginLeft: 10,
+                }}>
+                <MenuItem value={"none"}>To be fixed</MenuItem>
+                <MenuItem value={"snoozed"}>Snoozed</MenuItem>
+                <MenuItem value={"mitigated"}>Mitigated</MenuItem>
+                <MenuItem value={"unaffected"}>Unaffected</MenuItem>
+              </Select>
+            </Grid>
           </Grid>
-          <Grid item>
-            <Select
-              value={vulnStatus.status}
-              onChange={onChangeStatus}
-              style={{
-                fontSize: "12px",
-                height: 28,
-                marginBottom: 5,
-                marginLeft: 10,
-              }}>
-              <MenuItem value={"none"}>To be fixed</MenuItem>
-              <MenuItem value={"snoozed"}>Snoozed</MenuItem>
-              <MenuItem value={"mitigated"}>Mitigated</MenuItem>
-              <MenuItem value={"unaffected"}>Unaffected</MenuItem>
-            </Select>
-          </Grid>
+          {vulnStatus.author_name ? (
+            <Grid container>
+              <Grid item>
+                <Typography style={{ fontSize: 12 }}>by</Typography>
+              </Grid>
+              <Grid item marginRight={0.5} marginLeft={0.5}>
+                <Avatar
+                  alt={vulnStatus.author_name}
+                  src={vulnStatus.author_avatar}
+                  sx={{ width: 16, height: 16 }}
+                />
+              </Grid>
+              <Grid item style={{ fontSize: 12 }}>
+                <Typography style={{ fontSize: 12 }}>
+                  <Link href={vulnStatus.author_url}>
+                    {vulnStatus.author_name}
+                  </Link>
+                </Typography>
+              </Grid>
+            </Grid>
+          ) : (
+            ""
+          )}
         </Grid>
       </TableCell>
       <TableCell>

@@ -82,7 +82,9 @@ func (x *Client) GetScan(ctx *model.Context, id string) (*ent.Scan, error) {
 	got, err := x.client.Scan.Query().Where(scan.ID(id)).
 		WithRepository(func(rq *ent.RepositoryQuery) {
 			rq.WithStatus(func(vsiq *ent.VulnStatusIndexQuery) {
-				vsiq.WithLatest()
+				vsiq.WithLatest(func(vsq *ent.VulnStatusQuery) {
+					vsq.WithAuthor()
+				})
 			})
 		}).
 		WithPackages(func(prq *ent.PackageRecordQuery) {
