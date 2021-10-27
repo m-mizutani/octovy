@@ -6,29 +6,29 @@ type SourceChanges struct {
 	Remained VulnChanges
 }
 
-type Report struct {
+type Advisory struct {
 	Sources map[string]*SourceChanges
 }
 
-func MakeReport(changes VulnChanges, db *VulnStatusDB) *Report {
-	report := &Report{
+func MakeAdvisory(changes VulnChanges, db *VulnStatusDB) *Advisory {
+	advisory := &Advisory{
 		Sources: make(map[string]*SourceChanges),
 	}
 	for _, src := range changes.Sources() {
 		target := changes.FilterBySource(src)
 		qualified := target.Qualified(db)
 
-		report.Sources[src] = &SourceChanges{
+		advisory.Sources[src] = &SourceChanges{
 			Added:    qualified.FilterByType(VulnAdded),
 			Deleted:  target.FilterByType(VulnDeleted),
 			Remained: qualified.FilterByType(VulnRemained),
 		}
 	}
 
-	return report
+	return advisory
 }
 
-func (x *Report) NothingToNotify(githubEvent string) bool {
+func (x *Advisory) NothingToNotify(githubEvent string) bool {
 	switch githubEvent {
 	case "opened":
 		for _, src := range x.Sources {

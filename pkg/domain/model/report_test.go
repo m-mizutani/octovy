@@ -55,7 +55,7 @@ func TestReport(t *testing.T) {
 		}
 		changes := model.DiffVulnRecords(oldPkgs, newPkgs)
 		db := model.NewVulnStatusDB([]*ent.VulnStatus{}, 1000)
-		report := model.MakeReport(changes, db)
+		report := model.MakeAdvisory(changes, db)
 		assert.NotNil(t, report)
 		{
 			require.Len(t, report.Sources["x"].Added, 1)
