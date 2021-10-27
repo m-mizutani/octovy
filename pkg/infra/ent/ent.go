@@ -9,7 +9,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/object"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
@@ -38,7 +40,9 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		authstatecache.Table:  authstatecache.ValidColumn,
+		object.Table:          object.ValidColumn,
 		packagerecord.Table:   packagerecord.ValidColumn,
+		report.Table:          report.ValidColumn,
 		repository.Table:      repository.ValidColumn,
 		scan.Table:            scan.ValidColumn,
 		session.Table:         session.ValidColumn,

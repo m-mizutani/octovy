@@ -14,8 +14,12 @@ type Tx struct {
 	config
 	// AuthStateCache is the client for interacting with the AuthStateCache builders.
 	AuthStateCache *AuthStateCacheClient
+	// Object is the client for interacting with the Object builders.
+	Object *ObjectClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
+	// Report is the client for interacting with the Report builders.
+	Report *ReportClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
 	// Scan is the client for interacting with the Scan builders.
@@ -166,7 +170,9 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.AuthStateCache = NewAuthStateCacheClient(tx.config)
+	tx.Object = NewObjectClient(tx.config)
 	tx.PackageRecord = NewPackageRecordClient(tx.config)
+	tx.Report = NewReportClient(tx.config)
 	tx.Repository = NewRepositoryClient(tx.config)
 	tx.Scan = NewScanClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)

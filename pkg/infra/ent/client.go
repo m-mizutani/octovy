@@ -10,7 +10,9 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/migrate"
 
 	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/object"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
@@ -31,8 +33,12 @@ type Client struct {
 	Schema *migrate.Schema
 	// AuthStateCache is the client for interacting with the AuthStateCache builders.
 	AuthStateCache *AuthStateCacheClient
+	// Object is the client for interacting with the Object builders.
+	Object *ObjectClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
+	// Report is the client for interacting with the Report builders.
+	Report *ReportClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
 	// Scan is the client for interacting with the Scan builders.
@@ -61,7 +67,9 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.AuthStateCache = NewAuthStateCacheClient(c.config)
+	c.Object = NewObjectClient(c.config)
 	c.PackageRecord = NewPackageRecordClient(c.config)
+	c.Report = NewReportClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
 	c.Scan = NewScanClient(c.config)
 	c.Session = NewSessionClient(c.config)
@@ -103,7 +111,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:             ctx,
 		config:          cfg,
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
+		Object:          NewObjectClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
+		Report:          NewReportClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
@@ -130,7 +140,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		config:          cfg,
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
+		Object:          NewObjectClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
+		Report:          NewReportClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
@@ -168,7 +180,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.AuthStateCache.Use(hooks...)
+	c.Object.Use(hooks...)
 	c.PackageRecord.Use(hooks...)
+	c.Report.Use(hooks...)
 	c.Repository.Use(hooks...)
 	c.Scan.Use(hooks...)
 	c.Session.Use(hooks...)
@@ -266,6 +280,128 @@ func (c *AuthStateCacheClient) GetX(ctx context.Context, id string) *AuthStateCa
 // Hooks returns the client hooks.
 func (c *AuthStateCacheClient) Hooks() []Hook {
 	return c.hooks.AuthStateCache
+}
+
+// ObjectClient is a client for the Object schema.
+type ObjectClient struct {
+	config
+}
+
+// NewObjectClient returns a client for the Object from the given config.
+func NewObjectClient(c config) *ObjectClient {
+	return &ObjectClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `object.Hooks(f(g(h())))`.
+func (c *ObjectClient) Use(hooks ...Hook) {
+	c.hooks.Object = append(c.hooks.Object, hooks...)
+}
+
+// Create returns a create builder for Object.
+func (c *ObjectClient) Create() *ObjectCreate {
+	mutation := newObjectMutation(c.config, OpCreate)
+	return &ObjectCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Object entities.
+func (c *ObjectClient) CreateBulk(builders ...*ObjectCreate) *ObjectCreateBulk {
+	return &ObjectCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Object.
+func (c *ObjectClient) Update() *ObjectUpdate {
+	mutation := newObjectMutation(c.config, OpUpdate)
+	return &ObjectUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ObjectClient) UpdateOne(o *Object) *ObjectUpdateOne {
+	mutation := newObjectMutation(c.config, OpUpdateOne, withObject(o))
+	return &ObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ObjectClient) UpdateOneID(id int) *ObjectUpdateOne {
+	mutation := newObjectMutation(c.config, OpUpdateOne, withObjectID(id))
+	return &ObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Object.
+func (c *ObjectClient) Delete() *ObjectDelete {
+	mutation := newObjectMutation(c.config, OpDelete)
+	return &ObjectDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ObjectClient) DeleteOne(o *Object) *ObjectDeleteOne {
+	return c.DeleteOneID(o.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ObjectClient) DeleteOneID(id int) *ObjectDeleteOne {
+	builder := c.Delete().Where(object.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ObjectDeleteOne{builder}
+}
+
+// Query returns a query builder for Object.
+func (c *ObjectClient) Query() *ObjectQuery {
+	return &ObjectQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Object entity by its id.
+func (c *ObjectClient) Get(ctx context.Context, id int) (*Object, error) {
+	return c.Query().Where(object.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ObjectClient) GetX(ctx context.Context, id int) *Object {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryVulnerabilities queries the vulnerabilities edge of a Object.
+func (c *ObjectClient) QueryVulnerabilities(o *Object) *VulnerabilityQuery {
+	query := &VulnerabilityQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(object.Table, object.FieldID, id),
+			sqlgraph.To(vulnerability.Table, vulnerability.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, object.VulnerabilitiesTable, object.VulnerabilitiesColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReport queries the report edge of a Object.
+func (c *ObjectClient) QueryReport(o *Object) *ReportQuery {
+	query := &ReportQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(object.Table, object.FieldID, id),
+			sqlgraph.To(report.Table, report.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, object.ReportTable, object.ReportPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ObjectClient) Hooks() []Hook {
+	return c.hooks.Object
 }
 
 // PackageRecordClient is a client for the PackageRecord schema.
@@ -388,6 +524,112 @@ func (c *PackageRecordClient) QueryVulnerabilities(pr *PackageRecord) *Vulnerabi
 // Hooks returns the client hooks.
 func (c *PackageRecordClient) Hooks() []Hook {
 	return c.hooks.PackageRecord
+}
+
+// ReportClient is a client for the Report schema.
+type ReportClient struct {
+	config
+}
+
+// NewReportClient returns a client for the Report from the given config.
+func NewReportClient(c config) *ReportClient {
+	return &ReportClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `report.Hooks(f(g(h())))`.
+func (c *ReportClient) Use(hooks ...Hook) {
+	c.hooks.Report = append(c.hooks.Report, hooks...)
+}
+
+// Create returns a create builder for Report.
+func (c *ReportClient) Create() *ReportCreate {
+	mutation := newReportMutation(c.config, OpCreate)
+	return &ReportCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Report entities.
+func (c *ReportClient) CreateBulk(builders ...*ReportCreate) *ReportCreateBulk {
+	return &ReportCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Report.
+func (c *ReportClient) Update() *ReportUpdate {
+	mutation := newReportMutation(c.config, OpUpdate)
+	return &ReportUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReportClient) UpdateOne(r *Report) *ReportUpdateOne {
+	mutation := newReportMutation(c.config, OpUpdateOne, withReport(r))
+	return &ReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReportClient) UpdateOneID(id int) *ReportUpdateOne {
+	mutation := newReportMutation(c.config, OpUpdateOne, withReportID(id))
+	return &ReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Report.
+func (c *ReportClient) Delete() *ReportDelete {
+	mutation := newReportMutation(c.config, OpDelete)
+	return &ReportDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ReportClient) DeleteOne(r *Report) *ReportDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ReportClient) DeleteOneID(id int) *ReportDeleteOne {
+	builder := c.Delete().Where(report.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReportDeleteOne{builder}
+}
+
+// Query returns a query builder for Report.
+func (c *ReportClient) Query() *ReportQuery {
+	return &ReportQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Report entity by its id.
+func (c *ReportClient) Get(ctx context.Context, id int) (*Report, error) {
+	return c.Query().Where(report.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReportClient) GetX(ctx context.Context, id int) *Report {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryObjects queries the objects edge of a Report.
+func (c *ReportClient) QueryObjects(r *Report) *ObjectQuery {
+	query := &ObjectQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(report.Table, report.FieldID, id),
+			sqlgraph.To(object.Table, object.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, report.ObjectsTable, report.ObjectsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReportClient) Hooks() []Hook {
+	return c.hooks.Report
 }
 
 // RepositoryClient is a client for the Repository schema.
