@@ -27,16 +27,19 @@ type Report struct {
 	RequestedAt int64 `json:"requested_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ReportQuery when eager-loading is set.
-	Edges ReportEdges `json:"edges"`
+	Edges                    ReportEdges `json:"edges"`
+	repository_latest_report *int
 }
 
 // ReportEdges holds the relations/edges for other nodes in the graph.
 type ReportEdges struct {
 	// Objects holds the value of the objects edge.
 	Objects []*Object `json:"objects,omitempty"`
+	// Repository holds the value of the repository edge.
+	Repository []*Repository `json:"repository,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // ObjectsOrErr returns the Objects value or an error if the edge
@@ -48,6 +51,15 @@ func (e ReportEdges) ObjectsOrErr() ([]*Object, error) {
 	return nil, &NotLoadedError{edge: "objects"}
 }
 
+// RepositoryOrErr returns the Repository value or an error if the edge
+// was not loaded in eager-loading.
+func (e ReportEdges) RepositoryOrErr() ([]*Repository, error) {
+	if e.loadedTypes[1] {
+		return e.Repository, nil
+	}
+	return nil, &NotLoadedError{edge: "repository"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Report) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
@@ -57,6 +69,8 @@ func (*Report) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case report.FieldScanner, report.FieldResourceType, report.FieldResourceName:
 			values[i] = new(sql.NullString)
+		case report.ForeignKeys[0]: // repository_latest_report
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Report", columns[i])
 		}
@@ -108,6 +122,13 @@ func (r *Report) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				r.RequestedAt = value.Int64
 			}
+		case report.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field repository_latest_report", value)
+			} else if value.Valid {
+				r.repository_latest_report = new(int)
+				*r.repository_latest_report = int(value.Int64)
+			}
 		}
 	}
 	return nil
@@ -116,6 +137,11 @@ func (r *Report) assignValues(columns []string, values []interface{}) error {
 // QueryObjects queries the "objects" edge of the Report entity.
 func (r *Report) QueryObjects() *ObjectQuery {
 	return (&ReportClient{config: r.config}).QueryObjects(r)
+}
+
+// QueryRepository queries the "repository" edge of the Report entity.
+func (r *Report) QueryRepository() *RepositoryQuery {
+	return (&ReportClient{config: r.config}).QueryRepository(r)
 }
 
 // Update returns a builder for updating this Report.

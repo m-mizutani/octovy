@@ -42,11 +42,15 @@ type RepositoryEdges struct {
 	Main []*Scan `json:"main,omitempty"`
 	// Latest holds the value of the latest edge.
 	Latest *Scan `json:"latest,omitempty"`
+	// Report holds the value of the report edge.
+	Report []*Report `json:"report,omitempty"`
+	// LatestReport holds the value of the latest_report edge.
+	LatestReport []*Report `json:"latest_report,omitempty"`
 	// Status holds the value of the status edge.
 	Status []*VulnStatusIndex `json:"status,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [6]bool
 }
 
 // ScanOrErr returns the Scan value or an error if the edge
@@ -81,10 +85,28 @@ func (e RepositoryEdges) LatestOrErr() (*Scan, error) {
 	return nil, &NotLoadedError{edge: "latest"}
 }
 
+// ReportOrErr returns the Report value or an error if the edge
+// was not loaded in eager-loading.
+func (e RepositoryEdges) ReportOrErr() ([]*Report, error) {
+	if e.loadedTypes[3] {
+		return e.Report, nil
+	}
+	return nil, &NotLoadedError{edge: "report"}
+}
+
+// LatestReportOrErr returns the LatestReport value or an error if the edge
+// was not loaded in eager-loading.
+func (e RepositoryEdges) LatestReportOrErr() ([]*Report, error) {
+	if e.loadedTypes[4] {
+		return e.LatestReport, nil
+	}
+	return nil, &NotLoadedError{edge: "latest_report"}
+}
+
 // StatusOrErr returns the Status value or an error if the edge
 // was not loaded in eager-loading.
 func (e RepositoryEdges) StatusOrErr() ([]*VulnStatusIndex, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[5] {
 		return e.Status, nil
 	}
 	return nil, &NotLoadedError{edge: "status"}
@@ -185,6 +207,16 @@ func (r *Repository) QueryMain() *ScanQuery {
 // QueryLatest queries the "latest" edge of the Repository entity.
 func (r *Repository) QueryLatest() *ScanQuery {
 	return (&RepositoryClient{config: r.config}).QueryLatest(r)
+}
+
+// QueryReport queries the "report" edge of the Repository entity.
+func (r *Repository) QueryReport() *ReportQuery {
+	return (&RepositoryClient{config: r.config}).QueryReport(r)
+}
+
+// QueryLatestReport queries the "latest_report" edge of the Repository entity.
+func (r *Repository) QueryLatestReport() *ReportQuery {
+	return (&RepositoryClient{config: r.config}).QueryLatestReport(r)
 }
 
 // QueryStatus queries the "status" edge of the Repository entity.

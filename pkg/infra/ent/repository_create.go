@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
@@ -138,6 +139,36 @@ func (rc *RepositoryCreate) SetNillableLatestID(id *string) *RepositoryCreate {
 // SetLatest sets the "latest" edge to the Scan entity.
 func (rc *RepositoryCreate) SetLatest(s *Scan) *RepositoryCreate {
 	return rc.SetLatestID(s.ID)
+}
+
+// AddReportIDs adds the "report" edge to the Report entity by IDs.
+func (rc *RepositoryCreate) AddReportIDs(ids ...int) *RepositoryCreate {
+	rc.mutation.AddReportIDs(ids...)
+	return rc
+}
+
+// AddReport adds the "report" edges to the Report entity.
+func (rc *RepositoryCreate) AddReport(r ...*Report) *RepositoryCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return rc.AddReportIDs(ids...)
+}
+
+// AddLatestReportIDs adds the "latest_report" edge to the Report entity by IDs.
+func (rc *RepositoryCreate) AddLatestReportIDs(ids ...int) *RepositoryCreate {
+	rc.mutation.AddLatestReportIDs(ids...)
+	return rc
+}
+
+// AddLatestReport adds the "latest_report" edges to the Report entity.
+func (rc *RepositoryCreate) AddLatestReport(r ...*Report) *RepositoryCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return rc.AddLatestReportIDs(ids...)
 }
 
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
@@ -363,6 +394,44 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.repository_latest = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ReportIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.LatestReportIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := rc.mutation.StatusIDs(); len(nodes) > 0 {

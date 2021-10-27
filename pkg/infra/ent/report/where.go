@@ -653,6 +653,34 @@ func HasObjectsWith(preds ...predicate.Object) predicate.Report {
 	})
 }
 
+// HasRepository applies the HasEdge predicate on the "repository" edge.
+func HasRepository() predicate.Report {
+	return predicate.Report(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RepositoryTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RepositoryTable, RepositoryPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRepositoryWith applies the HasEdge predicate on the "repository" edge with a given conditions (other predicates).
+func HasRepositoryWith(preds ...predicate.Repository) predicate.Report {
+	return predicate.Report(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RepositoryInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, RepositoryTable, RepositoryPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Report) predicate.Report {
 	return predicate.Report(func(s *sql.Selector) {

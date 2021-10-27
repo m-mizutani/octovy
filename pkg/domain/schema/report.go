@@ -26,5 +26,6 @@ func (Report) Fields() []ent.Field {
 func (Report) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("objects", Object.Type),
+		edge.From("repository", Repository.Type).Ref("report"),
 	}
 }

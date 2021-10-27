@@ -19,6 +19,8 @@ const (
 	FieldRequestedAt = "requested_at"
 	// EdgeObjects holds the string denoting the objects edge name in mutations.
 	EdgeObjects = "objects"
+	// EdgeRepository holds the string denoting the repository edge name in mutations.
+	EdgeRepository = "repository"
 	// Table holds the table name of the report in the database.
 	Table = "reports"
 	// ObjectsTable is the table that holds the objects relation/edge. The primary key declared below.
@@ -26,6 +28,11 @@ const (
 	// ObjectsInverseTable is the table name for the Object entity.
 	// It exists in this package in order to avoid circular dependency with the "object" package.
 	ObjectsInverseTable = "objects"
+	// RepositoryTable is the table that holds the repository relation/edge. The primary key declared below.
+	RepositoryTable = "repository_report"
+	// RepositoryInverseTable is the table name for the Repository entity.
+	// It exists in this package in order to avoid circular dependency with the "repository" package.
+	RepositoryInverseTable = "repositories"
 )
 
 // Columns holds all SQL columns for report fields.
@@ -38,16 +45,30 @@ var Columns = []string{
 	FieldRequestedAt,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "reports"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"repository_latest_report",
+}
+
 var (
 	// ObjectsPrimaryKey and ObjectsColumn2 are the table columns denoting the
 	// primary key for the objects relation (M2M).
 	ObjectsPrimaryKey = []string{"report_id", "object_id"}
+	// RepositoryPrimaryKey and RepositoryColumn2 are the table columns denoting the
+	// primary key for the repository relation (M2M).
+	RepositoryPrimaryKey = []string{"repository_id", "report_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}

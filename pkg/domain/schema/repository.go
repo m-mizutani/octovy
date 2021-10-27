@@ -30,6 +30,8 @@ func (Repository) Edges() []ent.Edge {
 		edge.To("scan", Scan.Type).Comment("All scan results"),
 		edge.To("main", Scan.Type).Comment("Scan results for default branch"),
 		edge.To("latest", Scan.Type).Unique().Comment("A latest Scan result for default branch"),
+		edge.To("report", Report.Type),
+		edge.To("latest_report", Report.Type),
 		edge.To("status", VulnStatusIndex.Type),
 	}
 }

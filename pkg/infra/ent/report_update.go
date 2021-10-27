@@ -12,6 +12,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/object"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 )
 
 // ReportUpdate is the builder for updating Report entities.
@@ -94,6 +95,21 @@ func (ru *ReportUpdate) AddObjects(o ...*Object) *ReportUpdate {
 	return ru.AddObjectIDs(ids...)
 }
 
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by IDs.
+func (ru *ReportUpdate) AddRepositoryIDs(ids ...int) *ReportUpdate {
+	ru.mutation.AddRepositoryIDs(ids...)
+	return ru
+}
+
+// AddRepository adds the "repository" edges to the Repository entity.
+func (ru *ReportUpdate) AddRepository(r ...*Repository) *ReportUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.AddRepositoryIDs(ids...)
+}
+
 // Mutation returns the ReportMutation object of the builder.
 func (ru *ReportUpdate) Mutation() *ReportMutation {
 	return ru.mutation
@@ -118,6 +134,27 @@ func (ru *ReportUpdate) RemoveObjects(o ...*Object) *ReportUpdate {
 		ids[i] = o[i].ID
 	}
 	return ru.RemoveObjectIDs(ids...)
+}
+
+// ClearRepository clears all "repository" edges to the Repository entity.
+func (ru *ReportUpdate) ClearRepository() *ReportUpdate {
+	ru.mutation.ClearRepository()
+	return ru
+}
+
+// RemoveRepositoryIDs removes the "repository" edge to Repository entities by IDs.
+func (ru *ReportUpdate) RemoveRepositoryIDs(ids ...int) *ReportUpdate {
+	ru.mutation.RemoveRepositoryIDs(ids...)
+	return ru
+}
+
+// RemoveRepository removes "repository" edges to Repository entities.
+func (ru *ReportUpdate) RemoveRepository(r ...*Repository) *ReportUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.RemoveRepositoryIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -294,6 +331,60 @@ func (ru *ReportUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.RepositoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedRepositoryIDs(); len(nodes) > 0 && !ru.mutation.RepositoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RepositoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{report.Label}
@@ -380,6 +471,21 @@ func (ruo *ReportUpdateOne) AddObjects(o ...*Object) *ReportUpdateOne {
 	return ruo.AddObjectIDs(ids...)
 }
 
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by IDs.
+func (ruo *ReportUpdateOne) AddRepositoryIDs(ids ...int) *ReportUpdateOne {
+	ruo.mutation.AddRepositoryIDs(ids...)
+	return ruo
+}
+
+// AddRepository adds the "repository" edges to the Repository entity.
+func (ruo *ReportUpdateOne) AddRepository(r ...*Repository) *ReportUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.AddRepositoryIDs(ids...)
+}
+
 // Mutation returns the ReportMutation object of the builder.
 func (ruo *ReportUpdateOne) Mutation() *ReportMutation {
 	return ruo.mutation
@@ -404,6 +510,27 @@ func (ruo *ReportUpdateOne) RemoveObjects(o ...*Object) *ReportUpdateOne {
 		ids[i] = o[i].ID
 	}
 	return ruo.RemoveObjectIDs(ids...)
+}
+
+// ClearRepository clears all "repository" edges to the Repository entity.
+func (ruo *ReportUpdateOne) ClearRepository() *ReportUpdateOne {
+	ruo.mutation.ClearRepository()
+	return ruo
+}
+
+// RemoveRepositoryIDs removes the "repository" edge to Repository entities by IDs.
+func (ruo *ReportUpdateOne) RemoveRepositoryIDs(ids ...int) *ReportUpdateOne {
+	ruo.mutation.RemoveRepositoryIDs(ids...)
+	return ruo
+}
+
+// RemoveRepository removes "repository" edges to Repository entities.
+func (ruo *ReportUpdateOne) RemoveRepository(r ...*Repository) *ReportUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.RemoveRepositoryIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -596,6 +723,60 @@ func (ruo *ReportUpdateOne) sqlSave(ctx context.Context) (_node *Report, err err
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.RepositoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedRepositoryIDs(); len(nodes) > 0 && !ruo.mutation.RepositoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RepositoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
 				},
 			},
 		}

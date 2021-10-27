@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/object"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 )
 
 // ReportCreate is the builder for creating a Report entity.
@@ -73,6 +74,21 @@ func (rc *ReportCreate) AddObjects(o ...*Object) *ReportCreate {
 		ids[i] = o[i].ID
 	}
 	return rc.AddObjectIDs(ids...)
+}
+
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by IDs.
+func (rc *ReportCreate) AddRepositoryIDs(ids ...int) *ReportCreate {
+	rc.mutation.AddRepositoryIDs(ids...)
+	return rc
+}
+
+// AddRepository adds the "repository" edges to the Repository entity.
+func (rc *ReportCreate) AddRepository(r ...*Repository) *ReportCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return rc.AddRepositoryIDs(ids...)
 }
 
 // Mutation returns the ReportMutation object of the builder.
@@ -236,6 +252,25 @@ func (rc *ReportCreate) createSpec() (*Report, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: object.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.RepositoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   report.RepositoryTable,
+			Columns: report.RepositoryPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repository.FieldID,
 				},
 			},
 		}

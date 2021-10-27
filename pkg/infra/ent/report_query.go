@@ -15,6 +15,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/object"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 )
 
 // ReportQuery is the builder for querying Report entities.
@@ -27,7 +28,9 @@ type ReportQuery struct {
 	fields     []string
 	predicates []predicate.Report
 	// eager-loading edges.
-	withObjects *ObjectQuery
+	withObjects    *ObjectQuery
+	withRepository *RepositoryQuery
+	withFKs        bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -79,6 +82,28 @@ func (rq *ReportQuery) QueryObjects() *ObjectQuery {
 			sqlgraph.From(report.Table, report.FieldID, selector),
 			sqlgraph.To(object.Table, object.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, report.ObjectsTable, report.ObjectsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRepository chains the current query on the "repository" edge.
+func (rq *ReportQuery) QueryRepository() *RepositoryQuery {
+	query := &RepositoryQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(report.Table, report.FieldID, selector),
+			sqlgraph.To(repository.Table, repository.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, report.RepositoryTable, report.RepositoryPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -262,12 +287,13 @@ func (rq *ReportQuery) Clone() *ReportQuery {
 		return nil
 	}
 	return &ReportQuery{
-		config:      rq.config,
-		limit:       rq.limit,
-		offset:      rq.offset,
-		order:       append([]OrderFunc{}, rq.order...),
-		predicates:  append([]predicate.Report{}, rq.predicates...),
-		withObjects: rq.withObjects.Clone(),
+		config:         rq.config,
+		limit:          rq.limit,
+		offset:         rq.offset,
+		order:          append([]OrderFunc{}, rq.order...),
+		predicates:     append([]predicate.Report{}, rq.predicates...),
+		withObjects:    rq.withObjects.Clone(),
+		withRepository: rq.withRepository.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -282,6 +308,17 @@ func (rq *ReportQuery) WithObjects(opts ...func(*ObjectQuery)) *ReportQuery {
 		opt(query)
 	}
 	rq.withObjects = query
+	return rq
+}
+
+// WithRepository tells the query-builder to eager-load the nodes that are connected to
+// the "repository" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *ReportQuery) WithRepository(opts ...func(*RepositoryQuery)) *ReportQuery {
+	query := &RepositoryQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withRepository = query
 	return rq
 }
 
@@ -349,11 +386,16 @@ func (rq *ReportQuery) prepareQuery(ctx context.Context) error {
 func (rq *ReportQuery) sqlAll(ctx context.Context) ([]*Report, error) {
 	var (
 		nodes       = []*Report{}
+		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			rq.withObjects != nil,
+			rq.withRepository != nil,
 		}
 	)
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, report.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Report{config: rq.config}
 		nodes = append(nodes, node)
@@ -435,6 +477,71 @@ func (rq *ReportQuery) sqlAll(ctx context.Context) ([]*Report, error) {
 			}
 			for i := range nodes {
 				nodes[i].Edges.Objects = append(nodes[i].Edges.Objects, n)
+			}
+		}
+	}
+
+	if query := rq.withRepository; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Report, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Repository = []*Repository{}
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Report)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   report.RepositoryTable,
+				Columns: report.RepositoryPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(report.RepositoryPrimaryKey[1], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, rq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "repository": %w`, err)
+		}
+		query.Where(repository.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "repository" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Repository = append(nodes[i].Edges.Repository, n)
 			}
 		}
 	}

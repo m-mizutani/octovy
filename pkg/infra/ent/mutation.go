@@ -1738,23 +1738,26 @@ func (m *PackageRecordMutation) ResetEdge(name string) error {
 // ReportMutation represents an operation that mutates the Report nodes in the graph.
 type ReportMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int
-	scanner         *string
-	resource_type   *string
-	resource_name   *string
-	scanned_at      *int64
-	addscanned_at   *int64
-	requested_at    *int64
-	addrequested_at *int64
-	clearedFields   map[string]struct{}
-	objects         map[int]struct{}
-	removedobjects  map[int]struct{}
-	clearedobjects  bool
-	done            bool
-	oldValue        func(context.Context) (*Report, error)
-	predicates      []predicate.Report
+	op                Op
+	typ               string
+	id                *int
+	scanner           *string
+	resource_type     *string
+	resource_name     *string
+	scanned_at        *int64
+	addscanned_at     *int64
+	requested_at      *int64
+	addrequested_at   *int64
+	clearedFields     map[string]struct{}
+	objects           map[int]struct{}
+	removedobjects    map[int]struct{}
+	clearedobjects    bool
+	repository        map[int]struct{}
+	removedrepository map[int]struct{}
+	clearedrepository bool
+	done              bool
+	oldValue          func(context.Context) (*Report, error)
+	predicates        []predicate.Report
 }
 
 var _ ent.Mutation = (*ReportMutation)(nil)
@@ -2124,6 +2127,60 @@ func (m *ReportMutation) ResetObjects() {
 	m.removedobjects = nil
 }
 
+// AddRepositoryIDs adds the "repository" edge to the Repository entity by ids.
+func (m *ReportMutation) AddRepositoryIDs(ids ...int) {
+	if m.repository == nil {
+		m.repository = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.repository[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRepository clears the "repository" edge to the Repository entity.
+func (m *ReportMutation) ClearRepository() {
+	m.clearedrepository = true
+}
+
+// RepositoryCleared reports if the "repository" edge to the Repository entity was cleared.
+func (m *ReportMutation) RepositoryCleared() bool {
+	return m.clearedrepository
+}
+
+// RemoveRepositoryIDs removes the "repository" edge to the Repository entity by IDs.
+func (m *ReportMutation) RemoveRepositoryIDs(ids ...int) {
+	if m.removedrepository == nil {
+		m.removedrepository = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.repository, ids[i])
+		m.removedrepository[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRepository returns the removed IDs of the "repository" edge to the Repository entity.
+func (m *ReportMutation) RemovedRepositoryIDs() (ids []int) {
+	for id := range m.removedrepository {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RepositoryIDs returns the "repository" edge IDs in the mutation.
+func (m *ReportMutation) RepositoryIDs() (ids []int) {
+	for id := range m.repository {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRepository resets all changes to the "repository" edge.
+func (m *ReportMutation) ResetRepository() {
+	m.repository = nil
+	m.clearedrepository = false
+	m.removedrepository = nil
+}
+
 // Where appends a list predicates to the ReportMutation builder.
 func (m *ReportMutation) Where(ps ...predicate.Report) {
 	m.predicates = append(m.predicates, ps...)
@@ -2346,9 +2403,12 @@ func (m *ReportMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ReportMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.objects != nil {
 		edges = append(edges, report.EdgeObjects)
+	}
+	if m.repository != nil {
+		edges = append(edges, report.EdgeRepository)
 	}
 	return edges
 }
@@ -2363,15 +2423,24 @@ func (m *ReportMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case report.EdgeRepository:
+		ids := make([]ent.Value, 0, len(m.repository))
+		for id := range m.repository {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ReportMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedobjects != nil {
 		edges = append(edges, report.EdgeObjects)
+	}
+	if m.removedrepository != nil {
+		edges = append(edges, report.EdgeRepository)
 	}
 	return edges
 }
@@ -2386,15 +2455,24 @@ func (m *ReportMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case report.EdgeRepository:
+		ids := make([]ent.Value, 0, len(m.removedrepository))
+		for id := range m.removedrepository {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ReportMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedobjects {
 		edges = append(edges, report.EdgeObjects)
+	}
+	if m.clearedrepository {
+		edges = append(edges, report.EdgeRepository)
 	}
 	return edges
 }
@@ -2405,6 +2483,8 @@ func (m *ReportMutation) EdgeCleared(name string) bool {
 	switch name {
 	case report.EdgeObjects:
 		return m.clearedobjects
+	case report.EdgeRepository:
+		return m.clearedrepository
 	}
 	return false
 }
@@ -2424,6 +2504,9 @@ func (m *ReportMutation) ResetEdge(name string) error {
 	case report.EdgeObjects:
 		m.ResetObjects()
 		return nil
+	case report.EdgeRepository:
+		m.ResetRepository()
+		return nil
 	}
 	return fmt.Errorf("unknown Report edge %s", name)
 }
@@ -2431,31 +2514,37 @@ func (m *ReportMutation) ResetEdge(name string) error {
 // RepositoryMutation represents an operation that mutates the Repository nodes in the graph.
 type RepositoryMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int
-	owner          *string
-	name           *string
-	install_id     *int64
-	addinstall_id  *int64
-	url            *string
-	avatar_url     *string
-	default_branch *string
-	clearedFields  map[string]struct{}
-	scan           map[string]struct{}
-	removedscan    map[string]struct{}
-	clearedscan    bool
-	main           map[string]struct{}
-	removedmain    map[string]struct{}
-	clearedmain    bool
-	latest         *string
-	clearedlatest  bool
-	status         map[string]struct{}
-	removedstatus  map[string]struct{}
-	clearedstatus  bool
-	done           bool
-	oldValue       func(context.Context) (*Repository, error)
-	predicates     []predicate.Repository
+	op                   Op
+	typ                  string
+	id                   *int
+	owner                *string
+	name                 *string
+	install_id           *int64
+	addinstall_id        *int64
+	url                  *string
+	avatar_url           *string
+	default_branch       *string
+	clearedFields        map[string]struct{}
+	scan                 map[string]struct{}
+	removedscan          map[string]struct{}
+	clearedscan          bool
+	main                 map[string]struct{}
+	removedmain          map[string]struct{}
+	clearedmain          bool
+	latest               *string
+	clearedlatest        bool
+	report               map[int]struct{}
+	removedreport        map[int]struct{}
+	clearedreport        bool
+	latest_report        map[int]struct{}
+	removedlatest_report map[int]struct{}
+	clearedlatest_report bool
+	status               map[string]struct{}
+	removedstatus        map[string]struct{}
+	clearedstatus        bool
+	done                 bool
+	oldValue             func(context.Context) (*Repository, error)
+	predicates           []predicate.Repository
 }
 
 var _ ent.Mutation = (*RepositoryMutation)(nil)
@@ -2973,6 +3062,114 @@ func (m *RepositoryMutation) ResetLatest() {
 	m.clearedlatest = false
 }
 
+// AddReportIDs adds the "report" edge to the Report entity by ids.
+func (m *RepositoryMutation) AddReportIDs(ids ...int) {
+	if m.report == nil {
+		m.report = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.report[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReport clears the "report" edge to the Report entity.
+func (m *RepositoryMutation) ClearReport() {
+	m.clearedreport = true
+}
+
+// ReportCleared reports if the "report" edge to the Report entity was cleared.
+func (m *RepositoryMutation) ReportCleared() bool {
+	return m.clearedreport
+}
+
+// RemoveReportIDs removes the "report" edge to the Report entity by IDs.
+func (m *RepositoryMutation) RemoveReportIDs(ids ...int) {
+	if m.removedreport == nil {
+		m.removedreport = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.report, ids[i])
+		m.removedreport[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReport returns the removed IDs of the "report" edge to the Report entity.
+func (m *RepositoryMutation) RemovedReportIDs() (ids []int) {
+	for id := range m.removedreport {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ReportIDs returns the "report" edge IDs in the mutation.
+func (m *RepositoryMutation) ReportIDs() (ids []int) {
+	for id := range m.report {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReport resets all changes to the "report" edge.
+func (m *RepositoryMutation) ResetReport() {
+	m.report = nil
+	m.clearedreport = false
+	m.removedreport = nil
+}
+
+// AddLatestReportIDs adds the "latest_report" edge to the Report entity by ids.
+func (m *RepositoryMutation) AddLatestReportIDs(ids ...int) {
+	if m.latest_report == nil {
+		m.latest_report = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.latest_report[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLatestReport clears the "latest_report" edge to the Report entity.
+func (m *RepositoryMutation) ClearLatestReport() {
+	m.clearedlatest_report = true
+}
+
+// LatestReportCleared reports if the "latest_report" edge to the Report entity was cleared.
+func (m *RepositoryMutation) LatestReportCleared() bool {
+	return m.clearedlatest_report
+}
+
+// RemoveLatestReportIDs removes the "latest_report" edge to the Report entity by IDs.
+func (m *RepositoryMutation) RemoveLatestReportIDs(ids ...int) {
+	if m.removedlatest_report == nil {
+		m.removedlatest_report = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.latest_report, ids[i])
+		m.removedlatest_report[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLatestReport returns the removed IDs of the "latest_report" edge to the Report entity.
+func (m *RepositoryMutation) RemovedLatestReportIDs() (ids []int) {
+	for id := range m.removedlatest_report {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LatestReportIDs returns the "latest_report" edge IDs in the mutation.
+func (m *RepositoryMutation) LatestReportIDs() (ids []int) {
+	for id := range m.latest_report {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLatestReport resets all changes to the "latest_report" edge.
+func (m *RepositoryMutation) ResetLatestReport() {
+	m.latest_report = nil
+	m.clearedlatest_report = false
+	m.removedlatest_report = nil
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by ids.
 func (m *RepositoryMutation) AddStatuIDs(ids ...string) {
 	if m.status == nil {
@@ -3272,7 +3469,7 @@ func (m *RepositoryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RepositoryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 6)
 	if m.scan != nil {
 		edges = append(edges, repository.EdgeScan)
 	}
@@ -3281,6 +3478,12 @@ func (m *RepositoryMutation) AddedEdges() []string {
 	}
 	if m.latest != nil {
 		edges = append(edges, repository.EdgeLatest)
+	}
+	if m.report != nil {
+		edges = append(edges, repository.EdgeReport)
+	}
+	if m.latest_report != nil {
+		edges = append(edges, repository.EdgeLatestReport)
 	}
 	if m.status != nil {
 		edges = append(edges, repository.EdgeStatus)
@@ -3308,6 +3511,18 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 		if id := m.latest; id != nil {
 			return []ent.Value{*id}
 		}
+	case repository.EdgeReport:
+		ids := make([]ent.Value, 0, len(m.report))
+		for id := range m.report {
+			ids = append(ids, id)
+		}
+		return ids
+	case repository.EdgeLatestReport:
+		ids := make([]ent.Value, 0, len(m.latest_report))
+		for id := range m.latest_report {
+			ids = append(ids, id)
+		}
+		return ids
 	case repository.EdgeStatus:
 		ids := make([]ent.Value, 0, len(m.status))
 		for id := range m.status {
@@ -3320,12 +3535,18 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RepositoryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 6)
 	if m.removedscan != nil {
 		edges = append(edges, repository.EdgeScan)
 	}
 	if m.removedmain != nil {
 		edges = append(edges, repository.EdgeMain)
+	}
+	if m.removedreport != nil {
+		edges = append(edges, repository.EdgeReport)
+	}
+	if m.removedlatest_report != nil {
+		edges = append(edges, repository.EdgeLatestReport)
 	}
 	if m.removedstatus != nil {
 		edges = append(edges, repository.EdgeStatus)
@@ -3349,6 +3570,18 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgeReport:
+		ids := make([]ent.Value, 0, len(m.removedreport))
+		for id := range m.removedreport {
+			ids = append(ids, id)
+		}
+		return ids
+	case repository.EdgeLatestReport:
+		ids := make([]ent.Value, 0, len(m.removedlatest_report))
+		for id := range m.removedlatest_report {
+			ids = append(ids, id)
+		}
+		return ids
 	case repository.EdgeStatus:
 		ids := make([]ent.Value, 0, len(m.removedstatus))
 		for id := range m.removedstatus {
@@ -3361,7 +3594,7 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RepositoryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 6)
 	if m.clearedscan {
 		edges = append(edges, repository.EdgeScan)
 	}
@@ -3370,6 +3603,12 @@ func (m *RepositoryMutation) ClearedEdges() []string {
 	}
 	if m.clearedlatest {
 		edges = append(edges, repository.EdgeLatest)
+	}
+	if m.clearedreport {
+		edges = append(edges, repository.EdgeReport)
+	}
+	if m.clearedlatest_report {
+		edges = append(edges, repository.EdgeLatestReport)
 	}
 	if m.clearedstatus {
 		edges = append(edges, repository.EdgeStatus)
@@ -3387,6 +3626,10 @@ func (m *RepositoryMutation) EdgeCleared(name string) bool {
 		return m.clearedmain
 	case repository.EdgeLatest:
 		return m.clearedlatest
+	case repository.EdgeReport:
+		return m.clearedreport
+	case repository.EdgeLatestReport:
+		return m.clearedlatest_report
 	case repository.EdgeStatus:
 		return m.clearedstatus
 	}
@@ -3416,6 +3659,12 @@ func (m *RepositoryMutation) ResetEdge(name string) error {
 		return nil
 	case repository.EdgeLatest:
 		m.ResetLatest()
+		return nil
+	case repository.EdgeReport:
+		m.ResetReport()
+		return nil
+	case repository.EdgeLatestReport:
+		m.ResetLatestReport()
 		return nil
 	case repository.EdgeStatus:
 		m.ResetStatus()

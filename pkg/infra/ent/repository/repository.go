@@ -25,6 +25,10 @@ const (
 	EdgeMain = "main"
 	// EdgeLatest holds the string denoting the latest edge name in mutations.
 	EdgeLatest = "latest"
+	// EdgeReport holds the string denoting the report edge name in mutations.
+	EdgeReport = "report"
+	// EdgeLatestReport holds the string denoting the latest_report edge name in mutations.
+	EdgeLatestReport = "latest_report"
 	// EdgeStatus holds the string denoting the status edge name in mutations.
 	EdgeStatus = "status"
 	// Table holds the table name of the repository in the database.
@@ -48,6 +52,18 @@ const (
 	LatestInverseTable = "scans"
 	// LatestColumn is the table column denoting the latest relation/edge.
 	LatestColumn = "repository_latest"
+	// ReportTable is the table that holds the report relation/edge. The primary key declared below.
+	ReportTable = "repository_report"
+	// ReportInverseTable is the table name for the Report entity.
+	// It exists in this package in order to avoid circular dependency with the "report" package.
+	ReportInverseTable = "reports"
+	// LatestReportTable is the table that holds the latest_report relation/edge.
+	LatestReportTable = "reports"
+	// LatestReportInverseTable is the table name for the Report entity.
+	// It exists in this package in order to avoid circular dependency with the "report" package.
+	LatestReportInverseTable = "reports"
+	// LatestReportColumn is the table column denoting the latest_report relation/edge.
+	LatestReportColumn = "repository_latest_report"
 	// StatusTable is the table that holds the status relation/edge.
 	StatusTable = "vuln_status_indexes"
 	// StatusInverseTable is the table name for the VulnStatusIndex entity.
@@ -78,6 +94,9 @@ var (
 	// ScanPrimaryKey and ScanColumn2 are the table columns denoting the
 	// primary key for the scan relation (M2M).
 	ScanPrimaryKey = []string{"repository_id", "scan_id"}
+	// ReportPrimaryKey and ReportColumn2 are the table columns denoting the
+	// primary key for the report relation (M2M).
+	ReportPrimaryKey = []string{"repository_id", "report_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -627,6 +627,22 @@ func (c *ReportClient) QueryObjects(r *Report) *ObjectQuery {
 	return query
 }
 
+// QueryRepository queries the repository edge of a Report.
+func (c *ReportClient) QueryRepository(r *Report) *RepositoryQuery {
+	query := &RepositoryQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(report.Table, report.FieldID, id),
+			sqlgraph.To(repository.Table, repository.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, report.RepositoryTable, report.RepositoryPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ReportClient) Hooks() []Hook {
 	return c.hooks.Report
@@ -758,6 +774,38 @@ func (c *RepositoryClient) QueryLatest(r *Repository) *ScanQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, id),
 			sqlgraph.To(scan.Table, scan.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, repository.LatestTable, repository.LatestColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReport queries the report edge of a Repository.
+func (c *RepositoryClient) QueryReport(r *Repository) *ReportQuery {
+	query := &ReportQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, id),
+			sqlgraph.To(report.Table, report.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, repository.ReportTable, repository.ReportPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestReport queries the latest_report edge of a Repository.
+func (c *RepositoryClient) QueryLatestReport(r *Repository) *ReportQuery {
+	query := &ReportQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, id),
+			sqlgraph.To(report.Table, report.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.LatestReportTable, repository.LatestReportColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
