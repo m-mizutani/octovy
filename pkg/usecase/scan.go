@@ -165,7 +165,7 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 			Scan:          newScan,
 			FrontendURL:   clients.FrontendURL,
 			PullReqNumber: req.PullReqNumber,
-			Report:        model.MakeReport(changes, db),
+			Advisory:      model.MakeAdvisory(changes, db),
 			GitHubEvent:   req.PullReqAction,
 		}
 

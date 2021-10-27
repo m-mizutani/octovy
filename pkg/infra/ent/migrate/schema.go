@@ -19,6 +19,20 @@ var (
 		Columns:    AuthStateCachesColumns,
 		PrimaryKey: []*schema.Column{AuthStateCachesColumns[0]},
 	}
+	// ObjectsColumns holds the columns for the "objects" table.
+	ObjectsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "version", Type: field.TypeString, Nullable: true},
+	}
+	// ObjectsTable holds the schema information for the "objects" table.
+	ObjectsTable = &schema.Table{
+		Name:       "objects",
+		Columns:    ObjectsColumns,
+		PrimaryKey: []*schema.Column{ObjectsColumns[0]},
+	}
 	// PackageRecordsColumns holds the columns for the "package_records" table.
 	PackageRecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -33,6 +47,30 @@ var (
 		Name:       "package_records",
 		Columns:    PackageRecordsColumns,
 		PrimaryKey: []*schema.Column{PackageRecordsColumns[0]},
+	}
+	// ReportsColumns holds the columns for the "reports" table.
+	ReportsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "scanner", Type: field.TypeString},
+		{Name: "resource_type", Type: field.TypeString},
+		{Name: "resource_name", Type: field.TypeString},
+		{Name: "scanned_at", Type: field.TypeInt64},
+		{Name: "requested_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "repository_latest_report", Type: field.TypeInt, Nullable: true},
+	}
+	// ReportsTable holds the schema information for the "reports" table.
+	ReportsTable = &schema.Table{
+		Name:       "reports",
+		Columns:    ReportsColumns,
+		PrimaryKey: []*schema.Column{ReportsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "reports_repositories_latest_report",
+				Columns:    []*schema.Column{ReportsColumns[6]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// RepositoriesColumns holds the columns for the "repositories" table.
 	RepositoriesColumns = []*schema.Column{
@@ -207,12 +245,21 @@ var (
 		{Name: "severity", Type: field.TypeString, Nullable: true},
 		{Name: "cvss", Type: field.TypeJSON, Nullable: true},
 		{Name: "references", Type: field.TypeJSON, Nullable: true},
+		{Name: "object_vulnerabilities", Type: field.TypeInt, Nullable: true},
 	}
 	// VulnerabilitiesTable holds the schema information for the "vulnerabilities" table.
 	VulnerabilitiesTable = &schema.Table{
 		Name:       "vulnerabilities",
 		Columns:    VulnerabilitiesColumns,
 		PrimaryKey: []*schema.Column{VulnerabilitiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "vulnerabilities_objects_vulnerabilities",
+				Columns:    []*schema.Column{VulnerabilitiesColumns[9]},
+				RefColumns: []*schema.Column{ObjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// PackageRecordVulnerabilitiesColumns holds the columns for the "package_record_vulnerabilities" table.
 	PackageRecordVulnerabilitiesColumns = []*schema.Column{
@@ -239,6 +286,31 @@ var (
 			},
 		},
 	}
+	// ReportObjectsColumns holds the columns for the "report_objects" table.
+	ReportObjectsColumns = []*schema.Column{
+		{Name: "report_id", Type: field.TypeInt},
+		{Name: "object_id", Type: field.TypeInt},
+	}
+	// ReportObjectsTable holds the schema information for the "report_objects" table.
+	ReportObjectsTable = &schema.Table{
+		Name:       "report_objects",
+		Columns:    ReportObjectsColumns,
+		PrimaryKey: []*schema.Column{ReportObjectsColumns[0], ReportObjectsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "report_objects_report_id",
+				Columns:    []*schema.Column{ReportObjectsColumns[0]},
+				RefColumns: []*schema.Column{ReportsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "report_objects_object_id",
+				Columns:    []*schema.Column{ReportObjectsColumns[1]},
+				RefColumns: []*schema.Column{ObjectsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// RepositoryScanColumns holds the columns for the "repository_scan" table.
 	RepositoryScanColumns = []*schema.Column{
 		{Name: "repository_id", Type: field.TypeInt},
@@ -260,6 +332,31 @@ var (
 				Symbol:     "repository_scan_scan_id",
 				Columns:    []*schema.Column{RepositoryScanColumns[1]},
 				RefColumns: []*schema.Column{ScansColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// RepositoryReportColumns holds the columns for the "repository_report" table.
+	RepositoryReportColumns = []*schema.Column{
+		{Name: "repository_id", Type: field.TypeInt},
+		{Name: "report_id", Type: field.TypeInt},
+	}
+	// RepositoryReportTable holds the schema information for the "repository_report" table.
+	RepositoryReportTable = &schema.Table{
+		Name:       "repository_report",
+		Columns:    RepositoryReportColumns,
+		PrimaryKey: []*schema.Column{RepositoryReportColumns[0], RepositoryReportColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "repository_report_repository_id",
+				Columns:    []*schema.Column{RepositoryReportColumns[0]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "repository_report_report_id",
+				Columns:    []*schema.Column{RepositoryReportColumns[1]},
+				RefColumns: []*schema.Column{ReportsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -292,7 +389,9 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AuthStateCachesTable,
+		ObjectsTable,
 		PackageRecordsTable,
+		ReportsTable,
 		RepositoriesTable,
 		ScansTable,
 		SessionsTable,
@@ -301,12 +400,15 @@ var (
 		VulnStatusIndexesTable,
 		VulnerabilitiesTable,
 		PackageRecordVulnerabilitiesTable,
+		ReportObjectsTable,
 		RepositoryScanTable,
+		RepositoryReportTable,
 		ScanPackagesTable,
 	}
 )
 
 func init() {
+	ReportsTable.ForeignKeys[0].RefTable = RepositoriesTable
 	RepositoriesTable.ForeignKeys[0].RefTable = ScansTable
 	ScansTable.ForeignKeys[0].RefTable = RepositoriesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
@@ -316,10 +418,15 @@ func init() {
 	VulnStatusTable.ForeignKeys[3].RefTable = VulnerabilitiesTable
 	VulnStatusIndexesTable.ForeignKeys[0].RefTable = RepositoriesTable
 	VulnStatusIndexesTable.ForeignKeys[1].RefTable = VulnStatusTable
+	VulnerabilitiesTable.ForeignKeys[0].RefTable = ObjectsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[0].RefTable = PackageRecordsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
+	ReportObjectsTable.ForeignKeys[0].RefTable = ReportsTable
+	ReportObjectsTable.ForeignKeys[1].RefTable = ObjectsTable
 	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable
 	RepositoryScanTable.ForeignKeys[1].RefTable = ScansTable
+	RepositoryReportTable.ForeignKeys[0].RefTable = RepositoriesTable
+	RepositoryReportTable.ForeignKeys[1].RefTable = ReportsTable
 	ScanPackagesTable.ForeignKeys[0].RefTable = ScansTable
 	ScanPackagesTable.ForeignKeys[1].RefTable = PackageRecordsTable
 }

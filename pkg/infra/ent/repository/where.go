@@ -904,6 +904,62 @@ func HasLatestWith(preds ...predicate.Scan) predicate.Repository {
 	})
 }
 
+// HasReport applies the HasEdge predicate on the "report" edge.
+func HasReport() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReportTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ReportTable, ReportPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReportWith applies the HasEdge predicate on the "report" edge with a given conditions (other predicates).
+func HasReportWith(preds ...predicate.Report) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ReportInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ReportTable, ReportPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLatestReport applies the HasEdge predicate on the "latest_report" edge.
+func HasLatestReport() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LatestReportTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LatestReportTable, LatestReportColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLatestReportWith applies the HasEdge predicate on the "latest_report" edge with a given conditions (other predicates).
+func HasLatestReportWith(preds ...predicate.Report) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LatestReportInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LatestReportTable, LatestReportColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasStatus applies the HasEdge predicate on the "status" edge.
 func HasStatus() predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {

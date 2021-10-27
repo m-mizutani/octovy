@@ -17,7 +17,7 @@ type postGitHubCommentInput struct {
 	Target        *model.ScanTarget
 	PullReqNumber *int
 	Scan          *ent.Scan
-	Report        *model.Report
+	Advisory      *model.Advisory
 	FrontendURL   string
 }
 
@@ -38,7 +38,7 @@ func postGitHubComment(input *postGitHubCommentInput) error {
 		return goerr.Wrap(model.ErrInvalidSystemValue).With("input", input)
 	}
 
-	if input.Report.NothingToNotify(input.GitHubEvent) {
+	if input.Advisory.NothingToNotify(input.GitHubEvent) {
 		utils.Logger.Debug("nothing to notify, returning")
 		return nil
 	}
@@ -47,7 +47,7 @@ func postGitHubComment(input *postGitHubCommentInput) error {
 	b.Add("## Octovy scan result")
 	b.Break()
 
-	for src, changes := range input.Report.Sources {
+	for src, changes := range input.Advisory.Sources {
 		b.Add("### " + src)
 		b.Break()
 

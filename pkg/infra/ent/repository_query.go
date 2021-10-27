@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
@@ -28,11 +29,13 @@ type RepositoryQuery struct {
 	fields     []string
 	predicates []predicate.Repository
 	// eager-loading edges.
-	withScan   *ScanQuery
-	withMain   *ScanQuery
-	withLatest *ScanQuery
-	withStatus *VulnStatusIndexQuery
-	withFKs    bool
+	withScan         *ScanQuery
+	withMain         *ScanQuery
+	withLatest       *ScanQuery
+	withReport       *ReportQuery
+	withLatestReport *ReportQuery
+	withStatus       *VulnStatusIndexQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -128,6 +131,50 @@ func (rq *RepositoryQuery) QueryLatest() *ScanQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(scan.Table, scan.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, repository.LatestTable, repository.LatestColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReport chains the current query on the "report" edge.
+func (rq *RepositoryQuery) QueryReport() *ReportQuery {
+	query := &ReportQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(report.Table, report.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, repository.ReportTable, repository.ReportPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLatestReport chains the current query on the "latest_report" edge.
+func (rq *RepositoryQuery) QueryLatestReport() *ReportQuery {
+	query := &ReportQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(report.Table, report.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.LatestReportTable, repository.LatestReportColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -333,15 +380,17 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		return nil
 	}
 	return &RepositoryQuery{
-		config:     rq.config,
-		limit:      rq.limit,
-		offset:     rq.offset,
-		order:      append([]OrderFunc{}, rq.order...),
-		predicates: append([]predicate.Repository{}, rq.predicates...),
-		withScan:   rq.withScan.Clone(),
-		withMain:   rq.withMain.Clone(),
-		withLatest: rq.withLatest.Clone(),
-		withStatus: rq.withStatus.Clone(),
+		config:           rq.config,
+		limit:            rq.limit,
+		offset:           rq.offset,
+		order:            append([]OrderFunc{}, rq.order...),
+		predicates:       append([]predicate.Repository{}, rq.predicates...),
+		withScan:         rq.withScan.Clone(),
+		withMain:         rq.withMain.Clone(),
+		withLatest:       rq.withLatest.Clone(),
+		withReport:       rq.withReport.Clone(),
+		withLatestReport: rq.withLatestReport.Clone(),
+		withStatus:       rq.withStatus.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -378,6 +427,28 @@ func (rq *RepositoryQuery) WithLatest(opts ...func(*ScanQuery)) *RepositoryQuery
 		opt(query)
 	}
 	rq.withLatest = query
+	return rq
+}
+
+// WithReport tells the query-builder to eager-load the nodes that are connected to
+// the "report" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithReport(opts ...func(*ReportQuery)) *RepositoryQuery {
+	query := &ReportQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withReport = query
+	return rq
+}
+
+// WithLatestReport tells the query-builder to eager-load the nodes that are connected to
+// the "latest_report" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithLatestReport(opts ...func(*ReportQuery)) *RepositoryQuery {
+	query := &ReportQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withLatestReport = query
 	return rq
 }
 
@@ -458,10 +529,12 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 		nodes       = []*Repository{}
 		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [6]bool{
 			rq.withScan != nil,
 			rq.withMain != nil,
 			rq.withLatest != nil,
+			rq.withReport != nil,
+			rq.withLatestReport != nil,
 			rq.withStatus != nil,
 		}
 	)
@@ -611,6 +684,100 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 			for i := range nodes {
 				nodes[i].Edges.Latest = n
 			}
+		}
+	}
+
+	if query := rq.withReport; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Repository, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Report = []*Report{}
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Repository)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: false,
+				Table:   repository.ReportTable,
+				Columns: repository.ReportPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(repository.ReportPrimaryKey[0], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, rq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "report": %w`, err)
+		}
+		query.Where(report.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "report" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Report = append(nodes[i].Edges.Report, n)
+			}
+		}
+	}
+
+	if query := rq.withLatestReport; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Repository)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.LatestReport = []*Report{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Report(func(s *sql.Selector) {
+			s.Where(sql.InValues(repository.LatestReportColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.repository_latest_report
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "repository_latest_report" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "repository_latest_report" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.LatestReport = append(node.Edges.LatestReport, n)
 		}
 	}
 

@@ -22,6 +22,19 @@ func (f AuthStateCacheFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return f(ctx, mv)
 }
 
+// The ObjectFunc type is an adapter to allow the use of ordinary
+// function as Object mutator.
+type ObjectFunc func(context.Context, *ent.ObjectMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ObjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ObjectMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ObjectMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The PackageRecordFunc type is an adapter to allow the use of ordinary
 // function as PackageRecord mutator.
 type PackageRecordFunc func(context.Context, *ent.PackageRecordMutation) (ent.Value, error)
@@ -31,6 +44,19 @@ func (f PackageRecordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	mv, ok := m.(*ent.PackageRecordMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PackageRecordMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The ReportFunc type is an adapter to allow the use of ordinary
+// function as Report mutator.
+type ReportFunc func(context.Context, *ent.ReportMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReportFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ReportMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReportMutation", m)
 	}
 	return f(ctx, mv)
 }

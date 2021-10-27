@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/report"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
@@ -176,6 +177,36 @@ func (ru *RepositoryUpdate) SetLatest(s *Scan) *RepositoryUpdate {
 	return ru.SetLatestID(s.ID)
 }
 
+// AddReportIDs adds the "report" edge to the Report entity by IDs.
+func (ru *RepositoryUpdate) AddReportIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.AddReportIDs(ids...)
+	return ru
+}
+
+// AddReport adds the "report" edges to the Report entity.
+func (ru *RepositoryUpdate) AddReport(r ...*Report) *RepositoryUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.AddReportIDs(ids...)
+}
+
+// AddLatestReportIDs adds the "latest_report" edge to the Report entity by IDs.
+func (ru *RepositoryUpdate) AddLatestReportIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.AddLatestReportIDs(ids...)
+	return ru
+}
+
+// AddLatestReport adds the "latest_report" edges to the Report entity.
+func (ru *RepositoryUpdate) AddLatestReport(r ...*Report) *RepositoryUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.AddLatestReportIDs(ids...)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ru *RepositoryUpdate) AddStatuIDs(ids ...string) *RepositoryUpdate {
 	ru.mutation.AddStatuIDs(ids...)
@@ -242,6 +273,48 @@ func (ru *RepositoryUpdate) RemoveMain(s ...*Scan) *RepositoryUpdate {
 func (ru *RepositoryUpdate) ClearLatest() *RepositoryUpdate {
 	ru.mutation.ClearLatest()
 	return ru
+}
+
+// ClearReport clears all "report" edges to the Report entity.
+func (ru *RepositoryUpdate) ClearReport() *RepositoryUpdate {
+	ru.mutation.ClearReport()
+	return ru
+}
+
+// RemoveReportIDs removes the "report" edge to Report entities by IDs.
+func (ru *RepositoryUpdate) RemoveReportIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.RemoveReportIDs(ids...)
+	return ru
+}
+
+// RemoveReport removes "report" edges to Report entities.
+func (ru *RepositoryUpdate) RemoveReport(r ...*Report) *RepositoryUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.RemoveReportIDs(ids...)
+}
+
+// ClearLatestReport clears all "latest_report" edges to the Report entity.
+func (ru *RepositoryUpdate) ClearLatestReport() *RepositoryUpdate {
+	ru.mutation.ClearLatestReport()
+	return ru
+}
+
+// RemoveLatestReportIDs removes the "latest_report" edge to Report entities by IDs.
+func (ru *RepositoryUpdate) RemoveLatestReportIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.RemoveLatestReportIDs(ids...)
+	return ru
+}
+
+// RemoveLatestReport removes "latest_report" edges to Report entities.
+func (ru *RepositoryUpdate) RemoveLatestReport(r ...*Report) *RepositoryUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.RemoveLatestReportIDs(ids...)
 }
 
 // ClearStatus clears all "status" edges to the VulnStatusIndex entity.
@@ -553,6 +626,114 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.ReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedReportIDs(); len(nodes) > 0 && !ru.mutation.ReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.ReportIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ru.mutation.LatestReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedLatestReportIDs(); len(nodes) > 0 && !ru.mutation.LatestReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.LatestReportIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if ru.mutation.StatusCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -774,6 +955,36 @@ func (ruo *RepositoryUpdateOne) SetLatest(s *Scan) *RepositoryUpdateOne {
 	return ruo.SetLatestID(s.ID)
 }
 
+// AddReportIDs adds the "report" edge to the Report entity by IDs.
+func (ruo *RepositoryUpdateOne) AddReportIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.AddReportIDs(ids...)
+	return ruo
+}
+
+// AddReport adds the "report" edges to the Report entity.
+func (ruo *RepositoryUpdateOne) AddReport(r ...*Report) *RepositoryUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.AddReportIDs(ids...)
+}
+
+// AddLatestReportIDs adds the "latest_report" edge to the Report entity by IDs.
+func (ruo *RepositoryUpdateOne) AddLatestReportIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.AddLatestReportIDs(ids...)
+	return ruo
+}
+
+// AddLatestReport adds the "latest_report" edges to the Report entity.
+func (ruo *RepositoryUpdateOne) AddLatestReport(r ...*Report) *RepositoryUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.AddLatestReportIDs(ids...)
+}
+
 // AddStatuIDs adds the "status" edge to the VulnStatusIndex entity by IDs.
 func (ruo *RepositoryUpdateOne) AddStatuIDs(ids ...string) *RepositoryUpdateOne {
 	ruo.mutation.AddStatuIDs(ids...)
@@ -840,6 +1051,48 @@ func (ruo *RepositoryUpdateOne) RemoveMain(s ...*Scan) *RepositoryUpdateOne {
 func (ruo *RepositoryUpdateOne) ClearLatest() *RepositoryUpdateOne {
 	ruo.mutation.ClearLatest()
 	return ruo
+}
+
+// ClearReport clears all "report" edges to the Report entity.
+func (ruo *RepositoryUpdateOne) ClearReport() *RepositoryUpdateOne {
+	ruo.mutation.ClearReport()
+	return ruo
+}
+
+// RemoveReportIDs removes the "report" edge to Report entities by IDs.
+func (ruo *RepositoryUpdateOne) RemoveReportIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.RemoveReportIDs(ids...)
+	return ruo
+}
+
+// RemoveReport removes "report" edges to Report entities.
+func (ruo *RepositoryUpdateOne) RemoveReport(r ...*Report) *RepositoryUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.RemoveReportIDs(ids...)
+}
+
+// ClearLatestReport clears all "latest_report" edges to the Report entity.
+func (ruo *RepositoryUpdateOne) ClearLatestReport() *RepositoryUpdateOne {
+	ruo.mutation.ClearLatestReport()
+	return ruo
+}
+
+// RemoveLatestReportIDs removes the "latest_report" edge to Report entities by IDs.
+func (ruo *RepositoryUpdateOne) RemoveLatestReportIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.RemoveLatestReportIDs(ids...)
+	return ruo
+}
+
+// RemoveLatestReport removes "latest_report" edges to Report entities.
+func (ruo *RepositoryUpdateOne) RemoveLatestReport(r ...*Report) *RepositoryUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.RemoveLatestReportIDs(ids...)
 }
 
 // ClearStatus clears all "status" edges to the VulnStatusIndex entity.
@@ -1167,6 +1420,114 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: scan.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.ReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedReportIDs(); len(nodes) > 0 && !ruo.mutation.ReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.ReportIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.ReportTable,
+			Columns: repository.ReportPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.LatestReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedLatestReportIDs(); len(nodes) > 0 && !ruo.mutation.LatestReportCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.LatestReportIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.LatestReportTable,
+			Columns: []string{repository.LatestReportColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: report.FieldID,
 				},
 			},
 		}

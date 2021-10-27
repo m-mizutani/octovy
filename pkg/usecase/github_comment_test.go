@@ -32,7 +32,7 @@ func TestPostGitHubComment(t *testing.T) {
 				ID: "my-scan-report-id",
 			},
 			GitHubEvent: "opened",
-			Report: &model.Report{
+			Advisory: &model.Advisory{
 				Sources: map[string]*model.SourceChanges{
 					"x": {
 						Added: model.VulnChanges{
