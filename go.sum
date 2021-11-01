@@ -313,6 +313,8 @@ github.com/m-mizutani/goerr v0.1.2 h1:iYWo02qbCYpmqJAbPlbu+aXQVI/uS47hje0s6cgmKp
 github.com/m-mizutani/goerr v0.1.2/go.mod h1:j3cf1KSIhehhIY38cCdbixepJ2LQBpJdIQ3G8pbVUiY=
 github.com/m-mizutani/zlog v0.0.0-20211016022323-7594b5172111 h1:6teiSC6Q1Dhbsz3hXV/GqK+9potGo01egaEpFq/qTTo=
 github.com/m-mizutani/zlog v0.0.0-20211016022323-7594b5172111/go.mod h1:VyMPwnXiN8/95pUnB4bY9f59kFb4FSyOy7/tRyGJKAM=
+github.com/m-mizutani/zlog v0.1.2 h1:VohGyf08rK5ddF3+QmaLq7BvPUHno8DowryAD7ERao0=
+github.com/m-mizutani/zlog v0.1.2/go.mod h1:efppDLVhoHSRyq7ozaSW34gjr+gx6Ls0x2HkBqulx6k=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
