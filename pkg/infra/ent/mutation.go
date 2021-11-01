@@ -14,6 +14,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/severity"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
@@ -36,6 +37,7 @@ const (
 	TypeRepository      = "Repository"
 	TypeScan            = "Scan"
 	TypeSession         = "Session"
+	TypeSeverity        = "Severity"
 	TypeUser            = "User"
 	TypeVulnStatus      = "VulnStatus"
 	TypeVulnStatusIndex = "VulnStatusIndex"
@@ -3575,6 +3577,391 @@ func (m *SessionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Session edge %s", name)
 }
 
+// SeverityMutation represents an operation that mutates the Severity nodes in the graph.
+type SeverityMutation struct {
+	config
+	op                     Op
+	typ                    string
+	id                     *int
+	label                  *string
+	clearedFields          map[string]struct{}
+	vulnerabilities        map[string]struct{}
+	removedvulnerabilities map[string]struct{}
+	clearedvulnerabilities bool
+	done                   bool
+	oldValue               func(context.Context) (*Severity, error)
+	predicates             []predicate.Severity
+}
+
+var _ ent.Mutation = (*SeverityMutation)(nil)
+
+// severityOption allows management of the mutation configuration using functional options.
+type severityOption func(*SeverityMutation)
+
+// newSeverityMutation creates new mutation for the Severity entity.
+func newSeverityMutation(c config, op Op, opts ...severityOption) *SeverityMutation {
+	m := &SeverityMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSeverity,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSeverityID sets the ID field of the mutation.
+func withSeverityID(id int) severityOption {
+	return func(m *SeverityMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Severity
+		)
+		m.oldValue = func(ctx context.Context) (*Severity, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Severity.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSeverity sets the old Severity of the mutation.
+func withSeverity(node *Severity) severityOption {
+	return func(m *SeverityMutation) {
+		m.oldValue = func(context.Context) (*Severity, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SeverityMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SeverityMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SeverityMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetLabel sets the "label" field.
+func (m *SeverityMutation) SetLabel(s string) {
+	m.label = &s
+}
+
+// Label returns the value of the "label" field in the mutation.
+func (m *SeverityMutation) Label() (r string, exists bool) {
+	v := m.label
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLabel returns the old "label" field's value of the Severity entity.
+// If the Severity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SeverityMutation) OldLabel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldLabel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldLabel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLabel: %w", err)
+	}
+	return oldValue.Label, nil
+}
+
+// ResetLabel resets all changes to the "label" field.
+func (m *SeverityMutation) ResetLabel() {
+	m.label = nil
+}
+
+// AddVulnerabilityIDs adds the "vulnerabilities" edge to the Vulnerability entity by ids.
+func (m *SeverityMutation) AddVulnerabilityIDs(ids ...string) {
+	if m.vulnerabilities == nil {
+		m.vulnerabilities = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.vulnerabilities[ids[i]] = struct{}{}
+	}
+}
+
+// ClearVulnerabilities clears the "vulnerabilities" edge to the Vulnerability entity.
+func (m *SeverityMutation) ClearVulnerabilities() {
+	m.clearedvulnerabilities = true
+}
+
+// VulnerabilitiesCleared reports if the "vulnerabilities" edge to the Vulnerability entity was cleared.
+func (m *SeverityMutation) VulnerabilitiesCleared() bool {
+	return m.clearedvulnerabilities
+}
+
+// RemoveVulnerabilityIDs removes the "vulnerabilities" edge to the Vulnerability entity by IDs.
+func (m *SeverityMutation) RemoveVulnerabilityIDs(ids ...string) {
+	if m.removedvulnerabilities == nil {
+		m.removedvulnerabilities = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.vulnerabilities, ids[i])
+		m.removedvulnerabilities[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedVulnerabilities returns the removed IDs of the "vulnerabilities" edge to the Vulnerability entity.
+func (m *SeverityMutation) RemovedVulnerabilitiesIDs() (ids []string) {
+	for id := range m.removedvulnerabilities {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// VulnerabilitiesIDs returns the "vulnerabilities" edge IDs in the mutation.
+func (m *SeverityMutation) VulnerabilitiesIDs() (ids []string) {
+	for id := range m.vulnerabilities {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetVulnerabilities resets all changes to the "vulnerabilities" edge.
+func (m *SeverityMutation) ResetVulnerabilities() {
+	m.vulnerabilities = nil
+	m.clearedvulnerabilities = false
+	m.removedvulnerabilities = nil
+}
+
+// Where appends a list predicates to the SeverityMutation builder.
+func (m *SeverityMutation) Where(ps ...predicate.Severity) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *SeverityMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Severity).
+func (m *SeverityMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SeverityMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.label != nil {
+		fields = append(fields, severity.FieldLabel)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SeverityMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case severity.FieldLabel:
+		return m.Label()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SeverityMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case severity.FieldLabel:
+		return m.OldLabel(ctx)
+	}
+	return nil, fmt.Errorf("unknown Severity field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SeverityMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case severity.FieldLabel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLabel(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Severity field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SeverityMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SeverityMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SeverityMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Severity numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SeverityMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SeverityMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SeverityMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Severity nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SeverityMutation) ResetField(name string) error {
+	switch name {
+	case severity.FieldLabel:
+		m.ResetLabel()
+		return nil
+	}
+	return fmt.Errorf("unknown Severity field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SeverityMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.vulnerabilities != nil {
+		edges = append(edges, severity.EdgeVulnerabilities)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SeverityMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case severity.EdgeVulnerabilities:
+		ids := make([]ent.Value, 0, len(m.vulnerabilities))
+		for id := range m.vulnerabilities {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SeverityMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedvulnerabilities != nil {
+		edges = append(edges, severity.EdgeVulnerabilities)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SeverityMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case severity.EdgeVulnerabilities:
+		ids := make([]ent.Value, 0, len(m.removedvulnerabilities))
+		for id := range m.removedvulnerabilities {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SeverityMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedvulnerabilities {
+		edges = append(edges, severity.EdgeVulnerabilities)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SeverityMutation) EdgeCleared(name string) bool {
+	switch name {
+	case severity.EdgeVulnerabilities:
+		return m.clearedvulnerabilities
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SeverityMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Severity unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SeverityMutation) ResetEdge(name string) error {
+	switch name {
+	case severity.EdgeVulnerabilities:
+		m.ResetVulnerabilities()
+		return nil
+	}
+	return fmt.Errorf("unknown Severity edge %s", name)
+}
+
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
@@ -5428,9 +5815,8 @@ type VulnerabilityMutation struct {
 	packages            map[int]struct{}
 	removedpackages     map[int]struct{}
 	clearedpackages     bool
-	status              map[int]struct{}
-	removedstatus       map[int]struct{}
-	clearedstatus       bool
+	sev                 *int
+	clearedsev          bool
 	done                bool
 	oldValue            func(context.Context) (*Vulnerability, error)
 	predicates          []predicate.Vulnerability
@@ -5981,58 +6367,43 @@ func (m *VulnerabilityMutation) ResetPackages() {
 	m.removedpackages = nil
 }
 
-// AddStatuIDs adds the "status" edge to the VulnStatus entity by ids.
-func (m *VulnerabilityMutation) AddStatuIDs(ids ...int) {
-	if m.status == nil {
-		m.status = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.status[ids[i]] = struct{}{}
-	}
+// SetSevID sets the "sev" edge to the Severity entity by id.
+func (m *VulnerabilityMutation) SetSevID(id int) {
+	m.sev = &id
 }
 
-// ClearStatus clears the "status" edge to the VulnStatus entity.
-func (m *VulnerabilityMutation) ClearStatus() {
-	m.clearedstatus = true
+// ClearSev clears the "sev" edge to the Severity entity.
+func (m *VulnerabilityMutation) ClearSev() {
+	m.clearedsev = true
 }
 
-// StatusCleared reports if the "status" edge to the VulnStatus entity was cleared.
-func (m *VulnerabilityMutation) StatusCleared() bool {
-	return m.clearedstatus
+// SevCleared reports if the "sev" edge to the Severity entity was cleared.
+func (m *VulnerabilityMutation) SevCleared() bool {
+	return m.clearedsev
 }
 
-// RemoveStatuIDs removes the "status" edge to the VulnStatus entity by IDs.
-func (m *VulnerabilityMutation) RemoveStatuIDs(ids ...int) {
-	if m.removedstatus == nil {
-		m.removedstatus = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.status, ids[i])
-		m.removedstatus[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedStatus returns the removed IDs of the "status" edge to the VulnStatus entity.
-func (m *VulnerabilityMutation) RemovedStatusIDs() (ids []int) {
-	for id := range m.removedstatus {
-		ids = append(ids, id)
+// SevID returns the "sev" edge ID in the mutation.
+func (m *VulnerabilityMutation) SevID() (id int, exists bool) {
+	if m.sev != nil {
+		return *m.sev, true
 	}
 	return
 }
 
-// StatusIDs returns the "status" edge IDs in the mutation.
-func (m *VulnerabilityMutation) StatusIDs() (ids []int) {
-	for id := range m.status {
-		ids = append(ids, id)
+// SevIDs returns the "sev" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SevID instead. It exists only for internal usage by the builders.
+func (m *VulnerabilityMutation) SevIDs() (ids []int) {
+	if id := m.sev; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetStatus resets all changes to the "status" edge.
-func (m *VulnerabilityMutation) ResetStatus() {
-	m.status = nil
-	m.clearedstatus = false
-	m.removedstatus = nil
+// ResetSev resets all changes to the "sev" edge.
+func (m *VulnerabilityMutation) ResetSev() {
+	m.sev = nil
+	m.clearedsev = false
 }
 
 // Where appends a list predicates to the VulnerabilityMutation builder.
@@ -6342,8 +6713,8 @@ func (m *VulnerabilityMutation) AddedEdges() []string {
 	if m.packages != nil {
 		edges = append(edges, vulnerability.EdgePackages)
 	}
-	if m.status != nil {
-		edges = append(edges, vulnerability.EdgeStatus)
+	if m.sev != nil {
+		edges = append(edges, vulnerability.EdgeSev)
 	}
 	return edges
 }
@@ -6358,12 +6729,10 @@ func (m *VulnerabilityMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case vulnerability.EdgeStatus:
-		ids := make([]ent.Value, 0, len(m.status))
-		for id := range m.status {
-			ids = append(ids, id)
+	case vulnerability.EdgeSev:
+		if id := m.sev; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -6373,9 +6742,6 @@ func (m *VulnerabilityMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
 	if m.removedpackages != nil {
 		edges = append(edges, vulnerability.EdgePackages)
-	}
-	if m.removedstatus != nil {
-		edges = append(edges, vulnerability.EdgeStatus)
 	}
 	return edges
 }
@@ -6390,12 +6756,6 @@ func (m *VulnerabilityMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case vulnerability.EdgeStatus:
-		ids := make([]ent.Value, 0, len(m.removedstatus))
-		for id := range m.removedstatus {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
@@ -6406,8 +6766,8 @@ func (m *VulnerabilityMutation) ClearedEdges() []string {
 	if m.clearedpackages {
 		edges = append(edges, vulnerability.EdgePackages)
 	}
-	if m.clearedstatus {
-		edges = append(edges, vulnerability.EdgeStatus)
+	if m.clearedsev {
+		edges = append(edges, vulnerability.EdgeSev)
 	}
 	return edges
 }
@@ -6418,8 +6778,8 @@ func (m *VulnerabilityMutation) EdgeCleared(name string) bool {
 	switch name {
 	case vulnerability.EdgePackages:
 		return m.clearedpackages
-	case vulnerability.EdgeStatus:
-		return m.clearedstatus
+	case vulnerability.EdgeSev:
+		return m.clearedsev
 	}
 	return false
 }
@@ -6428,6 +6788,9 @@ func (m *VulnerabilityMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *VulnerabilityMutation) ClearEdge(name string) error {
 	switch name {
+	case vulnerability.EdgeSev:
+		m.ClearSev()
+		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability unique edge %s", name)
 }
@@ -6439,8 +6802,8 @@ func (m *VulnerabilityMutation) ResetEdge(name string) error {
 	case vulnerability.EdgePackages:
 		m.ResetPackages()
 		return nil
-	case vulnerability.EdgeStatus:
-		m.ResetStatus()
+	case vulnerability.EdgeSev:
+		m.ResetSev()
 		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability edge %s", name)

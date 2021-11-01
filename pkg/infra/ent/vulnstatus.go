@@ -39,7 +39,6 @@ type VulnStatus struct {
 	user_edited_status       *int
 	vuln_status_author       *int
 	vuln_status_index_status *string
-	vulnerability_status     *string
 }
 
 // VulnStatusEdges holds the relations/edges for other nodes in the graph.
@@ -79,8 +78,6 @@ func (*VulnStatus) scanValues(columns []string) ([]interface{}, error) {
 		case vulnstatus.ForeignKeys[1]: // vuln_status_author
 			values[i] = new(sql.NullInt64)
 		case vulnstatus.ForeignKeys[2]: // vuln_status_index_status
-			values[i] = new(sql.NullString)
-		case vulnstatus.ForeignKeys[3]: // vulnerability_status
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type VulnStatus", columns[i])
@@ -171,13 +168,6 @@ func (vs *VulnStatus) assignValues(columns []string, values []interface{}) error
 			} else if value.Valid {
 				vs.vuln_status_index_status = new(string)
 				*vs.vuln_status_index_status = value.String
-			}
-		case vulnstatus.ForeignKeys[3]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field vulnerability_status", values[i])
-			} else if value.Valid {
-				vs.vulnerability_status = new(string)
-				*vs.vulnerability_status = value.String
 			}
 		}
 	}

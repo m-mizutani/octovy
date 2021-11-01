@@ -14,6 +14,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/severity"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
@@ -39,6 +40,8 @@ type Client struct {
 	Scan *ScanClient
 	// Session is the client for interacting with the Session builders.
 	Session *SessionClient
+	// Severity is the client for interacting with the Severity builders.
+	Severity *SeverityClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VulnStatus is the client for interacting with the VulnStatus builders.
@@ -65,6 +68,7 @@ func (c *Client) init() {
 	c.Repository = NewRepositoryClient(c.config)
 	c.Scan = NewScanClient(c.config)
 	c.Session = NewSessionClient(c.config)
+	c.Severity = NewSeverityClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.VulnStatus = NewVulnStatusClient(c.config)
 	c.VulnStatusIndex = NewVulnStatusIndexClient(c.config)
@@ -107,6 +111,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
+		Severity:        NewSeverityClient(cfg),
 		User:            NewUserClient(cfg),
 		VulnStatus:      NewVulnStatusClient(cfg),
 		VulnStatusIndex: NewVulnStatusIndexClient(cfg),
@@ -134,6 +139,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
+		Severity:        NewSeverityClient(cfg),
 		User:            NewUserClient(cfg),
 		VulnStatus:      NewVulnStatusClient(cfg),
 		VulnStatusIndex: NewVulnStatusIndexClient(cfg),
@@ -172,6 +178,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Repository.Use(hooks...)
 	c.Scan.Use(hooks...)
 	c.Session.Use(hooks...)
+	c.Severity.Use(hooks...)
 	c.User.Use(hooks...)
 	c.VulnStatus.Use(hooks...)
 	c.VulnStatusIndex.Use(hooks...)
@@ -772,6 +779,112 @@ func (c *SessionClient) Hooks() []Hook {
 	return c.hooks.Session
 }
 
+// SeverityClient is a client for the Severity schema.
+type SeverityClient struct {
+	config
+}
+
+// NewSeverityClient returns a client for the Severity from the given config.
+func NewSeverityClient(c config) *SeverityClient {
+	return &SeverityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `severity.Hooks(f(g(h())))`.
+func (c *SeverityClient) Use(hooks ...Hook) {
+	c.hooks.Severity = append(c.hooks.Severity, hooks...)
+}
+
+// Create returns a create builder for Severity.
+func (c *SeverityClient) Create() *SeverityCreate {
+	mutation := newSeverityMutation(c.config, OpCreate)
+	return &SeverityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Severity entities.
+func (c *SeverityClient) CreateBulk(builders ...*SeverityCreate) *SeverityCreateBulk {
+	return &SeverityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Severity.
+func (c *SeverityClient) Update() *SeverityUpdate {
+	mutation := newSeverityMutation(c.config, OpUpdate)
+	return &SeverityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SeverityClient) UpdateOne(s *Severity) *SeverityUpdateOne {
+	mutation := newSeverityMutation(c.config, OpUpdateOne, withSeverity(s))
+	return &SeverityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SeverityClient) UpdateOneID(id int) *SeverityUpdateOne {
+	mutation := newSeverityMutation(c.config, OpUpdateOne, withSeverityID(id))
+	return &SeverityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Severity.
+func (c *SeverityClient) Delete() *SeverityDelete {
+	mutation := newSeverityMutation(c.config, OpDelete)
+	return &SeverityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *SeverityClient) DeleteOne(s *Severity) *SeverityDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *SeverityClient) DeleteOneID(id int) *SeverityDeleteOne {
+	builder := c.Delete().Where(severity.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SeverityDeleteOne{builder}
+}
+
+// Query returns a query builder for Severity.
+func (c *SeverityClient) Query() *SeverityQuery {
+	return &SeverityQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Severity entity by its id.
+func (c *SeverityClient) Get(ctx context.Context, id int) (*Severity, error) {
+	return c.Query().Where(severity.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SeverityClient) GetX(ctx context.Context, id int) *Severity {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryVulnerabilities queries the vulnerabilities edge of a Severity.
+func (c *SeverityClient) QueryVulnerabilities(s *Severity) *VulnerabilityQuery {
+	query := &VulnerabilityQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(severity.Table, severity.FieldID, id),
+			sqlgraph.To(vulnerability.Table, vulnerability.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, severity.VulnerabilitiesTable, severity.VulnerabilitiesColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SeverityClient) Hooks() []Hook {
+	return c.hooks.Severity
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -1207,15 +1320,15 @@ func (c *VulnerabilityClient) QueryPackages(v *Vulnerability) *PackageRecordQuer
 	return query
 }
 
-// QueryStatus queries the status edge of a Vulnerability.
-func (c *VulnerabilityClient) QueryStatus(v *Vulnerability) *VulnStatusQuery {
-	query := &VulnStatusQuery{config: c.config}
+// QuerySev queries the sev edge of a Vulnerability.
+func (c *VulnerabilityClient) QuerySev(v *Vulnerability) *SeverityQuery {
+	query := &SeverityQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := v.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(vulnerability.Table, vulnerability.FieldID, id),
-			sqlgraph.To(vulnstatus.Table, vulnstatus.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, vulnerability.StatusTable, vulnerability.StatusColumn),
+			sqlgraph.To(severity.Table, severity.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, vulnerability.SevTable, vulnerability.SevColumn),
 		)
 		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
 		return fromV, nil

@@ -1,12 +1,19 @@
 package usecase
 
 import (
-	"github.com/google/go-github/v39/github"
+	"testing"
+
+	gh "github.com/google/go-github/v39/github"
+	"github.com/stretchr/testify/require"
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra"
+	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/infra/github"
+	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
@@ -30,11 +37,19 @@ type Interface interface {
 	GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error)
 	GetVulnerabilityCount(ctx *model.Context) (int, error)
 	GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error)
+	CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerability) error
+
+	// Severity
+	CreateSeverity(ctx *model.Context, label string) (*ent.Severity, error)
+	DeleteSeverity(ctx *model.Context, id int) error
+	GetSeverities(ctx *model.Context) ([]*ent.Severity, error)
+	UpdateSeverity(ctx *model.Context, id int, label string) error
+	AssignSeverity(ctx *model.Context, vulnID string, id int) error
 
 	// Handle GitHub App Webhook event
-	HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error
-	HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error
-	HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error
+	HandleGitHubPushEvent(ctx *model.Context, event *gh.PushEvent) error
+	HandleGitHubPullReqEvent(ctx *model.Context, event *gh.PullRequestEvent) error
+	HandleGitHubInstallationEvent(ctx *model.Context, event *gh.InstallationEvent) error
 	VerifyGitHubSecret(sigSHA256 string, body []byte) error
 
 	// Auth
@@ -59,6 +74,31 @@ func New(cfg *model.Config) Interface {
 		config:    cfg,
 		infra:     infra.New(),
 		scanQueue: make(chan *model.ScanRepositoryRequest, 1024),
+	}
+
+	return uc
+}
+
+func NewTest(t *testing.T) Interface {
+	uc := New(&model.Config{}).(*usecase)
+
+	dbClient := db.NewMock(t)
+	ghClient := github.NewMock()
+	newGitHubApp, _ := githubapp.NewMock()
+	util := infra.NewUtils()
+	trivyClient := trivy.NewMock()
+
+	uc.disableInvokeThread = true
+	uc.infra = &infra.Interfaces{
+		DB:           dbClient,
+		GitHub:       ghClient,
+		NewGitHubApp: newGitHubApp,
+		Trivy:        trivyClient,
+		Utils:        util,
+	}
+
+	uc.testErrorHandler = func(err error) {
+		require.NoError(t, err)
 	}
 
 	return uc

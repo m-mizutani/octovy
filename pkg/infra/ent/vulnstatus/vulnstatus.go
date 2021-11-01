@@ -61,7 +61,6 @@ var ForeignKeys = []string{
 	"user_edited_status",
 	"vuln_status_author",
 	"vuln_status_index_status",
-	"vulnerability_status",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -1,15 +1,13 @@
 package server
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/goerr"
 
 	"github.com/m-mizutani/octovy/pkg/usecase"
-	"github.com/m-mizutani/octovy/pkg/utils"
-	"github.com/pkg/errors"
 )
-
-var globalLogger = utils.Logger
 
 const (
 	contextUsecase      = "usecase"
@@ -47,14 +45,29 @@ func errResp(c *gin.Context, code int, err error) {
 	}
 }
 
-func New(uc usecase.Interface) *gin.Engine {
+type Option struct {
+	DisableAuth bool
+}
+
+func mergeOption(options []*Option) *Option {
+	var merged Option
+	for _, opt := range options {
+		merged.DisableAuth = opt.DisableAuth
+	}
+	return &merged
+}
+
+func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 	engine := gin.Default()
+	opt := mergeOption(options)
 
 	engine.Use(func(c *gin.Context) {
 		c.Set(contextUsecase, uc)
 	})
 	engine.Use(requestLogging)
-	engine.Use(authControl)
+	if !opt.DisableAuth {
+		engine.Use(authControl)
+	}
 	engine.Use(getStaticFile)
 	engine.Use(errorHandler)
 
@@ -68,10 +81,17 @@ func New(uc usecase.Interface) *gin.Engine {
 		r.GET("/repository", getRepositories)
 		r.GET("/vulnerability", getVulnerabilities)
 		r.GET("/vulnerability/:vuln_id", getVulnerability)
+		r.POST("/vulnerability", postVulnerability)
 		r.GET("/scan/:scan_id", getScanReport)
 
 		r.POST("/status/:owner/:repo_name", postVulnStatus)
 		r.GET("/user", getUser)
+
+		r.GET("/severity", getSeverities)
+		r.POST("/severity", createSeverity)
+		r.PUT("/severity/:id", updateSeverity)
+		r.POST("/severity/:id/assign/:vuln_id", assignSeverity)
+		r.DELETE("/severity/:id", deleteSeverity)
 	}
 
 	return engine

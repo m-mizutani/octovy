@@ -74,6 +74,19 @@ func (f SessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return f(ctx, mv)
 }
 
+// The SeverityFunc type is an adapter to allow the use of ordinary
+// function as Severity mutator.
+type SeverityFunc func(context.Context, *ent.SeverityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SeverityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.SeverityMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SeverityMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

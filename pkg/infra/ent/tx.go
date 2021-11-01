@@ -22,6 +22,8 @@ type Tx struct {
 	Scan *ScanClient
 	// Session is the client for interacting with the Session builders.
 	Session *SessionClient
+	// Severity is the client for interacting with the Severity builders.
+	Severity *SeverityClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VulnStatus is the client for interacting with the VulnStatus builders.
@@ -170,6 +172,7 @@ func (tx *Tx) init() {
 	tx.Repository = NewRepositoryClient(tx.config)
 	tx.Scan = NewScanClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
+	tx.Severity = NewSeverityClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.VulnStatus = NewVulnStatusClient(tx.config)
 	tx.VulnStatusIndex = NewVulnStatusIndexClient(tx.config)

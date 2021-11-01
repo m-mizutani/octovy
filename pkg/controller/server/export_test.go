@@ -1,0 +1,6 @@
+package server
+
+type BaseResponse baseResponse
+
+type SeverityRequest severityRequest
+type RespVulnerabilities respVulnerabilities
