@@ -134,4 +134,22 @@ func TestSeverityAssign(t *testing.T) {
 		require.NotNil(t, resp.Vulnerabilities[0].Edges.Sev)
 		assert.Equal(t, "critical", resp.Vulnerabilities[0].Edges.Sev.Label)
 	}
+
+	{
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/severity/%d", sev.ID), nil)
+		engine.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+	}
+
+	{
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/vulnerability/CVE-2000-1000", nil)
+		engine.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+		var vuln *model.RespVulnerability
+		bind(t, w.Body, &vuln)
+		assert.Equal(t, "blue", vuln.Vulnerability.Title)
+		require.Nil(t, vuln.Vulnerability.Edges.Sev)
+	}
 }

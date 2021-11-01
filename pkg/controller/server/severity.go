@@ -85,12 +85,16 @@ func assignSeverity(c *gin.Context) {
 
 func deleteSeverity(c *gin.Context) {
 	uc := getUsecase(c)
-
-	resp, err := uc.GetRepositories(model.NewContextWith(c))
+	id, err := strconv.ParseInt(c.Param("id"), 10, 32)
 	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := uc.DeleteSeverity(model.NewContextWith(c), int(id)); err != nil {
 		_ = c.Error(err)
 		return
 	}
 
-	c.JSON(http.StatusOK, baseResponse{Data: resp})
+	c.JSON(http.StatusOK, baseResponse{})
 }
