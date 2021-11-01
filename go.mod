@@ -14,8 +14,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-github/v39 v39.0.0
 	github.com/google/uuid v1.3.0
-	github.com/huandu/go-clone v1.3.0 // indirect
-	github.com/jinzhu/copier v0.3.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/m-mizutani/goerr v0.1.2
