@@ -75,6 +75,9 @@ export type vulnerability = {
   severity: string;
   cvss: string[];
   references: string[];
+  edges: {
+    sev?: severity;
+  };
 };
 
 export interface user {
@@ -143,3 +146,8 @@ export class vulnStatusDB {
     );
   }
 }
+
+export type severity = {
+  id: number;
+  label: string;
+};

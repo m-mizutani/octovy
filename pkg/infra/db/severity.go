@@ -4,6 +4,7 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/severity"
 )
 
 // Severity
@@ -26,7 +27,7 @@ func (x *Client) DeleteSeverity(ctx *model.Context, id int) error {
 }
 
 func (x *Client) GetSeverities(ctx *model.Context) ([]*ent.Severity, error) {
-	got, err := x.client.Severity.Query().All(ctx)
+	got, err := x.client.Severity.Query().Order(ent.Asc(severity.FieldID)).All(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
