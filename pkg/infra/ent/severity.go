@@ -17,6 +17,8 @@ type Severity struct {
 	ID int `json:"id,omitempty"`
 	// Label holds the value of the "label" field.
 	Label string `json:"label,omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SeverityQuery when eager-loading is set.
 	Edges SeverityEdges `json:"edges"`
@@ -47,7 +49,7 @@ func (*Severity) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case severity.FieldID:
 			values[i] = new(sql.NullInt64)
-		case severity.FieldLabel:
+		case severity.FieldLabel, severity.FieldColor:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Severity", columns[i])
@@ -75,6 +77,12 @@ func (s *Severity) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field label", values[i])
 			} else if value.Valid {
 				s.Label = value.String
+			}
+		case severity.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				s.Color = value.String
 			}
 		}
 	}
@@ -111,6 +119,8 @@ func (s *Severity) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", s.ID))
 	builder.WriteString(", label=")
 	builder.WriteString(s.Label)
+	builder.WriteString(", color=")
+	builder.WriteString(s.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

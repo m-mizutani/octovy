@@ -28,6 +28,12 @@ func (sc *SeverityCreate) SetLabel(s string) *SeverityCreate {
 	return sc
 }
 
+// SetColor sets the "color" field.
+func (sc *SeverityCreate) SetColor(s string) *SeverityCreate {
+	sc.mutation.SetColor(s)
+	return sc
+}
+
 // AddVulnerabilityIDs adds the "vulnerabilities" edge to the Vulnerability entity by IDs.
 func (sc *SeverityCreate) AddVulnerabilityIDs(ids ...string) *SeverityCreate {
 	sc.mutation.AddVulnerabilityIDs(ids...)
@@ -121,6 +127,9 @@ func (sc *SeverityCreate) check() error {
 			return &ValidationError{Name: "label", err: fmt.Errorf(`ent: validator failed for field "label": %w`, err)}
 		}
 	}
+	if _, ok := sc.mutation.Color(); !ok {
+		return &ValidationError{Name: "color", err: errors.New(`ent: missing required field "color"`)}
+	}
 	return nil
 }
 
@@ -156,6 +165,14 @@ func (sc *SeverityCreate) createSpec() (*Severity, *sqlgraph.CreateSpec) {
 			Column: severity.FieldLabel,
 		})
 		_node.Label = value
+	}
+	if value, ok := sc.mutation.Color(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: severity.FieldColor,
+		})
+		_node.Color = value
 	}
 	if nodes := sc.mutation.VulnerabilitiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -242,6 +259,18 @@ func (u *SeverityUpsert) UpdateLabel() *SeverityUpsert {
 	return u
 }
 
+// SetColor sets the "color" field.
+func (u *SeverityUpsert) SetColor(v string) *SeverityUpsert {
+	u.Set(severity.FieldColor, v)
+	return u
+}
+
+// UpdateColor sets the "color" field to the value that was provided on create.
+func (u *SeverityUpsert) UpdateColor() *SeverityUpsert {
+	u.SetExcluded(severity.FieldColor)
+	return u
+}
+
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
@@ -293,6 +322,20 @@ func (u *SeverityUpsertOne) SetLabel(v string) *SeverityUpsertOne {
 func (u *SeverityUpsertOne) UpdateLabel() *SeverityUpsertOne {
 	return u.Update(func(s *SeverityUpsert) {
 		s.UpdateLabel()
+	})
+}
+
+// SetColor sets the "color" field.
+func (u *SeverityUpsertOne) SetColor(v string) *SeverityUpsertOne {
+	return u.Update(func(s *SeverityUpsert) {
+		s.SetColor(v)
+	})
+}
+
+// UpdateColor sets the "color" field to the value that was provided on create.
+func (u *SeverityUpsertOne) UpdateColor() *SeverityUpsertOne {
+	return u.Update(func(s *SeverityUpsert) {
+		s.UpdateColor()
 	})
 }
 
@@ -508,6 +551,20 @@ func (u *SeverityUpsertBulk) SetLabel(v string) *SeverityUpsertBulk {
 func (u *SeverityUpsertBulk) UpdateLabel() *SeverityUpsertBulk {
 	return u.Update(func(s *SeverityUpsert) {
 		s.UpdateLabel()
+	})
+}
+
+// SetColor sets the "color" field.
+func (u *SeverityUpsertBulk) SetColor(v string) *SeverityUpsertBulk {
+	return u.Update(func(s *SeverityUpsert) {
+		s.SetColor(v)
+	})
+}
+
+// UpdateColor sets the "color" field to the value that was provided on create.
+func (u *SeverityUpsertBulk) UpdateColor() *SeverityUpsertBulk {
+	return u.Update(func(s *SeverityUpsert) {
+		s.UpdateColor()
 	})
 }
 

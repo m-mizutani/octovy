@@ -15,6 +15,7 @@ type Severity struct {
 func (Severity) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("label").NotEmpty().Unique(),
+		field.String("color"),
 	}
 }
 

@@ -101,8 +101,12 @@ func (x *usecase) CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerabilit
 	return x.infra.DB.PutVulnerabilities(ctx, []*ent.Vulnerability{vuln})
 }
 
-func (x *usecase) CreateSeverity(ctx *model.Context, label string) (*ent.Severity, error) {
-	return x.infra.DB.CreateSeverity(ctx, label)
+func (x *usecase) CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error) {
+	if err := req.IsValid(); err != nil {
+		return nil, err
+	}
+
+	return x.infra.DB.CreateSeverity(ctx, req)
 }
 
 func (x *usecase) DeleteSeverity(ctx *model.Context, id int) error {
@@ -113,8 +117,12 @@ func (x *usecase) GetSeverities(ctx *model.Context) ([]*ent.Severity, error) {
 	return x.infra.DB.GetSeverities(ctx)
 }
 
-func (x *usecase) UpdateSeverity(ctx *model.Context, id int, label string) error {
-	return x.infra.DB.UpdateSeverity(ctx, id, label)
+func (x *usecase) UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error {
+	if err := req.IsValid(); err != nil {
+		return err
+	}
+
+	return x.infra.DB.UpdateSeverity(ctx, id, req)
 }
 
 func (x *usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) error {

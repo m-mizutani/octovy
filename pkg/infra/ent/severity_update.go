@@ -33,6 +33,12 @@ func (su *SeverityUpdate) SetLabel(s string) *SeverityUpdate {
 	return su
 }
 
+// SetColor sets the "color" field.
+func (su *SeverityUpdate) SetColor(s string) *SeverityUpdate {
+	su.mutation.SetColor(s)
+	return su
+}
+
 // AddVulnerabilityIDs adds the "vulnerabilities" edge to the Vulnerability entity by IDs.
 func (su *SeverityUpdate) AddVulnerabilityIDs(ids ...string) *SeverityUpdate {
 	su.mutation.AddVulnerabilityIDs(ids...)
@@ -169,6 +175,13 @@ func (su *SeverityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: severity.FieldLabel,
 		})
 	}
+	if value, ok := su.mutation.Color(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: severity.FieldColor,
+		})
+	}
 	if su.mutation.VulnerabilitiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -245,6 +258,12 @@ type SeverityUpdateOne struct {
 // SetLabel sets the "label" field.
 func (suo *SeverityUpdateOne) SetLabel(s string) *SeverityUpdateOne {
 	suo.mutation.SetLabel(s)
+	return suo
+}
+
+// SetColor sets the "color" field.
+func (suo *SeverityUpdateOne) SetColor(s string) *SeverityUpdateOne {
+	suo.mutation.SetColor(s)
 	return suo
 }
 
@@ -406,6 +425,13 @@ func (suo *SeverityUpdateOne) sqlSave(ctx context.Context) (_node *Severity, err
 			Type:   field.TypeString,
 			Value:  value,
 			Column: severity.FieldLabel,
+		})
+	}
+	if value, ok := suo.mutation.Color(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: severity.FieldColor,
 		})
 	}
 	if suo.mutation.VulnerabilitiesCleared() {

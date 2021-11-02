@@ -7,7 +7,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import IconButton from "@mui/material/IconButton";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorIcon from "@mui/icons-material/Error";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -95,7 +95,7 @@ function Severity(props: {
           </Stack>
         }>
         <ListItemIcon>
-          <ErrorOutlineIcon />
+          <ErrorIcon />
         </ListItemIcon>
 
         <TextField
@@ -156,7 +156,7 @@ function Severity(props: {
           </Stack>
         }>
         <ListItemIcon>
-          <ErrorOutlineIcon />
+          <ErrorIcon sx={{ color: "#310599" }} />
         </ListItemIcon>
         <ListItemText primary={label} />
       </ListItem>

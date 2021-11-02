@@ -20,20 +20,16 @@ func getSeverities(c *gin.Context) {
 	c.JSON(http.StatusOK, baseResponse{Data: resp})
 }
 
-type severityRequest struct {
-	Label string
-}
-
 func createSeverity(c *gin.Context) {
 	uc := getUsecase(c)
 
-	var req severityRequest
+	var req model.RequestSeverity
 	if err := c.BindJSON(&req); err != nil {
 		_ = c.Error(err)
 		return
 	}
 
-	resp, err := uc.CreateSeverity(model.NewContextWith(c), req.Label)
+	resp, err := uc.CreateSeverity(model.NewContextWith(c), &req)
 	if err != nil {
 		c.Error(err)
 		return
@@ -45,7 +41,7 @@ func createSeverity(c *gin.Context) {
 func updateSeverity(c *gin.Context) {
 	uc := getUsecase(c)
 
-	var req severityRequest
+	var req model.RequestSeverity
 	if err := c.BindJSON(&req); err != nil {
 		_ = c.Error(err)
 		return
@@ -57,7 +53,7 @@ func updateSeverity(c *gin.Context) {
 		return
 	}
 
-	if err := uc.UpdateSeverity(model.NewContextWith(c), int(id), req.Label); err != nil {
+	if err := uc.UpdateSeverity(model.NewContextWith(c), int(id), &req); err != nil {
 		c.Error(err)
 		return
 	}

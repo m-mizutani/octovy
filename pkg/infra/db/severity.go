@@ -8,9 +8,10 @@ import (
 )
 
 // Severity
-func (x *Client) CreateSeverity(ctx *model.Context, label string) (*ent.Severity, error) {
+func (x *Client) CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error) {
 	added, err := x.client.Severity.Create().
-		SetLabel(label).
+		SetLabel(req.Label).
+		SetColor(req.Color).
 		Save(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
@@ -34,8 +35,8 @@ func (x *Client) GetSeverities(ctx *model.Context) ([]*ent.Severity, error) {
 	return got, nil
 }
 
-func (x *Client) UpdateSeverity(ctx *model.Context, id int, label string) error {
-	if err := x.client.Severity.UpdateOneID(id).SetLabel(label).Exec(ctx); err != nil {
+func (x *Client) UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error {
+	if err := x.client.Severity.UpdateOneID(id).SetLabel(req.Label).SetColor(req.Color).Exec(ctx); err != nil {
 		return goerr.Wrap(err)
 	}
 	return nil

@@ -31,13 +31,13 @@ func TestSeverityCreate(t *testing.T) {
 	engine := newServer(t)
 
 	w1 := httptest.NewRecorder()
-	body, _ := json.Marshal(server.SeverityRequest{Label: "critical"})
+	body, _ := json.Marshal(model.RequestSeverity{Label: "critical"})
 	req1, _ := http.NewRequest("POST", "/api/v1/severity", bytes.NewReader(body))
 	engine.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusCreated, w1.Result().StatusCode)
 
 	w2 := httptest.NewRecorder()
-	body2, _ := json.Marshal(server.SeverityRequest{Label: "high"})
+	body2, _ := json.Marshal(model.RequestSeverity{Label: "high"})
 	req2, _ := http.NewRequest("POST", "/api/v1/severity", bytes.NewReader(body2))
 	engine.ServeHTTP(w2, req2)
 	assert.Equal(t, http.StatusCreated, w2.Result().StatusCode)
@@ -58,7 +58,7 @@ func TestSeverityUpdate(t *testing.T) {
 	engine := newServer(t)
 
 	w1 := httptest.NewRecorder()
-	body, _ := json.Marshal(server.SeverityRequest{Label: "critical"})
+	body, _ := json.Marshal(model.RequestSeverity{Label: "critical"})
 	req1, _ := http.NewRequest("POST", "/api/v1/severity", bytes.NewReader(body))
 	engine.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusCreated, w1.Result().StatusCode)
@@ -66,7 +66,7 @@ func TestSeverityUpdate(t *testing.T) {
 	bind(t, w1.Body, &resp1)
 
 	w2 := httptest.NewRecorder()
-	body2, _ := json.Marshal(server.SeverityRequest{Label: "high"})
+	body2, _ := json.Marshal(model.RequestSeverity{Label: "high"})
 	req2, _ := http.NewRequest("PUT", fmt.Sprintf("/api/v1/severity/%d", resp1.ID), bytes.NewReader(body2))
 	engine.ServeHTTP(w2, req2)
 	assert.Equal(t, http.StatusOK, w2.Result().StatusCode)
@@ -88,7 +88,7 @@ func TestSeverityAssign(t *testing.T) {
 	var sev *ent.Severity
 	{
 		w1 := httptest.NewRecorder()
-		body, _ := json.Marshal(server.SeverityRequest{Label: "critical"})
+		body, _ := json.Marshal(model.RequestSeverity{Label: "critical"})
 		req1, _ := http.NewRequest("POST", "/api/v1/severity", bytes.NewReader(body))
 		engine.ServeHTTP(w1, req1)
 		assert.Equal(t, http.StatusCreated, w1.Result().StatusCode)

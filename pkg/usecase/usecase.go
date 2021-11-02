@@ -40,10 +40,10 @@ type Interface interface {
 	CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerability) error
 
 	// Severity
-	CreateSeverity(ctx *model.Context, label string) (*ent.Severity, error)
+	CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error)
 	DeleteSeverity(ctx *model.Context, id int) error
 	GetSeverities(ctx *model.Context) ([]*ent.Severity, error)
-	UpdateSeverity(ctx *model.Context, id int, label string) error
+	UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error
 	AssignSeverity(ctx *model.Context, vulnID string, id int) error
 
 	// Handle GitHub App Webhook event

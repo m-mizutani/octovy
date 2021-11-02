@@ -9,6 +9,8 @@ const (
 	FieldID = "id"
 	// FieldLabel holds the string denoting the label field in the database.
 	FieldLabel = "label"
+	// FieldColor holds the string denoting the color field in the database.
+	FieldColor = "color"
 	// EdgeVulnerabilities holds the string denoting the vulnerabilities edge name in mutations.
 	EdgeVulnerabilities = "vulnerabilities"
 	// Table holds the table name of the severity in the database.
@@ -26,6 +28,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldLabel,
+	FieldColor,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

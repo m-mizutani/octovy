@@ -91,6 +91,13 @@ func IDLTE(id int) predicate.Severity {
 	})
 }
 
+// Color applies equality check predicate on the "color" field. It's identical to ColorEQ.
+func Color(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldColor), v))
+	})
+}
+
 // LabelEQ applies the EQ predicate on the "label" field.
 func LabelEQ(v string) predicate.Severity {
 	return predicate.Severity(func(s *sql.Selector) {
@@ -199,6 +206,117 @@ func LabelEqualFold(v string) predicate.Severity {
 func LabelContainsFold(v string) predicate.Severity {
 	return predicate.Severity(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldLabel), v))
+	})
+}
+
+// ColorEQ applies the EQ predicate on the "color" field.
+func ColorEQ(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldColor), v))
+	})
+}
+
+// ColorNEQ applies the NEQ predicate on the "color" field.
+func ColorNEQ(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldColor), v))
+	})
+}
+
+// ColorIn applies the In predicate on the "color" field.
+func ColorIn(vs ...string) predicate.Severity {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Severity(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldColor), v...))
+	})
+}
+
+// ColorNotIn applies the NotIn predicate on the "color" field.
+func ColorNotIn(vs ...string) predicate.Severity {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Severity(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldColor), v...))
+	})
+}
+
+// ColorGT applies the GT predicate on the "color" field.
+func ColorGT(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldColor), v))
+	})
+}
+
+// ColorGTE applies the GTE predicate on the "color" field.
+func ColorGTE(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldColor), v))
+	})
+}
+
+// ColorLT applies the LT predicate on the "color" field.
+func ColorLT(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldColor), v))
+	})
+}
+
+// ColorLTE applies the LTE predicate on the "color" field.
+func ColorLTE(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldColor), v))
+	})
+}
+
+// ColorContains applies the Contains predicate on the "color" field.
+func ColorContains(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldColor), v))
+	})
+}
+
+// ColorHasPrefix applies the HasPrefix predicate on the "color" field.
+func ColorHasPrefix(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldColor), v))
+	})
+}
+
+// ColorHasSuffix applies the HasSuffix predicate on the "color" field.
+func ColorHasSuffix(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldColor), v))
+	})
+}
+
+// ColorEqualFold applies the EqualFold predicate on the "color" field.
+func ColorEqualFold(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldColor), v))
+	})
+}
+
+// ColorContainsFold applies the ContainsFold predicate on the "color" field.
+func ColorContainsFold(v string) predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldColor), v))
 	})
 }
 
