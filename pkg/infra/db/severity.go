@@ -42,7 +42,7 @@ func (x *Client) UpdateSeverity(ctx *model.Context, id int, label string) error 
 }
 
 func (x *Client) AssignSeverity(ctx *model.Context, vulnID string, id int) error {
-	if err := x.client.Vulnerability.UpdateOneID(vulnID).SetSevID(id).Exec(ctx); err != nil {
+	if err := x.client.Vulnerability.UpdateOneID(vulnID).SetCustomSeverityID(id).Exec(ctx); err != nil {
 		return goerr.Wrap(err)
 	}
 	return nil

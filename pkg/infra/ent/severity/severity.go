@@ -19,7 +19,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "vulnerability" package.
 	VulnerabilitiesInverseTable = "vulnerabilities"
 	// VulnerabilitiesColumn is the table column denoting the vulnerabilities relation/edge.
-	VulnerabilitiesColumn = "vulnerability_sev"
+	VulnerabilitiesColumn = "vulnerability_custom_severity"
 )
 
 // Columns holds all SQL columns for severity fields.

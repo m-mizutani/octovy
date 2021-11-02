@@ -76,7 +76,7 @@ export type vulnerability = {
   cvss: string[];
   references: string[];
   edges: {
-    sev?: severity;
+    custom_severity?: severity;
   };
 };
 

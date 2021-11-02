@@ -1320,15 +1320,15 @@ func (c *VulnerabilityClient) QueryPackages(v *Vulnerability) *PackageRecordQuer
 	return query
 }
 
-// QuerySev queries the sev edge of a Vulnerability.
-func (c *VulnerabilityClient) QuerySev(v *Vulnerability) *SeverityQuery {
+// QueryCustomSeverity queries the custom_severity edge of a Vulnerability.
+func (c *VulnerabilityClient) QueryCustomSeverity(v *Vulnerability) *SeverityQuery {
 	query := &SeverityQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := v.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(vulnerability.Table, vulnerability.FieldID, id),
 			sqlgraph.To(severity.Table, severity.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, vulnerability.SevTable, vulnerability.SevColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, vulnerability.CustomSeverityTable, vulnerability.CustomSeverityColumn),
 		)
 		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
 		return fromV, nil

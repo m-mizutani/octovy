@@ -391,13 +391,13 @@ func (sq *SeverityQuery) sqlAll(ctx context.Context) ([]*Severity, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.vulnerability_sev
+			fk := n.vulnerability_custom_severity
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "vulnerability_sev" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "vulnerability_custom_severity" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "vulnerability_sev" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "vulnerability_custom_severity" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Vulnerabilities = append(node.Edges.Vulnerabilities, n)
 		}

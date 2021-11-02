@@ -18,7 +18,7 @@ export default function Config() {
       </Container>
       <Container style={{ marginTop: 20 }}>
         <Grid>
-          <Typography variant="h5">Severity</Typography>
+          <Typography variant="h5">Custom Severity</Typography>
         </Grid>
         <Grid style={{ margin: 15 }}>
           <Severities />

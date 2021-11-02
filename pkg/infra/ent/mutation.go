@@ -5798,28 +5798,28 @@ func (m *VulnStatusIndexMutation) ResetEdge(name string) error {
 // VulnerabilityMutation represents an operation that mutates the Vulnerability nodes in the graph.
 type VulnerabilityMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *string
-	first_seen_at       *int64
-	addfirst_seen_at    *int64
-	last_modified_at    *int64
-	addlast_modified_at *int64
-	title               *string
-	description         *string
-	cwe_id              *[]string
-	severity            *string
-	cvss                *[]string
-	references          *[]string
-	clearedFields       map[string]struct{}
-	packages            map[int]struct{}
-	removedpackages     map[int]struct{}
-	clearedpackages     bool
-	sev                 *int
-	clearedsev          bool
-	done                bool
-	oldValue            func(context.Context) (*Vulnerability, error)
-	predicates          []predicate.Vulnerability
+	op                     Op
+	typ                    string
+	id                     *string
+	first_seen_at          *int64
+	addfirst_seen_at       *int64
+	last_modified_at       *int64
+	addlast_modified_at    *int64
+	title                  *string
+	description            *string
+	cwe_id                 *[]string
+	severity               *string
+	cvss                   *[]string
+	references             *[]string
+	clearedFields          map[string]struct{}
+	packages               map[int]struct{}
+	removedpackages        map[int]struct{}
+	clearedpackages        bool
+	custom_severity        *int
+	clearedcustom_severity bool
+	done                   bool
+	oldValue               func(context.Context) (*Vulnerability, error)
+	predicates             []predicate.Vulnerability
 }
 
 var _ ent.Mutation = (*VulnerabilityMutation)(nil)
@@ -6367,43 +6367,43 @@ func (m *VulnerabilityMutation) ResetPackages() {
 	m.removedpackages = nil
 }
 
-// SetSevID sets the "sev" edge to the Severity entity by id.
-func (m *VulnerabilityMutation) SetSevID(id int) {
-	m.sev = &id
+// SetCustomSeverityID sets the "custom_severity" edge to the Severity entity by id.
+func (m *VulnerabilityMutation) SetCustomSeverityID(id int) {
+	m.custom_severity = &id
 }
 
-// ClearSev clears the "sev" edge to the Severity entity.
-func (m *VulnerabilityMutation) ClearSev() {
-	m.clearedsev = true
+// ClearCustomSeverity clears the "custom_severity" edge to the Severity entity.
+func (m *VulnerabilityMutation) ClearCustomSeverity() {
+	m.clearedcustom_severity = true
 }
 
-// SevCleared reports if the "sev" edge to the Severity entity was cleared.
-func (m *VulnerabilityMutation) SevCleared() bool {
-	return m.clearedsev
+// CustomSeverityCleared reports if the "custom_severity" edge to the Severity entity was cleared.
+func (m *VulnerabilityMutation) CustomSeverityCleared() bool {
+	return m.clearedcustom_severity
 }
 
-// SevID returns the "sev" edge ID in the mutation.
-func (m *VulnerabilityMutation) SevID() (id int, exists bool) {
-	if m.sev != nil {
-		return *m.sev, true
+// CustomSeverityID returns the "custom_severity" edge ID in the mutation.
+func (m *VulnerabilityMutation) CustomSeverityID() (id int, exists bool) {
+	if m.custom_severity != nil {
+		return *m.custom_severity, true
 	}
 	return
 }
 
-// SevIDs returns the "sev" edge IDs in the mutation.
+// CustomSeverityIDs returns the "custom_severity" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// SevID instead. It exists only for internal usage by the builders.
-func (m *VulnerabilityMutation) SevIDs() (ids []int) {
-	if id := m.sev; id != nil {
+// CustomSeverityID instead. It exists only for internal usage by the builders.
+func (m *VulnerabilityMutation) CustomSeverityIDs() (ids []int) {
+	if id := m.custom_severity; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetSev resets all changes to the "sev" edge.
-func (m *VulnerabilityMutation) ResetSev() {
-	m.sev = nil
-	m.clearedsev = false
+// ResetCustomSeverity resets all changes to the "custom_severity" edge.
+func (m *VulnerabilityMutation) ResetCustomSeverity() {
+	m.custom_severity = nil
+	m.clearedcustom_severity = false
 }
 
 // Where appends a list predicates to the VulnerabilityMutation builder.
@@ -6713,8 +6713,8 @@ func (m *VulnerabilityMutation) AddedEdges() []string {
 	if m.packages != nil {
 		edges = append(edges, vulnerability.EdgePackages)
 	}
-	if m.sev != nil {
-		edges = append(edges, vulnerability.EdgeSev)
+	if m.custom_severity != nil {
+		edges = append(edges, vulnerability.EdgeCustomSeverity)
 	}
 	return edges
 }
@@ -6729,8 +6729,8 @@ func (m *VulnerabilityMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case vulnerability.EdgeSev:
-		if id := m.sev; id != nil {
+	case vulnerability.EdgeCustomSeverity:
+		if id := m.custom_severity; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -6766,8 +6766,8 @@ func (m *VulnerabilityMutation) ClearedEdges() []string {
 	if m.clearedpackages {
 		edges = append(edges, vulnerability.EdgePackages)
 	}
-	if m.clearedsev {
-		edges = append(edges, vulnerability.EdgeSev)
+	if m.clearedcustom_severity {
+		edges = append(edges, vulnerability.EdgeCustomSeverity)
 	}
 	return edges
 }
@@ -6778,8 +6778,8 @@ func (m *VulnerabilityMutation) EdgeCleared(name string) bool {
 	switch name {
 	case vulnerability.EdgePackages:
 		return m.clearedpackages
-	case vulnerability.EdgeSev:
-		return m.clearedsev
+	case vulnerability.EdgeCustomSeverity:
+		return m.clearedcustom_severity
 	}
 	return false
 }
@@ -6788,8 +6788,8 @@ func (m *VulnerabilityMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *VulnerabilityMutation) ClearEdge(name string) error {
 	switch name {
-	case vulnerability.EdgeSev:
-		m.ClearSev()
+	case vulnerability.EdgeCustomSeverity:
+		m.ClearCustomSeverity()
 		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability unique edge %s", name)
@@ -6802,8 +6802,8 @@ func (m *VulnerabilityMutation) ResetEdge(name string) error {
 	case vulnerability.EdgePackages:
 		m.ResetPackages()
 		return nil
-	case vulnerability.EdgeSev:
-		m.ResetSev()
+	case vulnerability.EdgeCustomSeverity:
+		m.ResetCustomSeverity()
 		return nil
 	}
 	return fmt.Errorf("unknown Vulnerability edge %s", name)

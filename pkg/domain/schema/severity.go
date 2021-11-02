@@ -21,6 +21,6 @@ func (Severity) Fields() []ent.Field {
 // Edges of the Severity.
 func (Severity) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("vulnerabilities", Vulnerability.Type).Ref("sev"),
+		edge.From("vulnerabilities", Vulnerability.Type).Ref("custom_severity"),
 	}
 }

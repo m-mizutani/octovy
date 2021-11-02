@@ -211,7 +211,7 @@ var (
 		{Name: "severity", Type: field.TypeString, Nullable: true},
 		{Name: "cvss", Type: field.TypeJSON, Nullable: true},
 		{Name: "references", Type: field.TypeJSON, Nullable: true},
-		{Name: "vulnerability_sev", Type: field.TypeInt, Nullable: true},
+		{Name: "vulnerability_custom_severity", Type: field.TypeInt, Nullable: true},
 	}
 	// VulnerabilitiesTable holds the schema information for the "vulnerabilities" table.
 	VulnerabilitiesTable = &schema.Table{
@@ -220,7 +220,7 @@ var (
 		PrimaryKey: []*schema.Column{VulnerabilitiesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "vulnerabilities_severities_sev",
+				Symbol:     "vulnerabilities_severities_custom_severity",
 				Columns:    []*schema.Column{VulnerabilitiesColumns[9]},
 				RefColumns: []*schema.Column{SeveritiesColumns[0]},
 				OnDelete:   schema.SetNull,

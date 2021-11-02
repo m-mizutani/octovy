@@ -118,8 +118,8 @@ func TestSeverityAssign(t *testing.T) {
 		var vuln *model.RespVulnerability
 		bind(t, w.Body, &vuln)
 		assert.Equal(t, "blue", vuln.Vulnerability.Title)
-		require.NotNil(t, vuln.Vulnerability.Edges.Sev)
-		assert.Equal(t, "critical", vuln.Vulnerability.Edges.Sev.Label)
+		require.NotNil(t, vuln.Vulnerability.Edges.CustomSeverity)
+		assert.Equal(t, "critical", vuln.Vulnerability.Edges.CustomSeverity.Label)
 	}
 
 	{
@@ -131,8 +131,8 @@ func TestSeverityAssign(t *testing.T) {
 		bind(t, w.Body, &resp)
 		require.Len(t, resp.Vulnerabilities, 1)
 		assert.Equal(t, "blue", resp.Vulnerabilities[0].Title)
-		require.NotNil(t, resp.Vulnerabilities[0].Edges.Sev)
-		assert.Equal(t, "critical", resp.Vulnerabilities[0].Edges.Sev.Label)
+		require.NotNil(t, resp.Vulnerabilities[0].Edges.CustomSeverity)
+		assert.Equal(t, "critical", resp.Vulnerabilities[0].Edges.CustomSeverity.Label)
 	}
 
 	{
@@ -150,6 +150,6 @@ func TestSeverityAssign(t *testing.T) {
 		var vuln *model.RespVulnerability
 		bind(t, w.Body, &vuln)
 		assert.Equal(t, "blue", vuln.Vulnerability.Title)
-		require.Nil(t, vuln.Vulnerability.Edges.Sev)
+		require.Nil(t, vuln.Vulnerability.Edges.CustomSeverity)
 	}
 }
