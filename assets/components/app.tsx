@@ -12,7 +12,8 @@ import LoginIcon from "@mui/icons-material/Login";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import WarningIcon from "@mui/icons-material/Warning";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 import { ThemeProvider } from "@mui/material/styles";
 
@@ -21,6 +22,7 @@ import Link from "next/link";
 import theme from "./theme";
 import Head from "./head";
 import * as model from "./model";
+import Settings from "@mui/icons-material/Settings";
 
 type mainProp = {
   children?: React.ReactNode;
@@ -122,10 +124,17 @@ export function Main(props: mainProp) {
                 </Link>
 
                 <Box sx={{ flexGrow: 1 }} />
-                <Box sx={{ display: { xs: "none", md: "flex" } }}>
+                <Box sx={{ display: { xs: "none", md: "flex" }, width: 40 }}>
                   <Link href="/vulnerability">
                     <a style={{ color: "inherit" }}>
-                      <ErrorOutlineIcon fontSize="large" />
+                      <WarningIcon fontSize="large" />
+                    </a>
+                  </Link>
+                </Box>
+                <Box sx={{ display: { xs: "none", md: "flex" }, width: 40 }}>
+                  <Link href="/config">
+                    <a style={{ color: "inherit" }}>
+                      <SettingsIcon fontSize="large" />
                     </a>
                   </Link>
                 </Box>

@@ -29,10 +29,18 @@ type Interface interface {
 
 	CreateRepo(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error)
 
+	// Vulnerability
 	PutVulnerabilities(ctx *model.Context, vulnerabilities []*ent.Vulnerability) error
 	GetVulnerability(ctx *model.Context, id string) (*ent.Vulnerability, error)
 	GetLatestVulnerabilities(ctx *model.Context, offset, limit int) ([]*ent.Vulnerability, error)
 	GetVulnerabilityCount(ctx *model.Context) (int, error)
+
+	// Severity
+	CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error)
+	DeleteSeverity(ctx *model.Context, id int) error
+	GetSeverities(ctx *model.Context) ([]*ent.Severity, error)
+	UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error
+	AssignSeverity(ctx *model.Context, vulnID string, id int) error
 
 	PutPackages(ctx *model.Context, packages []*ent.PackageRecord) ([]*ent.PackageRecord, error)
 	PutScan(ctx *model.Context, scan *ent.Scan, repo *ent.Repository, packages []*ent.PackageRecord) (*ent.Scan, error)

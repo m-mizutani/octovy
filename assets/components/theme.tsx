@@ -26,6 +26,12 @@ const theme = createTheme({
       fontSize: 48,
       letterSpacing: 0.5,
     },
+    h4: {
+      fontFamily: "Kanit",
+      fontWeight: "bold",
+      fontSize: 32,
+      letterSpacing: 0.1,
+    },
     h5: {
       fontFamily: "Kanit",
       fontWeight: "bold",

@@ -107,6 +107,18 @@ var (
 			},
 		},
 	}
+	// SeveritiesColumns holds the columns for the "severities" table.
+	SeveritiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "label", Type: field.TypeString, Unique: true},
+		{Name: "color", Type: field.TypeString, Nullable: true},
+	}
+	// SeveritiesTable holds the schema information for the "severities" table.
+	SeveritiesTable = &schema.Table{
+		Name:       "severities",
+		Columns:    SeveritiesColumns,
+		PrimaryKey: []*schema.Column{SeveritiesColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -136,7 +148,6 @@ var (
 		{Name: "user_edited_status", Type: field.TypeInt, Nullable: true},
 		{Name: "vuln_status_author", Type: field.TypeInt, Nullable: true},
 		{Name: "vuln_status_index_status", Type: field.TypeString, Nullable: true},
-		{Name: "vulnerability_status", Type: field.TypeString, Nullable: true},
 	}
 	// VulnStatusTable holds the schema information for the "vuln_status" table.
 	VulnStatusTable = &schema.Table{
@@ -160,12 +171,6 @@ var (
 				Symbol:     "vuln_status_vuln_status_indexes_status",
 				Columns:    []*schema.Column{VulnStatusColumns[11]},
 				RefColumns: []*schema.Column{VulnStatusIndexesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "vuln_status_vulnerabilities_status",
-				Columns:    []*schema.Column{VulnStatusColumns[12]},
-				RefColumns: []*schema.Column{VulnerabilitiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -207,12 +212,21 @@ var (
 		{Name: "severity", Type: field.TypeString, Nullable: true},
 		{Name: "cvss", Type: field.TypeJSON, Nullable: true},
 		{Name: "references", Type: field.TypeJSON, Nullable: true},
+		{Name: "vulnerability_custom_severity", Type: field.TypeInt, Nullable: true},
 	}
 	// VulnerabilitiesTable holds the schema information for the "vulnerabilities" table.
 	VulnerabilitiesTable = &schema.Table{
 		Name:       "vulnerabilities",
 		Columns:    VulnerabilitiesColumns,
 		PrimaryKey: []*schema.Column{VulnerabilitiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "vulnerabilities_severities_custom_severity",
+				Columns:    []*schema.Column{VulnerabilitiesColumns[9]},
+				RefColumns: []*schema.Column{SeveritiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// PackageRecordVulnerabilitiesColumns holds the columns for the "package_record_vulnerabilities" table.
 	PackageRecordVulnerabilitiesColumns = []*schema.Column{
@@ -296,6 +310,7 @@ var (
 		RepositoriesTable,
 		ScansTable,
 		SessionsTable,
+		SeveritiesTable,
 		UsersTable,
 		VulnStatusTable,
 		VulnStatusIndexesTable,
@@ -313,9 +328,9 @@ func init() {
 	VulnStatusTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[1].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[2].RefTable = VulnStatusIndexesTable
-	VulnStatusTable.ForeignKeys[3].RefTable = VulnerabilitiesTable
 	VulnStatusIndexesTable.ForeignKeys[0].RefTable = RepositoriesTable
 	VulnStatusIndexesTable.ForeignKeys[1].RefTable = VulnStatusTable
+	VulnerabilitiesTable.ForeignKeys[0].RefTable = SeveritiesTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[0].RefTable = PackageRecordsTable
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
 	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable

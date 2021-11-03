@@ -13,6 +13,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/severity"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/user"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatus"
@@ -42,6 +43,7 @@ func columnChecker(table string) func(string) error {
 		repository.Table:      repository.ValidColumn,
 		scan.Table:            scan.ValidColumn,
 		session.Table:         session.ValidColumn,
+		severity.Table:        severity.ValidColumn,
 		user.Table:            user.ValidColumn,
 		vulnstatus.Table:      vulnstatus.ValidColumn,
 		vulnstatusindex.Table: vulnstatusindex.ValidColumn,

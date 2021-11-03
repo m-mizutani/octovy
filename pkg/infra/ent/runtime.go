@@ -5,6 +5,7 @@ package ent
 import (
 	"github.com/m-mizutani/octovy/pkg/domain/schema"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/severity"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnerability"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
 )
@@ -19,6 +20,12 @@ func init() {
 	sessionDescToken := sessionFields[2].Descriptor()
 	// session.TokenValidator is a validator for the "token" field. It is called by the builders before save.
 	session.TokenValidator = sessionDescToken.Validators[0].(func(string) error)
+	severityFields := schema.Severity{}.Fields()
+	_ = severityFields
+	// severityDescLabel is the schema descriptor for label field.
+	severityDescLabel := severityFields[0].Descriptor()
+	// severity.LabelValidator is a validator for the "label" field. It is called by the builders before save.
+	severity.LabelValidator = severityDescLabel.Validators[0].(func(string) error)
 	vulnstatusindexFields := schema.VulnStatusIndex{}.Fields()
 	_ = vulnstatusindexFields
 	// vulnstatusindexDescID is the schema descriptor for id field.

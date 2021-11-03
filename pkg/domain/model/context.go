@@ -46,6 +46,9 @@ func (x *Context) Value(key interface{}) interface{} { return x.base.Value(key) 
 
 // Logging feature
 func (x *Context) Log() *zlog.LogEntity {
+	if x.log == nil {
+		x.log = utils.Logger.Log()
+	}
 	return x.log
 }
 func (x *Context) With(key string, value interface{}) *zlog.LogEntity {

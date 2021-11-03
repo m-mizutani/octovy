@@ -29,6 +29,7 @@ type hooks struct {
 	Repository      []ent.Hook
 	Scan            []ent.Hook
 	Session         []ent.Hook
+	Severity        []ent.Hook
 	User            []ent.Hook
 	VulnStatus      []ent.Hook
 	VulnStatusIndex []ent.Hook

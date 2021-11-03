@@ -21,6 +21,9 @@ type Scan func(*sql.Selector)
 // Session is the predicate function for session builders.
 type Session func(*sql.Selector)
 
+// Severity is the predicate function for severity builders.
+type Severity func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 

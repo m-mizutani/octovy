@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"os"
+
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/zlog"
 	"github.com/m-mizutani/zlog/filter"
@@ -22,9 +24,9 @@ func SetLogLevel(logLevel string) error {
 func SetLogFormat(logFormat string) error {
 	switch logFormat {
 	case "console":
-		Logger.Formatter = zlog.NewConsoleFormatter()
+		Logger.Emitter = zlog.NewWriterWith(zlog.NewConsoleFormatter(), os.Stdout)
 	case "json":
-		Logger.Formatter = zlog.NewJsonFormatter()
+		Logger.Emitter = zlog.NewWriterWith(zlog.NewJsonFormatter(), os.Stdout)
 	default:
 		return goerr.New("invalid log format: " + logFormat)
 	}
