@@ -150,4 +150,5 @@ export class vulnStatusDB {
 export type severity = {
   id: number;
   label: string;
+  color: string;
 };

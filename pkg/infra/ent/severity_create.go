@@ -34,6 +34,14 @@ func (sc *SeverityCreate) SetColor(s string) *SeverityCreate {
 	return sc
 }
 
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (sc *SeverityCreate) SetNillableColor(s *string) *SeverityCreate {
+	if s != nil {
+		sc.SetColor(*s)
+	}
+	return sc
+}
+
 // AddVulnerabilityIDs adds the "vulnerabilities" edge to the Vulnerability entity by IDs.
 func (sc *SeverityCreate) AddVulnerabilityIDs(ids ...string) *SeverityCreate {
 	sc.mutation.AddVulnerabilityIDs(ids...)
@@ -126,9 +134,6 @@ func (sc *SeverityCreate) check() error {
 		if err := severity.LabelValidator(v); err != nil {
 			return &ValidationError{Name: "label", err: fmt.Errorf(`ent: validator failed for field "label": %w`, err)}
 		}
-	}
-	if _, ok := sc.mutation.Color(); !ok {
-		return &ValidationError{Name: "color", err: errors.New(`ent: missing required field "color"`)}
 	}
 	return nil
 }
@@ -271,6 +276,12 @@ func (u *SeverityUpsert) UpdateColor() *SeverityUpsert {
 	return u
 }
 
+// ClearColor clears the value of the "color" field.
+func (u *SeverityUpsert) ClearColor() *SeverityUpsert {
+	u.SetNull(severity.FieldColor)
+	return u
+}
+
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
@@ -336,6 +347,13 @@ func (u *SeverityUpsertOne) SetColor(v string) *SeverityUpsertOne {
 func (u *SeverityUpsertOne) UpdateColor() *SeverityUpsertOne {
 	return u.Update(func(s *SeverityUpsert) {
 		s.UpdateColor()
+	})
+}
+
+// ClearColor clears the value of the "color" field.
+func (u *SeverityUpsertOne) ClearColor() *SeverityUpsertOne {
+	return u.Update(func(s *SeverityUpsert) {
+		s.ClearColor()
 	})
 }
 
@@ -565,6 +583,13 @@ func (u *SeverityUpsertBulk) SetColor(v string) *SeverityUpsertBulk {
 func (u *SeverityUpsertBulk) UpdateColor() *SeverityUpsertBulk {
 	return u.Update(func(s *SeverityUpsert) {
 		s.UpdateColor()
+	})
+}
+
+// ClearColor clears the value of the "color" field.
+func (u *SeverityUpsertBulk) ClearColor() *SeverityUpsertBulk {
+	return u.Update(func(s *SeverityUpsert) {
+		s.ClearColor()
 	})
 }
 

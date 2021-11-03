@@ -111,7 +111,7 @@ var (
 	SeveritiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "label", Type: field.TypeString, Unique: true},
-		{Name: "color", Type: field.TypeString},
+		{Name: "color", Type: field.TypeString, Nullable: true},
 	}
 	// SeveritiesTable holds the schema information for the "severities" table.
 	SeveritiesTable = &schema.Table{

@@ -306,6 +306,20 @@ func ColorHasSuffix(v string) predicate.Severity {
 	})
 }
 
+// ColorIsNil applies the IsNil predicate on the "color" field.
+func ColorIsNil() predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldColor)))
+	})
+}
+
+// ColorNotNil applies the NotNil predicate on the "color" field.
+func ColorNotNil() predicate.Severity {
+	return predicate.Severity(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldColor)))
+	})
+}
+
 // ColorEqualFold applies the EqualFold predicate on the "color" field.
 func ColorEqualFold(v string) predicate.Severity {
 	return predicate.Severity(func(s *sql.Selector) {

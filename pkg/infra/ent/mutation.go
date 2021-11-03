@@ -3740,9 +3740,22 @@ func (m *SeverityMutation) OldColor(ctx context.Context) (v string, err error) {
 	return oldValue.Color, nil
 }
 
+// ClearColor clears the value of the "color" field.
+func (m *SeverityMutation) ClearColor() {
+	m.color = nil
+	m.clearedFields[severity.FieldColor] = struct{}{}
+}
+
+// ColorCleared returns if the "color" field was cleared in this mutation.
+func (m *SeverityMutation) ColorCleared() bool {
+	_, ok := m.clearedFields[severity.FieldColor]
+	return ok
+}
+
 // ResetColor resets all changes to the "color" field.
 func (m *SeverityMutation) ResetColor() {
 	m.color = nil
+	delete(m.clearedFields, severity.FieldColor)
 }
 
 // AddVulnerabilityIDs adds the "vulnerabilities" edge to the Vulnerability entity by ids.
@@ -3902,7 +3915,11 @@ func (m *SeverityMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *SeverityMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(severity.FieldColor) {
+		fields = append(fields, severity.FieldColor)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3915,6 +3932,11 @@ func (m *SeverityMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *SeverityMutation) ClearField(name string) error {
+	switch name {
+	case severity.FieldColor:
+		m.ClearColor()
+		return nil
+	}
 	return fmt.Errorf("unknown Severity nullable field %s", name)
 }
 

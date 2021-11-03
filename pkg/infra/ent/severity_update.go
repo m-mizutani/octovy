@@ -39,6 +39,20 @@ func (su *SeverityUpdate) SetColor(s string) *SeverityUpdate {
 	return su
 }
 
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (su *SeverityUpdate) SetNillableColor(s *string) *SeverityUpdate {
+	if s != nil {
+		su.SetColor(*s)
+	}
+	return su
+}
+
+// ClearColor clears the value of the "color" field.
+func (su *SeverityUpdate) ClearColor() *SeverityUpdate {
+	su.mutation.ClearColor()
+	return su
+}
+
 // AddVulnerabilityIDs adds the "vulnerabilities" edge to the Vulnerability entity by IDs.
 func (su *SeverityUpdate) AddVulnerabilityIDs(ids ...string) *SeverityUpdate {
 	su.mutation.AddVulnerabilityIDs(ids...)
@@ -182,6 +196,12 @@ func (su *SeverityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: severity.FieldColor,
 		})
 	}
+	if su.mutation.ColorCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: severity.FieldColor,
+		})
+	}
 	if su.mutation.VulnerabilitiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -264,6 +284,20 @@ func (suo *SeverityUpdateOne) SetLabel(s string) *SeverityUpdateOne {
 // SetColor sets the "color" field.
 func (suo *SeverityUpdateOne) SetColor(s string) *SeverityUpdateOne {
 	suo.mutation.SetColor(s)
+	return suo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (suo *SeverityUpdateOne) SetNillableColor(s *string) *SeverityUpdateOne {
+	if s != nil {
+		suo.SetColor(*s)
+	}
+	return suo
+}
+
+// ClearColor clears the value of the "color" field.
+func (suo *SeverityUpdateOne) ClearColor() *SeverityUpdateOne {
+	suo.mutation.ClearColor()
 	return suo
 }
 
@@ -431,6 +465,12 @@ func (suo *SeverityUpdateOne) sqlSave(ctx context.Context) (_node *Severity, err
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
+			Column: severity.FieldColor,
+		})
+	}
+	if suo.mutation.ColorCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
 			Column: severity.FieldColor,
 		})
 	}

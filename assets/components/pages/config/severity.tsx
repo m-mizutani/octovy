@@ -35,6 +35,7 @@ function Severity(props: {
   refresh: React.Dispatch<React.SetStateAction<severityState>>;
 }) {
   const [label, setLabel] = React.useState<string>(props.sev.label);
+  const [color, setColor] = React.useState<string>(props.sev.color);
   const [onEdit, setOnEdit] = React.useState<boolean>(false);
   const [showDelete, setShowDelete] = React.useState<boolean>(false);
 
@@ -52,7 +53,7 @@ function Severity(props: {
   }, []);
 
   const update = () => {
-    const body = JSON.stringify({ Label: label });
+    const body = JSON.stringify({ Label: label, Color: color });
     fetch(`/api/v1/severity/${props.sev.id}`, { method: "PUT", body })
       .then((res) => res.json())
       .then(
@@ -88,23 +89,30 @@ function Severity(props: {
     return (
       <ListItem
         secondaryAction={
-          <Stack spacing={2} direction="row">
-            <IconButton edge="end" aria-label="Save" onClick={update}>
-              <SaveAltIcon />
-            </IconButton>
-          </Stack>
+          <IconButton edge="end" aria-label="Save" onClick={update}>
+            <SaveAltIcon />
+          </IconButton>
         }>
         <ListItemIcon>
-          <ErrorIcon />
+          <ErrorIcon sx={{ color: color }} />
         </ListItemIcon>
 
-        <TextField
-          fullWidth
-          value={label}
-          onChange={(e) => {
-            setLabel(e.target.value);
-          }}
-          size="small"></TextField>
+        <Stack spacing={2} direction="row">
+          <TextField
+            value={color}
+            style={{ width: 150 }}
+            onChange={(e) => {
+              setColor(e.target.value);
+            }}
+            size="small"></TextField>
+          <TextField
+            fullWidth
+            value={label}
+            onChange={(e) => {
+              setLabel(e.target.value);
+            }}
+            size="small"></TextField>
+        </Stack>
       </ListItem>
     );
   }
@@ -156,7 +164,7 @@ function Severity(props: {
           </Stack>
         }>
         <ListItemIcon>
-          <ErrorIcon sx={{ color: "#310599" }} />
+          <ErrorIcon sx={{ color: color }} />
         </ListItemIcon>
         <ListItemText primary={label} />
       </ListItem>
@@ -250,7 +258,7 @@ export default function Severities() {
     <>
       {renderSevStateMsg()}
       <Grid>
-        <List dense={false} style={{ width: 380 }}>
+        <List dense={false} style={{ width: 420 }}>
           {status.resp.map((sev, idx) => {
             return (
               <Severity
