@@ -46,6 +46,11 @@ type Interface interface {
 	UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error
 	AssignSeverity(ctx *model.Context, vulnID string, id int) error
 
+	// Rule
+	GetRules(ctx *model.Context) ([]*ent.Rule, error)
+	CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.Rule, error)
+	DeleteRule(ctx *model.Context, id int) error
+
 	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(ctx *model.Context, event *gh.PushEvent) error
 	HandleGitHubPullReqEvent(ctx *model.Context, event *gh.PullRequestEvent) error

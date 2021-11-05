@@ -18,6 +18,8 @@ type Tx struct {
 	PackageRecord *PackageRecordClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
+	// Rule is the client for interacting with the Rule builders.
+	Rule *RuleClient
 	// Scan is the client for interacting with the Scan builders.
 	Scan *ScanClient
 	// Session is the client for interacting with the Session builders.
@@ -170,6 +172,7 @@ func (tx *Tx) init() {
 	tx.AuthStateCache = NewAuthStateCacheClient(tx.config)
 	tx.PackageRecord = NewPackageRecordClient(tx.config)
 	tx.Repository = NewRepositoryClient(tx.config)
+	tx.Rule = NewRuleClient(tx.config)
 	tx.Scan = NewScanClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
 	tx.Severity = NewSeverityClient(tx.config)

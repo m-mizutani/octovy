@@ -12,6 +12,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/rule"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/severity"
@@ -36,6 +37,8 @@ type Client struct {
 	PackageRecord *PackageRecordClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
+	// Rule is the client for interacting with the Rule builders.
+	Rule *RuleClient
 	// Scan is the client for interacting with the Scan builders.
 	Scan *ScanClient
 	// Session is the client for interacting with the Session builders.
@@ -66,6 +69,7 @@ func (c *Client) init() {
 	c.AuthStateCache = NewAuthStateCacheClient(c.config)
 	c.PackageRecord = NewPackageRecordClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
+	c.Rule = NewRuleClient(c.config)
 	c.Scan = NewScanClient(c.config)
 	c.Session = NewSessionClient(c.config)
 	c.Severity = NewSeverityClient(c.config)
@@ -109,6 +113,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
+		Rule:            NewRuleClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
 		Severity:        NewSeverityClient(cfg),
@@ -137,6 +142,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
+		Rule:            NewRuleClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
 		Severity:        NewSeverityClient(cfg),
@@ -176,6 +182,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.AuthStateCache.Use(hooks...)
 	c.PackageRecord.Use(hooks...)
 	c.Repository.Use(hooks...)
+	c.Rule.Use(hooks...)
 	c.Scan.Use(hooks...)
 	c.Session.Use(hooks...)
 	c.Severity.Use(hooks...)
@@ -549,6 +556,112 @@ func (c *RepositoryClient) QueryStatus(r *Repository) *VulnStatusIndexQuery {
 // Hooks returns the client hooks.
 func (c *RepositoryClient) Hooks() []Hook {
 	return c.hooks.Repository
+}
+
+// RuleClient is a client for the Rule schema.
+type RuleClient struct {
+	config
+}
+
+// NewRuleClient returns a client for the Rule from the given config.
+func NewRuleClient(c config) *RuleClient {
+	return &RuleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rule.Hooks(f(g(h())))`.
+func (c *RuleClient) Use(hooks ...Hook) {
+	c.hooks.Rule = append(c.hooks.Rule, hooks...)
+}
+
+// Create returns a create builder for Rule.
+func (c *RuleClient) Create() *RuleCreate {
+	mutation := newRuleMutation(c.config, OpCreate)
+	return &RuleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Rule entities.
+func (c *RuleClient) CreateBulk(builders ...*RuleCreate) *RuleCreateBulk {
+	return &RuleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Rule.
+func (c *RuleClient) Update() *RuleUpdate {
+	mutation := newRuleMutation(c.config, OpUpdate)
+	return &RuleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RuleClient) UpdateOne(r *Rule) *RuleUpdateOne {
+	mutation := newRuleMutation(c.config, OpUpdateOne, withRule(r))
+	return &RuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RuleClient) UpdateOneID(id int) *RuleUpdateOne {
+	mutation := newRuleMutation(c.config, OpUpdateOne, withRuleID(id))
+	return &RuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Rule.
+func (c *RuleClient) Delete() *RuleDelete {
+	mutation := newRuleMutation(c.config, OpDelete)
+	return &RuleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *RuleClient) DeleteOne(r *Rule) *RuleDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *RuleClient) DeleteOneID(id int) *RuleDeleteOne {
+	builder := c.Delete().Where(rule.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RuleDeleteOne{builder}
+}
+
+// Query returns a query builder for Rule.
+func (c *RuleClient) Query() *RuleQuery {
+	return &RuleQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Rule entity by its id.
+func (c *RuleClient) Get(ctx context.Context, id int) (*Rule, error) {
+	return c.Query().Where(rule.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RuleClient) GetX(ctx context.Context, id int) *Rule {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySeverity queries the severity edge of a Rule.
+func (c *RuleClient) QuerySeverity(r *Rule) *SeverityQuery {
+	query := &SeverityQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rule.Table, rule.FieldID, id),
+			sqlgraph.To(severity.Table, severity.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, rule.SeverityTable, rule.SeverityColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RuleClient) Hooks() []Hook {
+	return c.hooks.Rule
 }
 
 // ScanClient is a client for the Scan schema.

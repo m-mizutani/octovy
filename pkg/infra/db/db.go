@@ -53,6 +53,11 @@ type Interface interface {
 	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	GetRepositoriesWithVuln(ctx *model.Context, vulnID string) ([]*ent.Repository, error)
 
+	// Rule
+	GetRules(ctx *model.Context) ([]*ent.Rule, error)
+	CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.Rule, error)
+	DeleteRule(ctx *model.Context, id int) error
+
 	// Auth
 	SaveAuthState(ctx *model.Context, state string, expiresAt int64) error
 	HasAuthState(ctx *model.Context, state string, now int64) (bool, error)

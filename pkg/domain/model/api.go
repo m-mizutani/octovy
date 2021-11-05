@@ -48,3 +48,16 @@ func (x *RequestSeverity) IsValid() error {
 
 	return nil
 }
+
+type RequestRule struct {
+	SeverityID int
+	Action     string
+}
+
+func (x *RequestRule) IsValid() error {
+	if x.Action != "fail" {
+		return goerr.Wrap(ErrInvalidInput, "unsupported rule action")
+	}
+
+	return nil
+}

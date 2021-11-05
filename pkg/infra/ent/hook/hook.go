@@ -48,6 +48,19 @@ func (f RepositoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return f(ctx, mv)
 }
 
+// The RuleFunc type is an adapter to allow the use of ordinary
+// function as Rule mutator.
+type RuleFunc func(context.Context, *ent.RuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.RuleMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RuleMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The ScanFunc type is an adapter to allow the use of ordinary
 // function as Scan mutator.
 type ScanFunc func(context.Context, *ent.ScanMutation) (ent.Value, error)

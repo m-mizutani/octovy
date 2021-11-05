@@ -92,6 +92,10 @@ func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 		r.PUT("/severity/:id", updateSeverity)
 		r.POST("/severity/:id/assign/:vuln_id", assignSeverity)
 		r.DELETE("/severity/:id", deleteSeverity)
+
+		r.GET("/rule", getRules)
+		r.POST("/rule", createRule)
+		r.DELETE("/rule/:id", deleteRule)
 	}
 
 	return engine

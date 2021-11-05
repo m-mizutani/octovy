@@ -128,3 +128,16 @@ func (x *usecase) UpdateSeverity(ctx *model.Context, id int, req *model.RequestS
 func (x *usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) error {
 	return x.infra.DB.AssignSeverity(ctx, vulnID, id)
 }
+
+// Rule
+func (x *usecase) GetRules(ctx *model.Context) ([]*ent.Rule, error) {
+	return x.infra.DB.GetRules(ctx)
+}
+
+func (x *usecase) CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.Rule, error) {
+	return x.infra.DB.CreateRule(ctx, req)
+}
+
+func (x *usecase) DeleteRule(ctx *model.Context, id int) error {
+	return x.infra.DB.DeleteRule(ctx, id)
+}

@@ -3,6 +3,8 @@ package server_test
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -25,4 +27,20 @@ func bind(t *testing.T, body *bytes.Buffer, v interface{}) {
 	raw, err := json.Marshal(resp.Data)
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(raw, v))
+}
+
+func newRequest(method, url string, data interface{}) *http.Request {
+	var body io.Reader
+	if data != nil {
+		raw, err := json.Marshal(data)
+		if err != nil {
+			panic(err)
+		}
+		body = bytes.NewReader(raw)
+	}
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		panic(err)
+	}
+	return req
 }

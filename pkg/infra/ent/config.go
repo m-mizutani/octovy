@@ -27,6 +27,7 @@ type hooks struct {
 	AuthStateCache  []ent.Hook
 	PackageRecord   []ent.Hook
 	Repository      []ent.Hook
+	Rule            []ent.Hook
 	Scan            []ent.Hook
 	Session         []ent.Hook
 	Severity        []ent.Hook

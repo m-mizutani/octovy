@@ -59,6 +59,26 @@ var (
 			},
 		},
 	}
+	// RulesColumns holds the columns for the "rules" table.
+	RulesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "action", Type: field.TypeString},
+		{Name: "rule_severity", Type: field.TypeInt, Nullable: true},
+	}
+	// RulesTable holds the schema information for the "rules" table.
+	RulesTable = &schema.Table{
+		Name:       "rules",
+		Columns:    RulesColumns,
+		PrimaryKey: []*schema.Column{RulesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rules_severities_severity",
+				Columns:    []*schema.Column{RulesColumns[2]},
+				RefColumns: []*schema.Column{SeveritiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// ScansColumns holds the columns for the "scans" table.
 	ScansColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
@@ -308,6 +328,7 @@ var (
 		AuthStateCachesTable,
 		PackageRecordsTable,
 		RepositoriesTable,
+		RulesTable,
 		ScansTable,
 		SessionsTable,
 		SeveritiesTable,
@@ -323,6 +344,7 @@ var (
 
 func init() {
 	RepositoriesTable.ForeignKeys[0].RefTable = ScansTable
+	RulesTable.ForeignKeys[0].RefTable = SeveritiesTable
 	ScansTable.ForeignKeys[0].RefTable = RepositoriesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	VulnStatusTable.ForeignKeys[0].RefTable = UsersTable
