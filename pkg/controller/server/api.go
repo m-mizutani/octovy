@@ -94,8 +94,8 @@ func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 		r.DELETE("/severity/:id", deleteSeverity)
 
 		r.GET("/rule", GetCheckRules)
-		r.POST("/rule", createRule)
-		r.DELETE("/rule/:id", deleteRule)
+		r.POST("/rule", createCheckRule)
+		r.DELETE("/rule/:id", deleteCheckRule)
 	}
 
 	return engine

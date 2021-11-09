@@ -134,7 +134,7 @@ func (x *usecase) GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error) {
 	return x.infra.DB.GetCheckRules(ctx)
 }
 
-func (x *usecase) CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.CheckRule, error) {
+func (x *usecase) CreateRule(ctx *model.Context, req *model.RequestCheckRule) (*ent.CheckRule, error) {
 	return x.infra.DB.CreateCheckRule(ctx, req)
 }
 

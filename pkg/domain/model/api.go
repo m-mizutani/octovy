@@ -50,12 +50,12 @@ func (x *RequestSeverity) IsValid() error {
 	return nil
 }
 
-type RequestRule struct {
+type RequestCheckRule struct {
 	SeverityID int
 	Result     types.GitHubCheckResult
 }
 
-func (x *RequestRule) IsValid() error {
+func (x *RequestCheckRule) IsValid() error {
 	if err := x.Result.IsValid(); err != nil {
 		return goerr.Wrap(err, "unsupported result")
 	}

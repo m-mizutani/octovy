@@ -48,7 +48,7 @@ type Interface interface {
 
 	// Rule
 	GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error)
-	CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.CheckRule, error)
+	CreateRule(ctx *model.Context, req *model.RequestCheckRule) (*ent.CheckRule, error)
 	DeleteRule(ctx *model.Context, id int) error
 
 	// Handle GitHub App Webhook event

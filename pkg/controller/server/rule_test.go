@@ -32,7 +32,7 @@ func TestCreateRule(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		engine.ServeHTTP(w, newRequest("POST", "/api/v1/rule",
-			model.RequestRule{
+			model.RequestCheckRule{
 				Result:     types.CheckFail,
 				SeverityID: sev.ID,
 			}))
@@ -68,7 +68,7 @@ func TestRuleCreateFail(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		engine.ServeHTTP(w, newRequest("POST", "/api/v1/rule",
-			model.RequestRule{
+			model.RequestCheckRule{
 				Result:     types.GitHubCheckResult("invalid"),
 				SeverityID: 1,
 			}))

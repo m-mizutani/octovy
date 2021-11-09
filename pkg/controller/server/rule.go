@@ -20,10 +20,10 @@ func GetCheckRules(c *gin.Context) {
 	c.JSON(http.StatusOK, baseResponse{Data: resp})
 }
 
-func createRule(c *gin.Context) {
+func createCheckRule(c *gin.Context) {
 	uc := getUsecase(c)
 
-	var req model.RequestRule
+	var req model.RequestCheckRule
 	if err := c.BindJSON(&req); err != nil {
 		_ = c.Error(err)
 		return
@@ -38,7 +38,7 @@ func createRule(c *gin.Context) {
 	c.JSON(http.StatusCreated, baseResponse{Data: resp})
 }
 
-func deleteRule(c *gin.Context) {
+func deleteCheckRule(c *gin.Context) {
 	uc := getUsecase(c)
 
 	id, err := strconv.ParseInt(c.Param("id"), 10, 32)

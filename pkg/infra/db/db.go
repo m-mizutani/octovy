@@ -55,7 +55,7 @@ type Interface interface {
 
 	// Rule
 	GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error)
-	CreateCheckRule(ctx *model.Context, req *model.RequestRule) (*ent.CheckRule, error)
+	CreateCheckRule(ctx *model.Context, req *model.RequestCheckRule) (*ent.CheckRule, error)
 	DeleteCheckRule(ctx *model.Context, id int) error
 
 	// Auth
