@@ -88,7 +88,9 @@ func (x *Client) GetScan(ctx *model.Context, id string) (*ent.Scan, error) {
 			})
 		}).
 		WithPackages(func(prq *ent.PackageRecordQuery) {
-			prq.WithVulnerabilities()
+			prq.WithVulnerabilities(func(vq *ent.VulnerabilityQuery) {
+				vq.WithCustomSeverity()
+			})
 		}).
 		Only(ctx)
 	if err != nil {

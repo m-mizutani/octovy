@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
@@ -51,12 +52,12 @@ func (x *RequestSeverity) IsValid() error {
 
 type RequestRule struct {
 	SeverityID int
-	Action     string
+	Result     types.GitHubCheckResult
 }
 
 func (x *RequestRule) IsValid() error {
-	if x.Action != "fail" {
-		return goerr.Wrap(ErrInvalidInput, "unsupported rule action")
+	if err := x.Result.IsValid(); err != nil {
+		return goerr.Wrap(err, "unsupported result")
 	}
 
 	return nil

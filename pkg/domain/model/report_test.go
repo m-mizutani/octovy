@@ -55,25 +55,25 @@ func TestReport(t *testing.T) {
 		}
 		changes := model.DiffVulnRecords(oldPkgs, newPkgs)
 		db := model.NewVulnStatusDB([]*ent.VulnStatus{}, 1000)
-		report := model.MakeReport(changes, db)
+		report := model.MakeReport("scan1", changes, db, "https://example.com")
 		assert.NotNil(t, report)
 		{
-			require.Len(t, report.Sources["x"].Added, 1)
-			r := report.Sources["x"].Added[0]
+			require.Len(t, report.Sources()["x"].Added, 1)
+			r := report.Sources()["x"].Added[0]
 			assert.Equal(t, "orange", r.Pkg.Name)
 			assert.Equal(t, "x", r.Pkg.Source)
 			assert.Equal(t, "0001", r.Vuln.ID)
 		}
 		{
-			require.Len(t, report.Sources["x"].Deleted, 1)
-			r := report.Sources["x"].Deleted[0]
+			require.Len(t, report.Sources()["x"].Deleted, 1)
+			r := report.Sources()["x"].Deleted[0]
 			assert.Equal(t, "red", r.Pkg.Name)
 			assert.Equal(t, "x", r.Pkg.Source)
 			assert.Equal(t, "0001", r.Vuln.ID)
 		}
 		{
-			require.Len(t, report.Sources["x"].Remained, 2)
-			r := report.Sources["x"].Remained[0]
+			require.Len(t, report.Sources()["x"].Remained, 2)
+			r := report.Sources()["x"].Remained[0]
 			assert.Equal(t, "blue", r.Pkg.Name)
 		}
 	})

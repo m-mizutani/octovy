@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ import (
 func TestCreateRule(t *testing.T) {
 	engine := newServer(t)
 	var sev ent.Severity
-	var rule ent.Rule
+	var rule ent.CheckRule
 
 	{ // Create a severity
 		w := httptest.NewRecorder()
@@ -32,7 +33,7 @@ func TestCreateRule(t *testing.T) {
 
 		engine.ServeHTTP(w, newRequest("POST", "/api/v1/rule",
 			model.RequestRule{
-				Action:     "fail",
+				Result:     types.CheckFail,
 				SeverityID: sev.ID,
 			}))
 		assert.Equal(t, http.StatusCreated, w.Result().StatusCode)
@@ -43,7 +44,7 @@ func TestCreateRule(t *testing.T) {
 	{ // Get the created rule
 		w := httptest.NewRecorder()
 
-		var rules []*ent.Rule
+		var rules []*ent.CheckRule
 		engine.ServeHTTP(w, newRequest("GET", "/api/v1/rule", nil))
 		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 		bind(t, w.Body, &rules)
@@ -68,7 +69,7 @@ func TestRuleCreateFail(t *testing.T) {
 
 		engine.ServeHTTP(w, newRequest("POST", "/api/v1/rule",
 			model.RequestRule{
-				Action:     "fail",
+				Result:     types.GitHubCheckResult("invalid"),
 				SeverityID: 1,
 			}))
 		assert.NotEqual(t, http.StatusCreated, w.Result().StatusCode)

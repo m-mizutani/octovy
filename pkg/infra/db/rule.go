@@ -7,8 +7,8 @@ import (
 )
 
 // Rule
-func (x *Client) GetRules(ctx *model.Context) ([]*ent.Rule, error) {
-	rules, err := x.client.Rule.Query().WithSeverity().All(ctx)
+func (x *Client) GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error) {
+	rules, err := x.client.CheckRule.Query().WithSeverity().All(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
@@ -16,9 +16,9 @@ func (x *Client) GetRules(ctx *model.Context) ([]*ent.Rule, error) {
 	return rules, nil
 }
 
-func (x *Client) CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.Rule, error) {
-	rule, err := x.client.Rule.Create().
-		SetAction(req.Action).
+func (x *Client) CreateCheckRule(ctx *model.Context, req *model.RequestRule) (*ent.CheckRule, error) {
+	rule, err := x.client.CheckRule.Create().
+		SetCheckResult(req.Result).
 		SetSeverityID(req.SeverityID).
 		Save(ctx)
 	if err != nil {
@@ -28,8 +28,8 @@ func (x *Client) CreateRule(ctx *model.Context, req *model.RequestRule) (*ent.Ru
 	return rule, nil
 }
 
-func (x *Client) DeleteRule(ctx *model.Context, id int) error {
-	if err := x.client.Rule.DeleteOneID(id).Exec(ctx); err != nil {
+func (x *Client) DeleteCheckRule(ctx *model.Context, id int) error {
+	if err := x.client.CheckRule.DeleteOneID(id).Exec(ctx); err != nil {
 		return goerr.Wrap(err)
 	}
 

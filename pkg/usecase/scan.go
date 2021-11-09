@@ -116,13 +116,11 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	/*
-		// Disabled check run temporary
-		check := newCheckRun(clients.GitHubApp)
-		if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
-			return err
-		}
-	*/
+	// Disabled check run temporary
+	check := newCheckRun(clients.GitHubApp)
+	if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
+		return err
+	}
 
 	codes, err := setupGitHubCodes(ctx, req, clients.GitHubApp)
 	if codes != nil {
@@ -132,13 +130,13 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		return err
 	}
 
-	report, err := clients.Trivy.Scan(codes.Path)
+	trivyResult, err := clients.Trivy.Scan(codes.Path)
 	if err != nil {
 		return err
 	}
 
 	scannedAt := clients.Utils.Now()
-	newPkgs, vulnList := model.TrivyReportToEnt(report, scannedAt)
+	newPkgs, vulnList := model.TrivyReportToEnt(trivyResult, scannedAt)
 
 	newScan, err := insertScanReport(ctx, clients.DB, req, newPkgs, vulnList, scannedAt)
 	if err != nil {
@@ -146,26 +144,27 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 	}
 	ctx.Log().With("scanID", newScan.ID).Debug("inserted scan report")
 
+	status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)
+	if err != nil {
+		return err
+	}
+
+	oldPkgs := []*ent.PackageRecord{}
+	if latest != nil {
+		oldPkgs = latest.Edges.Packages
+	}
+
+	now := scannedAt.Unix()
+	changes := model.DiffVulnRecords(oldPkgs, newScan.Edges.Packages)
+	db := model.NewVulnStatusDB(status, now)
+	report := model.MakeReport(newScan.ID, changes, db, clients.FrontendURL)
+
 	if req.PullReqNumber != nil {
-		status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)
-		if err != nil {
-			return err
-		}
-
-		oldPkgs := []*ent.PackageRecord{}
-		if latest != nil {
-			oldPkgs = latest.Edges.Packages
-		}
-
-		changes := model.DiffVulnRecords(oldPkgs, newScan.Edges.Packages)
-		db := model.NewVulnStatusDB(status, scannedAt.Unix())
 		input := &postGitHubCommentInput{
 			App:           clients.GitHubApp,
 			Target:        &req.ScanTarget,
-			Scan:          newScan,
-			FrontendURL:   clients.FrontendURL,
 			PullReqNumber: req.PullReqNumber,
-			Report:        model.MakeReport(changes, db),
+			Report:        report,
 			GitHubEvent:   req.PullReqAction,
 		}
 
@@ -174,10 +173,15 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	/*
-		if err := check.complete(newScan.ID, changes, clients.FrontendURL); err != nil {
-			return err
-		}
-	*/
+	rules, err := clients.DB.GetCheckRules(ctx)
+	if err != nil {
+		return err
+	}
+	conclusion := model.NewPackageInventory(newScan.Edges.Packages, status, now).CheckResult(rules)
+
+	if err := check.complete(ctx, newScan.ID, report, clients.FrontendURL, conclusion); err != nil {
+		return err
+	}
+
 	return nil
 }

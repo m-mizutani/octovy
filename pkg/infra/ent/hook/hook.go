@@ -22,6 +22,19 @@ func (f AuthStateCacheFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return f(ctx, mv)
 }
 
+// The CheckRuleFunc type is an adapter to allow the use of ordinary
+// function as CheckRule mutator.
+type CheckRuleFunc func(context.Context, *ent.CheckRuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CheckRuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.CheckRuleMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CheckRuleMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The PackageRecordFunc type is an adapter to allow the use of ordinary
 // function as PackageRecord mutator.
 type PackageRecordFunc func(context.Context, *ent.PackageRecordMutation) (ent.Value, error)
@@ -44,19 +57,6 @@ func (f RepositoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	mv, ok := m.(*ent.RepositoryMutation)
 	if !ok {
 		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RepositoryMutation", m)
-	}
-	return f(ctx, mv)
-}
-
-// The RuleFunc type is an adapter to allow the use of ordinary
-// function as Rule mutator.
-type RuleFunc func(context.Context, *ent.RuleMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f RuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	mv, ok := m.(*ent.RuleMutation)
-	if !ok {
-		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RuleMutation", m)
 	}
 	return f(ctx, mv)
 }

@@ -28,31 +28,22 @@ func TestPostGitHubComment(t *testing.T) {
 			App:           mock,
 			Target:        &model.ScanTarget{},
 			PullReqNumber: github.Int(24),
-			Scan: &ent.Scan{
-				ID: "my-scan-report-id",
-			},
-			GitHubEvent: "opened",
-			Report: &model.Report{
-				Sources: map[string]*model.SourceChanges{
-					"x": {
-						Added: model.VulnChanges{
-							{
-								VulnRecord: model.VulnRecord{
-									Pkg: &ent.PackageRecord{
-										Source: "x",
-										Name:   "box",
-									},
-									Vuln: &ent.Vulnerability{
-										ID:    "CVE-2000-0000",
-										Title: "ansuz",
-									},
-								},
-							},
+			GitHubEvent:   "opened",
+			Report: model.MakeReport("my-scan-report-id", model.VulnChanges{
+				{
+					VulnRecord: model.VulnRecord{
+						Pkg: &ent.PackageRecord{
+							Source: "x",
+							Name:   "box",
+						},
+						Vuln: &ent.Vulnerability{
+							ID:    "CVE-2000-0000",
+							Title: "ansuz",
 						},
 					},
+					Type: model.VulnAdded,
 				},
-			},
-			FrontendURL: "https://octovy.example.com/",
+			}, model.NewVulnStatusDB(nil, 0), "https://octovy.example.com"),
 		}
 		require.NoError(t, usecase.PostGitHubComment(input))
 		assert.Equal(t, 1, cntComment)

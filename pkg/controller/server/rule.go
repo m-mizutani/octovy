@@ -8,10 +8,10 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
-func getRules(c *gin.Context) {
+func GetCheckRules(c *gin.Context) {
 	uc := getUsecase(c)
 
-	resp, err := uc.GetRules(model.NewContextWith(c))
+	resp, err := uc.GetCheckRules(model.NewContextWith(c))
 	if err != nil {
 		c.Error(err)
 		return
