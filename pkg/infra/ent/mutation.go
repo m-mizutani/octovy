@@ -386,7 +386,8 @@ type CheckRuleMutation struct {
 	op              Op
 	typ             string
 	id              *int
-	check_result    *types.GitHubCheckResult
+	name            *string
+	result          *types.GitHubCheckResult
 	clearedFields   map[string]struct{}
 	severity        *int
 	clearedseverity bool
@@ -474,40 +475,76 @@ func (m *CheckRuleMutation) ID() (id int, exists bool) {
 	return *m.id, true
 }
 
-// SetCheckResult sets the "check_result" field.
-func (m *CheckRuleMutation) SetCheckResult(thcr types.GitHubCheckResult) {
-	m.check_result = &thcr
+// SetName sets the "name" field.
+func (m *CheckRuleMutation) SetName(s string) {
+	m.name = &s
 }
 
-// CheckResult returns the value of the "check_result" field in the mutation.
-func (m *CheckRuleMutation) CheckResult() (r types.GitHubCheckResult, exists bool) {
-	v := m.check_result
+// Name returns the value of the "name" field in the mutation.
+func (m *CheckRuleMutation) Name() (r string, exists bool) {
+	v := m.name
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCheckResult returns the old "check_result" field's value of the CheckRule entity.
+// OldName returns the old "name" field's value of the CheckRule entity.
 // If the CheckRule object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CheckRuleMutation) OldCheckResult(ctx context.Context) (v types.GitHubCheckResult, err error) {
+func (m *CheckRuleMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldCheckResult is only allowed on UpdateOne operations")
+		return v, fmt.Errorf("OldName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldCheckResult requires an ID field in the mutation")
+		return v, fmt.Errorf("OldName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCheckResult: %w", err)
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
 	}
-	return oldValue.CheckResult, nil
+	return oldValue.Name, nil
 }
 
-// ResetCheckResult resets all changes to the "check_result" field.
-func (m *CheckRuleMutation) ResetCheckResult() {
-	m.check_result = nil
+// ResetName resets all changes to the "name" field.
+func (m *CheckRuleMutation) ResetName() {
+	m.name = nil
+}
+
+// SetResult sets the "result" field.
+func (m *CheckRuleMutation) SetResult(thcr types.GitHubCheckResult) {
+	m.result = &thcr
+}
+
+// Result returns the value of the "result" field in the mutation.
+func (m *CheckRuleMutation) Result() (r types.GitHubCheckResult, exists bool) {
+	v := m.result
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResult returns the old "result" field's value of the CheckRule entity.
+// If the CheckRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CheckRuleMutation) OldResult(ctx context.Context) (v types.GitHubCheckResult, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldResult is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldResult requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResult: %w", err)
+	}
+	return oldValue.Result, nil
+}
+
+// ResetResult resets all changes to the "result" field.
+func (m *CheckRuleMutation) ResetResult() {
+	m.result = nil
 }
 
 // SetSeverityID sets the "severity" edge to the Severity entity by id.
@@ -568,9 +605,12 @@ func (m *CheckRuleMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CheckRuleMutation) Fields() []string {
-	fields := make([]string, 0, 1)
-	if m.check_result != nil {
-		fields = append(fields, checkrule.FieldCheckResult)
+	fields := make([]string, 0, 2)
+	if m.name != nil {
+		fields = append(fields, checkrule.FieldName)
+	}
+	if m.result != nil {
+		fields = append(fields, checkrule.FieldResult)
 	}
 	return fields
 }
@@ -580,8 +620,10 @@ func (m *CheckRuleMutation) Fields() []string {
 // schema.
 func (m *CheckRuleMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case checkrule.FieldCheckResult:
-		return m.CheckResult()
+	case checkrule.FieldName:
+		return m.Name()
+	case checkrule.FieldResult:
+		return m.Result()
 	}
 	return nil, false
 }
@@ -591,8 +633,10 @@ func (m *CheckRuleMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *CheckRuleMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case checkrule.FieldCheckResult:
-		return m.OldCheckResult(ctx)
+	case checkrule.FieldName:
+		return m.OldName(ctx)
+	case checkrule.FieldResult:
+		return m.OldResult(ctx)
 	}
 	return nil, fmt.Errorf("unknown CheckRule field %s", name)
 }
@@ -602,12 +646,19 @@ func (m *CheckRuleMutation) OldField(ctx context.Context, name string) (ent.Valu
 // type.
 func (m *CheckRuleMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case checkrule.FieldCheckResult:
+	case checkrule.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case checkrule.FieldResult:
 		v, ok := value.(types.GitHubCheckResult)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetCheckResult(v)
+		m.SetResult(v)
 		return nil
 	}
 	return fmt.Errorf("unknown CheckRule field %s", name)
@@ -658,8 +709,11 @@ func (m *CheckRuleMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *CheckRuleMutation) ResetField(name string) error {
 	switch name {
-	case checkrule.FieldCheckResult:
-		m.ResetCheckResult()
+	case checkrule.FieldName:
+		m.ResetName()
+		return nil
+	case checkrule.FieldResult:
+		m.ResetResult()
 		return nil
 	}
 	return fmt.Errorf("unknown CheckRule field %s", name)

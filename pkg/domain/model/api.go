@@ -51,8 +51,9 @@ func (x *RequestSeverity) IsValid() error {
 }
 
 type RequestCheckRule struct {
-	SeverityID int
-	Result     types.GitHubCheckResult
+	Severity int                     `json:"severity"`
+	Name     string                  `json:"name"`
+	Result   types.GitHubCheckResult `json:"result"`
 }
 
 func (x *RequestCheckRule) IsValid() error {

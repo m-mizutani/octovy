@@ -17,8 +17,10 @@ type CheckRule struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// CheckResult holds the value of the "check_result" field.
-	CheckResult types.GitHubCheckResult `json:"check_result,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Result holds the value of the "result" field.
+	Result types.GitHubCheckResult `json:"result,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CheckRuleQuery when eager-loading is set.
 	Edges               CheckRuleEdges `json:"edges"`
@@ -55,7 +57,7 @@ func (*CheckRule) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case checkrule.FieldID:
 			values[i] = new(sql.NullInt64)
-		case checkrule.FieldCheckResult:
+		case checkrule.FieldName, checkrule.FieldResult:
 			values[i] = new(sql.NullString)
 		case checkrule.ForeignKeys[0]: // check_rule_severity
 			values[i] = new(sql.NullInt64)
@@ -80,11 +82,17 @@ func (cr *CheckRule) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			cr.ID = int(value.Int64)
-		case checkrule.FieldCheckResult:
+		case checkrule.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field check_result", values[i])
+				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				cr.CheckResult = types.GitHubCheckResult(value.String)
+				cr.Name = value.String
+			}
+		case checkrule.FieldResult:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field result", values[i])
+			} else if value.Valid {
+				cr.Result = types.GitHubCheckResult(value.String)
 			}
 		case checkrule.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -126,8 +134,10 @@ func (cr *CheckRule) String() string {
 	var builder strings.Builder
 	builder.WriteString("CheckRule(")
 	builder.WriteString(fmt.Sprintf("id=%v", cr.ID))
-	builder.WriteString(", check_result=")
-	builder.WriteString(fmt.Sprintf("%v", cr.CheckResult))
+	builder.WriteString(", name=")
+	builder.WriteString(cr.Name)
+	builder.WriteString(", result=")
+	builder.WriteString(fmt.Sprintf("%v", cr.Result))
 	builder.WriteByte(')')
 	return builder.String()
 }

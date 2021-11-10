@@ -18,8 +18,9 @@ func (x *Client) GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error) {
 
 func (x *Client) CreateCheckRule(ctx *model.Context, req *model.RequestCheckRule) (*ent.CheckRule, error) {
 	rule, err := x.client.CheckRule.Create().
-		SetCheckResult(req.Result).
-		SetSeverityID(req.SeverityID).
+		SetName(req.Name).
+		SetResult(req.Result).
+		SetSeverityID(req.Severity).
 		Save(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)

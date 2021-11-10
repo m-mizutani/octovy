@@ -22,7 +22,8 @@ var (
 	// CheckRulesColumns holds the columns for the "check_rules" table.
 	CheckRulesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "check_result", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "result", Type: field.TypeString},
 		{Name: "check_rule_severity", Type: field.TypeInt, Nullable: true},
 	}
 	// CheckRulesTable holds the schema information for the "check_rules" table.
@@ -33,7 +34,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "check_rules_severities_severity",
-				Columns:    []*schema.Column{CheckRulesColumns[2]},
+				Columns:    []*schema.Column{CheckRulesColumns[3]},
 				RefColumns: []*schema.Column{SeveritiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

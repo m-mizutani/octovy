@@ -7,8 +7,10 @@ const (
 	Label = "check_rule"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldCheckResult holds the string denoting the check_result field in the database.
-	FieldCheckResult = "check_result"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldResult holds the string denoting the result field in the database.
+	FieldResult = "result"
 	// EdgeSeverity holds the string denoting the severity edge name in mutations.
 	EdgeSeverity = "severity"
 	// Table holds the table name of the checkrule in the database.
@@ -25,7 +27,8 @@ const (
 // Columns holds all SQL columns for checkrule fields.
 var Columns = []string{
 	FieldID,
-	FieldCheckResult,
+	FieldName,
+	FieldResult,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "check_rules"

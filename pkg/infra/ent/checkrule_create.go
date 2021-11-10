@@ -23,9 +23,15 @@ type CheckRuleCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetCheckResult sets the "check_result" field.
-func (crc *CheckRuleCreate) SetCheckResult(thcr types.GitHubCheckResult) *CheckRuleCreate {
-	crc.mutation.SetCheckResult(thcr)
+// SetName sets the "name" field.
+func (crc *CheckRuleCreate) SetName(s string) *CheckRuleCreate {
+	crc.mutation.SetName(s)
+	return crc
+}
+
+// SetResult sets the "result" field.
+func (crc *CheckRuleCreate) SetResult(thcr types.GitHubCheckResult) *CheckRuleCreate {
+	crc.mutation.SetResult(thcr)
 	return crc
 }
 
@@ -118,8 +124,11 @@ func (crc *CheckRuleCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (crc *CheckRuleCreate) check() error {
-	if _, ok := crc.mutation.CheckResult(); !ok {
-		return &ValidationError{Name: "check_result", err: errors.New(`ent: missing required field "check_result"`)}
+	if _, ok := crc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "name"`)}
+	}
+	if _, ok := crc.mutation.Result(); !ok {
+		return &ValidationError{Name: "result", err: errors.New(`ent: missing required field "result"`)}
 	}
 	return nil
 }
@@ -149,13 +158,21 @@ func (crc *CheckRuleCreate) createSpec() (*CheckRule, *sqlgraph.CreateSpec) {
 		}
 	)
 	_spec.OnConflict = crc.conflict
-	if value, ok := crc.mutation.CheckResult(); ok {
+	if value, ok := crc.mutation.Name(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: checkrule.FieldCheckResult,
+			Column: checkrule.FieldName,
 		})
-		_node.CheckResult = value
+		_node.Name = value
+	}
+	if value, ok := crc.mutation.Result(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: checkrule.FieldResult,
+		})
+		_node.Result = value
 	}
 	if nodes := crc.mutation.SeverityIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -184,7 +201,7 @@ func (crc *CheckRuleCreate) createSpec() (*CheckRule, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.CheckRule.Create().
-//		SetCheckResult(v).
+//		SetName(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -193,7 +210,7 @@ func (crc *CheckRuleCreate) createSpec() (*CheckRule, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.CheckRuleUpsert) {
-//			SetCheckResult(v+v).
+//			SetName(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -231,15 +248,27 @@ type (
 	}
 )
 
-// SetCheckResult sets the "check_result" field.
-func (u *CheckRuleUpsert) SetCheckResult(v types.GitHubCheckResult) *CheckRuleUpsert {
-	u.Set(checkrule.FieldCheckResult, v)
+// SetName sets the "name" field.
+func (u *CheckRuleUpsert) SetName(v string) *CheckRuleUpsert {
+	u.Set(checkrule.FieldName, v)
 	return u
 }
 
-// UpdateCheckResult sets the "check_result" field to the value that was provided on create.
-func (u *CheckRuleUpsert) UpdateCheckResult() *CheckRuleUpsert {
-	u.SetExcluded(checkrule.FieldCheckResult)
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *CheckRuleUpsert) UpdateName() *CheckRuleUpsert {
+	u.SetExcluded(checkrule.FieldName)
+	return u
+}
+
+// SetResult sets the "result" field.
+func (u *CheckRuleUpsert) SetResult(v types.GitHubCheckResult) *CheckRuleUpsert {
+	u.Set(checkrule.FieldResult, v)
+	return u
+}
+
+// UpdateResult sets the "result" field to the value that was provided on create.
+func (u *CheckRuleUpsert) UpdateResult() *CheckRuleUpsert {
+	u.SetExcluded(checkrule.FieldResult)
 	return u
 }
 
@@ -283,17 +312,31 @@ func (u *CheckRuleUpsertOne) Update(set func(*CheckRuleUpsert)) *CheckRuleUpsert
 	return u
 }
 
-// SetCheckResult sets the "check_result" field.
-func (u *CheckRuleUpsertOne) SetCheckResult(v types.GitHubCheckResult) *CheckRuleUpsertOne {
+// SetName sets the "name" field.
+func (u *CheckRuleUpsertOne) SetName(v string) *CheckRuleUpsertOne {
 	return u.Update(func(s *CheckRuleUpsert) {
-		s.SetCheckResult(v)
+		s.SetName(v)
 	})
 }
 
-// UpdateCheckResult sets the "check_result" field to the value that was provided on create.
-func (u *CheckRuleUpsertOne) UpdateCheckResult() *CheckRuleUpsertOne {
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *CheckRuleUpsertOne) UpdateName() *CheckRuleUpsertOne {
 	return u.Update(func(s *CheckRuleUpsert) {
-		s.UpdateCheckResult()
+		s.UpdateName()
+	})
+}
+
+// SetResult sets the "result" field.
+func (u *CheckRuleUpsertOne) SetResult(v types.GitHubCheckResult) *CheckRuleUpsertOne {
+	return u.Update(func(s *CheckRuleUpsert) {
+		s.SetResult(v)
+	})
+}
+
+// UpdateResult sets the "result" field to the value that was provided on create.
+func (u *CheckRuleUpsertOne) UpdateResult() *CheckRuleUpsertOne {
+	return u.Update(func(s *CheckRuleUpsert) {
+		s.UpdateResult()
 	})
 }
 
@@ -427,7 +470,7 @@ func (crcb *CheckRuleCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.CheckRuleUpsert) {
-//			SetCheckResult(v+v).
+//			SetName(v+v).
 //		}).
 //		Exec(ctx)
 //
@@ -498,17 +541,31 @@ func (u *CheckRuleUpsertBulk) Update(set func(*CheckRuleUpsert)) *CheckRuleUpser
 	return u
 }
 
-// SetCheckResult sets the "check_result" field.
-func (u *CheckRuleUpsertBulk) SetCheckResult(v types.GitHubCheckResult) *CheckRuleUpsertBulk {
+// SetName sets the "name" field.
+func (u *CheckRuleUpsertBulk) SetName(v string) *CheckRuleUpsertBulk {
 	return u.Update(func(s *CheckRuleUpsert) {
-		s.SetCheckResult(v)
+		s.SetName(v)
 	})
 }
 
-// UpdateCheckResult sets the "check_result" field to the value that was provided on create.
-func (u *CheckRuleUpsertBulk) UpdateCheckResult() *CheckRuleUpsertBulk {
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *CheckRuleUpsertBulk) UpdateName() *CheckRuleUpsertBulk {
 	return u.Update(func(s *CheckRuleUpsert) {
-		s.UpdateCheckResult()
+		s.UpdateName()
+	})
+}
+
+// SetResult sets the "result" field.
+func (u *CheckRuleUpsertBulk) SetResult(v types.GitHubCheckResult) *CheckRuleUpsertBulk {
+	return u.Update(func(s *CheckRuleUpsert) {
+		s.SetResult(v)
+	})
+}
+
+// UpdateResult sets the "result" field to the value that was provided on create.
+func (u *CheckRuleUpsertBulk) UpdateResult() *CheckRuleUpsertBulk {
+	return u.Update(func(s *CheckRuleUpsert) {
+		s.UpdateResult()
 	})
 }
 

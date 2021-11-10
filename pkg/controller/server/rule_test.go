@@ -33,8 +33,8 @@ func TestCreateRule(t *testing.T) {
 
 		engine.ServeHTTP(w, newRequest("POST", "/api/v1/rule",
 			model.RequestCheckRule{
-				Result:     types.CheckFail,
-				SeverityID: sev.ID,
+				Result:   types.CheckFail,
+				Severity: sev.ID,
 			}))
 		assert.Equal(t, http.StatusCreated, w.Result().StatusCode)
 		bind(t, w.Body, &rule)
@@ -69,8 +69,8 @@ func TestRuleCreateFail(t *testing.T) {
 
 		engine.ServeHTTP(w, newRequest("POST", "/api/v1/rule",
 			model.RequestCheckRule{
-				Result:     types.GitHubCheckResult("invalid"),
-				SeverityID: 1,
+				Result:   types.GitHubCheckResult("invalid"),
+				Severity: 1,
 			}))
 		assert.NotEqual(t, http.StatusCreated, w.Result().StatusCode)
 	}

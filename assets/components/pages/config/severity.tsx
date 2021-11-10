@@ -12,6 +12,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import DeleteIcon from "@mui/icons-material/Delete";
 
+import Divider from "@mui/material/Divider";
+
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -23,7 +25,6 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
 import * as model from "../../model";
-import { Refresh } from "@mui/icons-material";
 
 type severityState = {
   msg?: string;
@@ -168,6 +169,8 @@ function Severity(props: {
         </ListItemIcon>
         <ListItemText primary={label} />
       </ListItem>
+
+      <Divider />
     </>
   );
 }

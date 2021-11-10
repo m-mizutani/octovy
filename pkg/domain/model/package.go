@@ -77,7 +77,7 @@ type Vulnerability struct {
 
 func (x *Vulnerability) Feedback(repo *ent.Repository, rules []*ent.CheckRule) types.GitHubCheckResult {
 	for _, rule := range rules {
-		return rule.CheckResult
+		return rule.Result
 	}
 
 	return types.CheckSuccess

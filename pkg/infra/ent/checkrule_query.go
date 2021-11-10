@@ -291,12 +291,12 @@ func (crq *CheckRuleQuery) WithSeverity(opts ...func(*SeverityQuery)) *CheckRule
 // Example:
 //
 //	var v []struct {
-//		CheckResult types.GitHubCheckResult `json:"check_result,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.CheckRule.Query().
-//		GroupBy(checkrule.FieldCheckResult).
+//		GroupBy(checkrule.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -318,11 +318,11 @@ func (crq *CheckRuleQuery) GroupBy(field string, fields ...string) *CheckRuleGro
 // Example:
 //
 //	var v []struct {
-//		CheckResult types.GitHubCheckResult `json:"check_result,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.CheckRule.Query().
-//		Select(checkrule.FieldCheckResult).
+//		Select(checkrule.FieldName).
 //		Scan(ctx, &v)
 //
 func (crq *CheckRuleQuery) Select(fields ...string) *CheckRuleSelect {

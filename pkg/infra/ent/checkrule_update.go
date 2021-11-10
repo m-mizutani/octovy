@@ -28,9 +28,15 @@ func (cru *CheckRuleUpdate) Where(ps ...predicate.CheckRule) *CheckRuleUpdate {
 	return cru
 }
 
-// SetCheckResult sets the "check_result" field.
-func (cru *CheckRuleUpdate) SetCheckResult(thcr types.GitHubCheckResult) *CheckRuleUpdate {
-	cru.mutation.SetCheckResult(thcr)
+// SetName sets the "name" field.
+func (cru *CheckRuleUpdate) SetName(s string) *CheckRuleUpdate {
+	cru.mutation.SetName(s)
+	return cru
+}
+
+// SetResult sets the "result" field.
+func (cru *CheckRuleUpdate) SetResult(thcr types.GitHubCheckResult) *CheckRuleUpdate {
+	cru.mutation.SetResult(thcr)
 	return cru
 }
 
@@ -136,11 +142,18 @@ func (cru *CheckRuleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := cru.mutation.CheckResult(); ok {
+	if value, ok := cru.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: checkrule.FieldCheckResult,
+			Column: checkrule.FieldName,
+		})
+	}
+	if value, ok := cru.mutation.Result(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: checkrule.FieldResult,
 		})
 	}
 	if cru.mutation.SeverityCleared() {
@@ -197,9 +210,15 @@ type CheckRuleUpdateOne struct {
 	mutation *CheckRuleMutation
 }
 
-// SetCheckResult sets the "check_result" field.
-func (cruo *CheckRuleUpdateOne) SetCheckResult(thcr types.GitHubCheckResult) *CheckRuleUpdateOne {
-	cruo.mutation.SetCheckResult(thcr)
+// SetName sets the "name" field.
+func (cruo *CheckRuleUpdateOne) SetName(s string) *CheckRuleUpdateOne {
+	cruo.mutation.SetName(s)
+	return cruo
+}
+
+// SetResult sets the "result" field.
+func (cruo *CheckRuleUpdateOne) SetResult(thcr types.GitHubCheckResult) *CheckRuleUpdateOne {
+	cruo.mutation.SetResult(thcr)
 	return cruo
 }
 
@@ -329,11 +348,18 @@ func (cruo *CheckRuleUpdateOne) sqlSave(ctx context.Context) (_node *CheckRule, 
 			}
 		}
 	}
-	if value, ok := cruo.mutation.CheckResult(); ok {
+	if value, ok := cruo.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: checkrule.FieldCheckResult,
+			Column: checkrule.FieldName,
+		})
+	}
+	if value, ok := cruo.mutation.Result(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: checkrule.FieldResult,
 		})
 	}
 	if cruo.mutation.SeverityCleared() {

@@ -92,32 +92,150 @@ func IDLTE(id int) predicate.CheckRule {
 	})
 }
 
-// CheckResult applies equality check predicate on the "check_result" field. It's identical to CheckResultEQ.
-func CheckResult(v types.GitHubCheckResult) predicate.CheckRule {
-	vc := string(v)
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.CheckRule {
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCheckResult), vc))
+		s.Where(sql.EQ(s.C(FieldName), v))
 	})
 }
 
-// CheckResultEQ applies the EQ predicate on the "check_result" field.
-func CheckResultEQ(v types.GitHubCheckResult) predicate.CheckRule {
+// Result applies equality check predicate on the "result" field. It's identical to ResultEQ.
+func Result(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCheckResult), vc))
+		s.Where(sql.EQ(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultNEQ applies the NEQ predicate on the "check_result" field.
-func CheckResultNEQ(v types.GitHubCheckResult) predicate.CheckRule {
-	vc := string(v)
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.CheckRule {
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldCheckResult), vc))
+		s.Where(sql.EQ(s.C(FieldName), v))
 	})
 }
 
-// CheckResultIn applies the In predicate on the "check_result" field.
-func CheckResultIn(vs ...types.GitHubCheckResult) predicate.CheckRule {
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldName), v))
+	})
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.CheckRule {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.CheckRule(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldName), v...))
+	})
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.CheckRule {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.CheckRule(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldName), v...))
+	})
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldName), v))
+	})
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldName), v))
+	})
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldName), v))
+	})
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldName), v))
+	})
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldName), v))
+	})
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldName), v))
+	})
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldName), v))
+	})
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldName), v))
+	})
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.CheckRule {
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldName), v))
+	})
+}
+
+// ResultEQ applies the EQ predicate on the "result" field.
+func ResultEQ(v types.GitHubCheckResult) predicate.CheckRule {
+	vc := string(v)
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldResult), vc))
+	})
+}
+
+// ResultNEQ applies the NEQ predicate on the "result" field.
+func ResultNEQ(v types.GitHubCheckResult) predicate.CheckRule {
+	vc := string(v)
+	return predicate.CheckRule(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldResult), vc))
+	})
+}
+
+// ResultIn applies the In predicate on the "result" field.
+func ResultIn(vs ...types.GitHubCheckResult) predicate.CheckRule {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = string(vs[i])
@@ -129,12 +247,12 @@ func CheckResultIn(vs ...types.GitHubCheckResult) predicate.CheckRule {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.In(s.C(FieldCheckResult), v...))
+		s.Where(sql.In(s.C(FieldResult), v...))
 	})
 }
 
-// CheckResultNotIn applies the NotIn predicate on the "check_result" field.
-func CheckResultNotIn(vs ...types.GitHubCheckResult) predicate.CheckRule {
+// ResultNotIn applies the NotIn predicate on the "result" field.
+func ResultNotIn(vs ...types.GitHubCheckResult) predicate.CheckRule {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = string(vs[i])
@@ -146,79 +264,79 @@ func CheckResultNotIn(vs ...types.GitHubCheckResult) predicate.CheckRule {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.NotIn(s.C(FieldCheckResult), v...))
+		s.Where(sql.NotIn(s.C(FieldResult), v...))
 	})
 }
 
-// CheckResultGT applies the GT predicate on the "check_result" field.
-func CheckResultGT(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultGT applies the GT predicate on the "result" field.
+func ResultGT(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldCheckResult), vc))
+		s.Where(sql.GT(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultGTE applies the GTE predicate on the "check_result" field.
-func CheckResultGTE(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultGTE applies the GTE predicate on the "result" field.
+func ResultGTE(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldCheckResult), vc))
+		s.Where(sql.GTE(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultLT applies the LT predicate on the "check_result" field.
-func CheckResultLT(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultLT applies the LT predicate on the "result" field.
+func ResultLT(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldCheckResult), vc))
+		s.Where(sql.LT(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultLTE applies the LTE predicate on the "check_result" field.
-func CheckResultLTE(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultLTE applies the LTE predicate on the "result" field.
+func ResultLTE(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldCheckResult), vc))
+		s.Where(sql.LTE(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultContains applies the Contains predicate on the "check_result" field.
-func CheckResultContains(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultContains applies the Contains predicate on the "result" field.
+func ResultContains(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldCheckResult), vc))
+		s.Where(sql.Contains(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultHasPrefix applies the HasPrefix predicate on the "check_result" field.
-func CheckResultHasPrefix(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultHasPrefix applies the HasPrefix predicate on the "result" field.
+func ResultHasPrefix(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldCheckResult), vc))
+		s.Where(sql.HasPrefix(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultHasSuffix applies the HasSuffix predicate on the "check_result" field.
-func CheckResultHasSuffix(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultHasSuffix applies the HasSuffix predicate on the "result" field.
+func ResultHasSuffix(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldCheckResult), vc))
+		s.Where(sql.HasSuffix(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultEqualFold applies the EqualFold predicate on the "check_result" field.
-func CheckResultEqualFold(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultEqualFold applies the EqualFold predicate on the "result" field.
+func ResultEqualFold(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldCheckResult), vc))
+		s.Where(sql.EqualFold(s.C(FieldResult), vc))
 	})
 }
 
-// CheckResultContainsFold applies the ContainsFold predicate on the "check_result" field.
-func CheckResultContainsFold(v types.GitHubCheckResult) predicate.CheckRule {
+// ResultContainsFold applies the ContainsFold predicate on the "result" field.
+func ResultContainsFold(v types.GitHubCheckResult) predicate.CheckRule {
 	vc := string(v)
 	return predicate.CheckRule(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldCheckResult), vc))
+		s.Where(sql.ContainsFold(s.C(FieldResult), vc))
 	})
 }
 

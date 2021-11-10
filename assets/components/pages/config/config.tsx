@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 
 import * as app from "../../app";
 import Severities from "./severity";
+import CheckRules from "./checkRule";
 
 export default function Config() {
   return (
@@ -16,12 +17,20 @@ export default function Config() {
           </Grid>
         </Grid>
       </Container>
-      <Container style={{ marginTop: 20 }}>
+      <Container style={{ marginTop: 48 }}>
         <Grid>
           <Typography variant="h5">Custom Severity</Typography>
         </Grid>
         <Grid style={{ margin: 15 }}>
           <Severities />
+        </Grid>
+      </Container>
+      <Container style={{ marginTop: 48 }}>
+        <Grid>
+          <Typography variant="h5">Custom CI Rules</Typography>
+        </Grid>
+        <Grid style={{ margin: 15 }}>
+          <CheckRules />
         </Grid>
       </Container>
     </app.Main>

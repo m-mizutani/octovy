@@ -15,7 +15,8 @@ type CheckRule struct {
 // Fields of the CheckRule.
 func (CheckRule) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("check_result").GoType(types.GitHubCheckResult("")),
+		field.String("name"),
+		field.String("result").GoType(types.GitHubCheckResult("")),
 	}
 }
 
@@ -24,5 +25,4 @@ func (CheckRule) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("severity", Severity.Type).Unique(),
 	}
-
 }
