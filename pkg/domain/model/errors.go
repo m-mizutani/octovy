@@ -20,5 +20,5 @@ var (
 	ErrGitHubAPI             = goerr.New("github API returns unexpected response")
 
 	// Rule error
-	ErrInvalidRuleResult = goerr.New("invalid rule result")
+	ErrInvalidPolicyResult = goerr.New("invalid rule result")
 )

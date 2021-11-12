@@ -1,4 +1,4 @@
-package rule
+package policy
 
 import (
 	"github.com/m-mizutani/goerr"
@@ -14,7 +14,7 @@ func NewCheck(query string) (Check, error) {
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
-	return &checkRule{
+	return &checkPolicy{
 		compiler: compiler,
 	}, nil
 }
@@ -24,11 +24,11 @@ type Check interface {
 	Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error)
 }
 
-type checkRule struct {
+type checkPolicy struct {
 	compiler *ast.Compiler
 }
 
-func (x *checkRule) Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error) {
+func (x *checkPolicy) Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error) {
 	policy := rego.New(
 		rego.Query(`response = data.octovy.check`),
 		rego.Compiler(x.compiler),
@@ -40,25 +40,25 @@ func (x *checkRule) Result(ctx *model.Context, inv *model.PackageInventory) (*mo
 	}
 
 	if len(rs) != 1 {
-		return nil, goerr.Wrap(model.ErrInvalidRuleResult, "only 1 result is acceptable").With("rego.ResultSet", rs)
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "only 1 result is acceptable").With("rego.ResultSet", rs)
 	}
 
 	response, ok := rs[0].Bindings["response"]
 	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidRuleResult, "'response' is empty")
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'response' is empty")
 	}
 	respMap, ok := response.(map[string]interface{})
 	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidRuleResult, "'response' type is invalid")
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'response' type is invalid")
 	}
 
 	obj, ok := respMap["result"]
 	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidRuleResult, "'result' field is not found").With("response", respMap)
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'result' field is not found").With("response", respMap)
 	}
 	result, ok := obj.(string)
 	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidRuleResult, "'result' field must be string")
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'result' field must be string")
 	}
 
 	var msg string
@@ -78,6 +78,6 @@ func (x *checkRule) Result(ctx *model.Context, inv *model.PackageInventory) (*mo
 		}, nil
 
 	default:
-		return nil, goerr.Wrap(model.ErrInvalidRuleResult, "Unsupported GitHub check conclusion").With("result", result)
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "Unsupported GitHub check conclusion").With("result", result)
 	}
 }

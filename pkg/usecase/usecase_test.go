@@ -82,7 +82,7 @@ func optCheckRule(rule string, update func(repo *model.GitHubRepo, checkID int64
 			require.Fail(t, "optGitHubAppMock should be called at first")
 		}
 
-		cfg.CheckRuleData = rule
+		cfg.CheckPolicyData = rule
 
 		var calledCreateCheckRunMock int
 

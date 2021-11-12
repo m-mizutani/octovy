@@ -151,16 +151,16 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.StringFlag{
-				Name:        "check-rule-data",
-				EnvVars:     []string{"OCTOVY_CHECK_RULE_DATA"},
-				Destination: &ctrl.Config.CheckRuleData,
-				Usage:       "Check result rule data in Rego",
+				Name:        "check-policy-data",
+				EnvVars:     []string{"OCTOVY_CHECK_POLICY_DATA"},
+				Destination: &ctrl.Config.CheckPolicyData,
+				Usage:       "Check result policy in Rego (plain text)",
 			},
 			&cli.StringFlag{
-				Name:        "check-rule-file",
-				EnvVars:     []string{"OCTOVY_CHECK_RULE_FILE"},
+				Name:        "check-policy-file",
+				EnvVars:     []string{"OCTOVY_CHECK_POLICY_FILE"},
 				Destination: &checkRuleFile,
-				Usage:       "Check result rule file in Rego",
+				Usage:       "Check result policy in Rego (file path)",
 			},
 
 			&cli.StringFlag{
@@ -186,10 +186,10 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				if err != nil {
 					return goerr.Wrap(err, "fail to read check rule file")
 				}
-				if ctrl.Config.CheckRuleData != "" {
-					logger.With("existed", ctrl.Config.CheckRuleData).Warn("both of --check-rule-file and --check-rule-data are specified. check-rule-data will be overwritten")
+				if ctrl.Config.CheckPolicyData != "" {
+					logger.With("existed", ctrl.Config.CheckPolicyData).Warn("both of --check-rule-file and --check-rule-data are specified. check-rule-data will be overwritten")
 				}
-				ctrl.Config.CheckRuleData = string(raw)
+				ctrl.Config.CheckPolicyData = string(raw)
 			}
 
 			if err := ctrl.usecase.Init(); err != nil {

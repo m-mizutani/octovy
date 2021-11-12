@@ -1,11 +1,11 @@
-package rule_test
+package policy_test
 
 import (
 	"testing"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
-	"github.com/m-mizutani/octovy/pkg/infra/rule"
+	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestCheckRule(t *testing.T) {
 
 	ctx := model.NewContext()
 	t.Run("always success", func(t *testing.T) {
-		check, err := rule.NewCheck(`package octovy.check
+		check, err := policy.NewCheck(`package octovy.check
 result = "success"
 `)
 		require.NoError(t, err)
@@ -47,7 +47,7 @@ result = "success"
 	})
 
 	t.Run("failure if severity is high", func(t *testing.T) {
-		check, err := rule.NewCheck(`package octovy.check
+		check, err := policy.NewCheck(`package octovy.check
 default result = "success"
 result = "failure" {
     vuln := input.sources[_].packages[_].vulnerabilities[_]
@@ -63,7 +63,7 @@ result = "failure" {
 	})
 
 	t.Run("message is set by msg", func(t *testing.T) {
-		check, err := rule.NewCheck(`package octovy.check
+		check, err := policy.NewCheck(`package octovy.check
 result = "success"
 msg = "blue"
 `)
@@ -76,7 +76,7 @@ msg = "blue"
 	})
 
 	t.Run("err if invalid rego", func(t *testing.T) {
-		_, err := rule.NewCheck(`package octovy.check
+		_, err := policy.NewCheck(`package octovy.check
 		default result = "success"
 		result = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
@@ -86,7 +86,7 @@ msg = "blue"
 	})
 
 	t.Run("err if missing result field", func(t *testing.T) {
-		check, err := rule.NewCheck(`package octovy.check
+		check, err := policy.NewCheck(`package octovy.check
 		xxx = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
 			vuln.custom_severity.label == "high"
@@ -96,12 +96,12 @@ msg = "blue"
 
 		result, err := check.Result(ctx, inv)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, model.ErrInvalidRuleResult)
+		assert.ErrorIs(t, err, model.ErrInvalidPolicyResult)
 		assert.Nil(t, result)
 	})
 
 	t.Run("err if package name is not octovy.check", func(t *testing.T) {
-		check, err := rule.NewCheck(`package octovy.cheeeeeeeeeeeeeeeeeeek
+		check, err := policy.NewCheck(`package octovy.cheeeeeeeeeeeeeeeeeeek
 		default result = "success"
 		result = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
@@ -111,12 +111,12 @@ msg = "blue"
 		require.NoError(t, err)
 
 		result, err := check.Result(ctx, inv)
-		require.ErrorIs(t, err, model.ErrInvalidRuleResult)
+		require.ErrorIs(t, err, model.ErrInvalidPolicyResult)
 		assert.Nil(t, result)
 	})
 
 	t.Run("err if missing package", func(t *testing.T) {
-		_, err := rule.NewCheck(`
+		_, err := policy.NewCheck(`
 		default result = "success"
 		field = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
@@ -127,14 +127,14 @@ msg = "blue"
 	})
 
 	t.Run("err if result is not string", func(t *testing.T) {
-		check, err := rule.NewCheck(`package octovy.check
+		check, err := policy.NewCheck(`package octovy.check
 result = 0
 `)
 		require.NoError(t, err)
 
 		result, err := check.Result(ctx, inv)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, model.ErrInvalidRuleResult)
+		assert.ErrorIs(t, err, model.ErrInvalidPolicyResult)
 		assert.Nil(t, result)
 	})
 }

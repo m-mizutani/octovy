@@ -13,7 +13,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
-	"github.com/m-mizutani/octovy/pkg/infra/rule"
+	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
@@ -132,13 +132,13 @@ func (x *usecase) Init() error {
 		return goerr.Wrap(err)
 	}
 
-	if x.config.CheckRuleData != "" {
-		check, err := rule.NewCheck(x.config.CheckRuleData)
+	if x.config.CheckPolicyData != "" {
+		check, err := policy.NewCheck(x.config.CheckPolicyData)
 		if err != nil {
 			return err
 		}
 
-		x.infra.CheckRule = check
+		x.infra.CheckPolicy = check
 	}
 
 	if !x.disableInvokeThread {

@@ -9,7 +9,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
-	"github.com/m-mizutani/octovy/pkg/infra/rule"
+	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
@@ -37,7 +37,7 @@ func (x *usecase) runScanThread() error {
 			GitHubApp:   x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
 			Utils:       x.infra.Utils,
 			Trivy:       x.infra.Trivy,
-			CheckRule:   x.infra.CheckRule,
+			CheckPolicy: x.infra.CheckPolicy,
 			FrontendURL: x.config.FrontendURL,
 		}
 
@@ -50,11 +50,11 @@ func (x *usecase) runScanThread() error {
 }
 
 type scanClients struct {
-	DB        db.Interface
-	GitHubApp githubapp.Interface
-	Trivy     trivy.Interface
-	Utils     *infra.Utils
-	CheckRule rule.Check
+	DB          db.Interface
+	GitHubApp   githubapp.Interface
+	Trivy       trivy.Interface
+	Utils       *infra.Utils
+	CheckPolicy policy.Check
 
 	FrontendURL string
 }
@@ -120,7 +120,7 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 	}
 
 	check := newCheckRun(clients.GitHubApp)
-	if clients.CheckRule != nil {
+	if clients.CheckPolicy != nil {
 		if err := check.create(ctx, &req.GitHubRepo, req.CommitID); err != nil {
 			return err
 		}
@@ -180,9 +180,9 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	if clients.CheckRule != nil {
+	if clients.CheckPolicy != nil {
 		inv := model.NewPackageInventory(newScan.Edges.Packages, status, now)
-		result, err := clients.CheckRule.Result(ctx, inv)
+		result, err := clients.CheckPolicy.Result(ctx, inv)
 		if err != nil {
 			return err
 		}
