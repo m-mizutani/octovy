@@ -1,11 +1,6 @@
 package usecase_test
 
 import (
-	"bytes"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"io"
 	"os"
 	"testing"
@@ -32,87 +27,109 @@ type mockSet struct {
 	Utils     *infra.Utils
 }
 
-func setupUsecase(t *testing.T) (usecase.Interface, *mockSet) {
-	uc := usecase.NewUsecase(&model.Config{})
+type testOption func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet)
 
-	dbClient := db.NewMock(t)
-	ghClient := github.NewMock()
-	newGitHubApp, ghApp := githubapp.NewMock()
-	util := infra.NewUtils()
-	trivyClient := trivy.NewMock()
+func optDBMock() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+		dbClient := db.NewMock(t)
+		infra.DB = dbClient
+		mock.DB = dbClient
+	}
+}
 
-	uc.DisableInvokeThread()
-	uc.InjectInfra(&infra.Interfaces{
-		DB:           dbClient,
-		GitHub:       ghClient,
-		NewGitHubApp: newGitHubApp,
-		Trivy:        trivyClient,
-		Utils:        util,
-	})
+func optGitHubMock() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+		ghClient := github.NewMock()
+		infra.GitHub = ghClient
+		mock.GitHub = ghClient
+	}
+}
 
+func optGitHubAppMock() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+		newGitHubApp, ghApp := githubapp.NewMock()
+		infra.NewGitHubApp = newGitHubApp
+		mock.GtiHubApp = ghApp
+	}
+}
+
+func optGitHubAppMockZip() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+		if mock.GtiHubApp == nil {
+			require.Fail(t, "optGitHubAppMock should be called at first")
+		}
+
+		var calledGetCodeZipMock int
+
+		mock.GtiHubApp.GetCodeZipMock = func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
+			calledGetCodeZipMock++
+			raw, err := os.ReadFile("./testdata/sample-repo.zip")
+			require.NoError(t, err)
+			w.Write(raw)
+			w.Close()
+			return nil
+		}
+
+		t.Cleanup(func() {
+			assert.GreaterOrEqual(t, calledGetCodeZipMock, 1)
+		})
+	}
+}
+
+func optCheckRule(rule string, update func(repo *model.GitHubRepo, checkID int64, opt *gh.UpdateCheckRunOptions) error) testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+		if mock.GtiHubApp == nil {
+			require.Fail(t, "optGitHubAppMock should be called at first")
+		}
+
+		cfg.CheckRuleData = rule
+
+		var calledCreateCheckRunMock int
+
+		const dummyCheckID int64 = 999
+		mock.GtiHubApp.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
+			calledCreateCheckRunMock++
+			return dummyCheckID, nil
+		}
+
+		mock.GtiHubApp.UpdateCheckRunMock = update
+
+		t.Cleanup(func() {
+			assert.GreaterOrEqual(t, calledCreateCheckRunMock, 1)
+		})
+	}
+}
+
+func optTrivy() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+		trivyClient := trivy.NewMock()
+		infra.Trivy = trivyClient
+		mock.Trivy = trivyClient
+	}
+}
+
+func setupUsecase(t *testing.T, options ...testOption) (usecase.Interface, *mockSet) {
+	utils := infra.NewUtils()
+	var cfg model.Config
+
+	mock := &mockSet{
+		Utils: utils,
+	}
+	inf := &infra.Interfaces{
+		Utils: utils,
+	}
+
+	for _, opt := range options {
+		opt(t, &cfg, inf, mock)
+	}
+
+	uc := usecase.NewUsecase(&cfg)
 	usecase.SetErrorHandler(uc, func(err error) {
 		require.NoError(t, err)
 	})
 
-	return uc, &mockSet{
-		DB:        dbClient,
-		GitHub:    ghClient,
-		GtiHubApp: ghApp,
-		Trivy:     trivyClient,
-		Utils:     util,
-	}
-}
+	uc.DisableInvokeThread()
+	uc.InjectInfra(inf)
 
-func genRSAKey(t *testing.T) []byte {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
-
-	buf := &bytes.Buffer{}
-	err = pem.Encode(buf, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return buf.Bytes()
-}
-
-func injectGitHubMock(t *testing.T, mock *mockSet, checkEnabled bool) {
-	var calledGetCodeZipMock,
-		calledCreateCheckRunMock,
-		calledUpdateCheckRunMock int
-
-	mock.GtiHubApp.GetCodeZipMock = func(repo *model.GitHubRepo, commitID string, w io.WriteCloser) error {
-		calledGetCodeZipMock++
-		raw, err := os.ReadFile("./testdata/sample-repo.zip")
-		require.NoError(t, err)
-		w.Write(raw)
-		w.Close()
-		return nil
-	}
-
-	const dummyCheckID int64 = 999
-	mock.GtiHubApp.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
-		calledCreateCheckRunMock++
-		return dummyCheckID, nil
-	}
-
-	mock.GtiHubApp.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *gh.UpdateCheckRunOptions) error {
-		calledUpdateCheckRunMock++
-		assert.Equal(t, dummyCheckID, checkID)
-		return nil
-	}
-
-	t.Cleanup(func() {
-		assert.GreaterOrEqual(t, calledGetCodeZipMock, 1)
-		if checkEnabled {
-			assert.GreaterOrEqual(t, calledCreateCheckRunMock, 1)
-			assert.GreaterOrEqual(t, calledUpdateCheckRunMock, 1)
-		} else {
-			assert.GreaterOrEqual(t, calledCreateCheckRunMock, 0)
-			assert.GreaterOrEqual(t, calledUpdateCheckRunMock, 0)
-		}
-	})
+	return uc, mock
 }

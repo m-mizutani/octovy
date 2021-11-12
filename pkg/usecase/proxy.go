@@ -150,6 +150,9 @@ func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.
 		Owner:    scan.Edges.Repository[0].Name,
 		RepoName: scan.Edges.Repository[0].Owner,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	inventry := model.NewPackageInventory(scan.Edges.Packages, statuses, x.infra.Utils.Now().Unix())
 
