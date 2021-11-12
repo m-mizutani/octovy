@@ -88,10 +88,42 @@ Run container image with following environment variables.
 - Database
     - `OCTOVY_DB_TYPE`: Database type. Recommend to use `postgres`
     - `OCTOVY_DB_CONFIG`: DSN of your database. Example: `host=x.x.x.x port=5432 user=octovy_app dbname=octovy_db password=xxxxxx`
+- Custom GitHub check rule
+    - `OCTOVY_CHECK_POLICY_DATA`: Check result policy in Rego (plain text)
+    - `OCTOVY_CHECK_POLICY_FILE`: Check result policy in Rego (file path)
 
 `OCTOVY_GITHUB_APP_PRIVATE_KEY`, `OCTOVY_GITHUB_SECRET`, `OCTOVY_GITHUB_WEBHOOK_SECRET` and `OCTOVY_DB_CONFIG` may contain secret values. I highly recommend to use secret variable management service (e.g. [Secret Manager](https://cloud.google.com/secret-manager) of Google Cloud and [AWS Secrets Manager](https://aws.amazon.com/jp/secrets-manager/)).
 
 An example of deploy script to Cloud Run is available in [tools/deploy_cloud_run.sh](tools/deploy_cloud_run.sh).
+
+### Custom GitHub check policy
+
+You can define custom policy for result of GitHub check run by [Rego](https://www.openpolicyagent.org/docs/latest/).
+
+#### Example
+
+A following example is a policy to make CI fail if the commit has a package that has `CVE-2021-0000` vulnerability.
+
+```rego
+package octovy.check
+
+default result = "success"
+
+result = "failure" {
+    vulnID := input.sources[_].packages[_].vuln_ids[_]
+    vulnID == "CVE-2021-0000"
+}
+```
+
+#### Policy specification
+
+- Package
+    - `package octovy.check` is required at head line of policy
+- Input
+    - `model.PackageInventory` of scan result
+- Output:
+    - `result` as string type (required): It must be either one of `conclusion` in [GitHub check parameters](https://docs.github.com/en/rest/reference/checks#update-a-check-run--parameters).
+    - `msg` as string type (optional): The message will be appeared in title of check result if given.
 
 ## License
 
