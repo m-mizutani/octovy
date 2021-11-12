@@ -51,8 +51,8 @@ func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 		InstallID: *event.Installation.ID,
 	}
 
-	if err := x.SendScanRequest(&req); err != nil {
-		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
+	if err := x.Scan(ctx, &req); err != nil {
+		return goerr.Wrap(err, "Failed Scan").With("req", req)
 	}
 
 	repo := &ent.Repository{
@@ -124,8 +124,8 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 		PullReqAction: *event.Action,
 	}
 
-	if err := x.SendScanRequest(&req); err != nil {
-		return goerr.Wrap(err, "Failed SendScanRequest").With("req", req)
+	if err := x.Scan(ctx, &req); err != nil {
+		return goerr.Wrap(err, "Failed Scan").With("req", req)
 	}
 
 	repo := &ent.Repository{

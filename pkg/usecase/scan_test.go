@@ -53,7 +53,8 @@ func TestScanProcedure(t *testing.T) {
 		}, nil
 	}
 
-	uc.SendScanRequest(&model.ScanRepositoryRequest{
+	require.NoError(t, uc.Init())
+	assert.NoError(t, uc.Scan(model.NewContext(), &model.ScanRepositoryRequest{
 		InstallID: 1,
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
@@ -67,11 +68,7 @@ func TestScanProcedure(t *testing.T) {
 			UpdatedAt:   2000,
 			RequestedAt: 2100,
 		},
-	})
-	usecase.CloseScanQueue(uc)
-
-	require.NoError(t, uc.Init())
-	require.NoError(t, usecase.RunScanThread(uc))
+	}))
 
 	assert.Equal(t, 1, calledScan)
 
@@ -213,9 +210,7 @@ func TestScanProcedureWithRule(t *testing.T) {
 				return nil
 			})
 
-			uc.SendScanRequest(scanReq)
-			usecase.CloseScanQueue(uc)
-			require.NoError(t, usecase.RunScanThread(uc))
+			assert.NoError(t, uc.Scan(model.NewContext(), scanReq))
 			assert.Equal(t, 1, called)
 		})
 	}

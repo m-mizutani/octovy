@@ -25,10 +25,7 @@ type Interface interface {
 	Shutdown()
 
 	// Scan
-	SendScanRequest(req *model.ScanRepositoryRequest) error
-
-	// Invoke thread
-	InvokeScanThread()
+	Scan(ctx *model.Context, req *model.ScanRepositoryRequest) error
 
 	// DB access proxy
 	RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error)
@@ -139,10 +136,6 @@ func (x *usecase) Init() error {
 		}
 
 		x.infra.CheckPolicy = check
-	}
-
-	if !x.disableInvokeThread {
-		x.InvokeScanThread()
 	}
 
 	x.initialized = true
