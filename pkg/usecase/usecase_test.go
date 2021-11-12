@@ -79,7 +79,7 @@ func genRSAKey(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
-func injectGitHubMock(t *testing.T, mock *mockSet) {
+func injectGitHubMock(t *testing.T, mock *mockSet, checkEnabled bool) {
 	var calledGetCodeZipMock,
 		calledCreateCheckRunMock,
 		calledUpdateCheckRunMock int
@@ -107,7 +107,12 @@ func injectGitHubMock(t *testing.T, mock *mockSet) {
 
 	t.Cleanup(func() {
 		assert.GreaterOrEqual(t, calledGetCodeZipMock, 1)
-		assert.GreaterOrEqual(t, calledCreateCheckRunMock, 1)
-		assert.GreaterOrEqual(t, calledUpdateCheckRunMock, 1)
+		if checkEnabled {
+			assert.GreaterOrEqual(t, calledCreateCheckRunMock, 1)
+			assert.GreaterOrEqual(t, calledUpdateCheckRunMock, 1)
+		} else {
+			assert.GreaterOrEqual(t, calledCreateCheckRunMock, 0)
+			assert.GreaterOrEqual(t, calledUpdateCheckRunMock, 0)
+		}
 	})
 }

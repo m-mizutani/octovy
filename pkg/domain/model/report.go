@@ -37,6 +37,32 @@ func MakeReport(scanID string, changes VulnChanges, db *VulnStatusDB, url string
 	return report
 }
 
+func (x *Report) Summary() string {
+	var added, fixed, remained int
+	for _, changes := range x.sources {
+		added += len(changes.Added)
+		fixed += len(changes.Deleted)
+		remained += len(changes.Remained)
+	}
+
+	var parts []string
+	if added > 0 {
+		parts = append(parts, fmt.Sprintf("New %d", added))
+	}
+	if remained > 0 {
+		parts = append(parts, fmt.Sprintf("Remained %d", remained))
+	}
+
+	if len(parts) == 0 {
+		return "✅ No vulnerability is found"
+	}
+	if fixed > 0 && added == 0 && remained == 0 {
+		return fmt.Sprintf("✅ Fixed %d vulnerability", fixed)
+	}
+
+	return "⚠️ Found " + strings.Join(parts, ", ") + " vulnerabilities"
+}
+
 func (x *Report) ToMarkdown() string {
 	var b githubCommentBody
 	b.Add("## Octovy scan result")

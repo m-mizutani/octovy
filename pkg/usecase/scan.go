@@ -9,6 +9,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/rule"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
@@ -36,6 +37,7 @@ func (x *usecase) runScanThread() error {
 			GitHubApp:   x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
 			Utils:       x.infra.Utils,
 			Trivy:       x.infra.Trivy,
+			CheckRule:   x.infra.CheckRule,
 			FrontendURL: x.config.FrontendURL,
 		}
 
@@ -52,6 +54,7 @@ type scanClients struct {
 	GitHubApp githubapp.Interface
 	Trivy     trivy.Interface
 	Utils     *infra.Utils
+	CheckRule rule.Check
 
 	FrontendURL string
 }
@@ -116,10 +119,14 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	// Disabled check run temporary
 	check := newCheckRun(clients.GitHubApp)
-	if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
-		return err
+	if clients.CheckRule != nil {
+		if err := check.create(ctx, &req.GitHubRepo, req.CommitID); err != nil {
+			return err
+		}
+
+		// Nothing happend if check completed properly
+		defer check.fallback(ctx)
 	}
 
 	codes, err := setupGitHubCodes(ctx, req, clients.GitHubApp)
@@ -173,14 +180,16 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	rules, err := clients.DB.GetCheckRules(ctx)
-	if err != nil {
-		return err
-	}
-	conclusion := model.NewPackageInventory(newScan.Edges.Packages, status, now).CheckResult(rules)
+	if clients.CheckRule != nil {
+		inv := model.NewPackageInventory(newScan.Edges.Packages, status, now)
+		result, err := clients.CheckRule.Result(ctx, inv)
+		if err != nil {
+			return err
+		}
 
-	if err := check.complete(ctx, newScan.ID, report, clients.FrontendURL, conclusion); err != nil {
-		return err
+		if err := check.complete(ctx, newScan.ID, report, clients.FrontendURL, result); err != nil {
+			return err
+		}
 	}
 
 	return nil

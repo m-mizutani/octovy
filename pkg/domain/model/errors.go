@@ -18,4 +18,7 @@ var (
 	ErrVulnerabilityNotFound = goerr.New("vulnerability not found")
 	ErrInvalidWebhookData    = goerr.New("invalid webhook data")
 	ErrGitHubAPI             = goerr.New("github API returns unexpected response")
+
+	// Rule error
+	ErrInvalidRuleResult = goerr.New("invalid rule result")
 )

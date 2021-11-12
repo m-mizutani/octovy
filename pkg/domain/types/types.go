@@ -25,6 +25,7 @@ func (x VulnStatusType) Values() []string {
 type GitHubCheckResult string
 
 const (
+	CheckNone    GitHubCheckResult = ""
 	CheckFail    GitHubCheckResult = "fail"
 	CheckNeutral GitHubCheckResult = "neutral"
 	CheckSuccess GitHubCheckResult = "success"

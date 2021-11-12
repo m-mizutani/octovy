@@ -14,7 +14,7 @@ import (
 
 func TestScanProcedure(t *testing.T) {
 	uc, mock := setupUsecase(t)
-	injectGitHubMock(t, mock)
+	injectGitHubMock(t, mock, false)
 	var calledScan int
 	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
 		calledScan++

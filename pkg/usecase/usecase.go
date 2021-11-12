@@ -13,6 +13,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/rule"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
@@ -38,6 +39,7 @@ type Interface interface {
 	GetVulnerabilityCount(ctx *model.Context) (int, error)
 	GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error)
 	CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerability) error
+	GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error)
 
 	// Severity
 	CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error)
@@ -45,11 +47,6 @@ type Interface interface {
 	GetSeverities(ctx *model.Context) ([]*ent.Severity, error)
 	UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error
 	AssignSeverity(ctx *model.Context, vulnID string, id int) error
-
-	// Rule
-	GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error)
-	CreateRule(ctx *model.Context, req *model.RequestCheckRule) (*ent.CheckRule, error)
-	DeleteRule(ctx *model.Context, id int) error
 
 	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(ctx *model.Context, event *gh.PushEvent) error
@@ -133,6 +130,15 @@ func (x *usecase) Init() error {
 	if err := x.infra.DB.Open(x.config.DBType, x.config.DBConfig); err != nil {
 		x.HandleError(model.NewContext(), err)
 		return goerr.Wrap(err)
+	}
+
+	if x.config.CheckRuleData != "" {
+		check, err := rule.NewCheck(x.config.CheckRuleData)
+		if err != nil {
+			return err
+		}
+
+		x.infra.CheckRule = check
 	}
 
 	if !x.disableInvokeThread {

@@ -13,7 +13,7 @@ import (
 
 func TestGetRepositories(t *testing.T) {
 	uc, mock := setupUsecase(t)
-	injectGitHubMock(t, mock)
+	injectGitHubMock(t, mock, false)
 	ctx := model.NewContext()
 	branch := "main"
 	var calledScan int
@@ -80,7 +80,7 @@ func TestGetRepositories(t *testing.T) {
 
 func TestGetVulnerability(t *testing.T) {
 	uc, mock := setupUsecase(t)
-	injectGitHubMock(t, mock)
+	injectGitHubMock(t, mock, false)
 	ctx := model.NewContext()
 	branch := "main"
 	var calledScan int

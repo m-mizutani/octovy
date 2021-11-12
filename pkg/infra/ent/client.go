@@ -10,7 +10,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent/migrate"
 
 	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
-	"github.com/m-mizutani/octovy/pkg/infra/ent/checkrule"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
@@ -33,8 +32,6 @@ type Client struct {
 	Schema *migrate.Schema
 	// AuthStateCache is the client for interacting with the AuthStateCache builders.
 	AuthStateCache *AuthStateCacheClient
-	// CheckRule is the client for interacting with the CheckRule builders.
-	CheckRule *CheckRuleClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
 	// Repository is the client for interacting with the Repository builders.
@@ -67,7 +64,6 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.AuthStateCache = NewAuthStateCacheClient(c.config)
-	c.CheckRule = NewCheckRuleClient(c.config)
 	c.PackageRecord = NewPackageRecordClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
 	c.Scan = NewScanClient(c.config)
@@ -111,7 +107,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:             ctx,
 		config:          cfg,
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
-		CheckRule:       NewCheckRuleClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
@@ -140,7 +135,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		config:          cfg,
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
-		CheckRule:       NewCheckRuleClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
@@ -180,7 +174,6 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.AuthStateCache.Use(hooks...)
-	c.CheckRule.Use(hooks...)
 	c.PackageRecord.Use(hooks...)
 	c.Repository.Use(hooks...)
 	c.Scan.Use(hooks...)
@@ -280,112 +273,6 @@ func (c *AuthStateCacheClient) GetX(ctx context.Context, id string) *AuthStateCa
 // Hooks returns the client hooks.
 func (c *AuthStateCacheClient) Hooks() []Hook {
 	return c.hooks.AuthStateCache
-}
-
-// CheckRuleClient is a client for the CheckRule schema.
-type CheckRuleClient struct {
-	config
-}
-
-// NewCheckRuleClient returns a client for the CheckRule from the given config.
-func NewCheckRuleClient(c config) *CheckRuleClient {
-	return &CheckRuleClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `checkrule.Hooks(f(g(h())))`.
-func (c *CheckRuleClient) Use(hooks ...Hook) {
-	c.hooks.CheckRule = append(c.hooks.CheckRule, hooks...)
-}
-
-// Create returns a create builder for CheckRule.
-func (c *CheckRuleClient) Create() *CheckRuleCreate {
-	mutation := newCheckRuleMutation(c.config, OpCreate)
-	return &CheckRuleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of CheckRule entities.
-func (c *CheckRuleClient) CreateBulk(builders ...*CheckRuleCreate) *CheckRuleCreateBulk {
-	return &CheckRuleCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for CheckRule.
-func (c *CheckRuleClient) Update() *CheckRuleUpdate {
-	mutation := newCheckRuleMutation(c.config, OpUpdate)
-	return &CheckRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *CheckRuleClient) UpdateOne(cr *CheckRule) *CheckRuleUpdateOne {
-	mutation := newCheckRuleMutation(c.config, OpUpdateOne, withCheckRule(cr))
-	return &CheckRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *CheckRuleClient) UpdateOneID(id int) *CheckRuleUpdateOne {
-	mutation := newCheckRuleMutation(c.config, OpUpdateOne, withCheckRuleID(id))
-	return &CheckRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for CheckRule.
-func (c *CheckRuleClient) Delete() *CheckRuleDelete {
-	mutation := newCheckRuleMutation(c.config, OpDelete)
-	return &CheckRuleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a delete builder for the given entity.
-func (c *CheckRuleClient) DeleteOne(cr *CheckRule) *CheckRuleDeleteOne {
-	return c.DeleteOneID(cr.ID)
-}
-
-// DeleteOneID returns a delete builder for the given id.
-func (c *CheckRuleClient) DeleteOneID(id int) *CheckRuleDeleteOne {
-	builder := c.Delete().Where(checkrule.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &CheckRuleDeleteOne{builder}
-}
-
-// Query returns a query builder for CheckRule.
-func (c *CheckRuleClient) Query() *CheckRuleQuery {
-	return &CheckRuleQuery{
-		config: c.config,
-	}
-}
-
-// Get returns a CheckRule entity by its id.
-func (c *CheckRuleClient) Get(ctx context.Context, id int) (*CheckRule, error) {
-	return c.Query().Where(checkrule.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *CheckRuleClient) GetX(ctx context.Context, id int) *CheckRule {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QuerySeverity queries the severity edge of a CheckRule.
-func (c *CheckRuleClient) QuerySeverity(cr *CheckRule) *SeverityQuery {
-	query := &SeverityQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
-		id := cr.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(checkrule.Table, checkrule.FieldID, id),
-			sqlgraph.To(severity.Table, severity.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, checkrule.SeverityTable, checkrule.SeverityColumn),
-		)
-		fromV = sqlgraph.Neighbors(cr.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *CheckRuleClient) Hooks() []Hook {
-	return c.hooks.CheckRule
 }
 
 // PackageRecordClient is a client for the PackageRecord schema.

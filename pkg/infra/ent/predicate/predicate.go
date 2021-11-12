@@ -9,9 +9,6 @@ import (
 // AuthStateCache is the predicate function for authstatecache builders.
 type AuthStateCache func(*sql.Selector)
 
-// CheckRule is the predicate function for checkrule builders.
-type CheckRule func(*sql.Selector)
-
 // PackageRecord is the predicate function for packagerecord builders.
 type PackageRecord func(*sql.Selector)
 

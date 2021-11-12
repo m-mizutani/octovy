@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
@@ -129,15 +130,28 @@ func (x *usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) erro
 	return x.infra.DB.AssignSeverity(ctx, vulnID, id)
 }
 
-// Rule
-func (x *usecase) GetCheckRules(ctx *model.Context) ([]*ent.CheckRule, error) {
-	return x.infra.DB.GetCheckRules(ctx)
-}
+func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error) {
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
 
-func (x *usecase) CreateRule(ctx *model.Context, req *model.RequestCheckRule) (*ent.CheckRule, error) {
-	return x.infra.DB.CreateCheckRule(ctx, req)
-}
+	scan, err := x.infra.DB.GetScan(ctx, scanID)
+	if err != nil {
+		return nil, err
+	}
+	if scan == nil {
+		return nil, nil
+	}
+	if len(scan.Edges.Repository) == 0 {
+		return nil, goerr.New("invalid data, repository of scan is not found").With("scan", scan)
+	}
 
-func (x *usecase) DeleteRule(ctx *model.Context, id int) error {
-	return x.infra.DB.DeleteCheckRule(ctx, id)
+	statuses, err := x.infra.DB.GetVulnStatus(ctx, &model.GitHubRepo{
+		Owner:    scan.Edges.Repository[0].Name,
+		RepoName: scan.Edges.Repository[0].Owner,
+	})
+
+	inventry := model.NewPackageInventory(scan.Edges.Packages, statuses, x.infra.Utils.Now().Unix())
+
+	return inventry, nil
 }

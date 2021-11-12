@@ -1,12 +1,11 @@
 package model
 
 import (
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
 type PackageInventory struct {
-	Sources []*PackageSource
+	Sources []*PackageSource `json:"sources"`
 }
 
 func NewPackageInventory(pkgs []*ent.PackageRecord, statuses []*ent.VulnStatus, now int64) *PackageInventory {
@@ -46,39 +45,27 @@ func NewPackageInventory(pkgs []*ent.PackageRecord, statuses []*ent.VulnStatus, 
 	return inventory
 }
 
-func (x *PackageInventory) CheckResult(rules []*ent.CheckRule) types.GitHubCheckResult {
-	return types.CheckSuccess
-}
-
 type PackageSource struct {
 	Source   string     `json:"source"`
 	Packages []*Package `json:"packages"`
 
 	// To remove "edges" field in JSON
-	Edges *struct{} `json:"edges.omitempty"`
+	Edges *struct{} `json:"edges,omitempty"`
 }
 
 type Package struct {
 	ent.PackageRecord
-	Vulnerabilities []*Vulnerability `json:"vulnerabilities"`
+	Vulnerabilities []*Vulnerability `json:"vulnerabilities,omitempty"`
 
 	// To remove "edges" field in JSON
-	Edges *struct{} `json:"edges.omitempty"`
+	Edges *struct{} `json:"edges,omitempty"`
 }
 
 type Vulnerability struct {
 	ent.Vulnerability
-	Status         *ent.VulnStatus `json:"status"`
-	CustomSeverity *ent.Severity   `json:"custom_severity"`
+	Status         *ent.VulnStatus `json:"status,omitempty"`
+	CustomSeverity *ent.Severity   `json:"custom_severity,omitempty"`
 
 	// To remove "edges" field in JSON
-	Edges *struct{} `json:"edges.omitempty"`
-}
-
-func (x *Vulnerability) Feedback(repo *ent.Repository, rules []*ent.CheckRule) types.GitHubCheckResult {
-	for _, rule := range rules {
-		return rule.Result
-	}
-
-	return types.CheckSuccess
+	Edges *struct{} `json:"edges,omitempty"`
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/rule"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
@@ -14,6 +15,7 @@ type Interfaces struct {
 	DB           db.Interface
 	GitHub       github.Interface
 	NewGitHubApp githubapp.Factory
+	CheckRule    rule.Check
 	Trivy        trivy.Interface
 	Utils        *Utils
 }

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -66,6 +67,8 @@ func globalSetup(c *cli.Context) error {
 }
 
 func newServeCommand(ctrl *Controller) *cli.Command {
+	var checkRuleFile string
+
 	return &cli.Command{
 		Name: "serve",
 		Flags: []cli.Flag{
@@ -148,6 +151,19 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.StringFlag{
+				Name:        "check-rule-data",
+				EnvVars:     []string{"OCTOVY_CHECK_RULE_DATA"},
+				Destination: &ctrl.Config.CheckRuleData,
+				Usage:       "Check result rule data in Rego",
+			},
+			&cli.StringFlag{
+				Name:        "check-rule-file",
+				EnvVars:     []string{"OCTOVY_CHECK_RULE_FILE"},
+				Destination: &checkRuleFile,
+				Usage:       "Check result rule file in Rego",
+			},
+
+			&cli.StringFlag{
 				Name:        "trivy-path",
 				EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 				Destination: &ctrl.Config.TrivyPath,
@@ -165,6 +181,17 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
+			if checkRuleFile != "" {
+				raw, err := ioutil.ReadFile(checkRuleFile)
+				if err != nil {
+					return goerr.Wrap(err, "fail to read check rule file")
+				}
+				if ctrl.Config.CheckRuleData != "" {
+					logger.With("existed", ctrl.Config.CheckRuleData).Warn("both of --check-rule-file and --check-rule-data are specified. check-rule-data will be overwritten")
+				}
+				ctrl.Config.CheckRuleData = string(raw)
+			}
+
 			if err := ctrl.usecase.Init(); err != nil {
 				return err
 			}

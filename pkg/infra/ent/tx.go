@@ -14,8 +14,6 @@ type Tx struct {
 	config
 	// AuthStateCache is the client for interacting with the AuthStateCache builders.
 	AuthStateCache *AuthStateCacheClient
-	// CheckRule is the client for interacting with the CheckRule builders.
-	CheckRule *CheckRuleClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
 	// Repository is the client for interacting with the Repository builders.
@@ -170,7 +168,6 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.AuthStateCache = NewAuthStateCacheClient(tx.config)
-	tx.CheckRule = NewCheckRuleClient(tx.config)
 	tx.PackageRecord = NewPackageRecordClient(tx.config)
 	tx.Repository = NewRepositoryClient(tx.config)
 	tx.Scan = NewScanClient(tx.config)

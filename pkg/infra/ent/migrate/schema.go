@@ -19,27 +19,6 @@ var (
 		Columns:    AuthStateCachesColumns,
 		PrimaryKey: []*schema.Column{AuthStateCachesColumns[0]},
 	}
-	// CheckRulesColumns holds the columns for the "check_rules" table.
-	CheckRulesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
-		{Name: "result", Type: field.TypeString},
-		{Name: "check_rule_severity", Type: field.TypeInt, Nullable: true},
-	}
-	// CheckRulesTable holds the schema information for the "check_rules" table.
-	CheckRulesTable = &schema.Table{
-		Name:       "check_rules",
-		Columns:    CheckRulesColumns,
-		PrimaryKey: []*schema.Column{CheckRulesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "check_rules_severities_severity",
-				Columns:    []*schema.Column{CheckRulesColumns[3]},
-				RefColumns: []*schema.Column{SeveritiesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// PackageRecordsColumns holds the columns for the "package_records" table.
 	PackageRecordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -327,7 +306,6 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AuthStateCachesTable,
-		CheckRulesTable,
 		PackageRecordsTable,
 		RepositoriesTable,
 		ScansTable,
@@ -344,7 +322,6 @@ var (
 )
 
 func init() {
-	CheckRulesTable.ForeignKeys[0].RefTable = SeveritiesTable
 	RepositoriesTable.ForeignKeys[0].RefTable = ScansTable
 	ScansTable.ForeignKeys[0].RefTable = RepositoriesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
