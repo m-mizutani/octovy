@@ -152,3 +152,10 @@ export type severity = {
   label: string;
   color: string;
 };
+
+export type rule = {
+  id?: number;
+  name: string;
+  severity: number;
+  result: string;
+};

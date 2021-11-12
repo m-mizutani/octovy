@@ -19,3 +19,8 @@ type GitHubToken struct {
 	Scope                 string `json:"scope"`
 	TokenType             string `json:"token_type"`
 }
+
+type GitHubCheckResult struct {
+	Conclusion string
+	Message    string
+}

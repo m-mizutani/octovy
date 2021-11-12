@@ -15,6 +15,8 @@ type Config struct {
 	GitHubAppSecret     string `zlog:"secret"`
 	GitHubWebhookSecret string `zlog:"secret"`
 
+	CheckPolicyData string
+
 	TrivyPath string
 
 	SentryDSN string

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
@@ -127,4 +128,33 @@ func (x *usecase) UpdateSeverity(ctx *model.Context, id int, req *model.RequestS
 
 func (x *usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) error {
 	return x.infra.DB.AssignSeverity(ctx, vulnID, id)
+}
+
+func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error) {
+	if !x.initialized {
+		panic("usecase is not initialized")
+	}
+
+	scan, err := x.infra.DB.GetScan(ctx, scanID)
+	if err != nil {
+		return nil, err
+	}
+	if scan == nil {
+		return nil, nil
+	}
+	if len(scan.Edges.Repository) == 0 {
+		return nil, goerr.New("invalid data, repository of scan is not found").With("scan", scan)
+	}
+
+	statuses, err := x.infra.DB.GetVulnStatus(ctx, &model.GitHubRepo{
+		Owner:    scan.Edges.Repository[0].Name,
+		RepoName: scan.Edges.Repository[0].Owner,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	inventry := model.NewPackageInventory(scan.Edges.Packages, statuses, x.infra.Utils.Now().Unix())
+
+	return inventry, nil
 }

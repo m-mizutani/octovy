@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
@@ -44,6 +45,20 @@ func (x *RequestSeverity) IsValid() error {
 
 	if !colorRegex.MatchString(x.Color) {
 		return goerr.Wrap(ErrInvalidInput, "invalid color schema")
+	}
+
+	return nil
+}
+
+type RequestCheckRule struct {
+	Severity int                     `json:"severity"`
+	Name     string                  `json:"name"`
+	Result   types.GitHubCheckResult `json:"result"`
+}
+
+func (x *RequestCheckRule) IsValid() error {
+	if err := x.Result.IsValid(); err != nil {
+		return goerr.Wrap(err, "unsupported result")
 	}
 
 	return nil

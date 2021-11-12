@@ -9,6 +9,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
@@ -36,6 +37,7 @@ func (x *usecase) runScanThread() error {
 			GitHubApp:   x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
 			Utils:       x.infra.Utils,
 			Trivy:       x.infra.Trivy,
+			CheckPolicy: x.infra.CheckPolicy,
 			FrontendURL: x.config.FrontendURL,
 		}
 
@@ -48,10 +50,11 @@ func (x *usecase) runScanThread() error {
 }
 
 type scanClients struct {
-	DB        db.Interface
-	GitHubApp githubapp.Interface
-	Trivy     trivy.Interface
-	Utils     *infra.Utils
+	DB          db.Interface
+	GitHubApp   githubapp.Interface
+	Trivy       trivy.Interface
+	Utils       *infra.Utils
+	CheckPolicy policy.Check
 
 	FrontendURL string
 }
@@ -116,13 +119,15 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	/*
-		// Disabled check run temporary
-		check := newCheckRun(clients.GitHubApp)
-		if err := check.create(&req.GitHubRepo, req.CommitID); err != nil {
+	check := newCheckRun(clients.GitHubApp)
+	if clients.CheckPolicy != nil {
+		if err := check.create(ctx, &req.GitHubRepo, req.CommitID); err != nil {
 			return err
 		}
-	*/
+
+		// Nothing happend if check completed properly
+		defer check.fallback(ctx)
+	}
 
 	codes, err := setupGitHubCodes(ctx, req, clients.GitHubApp)
 	if codes != nil {
@@ -132,13 +137,13 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		return err
 	}
 
-	report, err := clients.Trivy.Scan(codes.Path)
+	trivyResult, err := clients.Trivy.Scan(codes.Path)
 	if err != nil {
 		return err
 	}
 
 	scannedAt := clients.Utils.Now()
-	newPkgs, vulnList := model.TrivyReportToEnt(report, scannedAt)
+	newPkgs, vulnList := model.TrivyReportToEnt(trivyResult, scannedAt)
 
 	newScan, err := insertScanReport(ctx, clients.DB, req, newPkgs, vulnList, scannedAt)
 	if err != nil {
@@ -146,26 +151,27 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 	}
 	ctx.Log().With("scanID", newScan.ID).Debug("inserted scan report")
 
+	status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)
+	if err != nil {
+		return err
+	}
+
+	oldPkgs := []*ent.PackageRecord{}
+	if latest != nil {
+		oldPkgs = latest.Edges.Packages
+	}
+
+	now := scannedAt.Unix()
+	changes := model.DiffVulnRecords(oldPkgs, newScan.Edges.Packages)
+	db := model.NewVulnStatusDB(status, now)
+	report := model.MakeReport(newScan.ID, changes, db, clients.FrontendURL)
+
 	if req.PullReqNumber != nil {
-		status, err := clients.DB.GetVulnStatus(ctx, &req.GitHubRepo)
-		if err != nil {
-			return err
-		}
-
-		oldPkgs := []*ent.PackageRecord{}
-		if latest != nil {
-			oldPkgs = latest.Edges.Packages
-		}
-
-		changes := model.DiffVulnRecords(oldPkgs, newScan.Edges.Packages)
-		db := model.NewVulnStatusDB(status, scannedAt.Unix())
 		input := &postGitHubCommentInput{
 			App:           clients.GitHubApp,
 			Target:        &req.ScanTarget,
-			Scan:          newScan,
-			FrontendURL:   clients.FrontendURL,
 			PullReqNumber: req.PullReqNumber,
-			Report:        model.MakeReport(changes, db),
+			Report:        report,
 			GitHubEvent:   req.PullReqAction,
 		}
 
@@ -174,10 +180,17 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	/*
-		if err := check.complete(newScan.ID, changes, clients.FrontendURL); err != nil {
+	if clients.CheckPolicy != nil {
+		inv := model.NewPackageInventory(newScan.Edges.Packages, status, now)
+		result, err := clients.CheckPolicy.Result(ctx, inv)
+		if err != nil {
 			return err
 		}
-	*/
+
+		if err := check.complete(ctx, newScan.ID, report, clients.FrontendURL, result); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

@@ -6,6 +6,7 @@ import Grid from "@mui/material/Grid";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
 
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -112,6 +113,16 @@ function Scan() {
               </Link>
             </Typography>
           </Grid>
+        </Grid>
+      </Container>
+      <Container style={{ margin: "30px 0px" }}>
+        <Grid>
+          <Button
+            variant="outlined"
+            size="small"
+            href={`/api/v1/scan/${router.query.id}/package`}>
+            Raw data
+          </Button>
         </Grid>
       </Container>
       {vulnPkgMap ? (

@@ -1,5 +1,10 @@
 package model
 
+import (
+	"fmt"
+	"strings"
+)
+
 type SourceChanges struct {
 	Added    VulnChanges
 	Deleted  VulnChanges
@@ -7,18 +12,22 @@ type SourceChanges struct {
 }
 
 type Report struct {
-	Sources map[string]*SourceChanges
+	scanID      string
+	frontendURL string
+	sources     map[string]*SourceChanges
 }
 
-func MakeReport(changes VulnChanges, db *VulnStatusDB) *Report {
+func MakeReport(scanID string, changes VulnChanges, db *VulnStatusDB, url string) *Report {
 	report := &Report{
-		Sources: make(map[string]*SourceChanges),
+		scanID:      scanID,
+		sources:     make(map[string]*SourceChanges),
+		frontendURL: strings.Trim(url, "/"),
 	}
 	for _, src := range changes.Sources() {
 		target := changes.FilterBySource(src)
 		qualified := target.Qualified(db)
 
-		report.Sources[src] = &SourceChanges{
+		report.sources[src] = &SourceChanges{
 			Added:    qualified.FilterByType(VulnAdded),
 			Deleted:  target.FilterByType(VulnDeleted),
 			Remained: qualified.FilterByType(VulnRemained),
@@ -28,10 +37,74 @@ func MakeReport(changes VulnChanges, db *VulnStatusDB) *Report {
 	return report
 }
 
+func (x *Report) Summary() string {
+	var added, fixed, remained int
+	for _, changes := range x.sources {
+		added += len(changes.Added)
+		fixed += len(changes.Deleted)
+		remained += len(changes.Remained)
+	}
+
+	var parts []string
+	if added > 0 {
+		parts = append(parts, fmt.Sprintf("New %d", added))
+	}
+	if remained > 0 {
+		parts = append(parts, fmt.Sprintf("Remained %d", remained))
+	}
+
+	if len(parts) == 0 {
+		return "✅ No vulnerability is found"
+	}
+	if fixed > 0 && added == 0 && remained == 0 {
+		return fmt.Sprintf("✅ Fixed %d vulnerability", fixed)
+	}
+
+	return "⚠️ Found " + strings.Join(parts, ", ") + " vulnerabilities"
+}
+
+func (x *Report) ToMarkdown() string {
+	var b githubCommentBody
+	b.Add("## Octovy scan result")
+	b.Break()
+
+	for src, changes := range x.sources {
+		b.Add("### " + src)
+		b.Break()
+
+		for _, v := range changes.Added {
+			b.Add("- 🚨 **New** %s (%s): %s", v.Vuln.ID, v.Pkg.Name, v.Vuln.Title)
+		}
+		for _, v := range changes.Deleted {
+			b.Add("- ✅ **Fixed** %s (%s): %s", v.Vuln.ID, v.Pkg.Name, v.Vuln.Title)
+		}
+		if len(changes.Remained) > 0 {
+			b.Add("- ⚠️ %d vulnerabilities are remained", len(changes.Remained))
+		}
+		b.Break()
+	}
+
+	b.Add("🗒️ See [report](%s/scan/%s) more detail", x.frontendURL, x.scanID)
+
+	return b.Join()
+}
+
+type githubCommentBody struct {
+	lines []string
+}
+
+func (x *githubCommentBody) Add(f string, v ...interface{}) {
+	x.lines = append(x.lines, fmt.Sprintf(f, v...))
+}
+func (x *githubCommentBody) Break() {
+	x.lines = append(x.lines, "")
+}
+func (x *githubCommentBody) Join() string { return strings.Join(x.lines, "\n") }
+
 func (x *Report) NothingToNotify(githubEvent string) bool {
 	switch githubEvent {
 	case "opened":
-		for _, src := range x.Sources {
+		for _, src := range x.sources {
 			if len(src.Added) > 0 || len(src.Deleted) > 0 || len(src.Remained) > 0 {
 				return false
 			}
@@ -39,7 +112,7 @@ func (x *Report) NothingToNotify(githubEvent string) bool {
 		return true
 
 	case "synchronize":
-		for _, src := range x.Sources {
+		for _, src := range x.sources {
 			if len(src.Added) > 0 || len(src.Deleted) > 0 {
 				return false
 			}

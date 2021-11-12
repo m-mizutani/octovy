@@ -32,6 +32,13 @@ func NewVulnStatusDB(statuses []*ent.VulnStatus, now int64) *VulnStatusDB {
 	return db
 }
 
+func (x *VulnStatusDB) Lookup(pkg *ent.PackageRecord, vulnID string) *ent.VulnStatus {
+	if status, ok := x.dict[vulnStatusKey(pkg.Source, pkg.Name, vulnID)]; ok {
+		return status
+	}
+	return nil
+}
+
 func (x *VulnStatusDB) IsQualified(v *VulnRecord) bool {
 	_, ok := x.dict[vulnStatusKey(v.Pkg.Source, v.Pkg.Name, v.Vuln.ID)]
 	return !ok

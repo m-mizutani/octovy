@@ -19,6 +19,7 @@ require (
 	github.com/m-mizutani/goerr v0.1.2
 	github.com/m-mizutani/zlog v0.1.2
 	github.com/mattn/go-sqlite3 v1.14.8
+	github.com/open-policy-agent/opa v0.34.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect

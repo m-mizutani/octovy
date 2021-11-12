@@ -23,3 +23,20 @@ func getScanReport(c *gin.Context) {
 
 	c.JSON(http.StatusOK, baseResponse{Data: report})
 }
+
+func getScanPackages(c *gin.Context) {
+	uc := getUsecase(c)
+	scanID := c.Param("scan_id")
+
+	inventry, err := uc.GetPackageInventry(model.NewContextWith(c), scanID)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	if inventry == nil {
+		_ = c.Error(goerr.Wrap(errResourceNotFound, "No such report"))
+		return
+	}
+
+	c.JSON(http.StatusOK, baseResponse{Data: inventry})
+}
