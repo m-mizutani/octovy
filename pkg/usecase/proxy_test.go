@@ -6,7 +6,6 @@ import (
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
-	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,23 +38,6 @@ func TestGetRepositories(t *testing.T) {
 		}, nil
 	}
 
-	uc.SendScanRequest(&model.ScanRepositoryRequest{
-		InstallID: 1,
-		ScanTarget: model.ScanTarget{
-			GitHubBranch: model.GitHubBranch{
-				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
-				},
-				Branch: branch,
-			},
-			CommitID:    "1234567",
-			UpdatedAt:   2000,
-			RequestedAt: 2100,
-		},
-	})
-	usecase.CloseScanQueue(uc)
-
 	require.NoError(t, uc.Init())
 
 	t.Run("no result before scan", func(t *testing.T) {
@@ -70,17 +52,32 @@ func TestGetRepositories(t *testing.T) {
 		DefaultBranch: &branch,
 	})
 	require.NoError(t, err)
-	require.NoError(t, usecase.RunScanThread(uc))
 
-	t.Run("got result after scan", func(t *testing.T) {
+	assert.NoError(t, uc.Scan(ctx, &model.ScanRepositoryRequest{
+		InstallID: 1,
+		ScanTarget: model.ScanTarget{
+			GitHubBranch: model.GitHubBranch{
+				GitHubRepo: model.GitHubRepo{
+					Owner:    "blue",
+					RepoName: "five",
+				},
+				Branch: branch,
+			},
+			CommitID:    "1234567",
+			UpdatedAt:   2000,
+			RequestedAt: 2100,
+		},
+	}))
+
+	{
 		resp, err := uc.GetRepositories(ctx)
 		require.NoError(t, err)
 		require.Len(t, resp, 1)
 		assert.Equal(t, "blue", resp[0].Owner)
 		assert.Equal(t, "five", resp[0].Name)
-		require.NotNil(t, resp[0].Edges.Latest, 1)
+		require.NotNil(t, resp[0].Edges.Latest)
 		assert.Equal(t, "1234567", resp[0].Edges.Latest.CommitID)
-	})
+	}
 	assert.Equal(t, calledScan, 1)
 }
 
@@ -184,7 +181,8 @@ func TestGetVulnerability(t *testing.T) {
 		return nil, nil
 	}
 
-	uc.SendScanRequest(&model.ScanRepositoryRequest{
+	require.NoError(t, uc.Init())
+	require.NoError(t, uc.Scan(ctx, &model.ScanRepositoryRequest{
 		InstallID: 1,
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
@@ -196,8 +194,8 @@ func TestGetVulnerability(t *testing.T) {
 			},
 			CommitID: "1234567",
 		},
-	})
-	uc.SendScanRequest(&model.ScanRepositoryRequest{
+	}))
+	require.NoError(t, uc.Scan(ctx, &model.ScanRepositoryRequest{
 		InstallID: 1,
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
@@ -209,8 +207,8 @@ func TestGetVulnerability(t *testing.T) {
 			},
 			CommitID: "1234567",
 		},
-	})
-	uc.SendScanRequest(&model.ScanRepositoryRequest{
+	}))
+	require.NoError(t, uc.Scan(ctx, &model.ScanRepositoryRequest{
 		InstallID: 1,
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
@@ -222,11 +220,7 @@ func TestGetVulnerability(t *testing.T) {
 			},
 			CommitID: "1234567",
 		},
-	})
-	usecase.CloseScanQueue(uc)
-
-	require.NoError(t, uc.Init())
-	require.NoError(t, usecase.RunScanThread(uc))
+	}))
 
 	t.Run("3 repository with latset scan found", func(t *testing.T) {
 		resp, err := uc.GetRepositories(ctx)

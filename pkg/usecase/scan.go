@@ -49,6 +49,26 @@ func (x *usecase) runScanThread() error {
 	return nil
 }
 
+func (x *usecase) Scan(ctx *model.Context, req *model.ScanRepositoryRequest) error {
+	ctx.With("scan_req", req)
+	ctx.Log().Debug("recv scan request")
+
+	clients := &scanClients{
+		DB:          x.infra.DB,
+		GitHubApp:   x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
+		Utils:       x.infra.Utils,
+		Trivy:       x.infra.Trivy,
+		CheckPolicy: x.infra.CheckPolicy,
+		FrontendURL: x.config.FrontendURL,
+	}
+
+	if err := scanRepository(ctx, req, clients); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type scanClients struct {
 	DB          db.Interface
 	GitHubApp   githubapp.Interface

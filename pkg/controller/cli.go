@@ -214,7 +214,7 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 
 	logger.With("config", ctrl.Config.CopyWithoutSensitives()).Info("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
-		logger.With("err", err).With("config", ctrl.Config.CopyWithoutSensitives()).Error("Server error")
+		logger.Err(err).With("config", ctrl.Config.CopyWithoutSensitives()).Error("Server error")
 	}
 
 	return nil
