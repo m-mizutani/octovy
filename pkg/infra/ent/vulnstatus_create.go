@@ -331,9 +331,9 @@ func (vsc *VulnStatusCreate) OnConflict(opts ...sql.ConflictOption) *VulnStatusU
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.VulnStatus.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.VulnStatus.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (vsc *VulnStatusCreate) OnConflictColumns(columns ...string) *VulnStatusUpsertOne {
 	vsc.conflict = append(vsc.conflict, sql.ConflictColumns(columns...))
@@ -451,12 +451,14 @@ func (u *VulnStatusUpsert) UpdateComment() *VulnStatusUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create.
+// Using this option is equivalent to using:
 //
-//  client.VulnStatus.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.VulnStatus.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *VulnStatusUpsertOne) UpdateNewValues() *VulnStatusUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -747,9 +749,9 @@ func (vscb *VulnStatusCreateBulk) OnConflict(opts ...sql.ConflictOption) *VulnSt
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.VulnStatus.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.VulnStatus.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (vscb *VulnStatusCreateBulk) OnConflictColumns(columns ...string) *VulnStatusUpsertBulk {
 	vscb.conflict = append(vscb.conflict, sql.ConflictColumns(columns...))
@@ -767,9 +769,11 @@ type VulnStatusUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.VulnStatus.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.VulnStatus.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *VulnStatusUpsertBulk) UpdateNewValues() *VulnStatusUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -779,9 +783,9 @@ func (u *VulnStatusUpsertBulk) UpdateNewValues() *VulnStatusUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.VulnStatus.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.VulnStatus.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *VulnStatusUpsertBulk) Ignore() *VulnStatusUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

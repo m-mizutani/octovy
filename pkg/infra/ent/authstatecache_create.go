@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -117,6 +118,9 @@ func (ascc *AuthStateCacheCreate) sqlSave(ctx context.Context) (*AuthStateCache,
 		}
 		return nil, err
 	}
+	if _spec.ID.Value != nil {
+		_node.ID = _spec.ID.Value.(string)
+	}
 	return _node, nil
 }
 
@@ -174,9 +178,9 @@ func (ascc *AuthStateCacheCreate) OnConflict(opts ...sql.ConflictOption) *AuthSt
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.AuthStateCache.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.AuthStateCache.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (ascc *AuthStateCacheCreate) OnConflictColumns(columns ...string) *AuthStateCacheUpsertOne {
 	ascc.conflict = append(ascc.conflict, sql.ConflictColumns(columns...))
@@ -210,15 +214,25 @@ func (u *AuthStateCacheUpsert) UpdateExpiresAt() *AuthStateCacheUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
 //
-//  client.AuthStateCache.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.AuthStateCache.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(authstatecache.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
 //
 func (u *AuthStateCacheUpsertOne) UpdateNewValues() *AuthStateCacheUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(authstatecache.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -281,6 +295,11 @@ func (u *AuthStateCacheUpsertOne) ExecX(ctx context.Context) {
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
 func (u *AuthStateCacheUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: AuthStateCacheUpsertOne.ID is not supported by MySQL driver. Use AuthStateCacheUpsertOne.Exec instead")
+	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -404,9 +423,9 @@ func (asccb *AuthStateCacheCreateBulk) OnConflict(opts ...sql.ConflictOption) *A
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.AuthStateCache.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.AuthStateCache.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (asccb *AuthStateCacheCreateBulk) OnConflictColumns(columns ...string) *AuthStateCacheUpsertBulk {
 	asccb.conflict = append(asccb.conflict, sql.ConflictColumns(columns...))
@@ -424,21 +443,34 @@ type AuthStateCacheUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.AuthStateCache.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.AuthStateCache.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(authstatecache.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
 //
 func (u *AuthStateCacheUpsertBulk) UpdateNewValues() *AuthStateCacheUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(authstatecache.FieldID)
+				return
+			}
+		}
+	}))
 	return u
 }
 
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.AuthStateCache.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.AuthStateCache.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *AuthStateCacheUpsertBulk) Ignore() *AuthStateCacheUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

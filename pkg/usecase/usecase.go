@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	gh "github.com/google/go-github/v39/github"
-	"github.com/stretchr/testify/require"
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
@@ -45,6 +44,14 @@ type Interface interface {
 	UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error
 	AssignSeverity(ctx *model.Context, vulnID string, id int) error
 
+	// RepoLabel
+	CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error)
+	UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error
+	DeleteRepoLabel(ctx *model.Context, id int) error
+	GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error)
+	AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error
+	UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error
+
 	// Handle GitHub App Webhook event
 	HandleGitHubPushEvent(ctx *model.Context, event *gh.PushEvent) error
 	HandleGitHubPullReqEvent(ctx *model.Context, event *gh.PullRequestEvent) error
@@ -78,7 +85,21 @@ func New(cfg *model.Config) Interface {
 	return uc
 }
 
-func NewTest(t *testing.T) Interface {
+type TestOption func(*usecase)
+
+func OptInjectDB(client *db.Client) TestOption {
+	return func(u *usecase) {
+		u.infra.DB = client
+	}
+}
+
+func OptInjectErrorHandler(f func(error)) TestOption {
+	return func(u *usecase) {
+		u.testErrorHandler = f
+	}
+}
+
+func NewTest(t *testing.T, options ...TestOption) Interface {
 	uc := New(&model.Config{}).(*usecase)
 
 	dbClient := db.NewMock(t)
@@ -96,8 +117,8 @@ func NewTest(t *testing.T) Interface {
 		Utils:        util,
 	}
 
-	uc.testErrorHandler = func(err error) {
-		require.NoError(t, err)
+	for _, opt := range options {
+		opt(uc)
 	}
 
 	return uc

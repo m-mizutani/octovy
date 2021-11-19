@@ -932,6 +932,34 @@ func HasStatusWith(preds ...predicate.VulnStatusIndex) predicate.Repository {
 	})
 }
 
+// HasLabels applies the HasEdge predicate on the "labels" edge.
+func HasLabels() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LabelsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, LabelsTable, LabelsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLabelsWith applies the HasEdge predicate on the "labels" edge with a given conditions (other predicates).
+func HasLabelsWith(preds ...predicate.RepoLabel) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LabelsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, LabelsTable, LabelsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Repository) predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {

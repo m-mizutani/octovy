@@ -35,6 +35,19 @@ func (f PackageRecordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return f(ctx, mv)
 }
 
+// The RepoLabelFunc type is an adapter to allow the use of ordinary
+// function as RepoLabel mutator.
+type RepoLabelFunc func(context.Context, *ent.RepoLabelMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RepoLabelFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.RepoLabelMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RepoLabelMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The RepositoryFunc type is an adapter to allow the use of ordinary
 // function as Repository mutator.
 type RepositoryFunc func(context.Context, *ent.RepositoryMutation) (ent.Value, error)

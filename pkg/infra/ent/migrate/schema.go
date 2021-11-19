@@ -34,6 +34,17 @@ var (
 		Columns:    PackageRecordsColumns,
 		PrimaryKey: []*schema.Column{PackageRecordsColumns[0]},
 	}
+	// RepoLabelsColumns holds the columns for the "repo_labels" table.
+	RepoLabelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+	}
+	// RepoLabelsTable holds the schema information for the "repo_labels" table.
+	RepoLabelsTable = &schema.Table{
+		Name:       "repo_labels",
+		Columns:    RepoLabelsColumns,
+		PrimaryKey: []*schema.Column{RepoLabelsColumns[0]},
+	}
 	// RepositoriesColumns holds the columns for the "repositories" table.
 	RepositoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -278,6 +289,31 @@ var (
 			},
 		},
 	}
+	// RepositoryLabelsColumns holds the columns for the "repository_labels" table.
+	RepositoryLabelsColumns = []*schema.Column{
+		{Name: "repository_id", Type: field.TypeInt},
+		{Name: "repo_label_id", Type: field.TypeInt},
+	}
+	// RepositoryLabelsTable holds the schema information for the "repository_labels" table.
+	RepositoryLabelsTable = &schema.Table{
+		Name:       "repository_labels",
+		Columns:    RepositoryLabelsColumns,
+		PrimaryKey: []*schema.Column{RepositoryLabelsColumns[0], RepositoryLabelsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "repository_labels_repository_id",
+				Columns:    []*schema.Column{RepositoryLabelsColumns[0]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "repository_labels_repo_label_id",
+				Columns:    []*schema.Column{RepositoryLabelsColumns[1]},
+				RefColumns: []*schema.Column{RepoLabelsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// ScanPackagesColumns holds the columns for the "scan_packages" table.
 	ScanPackagesColumns = []*schema.Column{
 		{Name: "scan_id", Type: field.TypeString},
@@ -307,6 +343,7 @@ var (
 	Tables = []*schema.Table{
 		AuthStateCachesTable,
 		PackageRecordsTable,
+		RepoLabelsTable,
 		RepositoriesTable,
 		ScansTable,
 		SessionsTable,
@@ -317,6 +354,7 @@ var (
 		VulnerabilitiesTable,
 		PackageRecordVulnerabilitiesTable,
 		RepositoryScanTable,
+		RepositoryLabelsTable,
 		ScanPackagesTable,
 	}
 )
@@ -335,6 +373,8 @@ func init() {
 	PackageRecordVulnerabilitiesTable.ForeignKeys[1].RefTable = VulnerabilitiesTable
 	RepositoryScanTable.ForeignKeys[0].RefTable = RepositoriesTable
 	RepositoryScanTable.ForeignKeys[1].RefTable = ScansTable
+	RepositoryLabelsTable.ForeignKeys[0].RefTable = RepositoriesTable
+	RepositoryLabelsTable.ForeignKeys[1].RefTable = RepoLabelsTable
 	ScanPackagesTable.ForeignKeys[0].RefTable = ScansTable
 	ScanPackagesTable.ForeignKeys[1].RefTable = PackageRecordsTable
 }

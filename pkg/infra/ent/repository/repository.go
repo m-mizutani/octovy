@@ -27,6 +27,8 @@ const (
 	EdgeLatest = "latest"
 	// EdgeStatus holds the string denoting the status edge name in mutations.
 	EdgeStatus = "status"
+	// EdgeLabels holds the string denoting the labels edge name in mutations.
+	EdgeLabels = "labels"
 	// Table holds the table name of the repository in the database.
 	Table = "repositories"
 	// ScanTable is the table that holds the scan relation/edge. The primary key declared below.
@@ -55,6 +57,11 @@ const (
 	StatusInverseTable = "vuln_status_indexes"
 	// StatusColumn is the table column denoting the status relation/edge.
 	StatusColumn = "repository_status"
+	// LabelsTable is the table that holds the labels relation/edge. The primary key declared below.
+	LabelsTable = "repository_labels"
+	// LabelsInverseTable is the table name for the RepoLabel entity.
+	// It exists in this package in order to avoid circular dependency with the "repolabel" package.
+	LabelsInverseTable = "repo_labels"
 )
 
 // Columns holds all SQL columns for repository fields.
@@ -78,6 +85,9 @@ var (
 	// ScanPrimaryKey and ScanColumn2 are the table columns denoting the
 	// primary key for the scan relation (M2M).
 	ScanPrimaryKey = []string{"repository_id", "scan_id"}
+	// LabelsPrimaryKey and LabelsColumn2 are the table columns denoting the
+	// primary key for the labels relation (M2M).
+	LabelsPrimaryKey = []string{"repository_id", "repo_label_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

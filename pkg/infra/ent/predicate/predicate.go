@@ -12,6 +12,9 @@ type AuthStateCache func(*sql.Selector)
 // PackageRecord is the predicate function for packagerecord builders.
 type PackageRecord func(*sql.Selector)
 
+// RepoLabel is the predicate function for repolabel builders.
+type RepoLabel func(*sql.Selector)
+
 // Repository is the predicate function for repository builders.
 type Repository func(*sql.Selector)
 

@@ -65,6 +65,7 @@ func (x *Client) GetRepositories(ctx *model.Context) ([]*ent.Repository, error) 
 
 	resp, err := x.client.Repository.Query().
 		WithStatus().
+		WithLabels().
 		WithLatest(func(sq *ent.ScanQuery) {
 			sq.WithPackages(func(prq *ent.PackageRecordQuery) {
 				prq.WithVulnerabilities()

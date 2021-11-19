@@ -53,6 +53,14 @@ type Interface interface {
 	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	GetRepositoriesWithVuln(ctx *model.Context, vulnID string) ([]*ent.Repository, error)
 
+	// Repository Label
+	CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error)
+	UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error
+	DeleteRepoLabel(ctx *model.Context, id int) error
+	GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error)
+	AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error
+	UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error
+
 	// Auth
 	SaveAuthState(ctx *model.Context, state string, expiresAt int64) error
 	HasAuthState(ctx *model.Context, state string, now int64) (bool, error)

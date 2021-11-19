@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repolabel"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
@@ -32,6 +33,7 @@ type RepositoryQuery struct {
 	withMain   *ScanQuery
 	withLatest *ScanQuery
 	withStatus *VulnStatusIndexQuery
+	withLabels *RepoLabelQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -150,6 +152,28 @@ func (rq *RepositoryQuery) QueryStatus() *VulnStatusIndexQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(vulnstatusindex.Table, vulnstatusindex.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, repository.StatusTable, repository.StatusColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLabels chains the current query on the "labels" edge.
+func (rq *RepositoryQuery) QueryLabels() *RepoLabelQuery {
+	query := &RepoLabelQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(repolabel.Table, repolabel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, repository.LabelsTable, repository.LabelsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -342,6 +366,7 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		withMain:   rq.withMain.Clone(),
 		withLatest: rq.withLatest.Clone(),
 		withStatus: rq.withStatus.Clone(),
+		withLabels: rq.withLabels.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -389,6 +414,17 @@ func (rq *RepositoryQuery) WithStatus(opts ...func(*VulnStatusIndexQuery)) *Repo
 		opt(query)
 	}
 	rq.withStatus = query
+	return rq
+}
+
+// WithLabels tells the query-builder to eager-load the nodes that are connected to
+// the "labels" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithLabels(opts ...func(*RepoLabelQuery)) *RepositoryQuery {
+	query := &RepoLabelQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withLabels = query
 	return rq
 }
 
@@ -458,11 +494,12 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 		nodes       = []*Repository{}
 		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			rq.withScan != nil,
 			rq.withMain != nil,
 			rq.withLatest != nil,
 			rq.withStatus != nil,
+			rq.withLabels != nil,
 		}
 	)
 	if rq.withLatest != nil {
@@ -640,6 +677,71 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context) ([]*Repository, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "repository_status" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Status = append(node.Edges.Status, n)
+		}
+	}
+
+	if query := rq.withLabels; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Repository, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Labels = []*RepoLabel{}
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Repository)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: false,
+				Table:   repository.LabelsTable,
+				Columns: repository.LabelsPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(repository.LabelsPrimaryKey[0], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, rq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "labels": %w`, err)
+		}
+		query.Where(repolabel.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "labels" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Labels = append(nodes[i].Edges.Labels, n)
+			}
 		}
 	}
 

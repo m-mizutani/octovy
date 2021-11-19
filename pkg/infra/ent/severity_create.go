@@ -228,9 +228,9 @@ func (sc *SeverityCreate) OnConflict(opts ...sql.ConflictOption) *SeverityUpsert
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.Severity.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.Severity.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (sc *SeverityCreate) OnConflictColumns(columns ...string) *SeverityUpsertOne {
 	sc.conflict = append(sc.conflict, sql.ConflictColumns(columns...))
@@ -282,12 +282,14 @@ func (u *SeverityUpsert) ClearColor() *SeverityUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create.
+// Using this option is equivalent to using:
 //
-//  client.Severity.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.Severity.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *SeverityUpsertOne) UpdateNewValues() *SeverityUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -501,9 +503,9 @@ func (scb *SeverityCreateBulk) OnConflict(opts ...sql.ConflictOption) *SeverityU
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.Severity.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.Severity.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (scb *SeverityCreateBulk) OnConflictColumns(columns ...string) *SeverityUpsertBulk {
 	scb.conflict = append(scb.conflict, sql.ConflictColumns(columns...))
@@ -521,9 +523,11 @@ type SeverityUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.Severity.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.Severity.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *SeverityUpsertBulk) UpdateNewValues() *SeverityUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -533,9 +537,9 @@ func (u *SeverityUpsertBulk) UpdateNewValues() *SeverityUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Severity.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.Severity.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *SeverityUpsertBulk) Ignore() *SeverityUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

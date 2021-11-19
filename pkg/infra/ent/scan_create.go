@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -204,6 +205,9 @@ func (sc *ScanCreate) sqlSave(ctx context.Context) (*Scan, error) {
 		}
 		return nil, err
 	}
+	if _spec.ID.Value != nil {
+		_node.ID = _spec.ID.Value.(string)
+	}
 	return _node, nil
 }
 
@@ -339,9 +343,9 @@ func (sc *ScanCreate) OnConflict(opts ...sql.ConflictOption) *ScanUpsertOne {
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.Scan.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.Scan.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (sc *ScanCreate) OnConflictColumns(columns ...string) *ScanUpsertOne {
 	sc.conflict = append(sc.conflict, sql.ConflictColumns(columns...))
@@ -447,15 +451,25 @@ func (u *ScanUpsert) ClearPullRequestTarget() *ScanUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
 //
-//  client.Scan.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.Scan.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(scan.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
 //
 func (u *ScanUpsertOne) UpdateNewValues() *ScanUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(scan.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -602,6 +616,11 @@ func (u *ScanUpsertOne) ExecX(ctx context.Context) {
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
 func (u *ScanUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: ScanUpsertOne.ID is not supported by MySQL driver. Use ScanUpsertOne.Exec instead")
+	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -725,9 +744,9 @@ func (scb *ScanCreateBulk) OnConflict(opts ...sql.ConflictOption) *ScanUpsertBul
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.Scan.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.Scan.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (scb *ScanCreateBulk) OnConflictColumns(columns ...string) *ScanUpsertBulk {
 	scb.conflict = append(scb.conflict, sql.ConflictColumns(columns...))
@@ -745,21 +764,34 @@ type ScanUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.Scan.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.Scan.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(scan.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
 //
 func (u *ScanUpsertBulk) UpdateNewValues() *ScanUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(scan.FieldID)
+				return
+			}
+		}
+	}))
 	return u
 }
 
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Scan.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.Scan.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *ScanUpsertBulk) Ignore() *ScanUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

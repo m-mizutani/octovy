@@ -11,6 +11,7 @@ import (
 
 	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repolabel"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
@@ -34,6 +35,8 @@ type Client struct {
 	AuthStateCache *AuthStateCacheClient
 	// PackageRecord is the client for interacting with the PackageRecord builders.
 	PackageRecord *PackageRecordClient
+	// RepoLabel is the client for interacting with the RepoLabel builders.
+	RepoLabel *RepoLabelClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
 	// Scan is the client for interacting with the Scan builders.
@@ -65,6 +68,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.AuthStateCache = NewAuthStateCacheClient(c.config)
 	c.PackageRecord = NewPackageRecordClient(c.config)
+	c.RepoLabel = NewRepoLabelClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
 	c.Scan = NewScanClient(c.config)
 	c.Session = NewSessionClient(c.config)
@@ -108,6 +112,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:          cfg,
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
+		RepoLabel:       NewRepoLabelClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
@@ -136,6 +141,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:          cfg,
 		AuthStateCache:  NewAuthStateCacheClient(cfg),
 		PackageRecord:   NewPackageRecordClient(cfg),
+		RepoLabel:       NewRepoLabelClient(cfg),
 		Repository:      NewRepositoryClient(cfg),
 		Scan:            NewScanClient(cfg),
 		Session:         NewSessionClient(cfg),
@@ -175,6 +181,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.AuthStateCache.Use(hooks...)
 	c.PackageRecord.Use(hooks...)
+	c.RepoLabel.Use(hooks...)
 	c.Repository.Use(hooks...)
 	c.Scan.Use(hooks...)
 	c.Session.Use(hooks...)
@@ -397,6 +404,112 @@ func (c *PackageRecordClient) Hooks() []Hook {
 	return c.hooks.PackageRecord
 }
 
+// RepoLabelClient is a client for the RepoLabel schema.
+type RepoLabelClient struct {
+	config
+}
+
+// NewRepoLabelClient returns a client for the RepoLabel from the given config.
+func NewRepoLabelClient(c config) *RepoLabelClient {
+	return &RepoLabelClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `repolabel.Hooks(f(g(h())))`.
+func (c *RepoLabelClient) Use(hooks ...Hook) {
+	c.hooks.RepoLabel = append(c.hooks.RepoLabel, hooks...)
+}
+
+// Create returns a create builder for RepoLabel.
+func (c *RepoLabelClient) Create() *RepoLabelCreate {
+	mutation := newRepoLabelMutation(c.config, OpCreate)
+	return &RepoLabelCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RepoLabel entities.
+func (c *RepoLabelClient) CreateBulk(builders ...*RepoLabelCreate) *RepoLabelCreateBulk {
+	return &RepoLabelCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RepoLabel.
+func (c *RepoLabelClient) Update() *RepoLabelUpdate {
+	mutation := newRepoLabelMutation(c.config, OpUpdate)
+	return &RepoLabelUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RepoLabelClient) UpdateOne(rl *RepoLabel) *RepoLabelUpdateOne {
+	mutation := newRepoLabelMutation(c.config, OpUpdateOne, withRepoLabel(rl))
+	return &RepoLabelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RepoLabelClient) UpdateOneID(id int) *RepoLabelUpdateOne {
+	mutation := newRepoLabelMutation(c.config, OpUpdateOne, withRepoLabelID(id))
+	return &RepoLabelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RepoLabel.
+func (c *RepoLabelClient) Delete() *RepoLabelDelete {
+	mutation := newRepoLabelMutation(c.config, OpDelete)
+	return &RepoLabelDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *RepoLabelClient) DeleteOne(rl *RepoLabel) *RepoLabelDeleteOne {
+	return c.DeleteOneID(rl.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *RepoLabelClient) DeleteOneID(id int) *RepoLabelDeleteOne {
+	builder := c.Delete().Where(repolabel.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RepoLabelDeleteOne{builder}
+}
+
+// Query returns a query builder for RepoLabel.
+func (c *RepoLabelClient) Query() *RepoLabelQuery {
+	return &RepoLabelQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a RepoLabel entity by its id.
+func (c *RepoLabelClient) Get(ctx context.Context, id int) (*RepoLabel, error) {
+	return c.Query().Where(repolabel.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RepoLabelClient) GetX(ctx context.Context, id int) *RepoLabel {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRepos queries the repos edge of a RepoLabel.
+func (c *RepoLabelClient) QueryRepos(rl *RepoLabel) *RepositoryQuery {
+	query := &RepositoryQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := rl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repolabel.Table, repolabel.FieldID, id),
+			sqlgraph.To(repository.Table, repository.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, repolabel.ReposTable, repolabel.ReposPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(rl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RepoLabelClient) Hooks() []Hook {
+	return c.hooks.RepoLabel
+}
+
 // RepositoryClient is a client for the Repository schema.
 type RepositoryClient struct {
 	config
@@ -539,6 +652,22 @@ func (c *RepositoryClient) QueryStatus(r *Repository) *VulnStatusIndexQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, id),
 			sqlgraph.To(vulnstatusindex.Table, vulnstatusindex.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, repository.StatusTable, repository.StatusColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLabels queries the labels edge of a Repository.
+func (c *RepositoryClient) QueryLabels(r *Repository) *RepoLabelQuery {
+	query := &RepoLabelQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, id),
+			sqlgraph.To(repolabel.Table, repolabel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, repository.LabelsTable, repository.LabelsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil

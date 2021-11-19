@@ -158,3 +158,28 @@ func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.
 
 	return inventry, nil
 }
+
+// RepoLabel
+func (x *usecase) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error) {
+	return x.infra.DB.CreateRepoLabel(ctx, req)
+}
+
+func (x *usecase) UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error {
+	return x.infra.DB.UpdateRepoLabel(ctx, id, req)
+}
+
+func (x *usecase) DeleteRepoLabel(ctx *model.Context, id int) error {
+	return x.infra.DB.DeleteRepoLabel(ctx, id)
+}
+
+func (x *usecase) GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error) {
+	return x.infra.DB.GetRepoLabels(ctx)
+}
+
+func (x *usecase) AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
+	return x.infra.DB.AssignRepoLabel(ctx, repoID, labelID)
+}
+
+func (x *usecase) UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
+	return x.infra.DB.UnassignRepoLabel(ctx, repoID, labelID)
+}
