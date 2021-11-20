@@ -15,6 +15,8 @@ type RepoLabel struct {
 func (RepoLabel) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").Unique(),
+		field.String("description"),
+		field.String("color"),
 	}
 }
 

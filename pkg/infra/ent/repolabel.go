@@ -17,6 +17,10 @@ type RepoLabel struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RepoLabelQuery when eager-loading is set.
 	Edges RepoLabelEdges `json:"edges"`
@@ -47,7 +51,7 @@ func (*RepoLabel) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case repolabel.FieldID:
 			values[i] = new(sql.NullInt64)
-		case repolabel.FieldName:
+		case repolabel.FieldName, repolabel.FieldDescription, repolabel.FieldColor:
 			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type RepoLabel", columns[i])
@@ -75,6 +79,18 @@ func (rl *RepoLabel) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				rl.Name = value.String
+			}
+		case repolabel.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				rl.Description = value.String
+			}
+		case repolabel.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				rl.Color = value.String
 			}
 		}
 	}
@@ -111,6 +127,10 @@ func (rl *RepoLabel) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", rl.ID))
 	builder.WriteString(", name=")
 	builder.WriteString(rl.Name)
+	builder.WriteString(", description=")
+	builder.WriteString(rl.Description)
+	builder.WriteString(", color=")
+	builder.WriteString(rl.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

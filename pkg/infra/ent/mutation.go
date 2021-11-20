@@ -1071,6 +1071,8 @@ type RepoLabelMutation struct {
 	typ           string
 	id            *int
 	name          *string
+	description   *string
+	color         *string
 	clearedFields map[string]struct{}
 	repos         map[int]struct{}
 	removedrepos  map[int]struct{}
@@ -1195,6 +1197,78 @@ func (m *RepoLabelMutation) ResetName() {
 	m.name = nil
 }
 
+// SetDescription sets the "description" field.
+func (m *RepoLabelMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RepoLabelMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the RepoLabel entity.
+// If the RepoLabel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoLabelMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RepoLabelMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetColor sets the "color" field.
+func (m *RepoLabelMutation) SetColor(s string) {
+	m.color = &s
+}
+
+// Color returns the value of the "color" field in the mutation.
+func (m *RepoLabelMutation) Color() (r string, exists bool) {
+	v := m.color
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColor returns the old "color" field's value of the RepoLabel entity.
+// If the RepoLabel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoLabelMutation) OldColor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldColor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldColor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColor: %w", err)
+	}
+	return oldValue.Color, nil
+}
+
+// ResetColor resets all changes to the "color" field.
+func (m *RepoLabelMutation) ResetColor() {
+	m.color = nil
+}
+
 // AddRepoIDs adds the "repos" edge to the Repository entity by ids.
 func (m *RepoLabelMutation) AddRepoIDs(ids ...int) {
 	if m.repos == nil {
@@ -1268,9 +1342,15 @@ func (m *RepoLabelMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RepoLabelMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 3)
 	if m.name != nil {
 		fields = append(fields, repolabel.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, repolabel.FieldDescription)
+	}
+	if m.color != nil {
+		fields = append(fields, repolabel.FieldColor)
 	}
 	return fields
 }
@@ -1282,6 +1362,10 @@ func (m *RepoLabelMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case repolabel.FieldName:
 		return m.Name()
+	case repolabel.FieldDescription:
+		return m.Description()
+	case repolabel.FieldColor:
+		return m.Color()
 	}
 	return nil, false
 }
@@ -1293,6 +1377,10 @@ func (m *RepoLabelMutation) OldField(ctx context.Context, name string) (ent.Valu
 	switch name {
 	case repolabel.FieldName:
 		return m.OldName(ctx)
+	case repolabel.FieldDescription:
+		return m.OldDescription(ctx)
+	case repolabel.FieldColor:
+		return m.OldColor(ctx)
 	}
 	return nil, fmt.Errorf("unknown RepoLabel field %s", name)
 }
@@ -1308,6 +1396,20 @@ func (m *RepoLabelMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case repolabel.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case repolabel.FieldColor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColor(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RepoLabel field %s", name)
@@ -1360,6 +1462,12 @@ func (m *RepoLabelMutation) ResetField(name string) error {
 	switch name {
 	case repolabel.FieldName:
 		m.ResetName()
+		return nil
+	case repolabel.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case repolabel.FieldColor:
+		m.ResetColor()
 		return nil
 	}
 	return fmt.Errorf("unknown RepoLabel field %s", name)

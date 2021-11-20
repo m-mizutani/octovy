@@ -37,7 +37,9 @@ var (
 	// RepoLabelsColumns holds the columns for the "repo_labels" table.
 	RepoLabelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "description", Type: field.TypeString},
+		{Name: "color", Type: field.TypeString},
 	}
 	// RepoLabelsTable holds the schema information for the "repo_labels" table.
 	RepoLabelsTable = &schema.Table{

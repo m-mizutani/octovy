@@ -9,6 +9,10 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
+	// FieldColor holds the string denoting the color field in the database.
+	FieldColor = "color"
 	// EdgeRepos holds the string denoting the repos edge name in mutations.
 	EdgeRepos = "repos"
 	// Table holds the table name of the repolabel in the database.
@@ -24,6 +28,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldDescription,
+	FieldColor,
 }
 
 var (

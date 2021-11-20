@@ -33,6 +33,18 @@ func (rlu *RepoLabelUpdate) SetName(s string) *RepoLabelUpdate {
 	return rlu
 }
 
+// SetDescription sets the "description" field.
+func (rlu *RepoLabelUpdate) SetDescription(s string) *RepoLabelUpdate {
+	rlu.mutation.SetDescription(s)
+	return rlu
+}
+
+// SetColor sets the "color" field.
+func (rlu *RepoLabelUpdate) SetColor(s string) *RepoLabelUpdate {
+	rlu.mutation.SetColor(s)
+	return rlu
+}
+
 // AddRepoIDs adds the "repos" edge to the Repository entity by IDs.
 func (rlu *RepoLabelUpdate) AddRepoIDs(ids ...int) *RepoLabelUpdate {
 	rlu.mutation.AddRepoIDs(ids...)
@@ -153,6 +165,20 @@ func (rlu *RepoLabelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: repolabel.FieldName,
 		})
 	}
+	if value, ok := rlu.mutation.Description(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repolabel.FieldDescription,
+		})
+	}
+	if value, ok := rlu.mutation.Color(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repolabel.FieldColor,
+		})
+	}
 	if rlu.mutation.ReposCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -229,6 +255,18 @@ type RepoLabelUpdateOne struct {
 // SetName sets the "name" field.
 func (rluo *RepoLabelUpdateOne) SetName(s string) *RepoLabelUpdateOne {
 	rluo.mutation.SetName(s)
+	return rluo
+}
+
+// SetDescription sets the "description" field.
+func (rluo *RepoLabelUpdateOne) SetDescription(s string) *RepoLabelUpdateOne {
+	rluo.mutation.SetDescription(s)
+	return rluo
+}
+
+// SetColor sets the "color" field.
+func (rluo *RepoLabelUpdateOne) SetColor(s string) *RepoLabelUpdateOne {
+	rluo.mutation.SetColor(s)
 	return rluo
 }
 
@@ -374,6 +412,20 @@ func (rluo *RepoLabelUpdateOne) sqlSave(ctx context.Context) (_node *RepoLabel, 
 			Type:   field.TypeString,
 			Value:  value,
 			Column: repolabel.FieldName,
+		})
+	}
+	if value, ok := rluo.mutation.Description(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repolabel.FieldDescription,
+		})
+	}
+	if value, ok := rluo.mutation.Color(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repolabel.FieldColor,
 		})
 	}
 	if rluo.mutation.ReposCleared() {

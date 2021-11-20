@@ -4,6 +4,9 @@ import (
 	"math/rand"
 	"regexp"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
+
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
@@ -50,5 +53,33 @@ func (x *RequestSeverity) IsValid() error {
 }
 
 type RequestRepoLabel struct {
-	Name string
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+}
+
+func (x *RequestRepoLabel) IsValid() error {
+	if err := validation.Validate(x.Name,
+		validation.Required,
+		validation.Length(1, 64),
+		is.ASCII,
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("field", "name")
+	}
+
+	if err := validation.Validate(x.Description,
+		validation.Length(0, 256),
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("field", "description")
+	}
+
+	if err := validation.Validate(x.Color,
+		is.HexColor,
+		validation.Length(4, 7),
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("field", "color")
+	}
+
+	return nil
+
 }

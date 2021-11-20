@@ -161,10 +161,16 @@ func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.
 
 // RepoLabel
 func (x *usecase) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error) {
+	if err := req.IsValid(); err != nil {
+		return nil, err
+	}
 	return x.infra.DB.CreateRepoLabel(ctx, req)
 }
 
 func (x *usecase) UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error {
+	if err := req.IsValid(); err != nil {
+		return err
+	}
 	return x.infra.DB.UpdateRepoLabel(ctx, id, req)
 }
 

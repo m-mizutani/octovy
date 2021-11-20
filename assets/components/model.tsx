@@ -153,9 +153,9 @@ export type severity = {
   color: string;
 };
 
-export type rule = {
-  id?: number;
+export type repoLabel = {
+  id: number;
   name: string;
-  severity: number;
-  result: string;
+  description: string;
+  color: string;
 };

@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 
 import * as app from "../../app";
 import Severities from "./severity";
+import RepoLabels from "./repoLabel";
 
 export default function Config() {
   return (
@@ -22,6 +23,14 @@ export default function Config() {
         </Grid>
         <Grid style={{ margin: 15 }}>
           <Severities />
+        </Grid>
+      </Container>
+      <Container style={{ marginTop: 48 }}>
+        <Grid>
+          <Typography variant="h5">Repository Label</Typography>
+        </Grid>
+        <Grid style={{ margin: 15 }}>
+          <RepoLabels />
         </Grid>
       </Container>
     </app.Main>

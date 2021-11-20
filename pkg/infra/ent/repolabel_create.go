@@ -28,6 +28,18 @@ func (rlc *RepoLabelCreate) SetName(s string) *RepoLabelCreate {
 	return rlc
 }
 
+// SetDescription sets the "description" field.
+func (rlc *RepoLabelCreate) SetDescription(s string) *RepoLabelCreate {
+	rlc.mutation.SetDescription(s)
+	return rlc
+}
+
+// SetColor sets the "color" field.
+func (rlc *RepoLabelCreate) SetColor(s string) *RepoLabelCreate {
+	rlc.mutation.SetColor(s)
+	return rlc
+}
+
 // AddRepoIDs adds the "repos" edge to the Repository entity by IDs.
 func (rlc *RepoLabelCreate) AddRepoIDs(ids ...int) *RepoLabelCreate {
 	rlc.mutation.AddRepoIDs(ids...)
@@ -116,6 +128,12 @@ func (rlc *RepoLabelCreate) check() error {
 	if _, ok := rlc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "name"`)}
 	}
+	if _, ok := rlc.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "description"`)}
+	}
+	if _, ok := rlc.mutation.Color(); !ok {
+		return &ValidationError{Name: "color", err: errors.New(`ent: missing required field "color"`)}
+	}
 	return nil
 }
 
@@ -151,6 +169,22 @@ func (rlc *RepoLabelCreate) createSpec() (*RepoLabel, *sqlgraph.CreateSpec) {
 			Column: repolabel.FieldName,
 		})
 		_node.Name = value
+	}
+	if value, ok := rlc.mutation.Description(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repolabel.FieldDescription,
+		})
+		_node.Description = value
+	}
+	if value, ok := rlc.mutation.Color(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: repolabel.FieldColor,
+		})
+		_node.Color = value
 	}
 	if nodes := rlc.mutation.ReposIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -237,6 +271,30 @@ func (u *RepoLabelUpsert) UpdateName() *RepoLabelUpsert {
 	return u
 }
 
+// SetDescription sets the "description" field.
+func (u *RepoLabelUpsert) SetDescription(v string) *RepoLabelUpsert {
+	u.Set(repolabel.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RepoLabelUpsert) UpdateDescription() *RepoLabelUpsert {
+	u.SetExcluded(repolabel.FieldDescription)
+	return u
+}
+
+// SetColor sets the "color" field.
+func (u *RepoLabelUpsert) SetColor(v string) *RepoLabelUpsert {
+	u.Set(repolabel.FieldColor, v)
+	return u
+}
+
+// UpdateColor sets the "color" field to the value that was provided on create.
+func (u *RepoLabelUpsert) UpdateColor() *RepoLabelUpsert {
+	u.SetExcluded(repolabel.FieldColor)
+	return u
+}
+
 // UpdateNewValues updates the fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -290,6 +348,34 @@ func (u *RepoLabelUpsertOne) SetName(v string) *RepoLabelUpsertOne {
 func (u *RepoLabelUpsertOne) UpdateName() *RepoLabelUpsertOne {
 	return u.Update(func(s *RepoLabelUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *RepoLabelUpsertOne) SetDescription(v string) *RepoLabelUpsertOne {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RepoLabelUpsertOne) UpdateDescription() *RepoLabelUpsertOne {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetColor sets the "color" field.
+func (u *RepoLabelUpsertOne) SetColor(v string) *RepoLabelUpsertOne {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.SetColor(v)
+	})
+}
+
+// UpdateColor sets the "color" field to the value that was provided on create.
+func (u *RepoLabelUpsertOne) UpdateColor() *RepoLabelUpsertOne {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.UpdateColor()
 	})
 }
 
@@ -507,6 +593,34 @@ func (u *RepoLabelUpsertBulk) SetName(v string) *RepoLabelUpsertBulk {
 func (u *RepoLabelUpsertBulk) UpdateName() *RepoLabelUpsertBulk {
 	return u.Update(func(s *RepoLabelUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *RepoLabelUpsertBulk) SetDescription(v string) *RepoLabelUpsertBulk {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *RepoLabelUpsertBulk) UpdateDescription() *RepoLabelUpsertBulk {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetColor sets the "color" field.
+func (u *RepoLabelUpsertBulk) SetColor(v string) *RepoLabelUpsertBulk {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.SetColor(v)
+	})
+}
+
+// UpdateColor sets the "color" field to the value that was provided on create.
+func (u *RepoLabelUpsertBulk) UpdateColor() *RepoLabelUpsertBulk {
+	return u.Update(func(s *RepoLabelUpsert) {
+		s.UpdateColor()
 	})
 }
 

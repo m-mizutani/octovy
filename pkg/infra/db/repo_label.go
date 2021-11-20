@@ -8,7 +8,11 @@ import (
 
 // Repository Label
 func (x *Client) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error) {
-	added, err := x.client.RepoLabel.Create().SetName(req.Name).Save(ctx)
+	added, err := x.client.RepoLabel.Create().
+		SetName(req.Name).
+		SetDescription(req.Description).
+		SetColor(req.Color).
+		Save(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}
@@ -17,7 +21,12 @@ func (x *Client) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel
 }
 
 func (x *Client) UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error {
-	_, err := x.client.RepoLabel.UpdateOneID(id).SetName(req.Name).Save(ctx)
+	_, err := x.client.RepoLabel.UpdateOneID(id).
+		SetName(req.Name).
+		SetDescription(req.Description).
+		SetColor(req.Color).
+		Save(ctx)
+
 	if err != nil {
 		return goerr.Wrap(err)
 	}
