@@ -138,7 +138,7 @@ function RepoLabel(props: { label: model.repoLabel; refresh: () => void }) {
   const [displayDeleteDialog, setDisplayDeleteDialog] =
     React.useState<boolean>(false);
   const closeDeleteDialog = (refresh: boolean) => {
-    setDisplayEditDialog(false);
+    setDisplayDeleteDialog(false);
     if (refresh) {
       props.refresh();
     }
