@@ -14,6 +14,7 @@ export interface scan {
 }
 
 export type repository = {
+  id: number;
   owner: string;
   name: string;
   url: string;
@@ -23,6 +24,7 @@ export type repository = {
     scan: scan[];
     main: scan[];
     status: vulnStatusIndex[];
+    labels: repoLabel[];
   };
 };
 
@@ -153,9 +155,9 @@ export type severity = {
   color: string;
 };
 
-export type rule = {
-  id?: number;
+export type repoLabel = {
+  id: number;
   name: string;
-  severity: number;
-  result: string;
+  description: string;
+  color: string;
 };

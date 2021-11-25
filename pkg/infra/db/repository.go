@@ -65,6 +65,7 @@ func (x *Client) GetRepositories(ctx *model.Context) ([]*ent.Repository, error) 
 
 	resp, err := x.client.Repository.Query().
 		WithStatus().
+		WithLabels().
 		WithLatest(func(sq *ent.ScanQuery) {
 			sq.WithPackages(func(prq *ent.PackageRecordQuery) {
 				prq.WithVulnerabilities()
@@ -116,4 +117,27 @@ func (x *Client) GetRepositoriesWithVuln(ctx *model.Context, vulnID string) ([]*
 	}
 
 	return resp, nil
+}
+
+func (x *Client) GetRepository(ctx *model.Context, repo *model.GitHubRepo) (*ent.Repository, error) {
+	if x.lock {
+		x.mutex.Lock()
+		defer x.mutex.Unlock()
+	}
+
+	resp, err := x.client.Repository.Query().
+		Where(repository.Owner(repo.Owner)).
+		Where(repository.Name(repo.RepoName)).
+		WithLabels().
+		WithStatus().
+		First(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err)
+	}
+
+	return resp, nil
+}
+
+func (x *Client) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
+	panic("not implemented")
 }

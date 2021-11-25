@@ -44,9 +44,11 @@ type RepositoryEdges struct {
 	Latest *Scan `json:"latest,omitempty"`
 	// Status holds the value of the status edge.
 	Status []*VulnStatusIndex `json:"status,omitempty"`
+	// Labels holds the value of the labels edge.
+	Labels []*RepoLabel `json:"labels,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // ScanOrErr returns the Scan value or an error if the edge
@@ -88,6 +90,15 @@ func (e RepositoryEdges) StatusOrErr() ([]*VulnStatusIndex, error) {
 		return e.Status, nil
 	}
 	return nil, &NotLoadedError{edge: "status"}
+}
+
+// LabelsOrErr returns the Labels value or an error if the edge
+// was not loaded in eager-loading.
+func (e RepositoryEdges) LabelsOrErr() ([]*RepoLabel, error) {
+	if e.loadedTypes[4] {
+		return e.Labels, nil
+	}
+	return nil, &NotLoadedError{edge: "labels"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -190,6 +201,11 @@ func (r *Repository) QueryLatest() *ScanQuery {
 // QueryStatus queries the "status" edge of the Repository entity.
 func (r *Repository) QueryStatus() *VulnStatusIndexQuery {
 	return (&RepositoryClient{config: r.config}).QueryStatus(r)
+}
+
+// QueryLabels queries the "labels" edge of the Repository entity.
+func (r *Repository) QueryLabels() *RepoLabelQuery {
+	return (&RepositoryClient{config: r.config}).QueryLabels(r)
 }
 
 // Update returns a builder for updating this Repository.

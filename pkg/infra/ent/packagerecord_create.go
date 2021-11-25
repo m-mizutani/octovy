@@ -304,9 +304,9 @@ func (prc *PackageRecordCreate) OnConflict(opts ...sql.ConflictOption) *PackageR
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.PackageRecord.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.PackageRecord.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (prc *PackageRecordCreate) OnConflictColumns(columns ...string) *PackageRecordUpsertOne {
 	prc.conflict = append(prc.conflict, sql.ConflictColumns(columns...))
@@ -388,12 +388,14 @@ func (u *PackageRecordUpsert) UpdateVulnIds() *PackageRecordUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create.
+// Using this option is equivalent to using:
 //
-//  client.PackageRecord.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.PackageRecord.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *PackageRecordUpsertOne) UpdateNewValues() *PackageRecordUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -642,9 +644,9 @@ func (prcb *PackageRecordCreateBulk) OnConflict(opts ...sql.ConflictOption) *Pac
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.PackageRecord.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.PackageRecord.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (prcb *PackageRecordCreateBulk) OnConflictColumns(columns ...string) *PackageRecordUpsertBulk {
 	prcb.conflict = append(prcb.conflict, sql.ConflictColumns(columns...))
@@ -662,9 +664,11 @@ type PackageRecordUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.PackageRecord.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.PackageRecord.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *PackageRecordUpsertBulk) UpdateNewValues() *PackageRecordUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -674,9 +678,9 @@ func (u *PackageRecordUpsertBulk) UpdateNewValues() *PackageRecordUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.PackageRecord.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.PackageRecord.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *PackageRecordUpsertBulk) Ignore() *PackageRecordUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

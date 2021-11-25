@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -148,6 +149,9 @@ func (vsic *VulnStatusIndexCreate) sqlSave(ctx context.Context) (*VulnStatusInde
 		}
 		return nil, err
 	}
+	if _spec.ID.Value != nil {
+		_node.ID = _spec.ID.Value.(string)
+	}
 	return _node, nil
 }
 
@@ -230,9 +234,9 @@ func (vsic *VulnStatusIndexCreate) OnConflict(opts ...sql.ConflictOption) *VulnS
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.VulnStatusIndex.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.VulnStatusIndex.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (vsic *VulnStatusIndexCreate) OnConflictColumns(columns ...string) *VulnStatusIndexUpsertOne {
 	vsic.conflict = append(vsic.conflict, sql.ConflictColumns(columns...))
@@ -254,15 +258,25 @@ type (
 	}
 )
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
 //
-//  client.VulnStatusIndex.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.VulnStatusIndex.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(vulnstatusindex.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
 //
 func (u *VulnStatusIndexUpsertOne) UpdateNewValues() *VulnStatusIndexUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(vulnstatusindex.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -311,6 +325,11 @@ func (u *VulnStatusIndexUpsertOne) ExecX(ctx context.Context) {
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
 func (u *VulnStatusIndexUpsertOne) ID(ctx context.Context) (id string, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: VulnStatusIndexUpsertOne.ID is not supported by MySQL driver. Use VulnStatusIndexUpsertOne.Exec instead")
+	}
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -429,9 +448,9 @@ func (vsicb *VulnStatusIndexCreateBulk) OnConflict(opts ...sql.ConflictOption) *
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.VulnStatusIndex.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.VulnStatusIndex.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (vsicb *VulnStatusIndexCreateBulk) OnConflictColumns(columns ...string) *VulnStatusIndexUpsertBulk {
 	vsicb.conflict = append(vsicb.conflict, sql.ConflictColumns(columns...))
@@ -449,21 +468,34 @@ type VulnStatusIndexUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.VulnStatusIndex.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.VulnStatusIndex.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(vulnstatusindex.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
 //
 func (u *VulnStatusIndexUpsertBulk) UpdateNewValues() *VulnStatusIndexUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(vulnstatusindex.FieldID)
+				return
+			}
+		}
+	}))
 	return u
 }
 
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.VulnStatusIndex.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.VulnStatusIndex.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *VulnStatusIndexUpsertBulk) Ignore() *VulnStatusIndexUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

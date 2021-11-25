@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repolabel"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
@@ -153,6 +154,21 @@ func (rc *RepositoryCreate) AddStatus(v ...*VulnStatusIndex) *RepositoryCreate {
 		ids[i] = v[i].ID
 	}
 	return rc.AddStatuIDs(ids...)
+}
+
+// AddLabelIDs adds the "labels" edge to the RepoLabel entity by IDs.
+func (rc *RepositoryCreate) AddLabelIDs(ids ...int) *RepositoryCreate {
+	rc.mutation.AddLabelIDs(ids...)
+	return rc
+}
+
+// AddLabels adds the "labels" edges to the RepoLabel entity.
+func (rc *RepositoryCreate) AddLabels(r ...*RepoLabel) *RepositoryCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return rc.AddLabelIDs(ids...)
 }
 
 // Mutation returns the RepositoryMutation object of the builder.
@@ -384,6 +400,25 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := rc.mutation.LabelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -414,9 +449,9 @@ func (rc *RepositoryCreate) OnConflict(opts ...sql.ConflictOption) *RepositoryUp
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.Repository.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.Repository.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (rc *RepositoryCreate) OnConflictColumns(columns ...string) *RepositoryUpsertOne {
 	rc.conflict = append(rc.conflict, sql.ConflictColumns(columns...))
@@ -534,12 +569,14 @@ func (u *RepositoryUpsert) ClearDefaultBranch() *RepositoryUpsert {
 	return u
 }
 
-// UpdateNewValues updates the fields using the new values that
-// were set on create. Using this option is equivalent to using:
+// UpdateNewValues updates the fields using the new values that were set on create.
+// Using this option is equivalent to using:
 //
-//  client.Repository.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.Repository.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *RepositoryUpsertOne) UpdateNewValues() *RepositoryUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -830,9 +867,9 @@ func (rcb *RepositoryCreateBulk) OnConflict(opts ...sql.ConflictOption) *Reposit
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//  client.Repository.Create().
-//      OnConflict(sql.ConflictColumns(columns...)).
-//      Exec(ctx)
+//	client.Repository.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
 //
 func (rcb *RepositoryCreateBulk) OnConflictColumns(columns ...string) *RepositoryUpsertBulk {
 	rcb.conflict = append(rcb.conflict, sql.ConflictColumns(columns...))
@@ -850,9 +887,11 @@ type RepositoryUpsertBulk struct {
 // UpdateNewValues updates the fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//  client.Repository.Create().
-//      OnConflict(sql.ResolveWithNewValues()).
-//      Exec(ctx)
+//	client.Repository.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
 //
 func (u *RepositoryUpsertBulk) UpdateNewValues() *RepositoryUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
@@ -862,9 +901,9 @@ func (u *RepositoryUpsertBulk) UpdateNewValues() *RepositoryUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//  client.Repository.Create().
-//      OnConflict(sql.ResolveWithIgnore()).
-//      Exec(ctx)
+//	client.Repository.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
 //
 func (u *RepositoryUpsertBulk) Ignore() *RepositoryUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())

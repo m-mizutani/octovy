@@ -9,12 +9,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/octovy/pkg/controller/server"
+	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/stretchr/testify/require"
 )
 
 func newServer(t *testing.T) *gin.Engine {
 	uc := usecase.NewTest(t)
+	require.NoError(t, uc.Init())
+	engine := server.New(uc, &server.Option{DisableAuth: true})
+	return engine
+}
+
+func newServerWithDB(t *testing.T, client *db.Client) *gin.Engine {
+	uc := usecase.NewTest(t, usecase.OptInjectDB(client))
 	require.NoError(t, uc.Init())
 	engine := server.New(uc, &server.Option{DisableAuth: true})
 	return engine

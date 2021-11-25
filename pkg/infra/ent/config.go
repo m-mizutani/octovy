@@ -26,6 +26,7 @@ type config struct {
 type hooks struct {
 	AuthStateCache  []ent.Hook
 	PackageRecord   []ent.Hook
+	RepoLabel       []ent.Hook
 	Repository      []ent.Hook
 	Scan            []ent.Hook
 	Session         []ent.Hook

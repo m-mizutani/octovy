@@ -79,6 +79,8 @@ func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 		r := engine.Group("/api/v1")
 
 		r.GET("/repository", getRepositories)
+		r.GET("/repository/:owner/:repo", getRepository)
+		r.GET("/repository/:owner/:repo/scan", getRepositoryScan)
 		r.GET("/vulnerability", getVulnerabilities)
 		r.GET("/vulnerability/:vuln_id", getVulnerability)
 		r.POST("/vulnerability", postVulnerability)
@@ -93,6 +95,13 @@ func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 		r.PUT("/severity/:id", updateSeverity)
 		r.POST("/severity/:id/assign/:vuln_id", assignSeverity)
 		r.DELETE("/severity/:id", deleteSeverity)
+
+		r.GET("/repo-label", getRepoLabels)
+		r.POST("/repo-label", createRepoLabel)
+		r.PUT("/repo-label/:id", updateRepoLabel)
+		r.POST("/repo-label/:id/assign/:repo_id", assignRepoLabel)
+		r.DELETE("/repo-label/:id/assign/:repo_id", unassignRepoLabel)
+		r.DELETE("/repo-label/:id", deleteRepoLabel)
 	}
 
 	return engine

@@ -4,8 +4,10 @@ import (
 	"math/rand"
 	"regexp"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
+
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
@@ -50,16 +52,40 @@ func (x *RequestSeverity) IsValid() error {
 	return nil
 }
 
-type RequestCheckRule struct {
-	Severity int                     `json:"severity"`
-	Name     string                  `json:"name"`
-	Result   types.GitHubCheckResult `json:"result"`
+type RequestRepoLabel struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
 }
 
-func (x *RequestCheckRule) IsValid() error {
-	if err := x.Result.IsValid(); err != nil {
-		return goerr.Wrap(err, "unsupported result")
+func (x *RequestRepoLabel) IsValid() error {
+	if err := validation.Validate(x.Name,
+		validation.Required,
+		validation.Length(1, 64),
+		is.ASCII,
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("field", "name")
+	}
+
+	if err := validation.Validate(x.Description,
+		validation.Length(0, 256),
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("field", "description")
+	}
+
+	if err := validation.Validate(x.Color,
+		is.HexColor,
+		validation.Length(4, 7),
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("field", "color")
 	}
 
 	return nil
+
+}
+
+type GetRepoScanRequest struct {
+	GitHubRepo
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }

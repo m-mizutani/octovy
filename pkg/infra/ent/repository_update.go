@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/predicate"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repolabel"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/vulnstatusindex"
@@ -191,6 +192,21 @@ func (ru *RepositoryUpdate) AddStatus(v ...*VulnStatusIndex) *RepositoryUpdate {
 	return ru.AddStatuIDs(ids...)
 }
 
+// AddLabelIDs adds the "labels" edge to the RepoLabel entity by IDs.
+func (ru *RepositoryUpdate) AddLabelIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.AddLabelIDs(ids...)
+	return ru
+}
+
+// AddLabels adds the "labels" edges to the RepoLabel entity.
+func (ru *RepositoryUpdate) AddLabels(r ...*RepoLabel) *RepositoryUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.AddLabelIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ru *RepositoryUpdate) Mutation() *RepositoryMutation {
 	return ru.mutation
@@ -263,6 +279,27 @@ func (ru *RepositoryUpdate) RemoveStatus(v ...*VulnStatusIndex) *RepositoryUpdat
 		ids[i] = v[i].ID
 	}
 	return ru.RemoveStatuIDs(ids...)
+}
+
+// ClearLabels clears all "labels" edges to the RepoLabel entity.
+func (ru *RepositoryUpdate) ClearLabels() *RepositoryUpdate {
+	ru.mutation.ClearLabels()
+	return ru
+}
+
+// RemoveLabelIDs removes the "labels" edge to RepoLabel entities by IDs.
+func (ru *RepositoryUpdate) RemoveLabelIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.RemoveLabelIDs(ids...)
+	return ru
+}
+
+// RemoveLabels removes "labels" edges to RepoLabel entities.
+func (ru *RepositoryUpdate) RemoveLabels(r ...*RepoLabel) *RepositoryUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.RemoveLabelIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -607,6 +644,60 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.LabelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedLabelsIDs(); len(nodes) > 0 && !ru.mutation.LabelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.LabelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{repository.Label}
@@ -789,6 +880,21 @@ func (ruo *RepositoryUpdateOne) AddStatus(v ...*VulnStatusIndex) *RepositoryUpda
 	return ruo.AddStatuIDs(ids...)
 }
 
+// AddLabelIDs adds the "labels" edge to the RepoLabel entity by IDs.
+func (ruo *RepositoryUpdateOne) AddLabelIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.AddLabelIDs(ids...)
+	return ruo
+}
+
+// AddLabels adds the "labels" edges to the RepoLabel entity.
+func (ruo *RepositoryUpdateOne) AddLabels(r ...*RepoLabel) *RepositoryUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.AddLabelIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ruo *RepositoryUpdateOne) Mutation() *RepositoryMutation {
 	return ruo.mutation
@@ -861,6 +967,27 @@ func (ruo *RepositoryUpdateOne) RemoveStatus(v ...*VulnStatusIndex) *RepositoryU
 		ids[i] = v[i].ID
 	}
 	return ruo.RemoveStatuIDs(ids...)
+}
+
+// ClearLabels clears all "labels" edges to the RepoLabel entity.
+func (ruo *RepositoryUpdateOne) ClearLabels() *RepositoryUpdateOne {
+	ruo.mutation.ClearLabels()
+	return ruo
+}
+
+// RemoveLabelIDs removes the "labels" edge to RepoLabel entities by IDs.
+func (ruo *RepositoryUpdateOne) RemoveLabelIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.RemoveLabelIDs(ids...)
+	return ruo
+}
+
+// RemoveLabels removes "labels" edges to RepoLabel entities.
+func (ruo *RepositoryUpdateOne) RemoveLabels(r ...*RepoLabel) *RepositoryUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.RemoveLabelIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -1221,6 +1348,60 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: vulnstatusindex.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.LabelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedLabelsIDs(); len(nodes) > 0 && !ruo.mutation.LabelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.LabelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   repository.LabelsTable,
+			Columns: repository.LabelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: repolabel.FieldID,
 				},
 			},
 		}

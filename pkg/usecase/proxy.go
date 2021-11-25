@@ -62,6 +62,14 @@ func (x *usecase) GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	return x.infra.DB.GetRepositories(ctx)
 }
 
+func (x *usecase) GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent.Repository, error) {
+	return x.infra.DB.GetRepository(ctx, req)
+}
+
+func (x *usecase) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
+	return x.infra.DB.GetRepositoryScan(ctx, req)
+}
+
 func (x *usecase) GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
@@ -157,4 +165,35 @@ func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.
 	inventry := model.NewPackageInventory(scan.Edges.Packages, statuses, x.infra.Utils.Now().Unix())
 
 	return inventry, nil
+}
+
+// RepoLabel
+func (x *usecase) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error) {
+	if err := req.IsValid(); err != nil {
+		return nil, err
+	}
+	return x.infra.DB.CreateRepoLabel(ctx, req)
+}
+
+func (x *usecase) UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error {
+	if err := req.IsValid(); err != nil {
+		return err
+	}
+	return x.infra.DB.UpdateRepoLabel(ctx, id, req)
+}
+
+func (x *usecase) DeleteRepoLabel(ctx *model.Context, id int) error {
+	return x.infra.DB.DeleteRepoLabel(ctx, id)
+}
+
+func (x *usecase) GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error) {
+	return x.infra.DB.GetRepoLabels(ctx)
+}
+
+func (x *usecase) AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
+	return x.infra.DB.AssignRepoLabel(ctx, repoID, labelID)
+}
+
+func (x *usecase) UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
+	return x.infra.DB.UnassignRepoLabel(ctx, repoID, labelID)
 }

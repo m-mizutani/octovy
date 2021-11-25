@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/authstatecache"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/packagerecord"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/repolabel"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/session"
@@ -40,6 +41,7 @@ func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		authstatecache.Table:  authstatecache.ValidColumn,
 		packagerecord.Table:   packagerecord.ValidColumn,
+		repolabel.Table:       repolabel.ValidColumn,
 		repository.Table:      repository.ValidColumn,
 		scan.Table:            scan.ValidColumn,
 		session.Table:         session.ValidColumn,
