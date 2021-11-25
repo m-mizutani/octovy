@@ -62,6 +62,14 @@ func (x *usecase) GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	return x.infra.DB.GetRepositories(ctx)
 }
 
+func (x *usecase) GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent.Repository, error) {
+	return x.infra.DB.GetRepository(ctx, req)
+}
+
+func (x *usecase) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
+	return x.infra.DB.GetRepositoryScan(ctx, req)
+}
+
 func (x *usecase) GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")

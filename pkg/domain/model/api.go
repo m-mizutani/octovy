@@ -83,3 +83,9 @@ func (x *RequestRepoLabel) IsValid() error {
 	return nil
 
 }
+
+type GetRepoScanRequest struct {
+	GitHubRepo
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}

@@ -52,6 +52,8 @@ type Interface interface {
 	GetLatestScans(ctx *model.Context) ([]*ent.Scan, error)
 	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	GetRepositoriesWithVuln(ctx *model.Context, vulnID string) ([]*ent.Repository, error)
+	GetRepository(ctx *model.Context, repo *model.GitHubRepo) (*ent.Repository, error)
+	GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error)
 
 	// Repository Label
 	CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error)

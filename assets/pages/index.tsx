@@ -11,8 +11,10 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import GitHubIcon from "@mui/icons-material/GitHub";
 
 import Link from "next/link";
+import Stack from "@mui/material/Stack";
 
 import strftime from "strftime";
 import TimeAgo from "javascript-time-ago";
@@ -113,7 +115,16 @@ function Repository(repo: model.repository) {
   return (
     <TableRow key={repo.owner + "/" + repo.name}>
       <TableCell>
-        <Link href={repo.url}>{repo.owner + "/" + repo.name}</Link>
+        <Stack direction="row" spacing={2}>
+          <Link href={repo.url}>
+            <a style={{ color: "inherit" }}>
+              <GitHubIcon />
+            </a>
+          </Link>
+          <Link href={`/repository/${repo.owner}/${repo.name}`}>
+            {repo.owner + "/" + repo.name}
+          </Link>
+        </Stack>
       </TableCell>
       <TableCell>
         <Scan repo={repo} scan={repo.edges.latest} />

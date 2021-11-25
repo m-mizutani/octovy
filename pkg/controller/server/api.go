@@ -79,6 +79,8 @@ func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 		r := engine.Group("/api/v1")
 
 		r.GET("/repository", getRepositories)
+		r.GET("/repository/:owner/:repo", getRepository)
+		r.GET("/repository/:owner/:repo/scan", getRepositoryScan)
 		r.GET("/vulnerability", getVulnerabilities)
 		r.GET("/vulnerability/:vuln_id", getVulnerability)
 		r.POST("/vulnerability", postVulnerability)

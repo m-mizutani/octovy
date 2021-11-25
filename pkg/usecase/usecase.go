@@ -31,6 +31,8 @@ type Interface interface {
 	UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error)
 	LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error)
 	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
+	GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent.Repository, error)
+	GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error)
 	GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error)
 	GetVulnerabilityCount(ctx *model.Context) (int, error)
 	GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error)

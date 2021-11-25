@@ -18,22 +18,13 @@ import {
   TableRow,
 } from "@mui/material";
 
-import { List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
-import Chip from "@mui/material/Chip";
 import { TwitterPicker } from "react-color";
 
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 
 import * as model from "@/components/model";
-
-function labelColor(hex: string) {
-  var r = parseInt(hex.substr(1, 2), 16);
-  var g = parseInt(hex.substr(3, 2), 16);
-  var b = parseInt(hex.substr(5, 2), 16);
-
-  return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? "white" : "black";
-}
+import * as ui from "@/components/ui";
 
 export default function RepoLabels() {
   type status = {
@@ -158,14 +149,7 @@ function RepoLabel(props: { label: model.repoLabel; refresh: () => void }) {
       />
 
       <TableCell width={48}>
-        <Chip
-          label={props.label.name}
-          style={{
-            marginTop: 6,
-            backgroundColor: props.label.color,
-            color: labelColor(props.label.color),
-          }}
-        />
+        <ui.RepoLabel label={props.label} />
       </TableCell>
       <TableCell align="left">{props.label.description}</TableCell>
       <TableCell width={48}>

@@ -14,6 +14,7 @@ export interface scan {
 }
 
 export type repository = {
+  id: number;
   owner: string;
   name: string;
   url: string;
@@ -23,6 +24,7 @@ export type repository = {
     scan: scan[];
     main: scan[];
     status: vulnStatusIndex[];
+    labels: repoLabel[];
   };
 };
 
