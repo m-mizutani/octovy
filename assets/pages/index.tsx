@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as app from "../components/app";
 import * as model from "../components/model";
+import * as ui from "../components/ui";
 
 import Alert from "@mui/material/Alert";
 import Grid from "@mui/material/Grid";
@@ -102,6 +103,7 @@ function Body(props: bodyProps) {
         <TableHead>
           <TableRow style={{ background: "#eee" }}>
             <TableCell>Repository</TableCell>
+            <TableCell>Labels</TableCell>
             <TableCell>Recent scan of default branch</TableCell>
           </TableRow>
         </TableHead>
@@ -124,6 +126,23 @@ function Repository(repo: model.repository) {
           <Link href={`/repository/${repo.owner}/${repo.name}`}>
             {repo.owner + "/" + repo.name}
           </Link>
+        </Stack>
+      </TableCell>
+      <TableCell>
+        <Stack direction="row" spacing={2}>
+          {repo.edges.labels ? (
+            repo.edges.labels.map((label) => {
+              return (
+                <ui.RepoLabel
+                  label={label}
+                  size={"small"}
+                  key={`repo-label-${repo.id}-${label.id}`}
+                />
+              );
+            })
+          ) : (
+            <></>
+          )}
         </Stack>
       </TableCell>
       <TableCell>

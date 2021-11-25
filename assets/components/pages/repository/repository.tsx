@@ -127,7 +127,7 @@ function RepoLabels(props: { repo: model.repository }) {
   }
 
   return (
-    <List sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}>
+    <List sx={{ width: "100%", maxWidth: 560, bgcolor: "background.paper" }}>
       {status.labels.map((label) => {
         return <RepoLabel repo={props.repo} label={label} key={label.name} />;
       })}
@@ -136,23 +136,20 @@ function RepoLabels(props: { repo: model.repository }) {
 }
 
 function RepoLabel(props: { repo: model.repository; label: model.repoLabel }) {
-  const initChecked =
-    props.repo.edges.labels.filter((label) => {
-      return label.id === props.label.id;
-    }).length > 0;
-  const isInit = React.useRef(true);
+  const initChecked = props.repo.edges.labels
+    ? props.repo.edges.labels.filter((label) => {
+        return label.id === props.label.id;
+      }).length > 0
+    : false;
+
   const [status, setStatus] = React.useState<{
     done: boolean;
     err?: any;
   }>({ done: false });
   const [checked, setChecked] = React.useState<boolean>(initChecked);
 
-  const update = () => {
-    if (isInit.current) {
-      return;
-    }
-
-    const method = checked ? "POST" : "DELETE";
+  const update = (value: boolean) => {
+    const method = value ? "POST" : "DELETE";
     const url = `/api/v1/repo-label/${props.label.id}/assign/${props.repo.id}`;
 
     fetch(url, { method })
@@ -160,10 +157,8 @@ function RepoLabel(props: { repo: model.repository; label: model.repoLabel }) {
       .then(
         (result) => {
           console.log({ result });
+          setChecked(value);
           setStatus({ done: true });
-          setTimeout(() => {
-            setStatus({ done: false });
-          }, 3000);
         },
         (error) => {
           console.log("error:", { error });
@@ -171,10 +166,6 @@ function RepoLabel(props: { repo: model.repository; label: model.repoLabel }) {
         }
       );
   };
-  React.useEffect(update, [checked]);
-  React.useEffect(() => {
-    isInit.current = false;
-  }, []);
 
   return (
     <ListItem
@@ -192,7 +183,8 @@ function RepoLabel(props: { repo: model.repository; label: model.repoLabel }) {
       disablePadding>
       <ListItemButton
         onClick={() => {
-          setChecked(!checked);
+          setStatus({ done: false });
+          update(!checked);
         }}
         dense>
         <ListItemIcon>
@@ -203,7 +195,14 @@ function RepoLabel(props: { repo: model.repository; label: model.repoLabel }) {
             disableRipple
           />
         </ListItemIcon>
-        <ListItemText primary={<ui.RepoLabel label={props.label} />} />
+        <ListItemText
+          primary={
+            <Stack direction="row" spacing={2}>
+              <ui.RepoLabel label={props.label} />
+              <Typography paddingTop={1}>{props.label.description}</Typography>
+            </Stack>
+          }
+        />
       </ListItemButton>
     </ListItem>
   );

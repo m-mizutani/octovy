@@ -9,10 +9,14 @@ function labelColor(hex: string) {
   return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? "white" : "black";
 }
 
-export function RepoLabel(props: { label: model.repoLabel }) {
+export function RepoLabel(props: {
+  label: model.repoLabel;
+  size?: "small" | "medium";
+}) {
   return (
     <Chip
       label={props.label.name}
+      size={props.size}
       style={{
         marginTop: 3,
         backgroundColor: props.label.color,
