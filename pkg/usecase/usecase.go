@@ -3,13 +3,10 @@ package usecase
 import (
 	"testing"
 
-	gh "github.com/google/go-github/v39/github"
-
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/db"
-	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
 	"github.com/m-mizutani/octovy/pkg/infra/policy"
@@ -19,66 +16,8 @@ import (
 
 var logger = utils.Logger
 
-type Interface interface {
-	Init() error
-	Shutdown()
-
-	// Scan
-	Scan(ctx *model.Context, req *model.ScanRepositoryRequest) error
-
-	// DB access proxy
-	RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error)
-	UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error)
-	LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error)
-	GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
-	GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent.Repository, error)
-	GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error)
-	GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error)
-	GetVulnerabilityCount(ctx *model.Context) (int, error)
-	GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error)
-	CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerability) error
-	GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error)
-
-	// Severity
-	CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error)
-	DeleteSeverity(ctx *model.Context, id int) error
-	GetSeverities(ctx *model.Context) ([]*ent.Severity, error)
-	UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error
-	AssignSeverity(ctx *model.Context, vulnID string, id int) error
-
-	// RepoLabel
-	CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error)
-	UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error
-	DeleteRepoLabel(ctx *model.Context, id int) error
-	GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error)
-	AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error
-	UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error
-
-	// Handle GitHub App Webhook event
-	HandleGitHubPushEvent(ctx *model.Context, event *gh.PushEvent) error
-	HandleGitHubPullReqEvent(ctx *model.Context, event *gh.PullRequestEvent) error
-	HandleGitHubInstallationEvent(ctx *model.Context, event *gh.InstallationEvent) error
-	VerifyGitHubSecret(sigSHA256 string, body []byte) error
-
-	// Auth
-	CreateAuthState(ctx *model.Context) (string, error)
-	AuthGitHubUser(ctx *model.Context, code, state string) (*ent.User, error)
-	LookupUser(ctx *model.Context, userID int) (*ent.User, error)
-	CreateSession(ctx *model.Context, user *ent.User) (*ent.Session, error)
-	ValidateSession(ctx *model.Context, ssnID string) (*ent.Session, error)
-	RevokeSession(ctx *model.Context, token string) error
-
-	// Error handling
-	HandleError(ctx *model.Context, err error)
-
-	// Config proxy
-	GetGitHubAppClientID() string
-	FrontendURL() string
-	WebhookOnly() bool
-}
-
-func New(cfg *model.Config) Interface {
-	uc := &usecase{
+func New(cfg *model.Config) *Usecase {
+	uc := &Usecase{
 		config:    cfg,
 		infra:     infra.New(),
 		scanQueue: make(chan *model.ScanRepositoryRequest, 1024),
@@ -87,22 +26,22 @@ func New(cfg *model.Config) Interface {
 	return uc
 }
 
-type TestOption func(*usecase)
+type TestOption func(*Usecase)
 
 func OptInjectDB(client *db.Client) TestOption {
-	return func(u *usecase) {
+	return func(u *Usecase) {
 		u.infra.DB = client
 	}
 }
 
 func OptInjectErrorHandler(f func(error)) TestOption {
-	return func(u *usecase) {
+	return func(u *Usecase) {
 		u.testErrorHandler = f
 	}
 }
 
-func NewTest(t *testing.T, options ...TestOption) Interface {
-	uc := New(&model.Config{}).(*usecase)
+func NewTest(t *testing.T, options ...TestOption) *Usecase {
+	uc := New(&model.Config{})
 
 	dbClient := db.NewMock(t)
 	ghClient := github.NewMock()
@@ -126,7 +65,7 @@ func NewTest(t *testing.T, options ...TestOption) Interface {
 	return uc
 }
 
-type usecase struct {
+type Usecase struct {
 	initialized bool
 	scanQueue   chan *model.ScanRepositoryRequest
 
@@ -138,7 +77,7 @@ type usecase struct {
 	disableInvokeThread bool
 }
 
-func (x *usecase) Init() error {
+func (x *Usecase) Init() error {
 	if err := x.initErrorHandler(); err != nil {
 		return err
 	}
@@ -165,16 +104,16 @@ func (x *usecase) Init() error {
 	return nil
 }
 
-func (x *usecase) Shutdown() {
+func (x *Usecase) Shutdown() {
 	x.flushError()
 }
 
-func (x *usecase) FrontendURL() string {
+func (x *Usecase) FrontendURL() string {
 	return x.config.FrontendURL
 }
-func (x *usecase) GetGitHubAppClientID() string {
+func (x *Usecase) GetGitHubAppClientID() string {
 	return x.config.GitHubAppClientID
 }
-func (x *usecase) WebhookOnly() bool {
+func (x *Usecase) WebhookOnly() bool {
 	return x.config.WebhookOnly
 }

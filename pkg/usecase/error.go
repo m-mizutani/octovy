@@ -10,7 +10,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-func (x *usecase) initErrorHandler() error {
+func (x *Usecase) initErrorHandler() error {
 	if x.config.SentryDSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:         x.config.SentryDSN,
@@ -24,13 +24,13 @@ func (x *usecase) initErrorHandler() error {
 	return nil
 }
 
-func (x *usecase) flushError() {
+func (x *Usecase) flushError() {
 	sentry.Flush(2 * time.Second)
 	utils.Logger.Debug("sentry flushed")
 }
 
 // HandleError handles a notable error. Logging error and send it to sentry if configured. It should handle an error caused by system, not a user.
-func (x *usecase) HandleError(ctx *model.Context, err error) {
+func (x *Usecase) HandleError(ctx *model.Context, err error) {
 	// Logging
 	entry := ctx.Log()
 	var gerr *goerr.Error

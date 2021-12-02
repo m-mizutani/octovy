@@ -11,7 +11,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error {
+func (x *Usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error {
 	if event == nil ||
 		event.Repo == nil ||
 		event.Repo.HTMLURL == nil ||
@@ -72,7 +72,7 @@ func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 
 }
 
-func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error {
+func (x *Usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error {
 	if event == nil ||
 		event.Action == nil ||
 		event.Repo == nil ||
@@ -145,7 +145,7 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 	return nil
 }
 
-func (x *usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error {
+func (x *Usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error {
 	if event == nil ||
 		event.Installation == nil ||
 		event.Installation.ID == nil ||
@@ -179,7 +179,7 @@ func (x *usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *githu
 	return nil
 }
 
-func (x *usecase) VerifyGitHubSecret(sigSHA256 string, body []byte) error {
+func (x *Usecase) VerifyGitHubSecret(sigSHA256 string, body []byte) error {
 	if x.config.GitHubWebhookSecret == "" {
 		if sigSHA256 == "" {
 			return nil // No secret and no signature

@@ -108,7 +108,7 @@ func optTrivy() testOption {
 	}
 }
 
-func setupUsecase(t *testing.T, options ...testOption) (usecase.Interface, *mockSet) {
+func setupUsecase(t *testing.T, options ...testOption) (*usecase.Usecase, *mockSet) {
 	utils := infra.NewUtils()
 	var cfg model.Config
 

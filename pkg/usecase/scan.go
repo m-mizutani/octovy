@@ -13,12 +13,12 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
-func (x *usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
+func (x *Usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
 	x.scanQueue <- req
 	return nil
 }
 
-func (x *usecase) InvokeScanThread() {
+func (x *Usecase) InvokeScanThread() {
 	go func() {
 		if err := x.runScanThread(); err != nil {
 			x.HandleError(model.NewContext(), err)
@@ -26,7 +26,7 @@ func (x *usecase) InvokeScanThread() {
 	}()
 }
 
-func (x *usecase) runScanThread() error {
+func (x *Usecase) runScanThread() error {
 	for req := range x.scanQueue {
 		ctx := model.NewContext()
 		ctx.With("scan_req", req)
@@ -49,7 +49,7 @@ func (x *usecase) runScanThread() error {
 	return nil
 }
 
-func (x *usecase) Scan(ctx *model.Context, req *model.ScanRepositoryRequest) error {
+func (x *Usecase) Scan(ctx *model.Context, req *model.ScanRepositoryRequest) error {
 	ctx.With("scan_req", req)
 	ctx.Log().Debug("recv scan request")
 

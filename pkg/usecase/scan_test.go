@@ -89,7 +89,7 @@ func TestScanProcedure(t *testing.T) {
 }
 
 func TestScanProcedureWithRule(t *testing.T) {
-	setup := func(t *testing.T, rule string, update func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error) usecase.Interface {
+	setup := func(t *testing.T, rule string, update func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error) *usecase.Usecase {
 		uc, mock := setupUsecase(t,
 			optDBMock(),
 			optTrivy(),

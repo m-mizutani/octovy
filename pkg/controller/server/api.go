@@ -57,7 +57,7 @@ func mergeOption(options []*Option) *Option {
 	return &merged
 }
 
-func New(uc usecase.Interface, options ...*Option) *gin.Engine {
+func New(uc *usecase.Usecase, options ...*Option) *gin.Engine {
 	engine := gin.Default()
 	opt := mergeOption(options)
 
@@ -107,12 +107,12 @@ func New(uc usecase.Interface, options ...*Option) *gin.Engine {
 	return engine
 }
 
-func getUsecase(c *gin.Context) usecase.Interface {
+func getUsecase(c *gin.Context) *usecase.Usecase {
 	v, ok := c.Get(contextUsecase)
 	if !ok {
 		panic("No config in contextUsecase")
 	}
-	uc, ok := v.(usecase.Interface)
+	uc, ok := v.(*usecase.Usecase)
 	if !ok {
 		panic("Type mismatch for contextUsecase")
 	}

@@ -7,7 +7,7 @@ import (
 
 type Controller struct {
 	Config  *model.Config
-	usecase usecase.Interface
+	usecase *usecase.Usecase
 }
 
 func New() *Controller {

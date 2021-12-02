@@ -6,7 +6,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
-func (x *usecase) RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error) {
+func (x *Usecase) RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -14,7 +14,7 @@ func (x *usecase) RegisterRepository(ctx *model.Context, repo *ent.Repository) (
 	return x.infra.DB.CreateRepo(ctx, repo)
 }
 
-func (x *usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error) {
+func (x *Usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -46,7 +46,7 @@ func (x *usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStat
 	return added, nil
 }
 
-func (x *usecase) LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error) {
+func (x *Usecase) LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -54,7 +54,7 @@ func (x *usecase) LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan
 	return x.infra.DB.GetScan(ctx, scanID)
 }
 
-func (x *usecase) GetRepositories(ctx *model.Context) ([]*ent.Repository, error) {
+func (x *Usecase) GetRepositories(ctx *model.Context) ([]*ent.Repository, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -62,15 +62,15 @@ func (x *usecase) GetRepositories(ctx *model.Context) ([]*ent.Repository, error)
 	return x.infra.DB.GetRepositories(ctx)
 }
 
-func (x *usecase) GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent.Repository, error) {
+func (x *Usecase) GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent.Repository, error) {
 	return x.infra.DB.GetRepository(ctx, req)
 }
 
-func (x *usecase) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
+func (x *Usecase) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
 	return x.infra.DB.GetRepositoryScan(ctx, req)
 }
 
-func (x *usecase) GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error) {
+func (x *Usecase) GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -78,7 +78,7 @@ func (x *usecase) GetVulnerabilities(ctx *model.Context, offset, limit int64) ([
 	return x.infra.DB.GetLatestVulnerabilities(ctx, int(offset), int(limit))
 }
 
-func (x *usecase) GetVulnerabilityCount(ctx *model.Context) (int, error) {
+func (x *Usecase) GetVulnerabilityCount(ctx *model.Context) (int, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -86,7 +86,7 @@ func (x *usecase) GetVulnerabilityCount(ctx *model.Context) (int, error) {
 	return x.infra.DB.GetVulnerabilityCount(ctx)
 }
 
-func (x *usecase) GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error) {
+func (x *Usecase) GetVulnerability(ctx *model.Context, vulnID string) (*model.RespVulnerability, error) {
 	vuln, err := x.infra.DB.GetVulnerability(ctx, vulnID)
 	if err != nil {
 		return nil, err
@@ -106,11 +106,11 @@ func (x *usecase) GetVulnerability(ctx *model.Context, vulnID string) (*model.Re
 	}, nil
 }
 
-func (x *usecase) CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerability) error {
+func (x *Usecase) CreateVulnerability(ctx *model.Context, vuln *ent.Vulnerability) error {
 	return x.infra.DB.PutVulnerabilities(ctx, []*ent.Vulnerability{vuln})
 }
 
-func (x *usecase) CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error) {
+func (x *Usecase) CreateSeverity(ctx *model.Context, req *model.RequestSeverity) (*ent.Severity, error) {
 	if err := req.IsValid(); err != nil {
 		return nil, err
 	}
@@ -118,15 +118,15 @@ func (x *usecase) CreateSeverity(ctx *model.Context, req *model.RequestSeverity)
 	return x.infra.DB.CreateSeverity(ctx, req)
 }
 
-func (x *usecase) DeleteSeverity(ctx *model.Context, id int) error {
+func (x *Usecase) DeleteSeverity(ctx *model.Context, id int) error {
 	return x.infra.DB.DeleteSeverity(ctx, id)
 }
 
-func (x *usecase) GetSeverities(ctx *model.Context) ([]*ent.Severity, error) {
+func (x *Usecase) GetSeverities(ctx *model.Context) ([]*ent.Severity, error) {
 	return x.infra.DB.GetSeverities(ctx)
 }
 
-func (x *usecase) UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error {
+func (x *Usecase) UpdateSeverity(ctx *model.Context, id int, req *model.RequestSeverity) error {
 	if err := req.IsValid(); err != nil {
 		return err
 	}
@@ -134,11 +134,11 @@ func (x *usecase) UpdateSeverity(ctx *model.Context, id int, req *model.RequestS
 	return x.infra.DB.UpdateSeverity(ctx, id, req)
 }
 
-func (x *usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) error {
+func (x *Usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) error {
 	return x.infra.DB.AssignSeverity(ctx, vulnID, id)
 }
 
-func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error) {
+func (x *Usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error) {
 	if !x.initialized {
 		panic("usecase is not initialized")
 	}
@@ -168,32 +168,32 @@ func (x *usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.
 }
 
 // RepoLabel
-func (x *usecase) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error) {
+func (x *Usecase) CreateRepoLabel(ctx *model.Context, req *model.RequestRepoLabel) (*ent.RepoLabel, error) {
 	if err := req.IsValid(); err != nil {
 		return nil, err
 	}
 	return x.infra.DB.CreateRepoLabel(ctx, req)
 }
 
-func (x *usecase) UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error {
+func (x *Usecase) UpdateRepoLabel(ctx *model.Context, id int, req *model.RequestRepoLabel) error {
 	if err := req.IsValid(); err != nil {
 		return err
 	}
 	return x.infra.DB.UpdateRepoLabel(ctx, id, req)
 }
 
-func (x *usecase) DeleteRepoLabel(ctx *model.Context, id int) error {
+func (x *Usecase) DeleteRepoLabel(ctx *model.Context, id int) error {
 	return x.infra.DB.DeleteRepoLabel(ctx, id)
 }
 
-func (x *usecase) GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error) {
+func (x *Usecase) GetRepoLabels(ctx *model.Context) ([]*ent.RepoLabel, error) {
 	return x.infra.DB.GetRepoLabels(ctx)
 }
 
-func (x *usecase) AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
+func (x *Usecase) AssignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
 	return x.infra.DB.AssignRepoLabel(ctx, repoID, labelID)
 }
 
-func (x *usecase) UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
+func (x *Usecase) UnassignRepoLabel(ctx *model.Context, repoID int, labelID int) error {
 	return x.infra.DB.UnassignRepoLabel(ctx, repoID, labelID)
 }
