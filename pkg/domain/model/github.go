@@ -1,13 +1,13 @@
 package model
 
 type GitHubRepo struct {
-	Owner    string
-	RepoName string
+	Owner    string `json:"owner"`
+	RepoName string `json:"name"`
 }
 
 type GitHubBranch struct {
 	GitHubRepo
-	Branch string
+	Branch string `json:"branch"`
 }
 
 type GitHubToken struct {

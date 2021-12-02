@@ -120,7 +120,7 @@ result = "failure" {
 - Package
     - `package octovy.check` is required at head line of policy
 - Input
-    - `model.PackageInventory` of scan result
+    - `model.ScanReport` of scan result
 - Output:
     - `result` as string type (required): It must be either one of `conclusion` in [GitHub check parameters](https://docs.github.com/en/rest/reference/checks#update-a-check-run--parameters).
     - `msg` as string type (optional): The message will be appeared in title of check result if given.

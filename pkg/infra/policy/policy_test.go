@@ -11,20 +11,24 @@ import (
 )
 
 func TestCheckRule(t *testing.T) {
-	inv := model.NewPackageInventory([]*ent.PackageRecord{
-		{
-			Type:    "gomod",
-			Source:  "go.sum",
-			Name:    "github.com/dgrijalva/jwt-go",
-			Version: "3.2.0+incompatible",
-			VulnIds: []string{"CVE-2020-26160"},
-			Edges: ent.PackageRecordEdges{
-				Vulnerabilities: []*ent.Vulnerability{
-					{
-						ID: "CVE-2020-26160",
-						Edges: ent.VulnerabilityEdges{
-							CustomSeverity: &ent.Severity{
-								Label: "high",
+	inv := model.NewScanReport(&ent.Scan{
+		Edges: ent.ScanEdges{
+			Packages: []*ent.PackageRecord{
+				{
+					Type:    "gomod",
+					Source:  "go.sum",
+					Name:    "github.com/dgrijalva/jwt-go",
+					Version: "3.2.0+incompatible",
+					VulnIds: []string{"CVE-2020-26160"},
+					Edges: ent.PackageRecordEdges{
+						Vulnerabilities: []*ent.Vulnerability{
+							{
+								ID: "CVE-2020-26160",
+								Edges: ent.VulnerabilityEdges{
+									CustomSeverity: &ent.Severity{
+										Label: "high",
+									},
+								},
 							},
 						},
 					},

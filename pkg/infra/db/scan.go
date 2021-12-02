@@ -86,6 +86,7 @@ func (x *Client) GetScan(ctx *model.Context, id string) (*ent.Scan, error) {
 					vsq.WithAuthor()
 				})
 			})
+			rq.WithLabels()
 		}).
 		WithPackages(func(prq *ent.PackageRecordQuery) {
 			prq.WithVulnerabilities(func(vq *ent.VulnerabilityQuery) {

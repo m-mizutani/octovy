@@ -201,7 +201,7 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 	}
 
 	if clients.CheckPolicy != nil {
-		inv := model.NewPackageInventory(newScan.Edges.Packages, status, now)
+		inv := model.NewScanReport(newScan, status, now)
 		result, err := clients.CheckPolicy.Result(ctx, inv)
 		if err != nil {
 			return err

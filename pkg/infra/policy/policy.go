@@ -21,14 +21,14 @@ func NewCheck(query string) (Check, error) {
 
 type CheckFactory func(query string) (Check, error)
 type Check interface {
-	Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error)
+	Result(ctx *model.Context, inv *model.ScanReport) (*model.GitHubCheckResult, error)
 }
 
 type checkPolicy struct {
 	compiler *ast.Compiler
 }
 
-func (x *checkPolicy) Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error) {
+func (x *checkPolicy) Result(ctx *model.Context, inv *model.ScanReport) (*model.GitHubCheckResult, error) {
 	policy := rego.New(
 		rego.Query(`response = data.octovy.check`),
 		rego.Compiler(x.compiler),

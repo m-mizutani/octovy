@@ -4,17 +4,24 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 )
 
-type PackageInventory struct {
-	Sources []*PackageSource `json:"sources"`
+type ScanReport struct {
+	Repo     Repository       `json:"repo"`
+	CommitID string           `json:"commit_id"`
+	Sources  []*PackageSource `json:"sources"`
 }
 
-func NewPackageInventory(pkgs []*ent.PackageRecord, statuses []*ent.VulnStatus, now int64) *PackageInventory {
+func NewScanReport(scan *ent.Scan, statuses []*ent.VulnStatus, now int64) *ScanReport {
+	repo := &ent.Repository{}
+	if len(scan.Edges.Repository) > 0 {
+		repo = scan.Edges.Repository[0]
+	}
+
 	db := NewVulnStatusDB(statuses, now)
 
 	srcMap := map[string]*PackageSource{}
-	for i := range pkgs {
+	for i := range scan.Edges.Packages {
 		pkg := &Package{
-			PackageRecord: *pkgs[i],
+			PackageRecord: *scan.Edges.Packages[i],
 		}
 
 		src, ok := srcMap[pkg.Source]
@@ -25,7 +32,7 @@ func NewPackageInventory(pkgs []*ent.PackageRecord, statuses []*ent.VulnStatus, 
 			srcMap[pkg.Source] = src
 		}
 
-		for _, vuln := range pkgs[i].Edges.Vulnerabilities {
+		for _, vuln := range scan.Edges.Packages[i].Edges.Vulnerabilities {
 			pkg.Vulnerabilities = append(pkg.Vulnerabilities, &Vulnerability{
 				Vulnerability:  *vuln,
 				Status:         db.Lookup(&pkg.PackageRecord, vuln.ID),
@@ -36,7 +43,22 @@ func NewPackageInventory(pkgs []*ent.PackageRecord, statuses []*ent.VulnStatus, 
 		src.Packages = append(src.Packages, pkg)
 	}
 
-	inventory := &PackageInventory{
+	labels := make([]string, len(repo.Edges.Labels))
+	for i := range repo.Edges.Labels {
+		labels[i] = repo.Edges.Labels[i].Name
+	}
+
+	inventory := &ScanReport{
+		Repo: Repository{
+			GitHubBranch: GitHubBranch{
+				GitHubRepo: GitHubRepo{
+					Owner:    repo.Owner,
+					RepoName: repo.Name,
+				},
+				Branch: scan.Branch,
+			},
+			Labels: labels,
+		},
 		Sources: make([]*PackageSource, len(srcMap)),
 	}
 	for _, v := range srcMap {
@@ -45,12 +67,15 @@ func NewPackageInventory(pkgs []*ent.PackageRecord, statuses []*ent.VulnStatus, 
 	return inventory
 }
 
+type Repository struct {
+	GitHubBranch
+	Labels        []string `json:"labels"`
+	DefaultBranch string   `json:"default_branch"`
+}
+
 type PackageSource struct {
 	Source   string     `json:"source"`
 	Packages []*Package `json:"packages"`
-
-	// To remove "edges" field in JSON
-	Edges *struct{} `json:"edges,omitempty"`
 }
 
 type Package struct {
