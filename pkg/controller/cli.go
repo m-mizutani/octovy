@@ -47,7 +47,7 @@ func (x *Controller) RunCmd(args []string) error {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.With("config", x.Config.CopyWithoutSensitives()).With("err", err).Error("Failed")
+		logger.With("config", x.Config).With("err", err).Error("Failed")
 		return err
 	}
 
@@ -164,6 +164,17 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.StringFlag{
+				Name:        "opa-url",
+				EnvVars:     []string{"OCTOVY_OPA_URL"},
+				Destination: &ctrl.Config.OPAServerURL,
+			},
+			&cli.BoolFlag{
+				Name:        "opa-use-iap",
+				EnvVars:     []string{"OCTOVY_OPA_IAP"},
+				Destination: &ctrl.Config.OPAUseGoogleIAP,
+			},
+
+			&cli.StringFlag{
 				Name:        "trivy-path",
 				EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 				Destination: &ctrl.Config.TrivyPath,
@@ -212,9 +223,9 @@ func serveCommand(c *cli.Context, ctrl *Controller) error {
 
 	gin.SetMode(gin.DebugMode)
 
-	logger.With("config", ctrl.Config.CopyWithoutSensitives()).Info("Starting server...")
+	logger.With("config", ctrl.Config).Info("Starting server...")
 	if err := engine.Run(serverAddr); err != nil {
-		logger.Err(err).With("config", ctrl.Config.CopyWithoutSensitives()).Error("Server error")
+		logger.Err(err).With("config", ctrl.Config).Error("Server error")
 	}
 
 	return nil
