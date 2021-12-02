@@ -94,6 +94,10 @@ var nextRoutes = rewriteRoutes{
 		ptn:   regexp.MustCompile("^config$"),
 		fname: "config.html",
 	},
+	{
+		ptn:   regexp.MustCompile("^repository/[A-Za-z0-9-.]+/[A-Za-z0-9-.]+$"),
+		fname: "repository/[owner]/[repo].html",
+	},
 }
 
 func getStaticFile(c *gin.Context) {
