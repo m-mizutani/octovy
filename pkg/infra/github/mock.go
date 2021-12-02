@@ -10,12 +10,12 @@ func NewMock() *Mock {
 }
 
 type Mock struct {
-	AuthenticateMock func(ctx *model.Context, clientID string, clientSecret string, code string) (*model.GitHubToken, error)
+	AuthenticateMock func(ctx *model.Context, code string) (*model.GitHubToken, error)
 	GetUserMock      func(ctx *model.Context, token *model.GitHubToken) (*github.User, error)
 }
 
-func (x *Mock) Authenticate(ctx *model.Context, clientID string, clientSecret string, code string) (*model.GitHubToken, error) {
-	return x.AuthenticateMock(ctx, clientID, clientSecret, code)
+func (x *Mock) Authenticate(ctx *model.Context, code string) (*model.GitHubToken, error) {
+	return x.AuthenticateMock(ctx, code)
 }
 
 func (x *Mock) GetUser(ctx *model.Context, token *model.GitHubToken) (*github.User, error) {

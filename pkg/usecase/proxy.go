@@ -7,18 +7,10 @@ import (
 )
 
 func (x *Usecase) RegisterRepository(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	return x.infra.DB.CreateRepo(ctx, repo)
 }
 
 func (x *Usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	tgt, err := x.infra.DB.CreateRepo(ctx, &ent.Repository{
 		Owner: req.Owner,
 		Name:  req.RepoName,
@@ -47,18 +39,10 @@ func (x *Usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStat
 }
 
 func (x *Usecase) LookupScanReport(ctx *model.Context, scanID string) (*ent.Scan, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	return x.infra.DB.GetScan(ctx, scanID)
 }
 
 func (x *Usecase) GetRepositories(ctx *model.Context) ([]*ent.Repository, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	return x.infra.DB.GetRepositories(ctx)
 }
 
@@ -71,18 +55,10 @@ func (x *Usecase) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRe
 }
 
 func (x *Usecase) GetVulnerabilities(ctx *model.Context, offset, limit int64) ([]*ent.Vulnerability, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	return x.infra.DB.GetLatestVulnerabilities(ctx, int(offset), int(limit))
 }
 
 func (x *Usecase) GetVulnerabilityCount(ctx *model.Context) (int, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	return x.infra.DB.GetVulnerabilityCount(ctx)
 }
 
@@ -139,10 +115,6 @@ func (x *Usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) erro
 }
 
 func (x *Usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.PackageInventory, error) {
-	if !x.initialized {
-		panic("usecase is not initialized")
-	}
-
 	scan, err := x.infra.DB.GetScan(ctx, scanID)
 	if err != nil {
 		return nil, err

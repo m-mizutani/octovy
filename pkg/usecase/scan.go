@@ -34,7 +34,7 @@ func (x *Usecase) runScanThread() error {
 
 		clients := &scanClients{
 			DB:          x.infra.DB,
-			GitHubApp:   x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
+			GitHubApp:   x.infra.NewGitHubApp(req.InstallID),
 			Utils:       x.infra.Utils,
 			Trivy:       x.infra.Trivy,
 			CheckPolicy: x.infra.CheckPolicy,
@@ -55,7 +55,7 @@ func (x *Usecase) Scan(ctx *model.Context, req *model.ScanRepositoryRequest) err
 
 	clients := &scanClients{
 		DB:          x.infra.DB,
-		GitHubApp:   x.infra.NewGitHubApp(x.config.GitHubAppID, req.InstallID, []byte(x.config.GitHubAppPrivateKey)),
+		GitHubApp:   x.infra.NewGitHubApp(req.InstallID),
 		Utils:       x.infra.Utils,
 		Trivy:       x.infra.Trivy,
 		CheckPolicy: x.infra.CheckPolicy,

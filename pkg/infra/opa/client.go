@@ -15,8 +15,17 @@ type Client struct {
 	client *opaclient.Client
 }
 
-func New(url string) (*Client, error) {
-	client, err := opaclient.New(url)
+type Config struct {
+	BaseURL      string
+	UseGoogleIAP bool
+}
+
+func New(cfg *Config) (*Client, error) {
+	var options []opaclient.Option
+	if cfg.UseGoogleIAP {
+		options = append(options, opaclient.OptEnableGoogleIAP())
+	}
+	client, err := opaclient.New(cfg.BaseURL, options...)
 	if err != nil {
 		return nil, goerr.Wrap(err)
 	}

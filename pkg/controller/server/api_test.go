@@ -16,14 +16,12 @@ import (
 
 func newServer(t *testing.T) *gin.Engine {
 	uc := usecase.NewTest(t)
-	require.NoError(t, uc.Init())
 	engine := server.New(uc, &server.Option{DisableAuth: true})
 	return engine
 }
 
 func newServerWithDB(t *testing.T, client *db.Client) *gin.Engine {
 	uc := usecase.NewTest(t, usecase.OptInjectDB(client))
-	require.NoError(t, uc.Init())
 	engine := server.New(uc, &server.Option{DisableAuth: true})
 	return engine
 }

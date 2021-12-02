@@ -53,7 +53,6 @@ func TestScanProcedure(t *testing.T) {
 		}, nil
 	}
 
-	require.NoError(t, uc.Init())
 	assert.NoError(t, uc.Scan(model.NewContext(), &model.ScanRepositoryRequest{
 		InstallID: 1,
 		ScanTarget: model.ScanTarget{
@@ -133,8 +132,6 @@ func TestScanProcedureWithRule(t *testing.T) {
 		t.Cleanup(func() {
 			assert.Equal(t, 1, calledScan)
 		})
-
-		require.NoError(t, uc.Init())
 
 		return uc
 	}

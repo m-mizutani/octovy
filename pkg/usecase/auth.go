@@ -51,7 +51,7 @@ func (x *Usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.U
 		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Auth state is not found")
 	}
 
-	token, err := x.infra.GitHub.Authenticate(ctx, x.config.GitHubAppClientID, x.config.GitHubAppSecret, code)
+	token, err := x.infra.GitHub.Authenticate(ctx, code)
 	if err != nil {
 		return nil, err
 	}

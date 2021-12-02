@@ -51,7 +51,7 @@ func TestGitHubDownload(t *testing.T) {
 	appID, err := strconv.ParseInt(props.GITHUB_APP_ID, 10, 64)
 	require.NoError(t, err)
 
-	app := githubapp.New(appID, installID, privateKey)
+	app := githubapp.New(appID, privateKey)(installID)
 
 	buf := &WriteBuffer{}
 	repo := &model.GitHubRepo{

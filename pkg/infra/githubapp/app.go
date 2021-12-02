@@ -30,13 +30,15 @@ type Client struct {
 	client *github.Client
 }
 
-type Factory func(appID, installID int64, pem []byte) Interface
+type Factory func(installID int64) Interface
 
-func New(appID, installID int64, pem []byte) Interface {
-	return &Client{
-		appID:     appID,
-		installID: installID,
-		pem:       pem,
+func New(appID int64, pem []byte) Factory {
+	return func(installID int64) Interface {
+		return &Client{
+			appID:     appID,
+			installID: installID,
+			pem:       pem,
+		}
 	}
 }
 
