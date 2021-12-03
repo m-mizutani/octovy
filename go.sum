@@ -390,6 +390,8 @@ github.com/m-mizutani/opa-go-client v0.0.0-20211202085429-2947fccd1b13 h1:d7s/nz
 github.com/m-mizutani/opa-go-client v0.0.0-20211202085429-2947fccd1b13/go.mod h1:fIItP0zth1katEOuK3JEVg/+TTq3plnW/BYSyCu3WkU=
 github.com/m-mizutani/zlog v0.1.2 h1:VohGyf08rK5ddF3+QmaLq7BvPUHno8DowryAD7ERao0=
 github.com/m-mizutani/zlog v0.1.2/go.mod h1:efppDLVhoHSRyq7ozaSW34gjr+gx6Ls0x2HkBqulx6k=
+github.com/m-mizutani/zlog v0.1.3-0.20211203002134-3946d2ec45ed h1:bKj/28Z9FaW0XBXBJGhsnU+eeNrXSFDUexEw9AGkyyM=
+github.com/m-mizutani/zlog v0.1.3-0.20211203002134-3946d2ec45ed/go.mod h1:efppDLVhoHSRyq7ozaSW34gjr+gx6Ls0x2HkBqulx6k=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.5/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=

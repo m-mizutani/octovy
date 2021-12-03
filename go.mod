@@ -18,7 +18,7 @@ require (
 	github.com/lib/pq v1.10.2
 	github.com/m-mizutani/goerr v0.1.2
 	github.com/m-mizutani/opa-go-client v0.0.0-20211202085429-2947fccd1b13
-	github.com/m-mizutani/zlog v0.1.2
+	github.com/m-mizutani/zlog v0.1.3-0.20211203002134-3946d2ec45ed
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/open-policy-agent/opa v0.34.2
 	github.com/pkg/errors v0.9.1
