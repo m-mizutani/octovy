@@ -86,6 +86,7 @@ func (x *Client) GetScan(ctx *model.Context, id string) (*ent.Scan, error) {
 					vsq.WithAuthor()
 				})
 			})
+			rq.WithLabels()
 		}).
 		WithPackages(func(prq *ent.PackageRecordQuery) {
 			prq.WithVulnerabilities(func(vq *ent.VulnerabilityQuery) {
@@ -148,7 +149,7 @@ func (x *Client) getLatestScanEntity(ctx *model.Context, branch model.GitHubBran
 
 	got, err := x.client.Repository.Query().
 		Where(repository.Owner(branch.Owner)).
-		Where(repository.Name(branch.RepoName)).
+		Where(repository.Name(branch.Name)).
 		WithScan(func(sq *ent.ScanQuery) {
 			sq.Where(scan.Branch(branch.Branch)).
 				Order(ent.Desc("scanned_at")).

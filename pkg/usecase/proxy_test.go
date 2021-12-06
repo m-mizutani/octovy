@@ -38,8 +38,6 @@ func TestGetRepositories(t *testing.T) {
 		}, nil
 	}
 
-	require.NoError(t, uc.Init())
-
 	t.Run("no result before scan", func(t *testing.T) {
 		r0, err := uc.GetRepositories(ctx)
 		require.NoError(t, err)
@@ -58,8 +56,8 @@ func TestGetRepositories(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
+					Owner: "blue",
+					Name:  "five",
 				},
 				Branch: branch,
 			},
@@ -181,14 +179,13 @@ func TestGetVulnerability(t *testing.T) {
 		return nil, nil
 	}
 
-	require.NoError(t, uc.Init())
 	require.NoError(t, uc.Scan(ctx, &model.ScanRepositoryRequest{
 		InstallID: 1,
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
+					Owner: "blue",
+					Name:  "five",
 				},
 				Branch: branch,
 			},
@@ -200,8 +197,8 @@ func TestGetVulnerability(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "timeless",
+					Owner: "blue",
+					Name:  "timeless",
 				},
 				Branch: branch,
 			},
@@ -213,8 +210,8 @@ func TestGetVulnerability(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "words",
+					Owner: "blue",
+					Name:  "words",
 				},
 				Branch: branch,
 			},

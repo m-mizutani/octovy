@@ -88,9 +88,13 @@ Run container image with following environment variables.
 - Database
     - `OCTOVY_DB_TYPE`: Database type. Recommend to use `postgres`
     - `OCTOVY_DB_CONFIG`: DSN of your database. Example: `host=x.x.x.x port=5432 user=octovy_app dbname=octovy_db password=xxxxxx`
-- Custom GitHub check rule
+- Custom GitHub check rule by Rego policy
     - `OCTOVY_CHECK_POLICY_DATA`: Check result policy in Rego (plain text)
     - `OCTOVY_CHECK_POLICY_FILE`: Check result policy in Rego (file path)
+- Custom GitHub check rule by OPA server
+    - `OCTOVY_OPA_URL`: OPA server URL (e.g. https://opa.example.com)
+    - `OCTOVY_OPA_PATH`: Additional path of OPA. For example, octovy accesses `https://opa.example.com/v1/data/mypolicy/check` by setting `OCTOVY_OPA_PATH` = `mypolicy`.
+    - `OCTOVY_OPA_IAP`: Set "1" if you want to access OPA server through Google IAP
 
 `OCTOVY_GITHUB_APP_PRIVATE_KEY`, `OCTOVY_GITHUB_SECRET`, `OCTOVY_GITHUB_WEBHOOK_SECRET` and `OCTOVY_DB_CONFIG` may contain secret values. I highly recommend to use secret variable management service (e.g. [Secret Manager](https://cloud.google.com/secret-manager) of Google Cloud and [AWS Secrets Manager](https://aws.amazon.com/jp/secrets-manager/)).
 
@@ -120,7 +124,7 @@ result = "failure" {
 - Package
     - `package octovy.check` is required at head line of policy
 - Input
-    - `model.PackageInventory` of scan result
+    - `model.ScanReport` of scan result
 - Output:
     - `result` as string type (required): It must be either one of `conclusion` in [GitHub check parameters](https://docs.github.com/en/rest/reference/checks#update-a-check-run--parameters).
     - `msg` as string type (optional): The message will be appeared in title of check result if given.

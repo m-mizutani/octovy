@@ -10,6 +10,8 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/opa"
+	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 
@@ -25,12 +27,13 @@ type mockSet struct {
 	GtiHubApp *githubapp.Mock
 	Trivy     *trivy.Mock
 	Utils     *infra.Utils
+	OPA       *opa.Mock
 }
 
-type testOption func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet)
+type testOption func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet)
 
 func optDBMock() testOption {
-	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
 		dbClient := db.NewMock(t)
 		infra.DB = dbClient
 		mock.DB = dbClient
@@ -38,7 +41,7 @@ func optDBMock() testOption {
 }
 
 func optGitHubMock() testOption {
-	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
 		ghClient := github.NewMock()
 		infra.GitHub = ghClient
 		mock.GitHub = ghClient
@@ -46,7 +49,7 @@ func optGitHubMock() testOption {
 }
 
 func optGitHubAppMock() testOption {
-	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
 		newGitHubApp, ghApp := githubapp.NewMock()
 		infra.NewGitHubApp = newGitHubApp
 		mock.GtiHubApp = ghApp
@@ -54,7 +57,7 @@ func optGitHubAppMock() testOption {
 }
 
 func optGitHubAppMockZip() testOption {
-	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
 		if mock.GtiHubApp == nil {
 			require.Fail(t, "optGitHubAppMock should be called at first")
 		}
@@ -76,13 +79,23 @@ func optGitHubAppMockZip() testOption {
 	}
 }
 
+func optOPAServer() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
+		opaMock := &opa.Mock{}
+		mock.OPA = opaMock
+		infra.OPAClient = opaMock
+	}
+}
+
 func optCheckRule(rule string, update func(repo *model.GitHubRepo, checkID int64, opt *gh.UpdateCheckRunOptions) error) testOption {
-	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
 		if mock.GtiHubApp == nil {
 			require.Fail(t, "optGitHubAppMock should be called at first")
 		}
 
-		cfg.CheckPolicyData = rule
+		check, err := policy.NewCheck(rule)
+		require.NoError(t, err)
+		infra.CheckPolicy = check
 
 		var calledCreateCheckRunMock int
 
@@ -101,21 +114,21 @@ func optCheckRule(rule string, update func(repo *model.GitHubRepo, checkID int64
 }
 
 func optTrivy() testOption {
-	return func(t *testing.T, cfg *model.Config, infra *infra.Interfaces, mock *mockSet) {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
 		trivyClient := trivy.NewMock()
 		infra.Trivy = trivyClient
 		mock.Trivy = trivyClient
 	}
 }
 
-func setupUsecase(t *testing.T, options ...testOption) (usecase.Interface, *mockSet) {
+func setupUsecase(t *testing.T, options ...testOption) (*usecase.Usecase, *mockSet) {
 	utils := infra.NewUtils()
 	var cfg model.Config
 
 	mock := &mockSet{
 		Utils: utils,
 	}
-	inf := &infra.Interfaces{
+	inf := &infra.Clients{
 		Utils: utils,
 	}
 
@@ -123,13 +136,12 @@ func setupUsecase(t *testing.T, options ...testOption) (usecase.Interface, *mock
 		opt(t, &cfg, inf, mock)
 	}
 
-	uc := usecase.NewUsecase(&cfg)
+	uc := usecase.New(&cfg, inf)
 	usecase.SetErrorHandler(uc, func(err error) {
 		require.NoError(t, err)
 	})
 
 	uc.DisableInvokeThread()
-	uc.InjectInfra(inf)
 
 	return uc, mock
 }

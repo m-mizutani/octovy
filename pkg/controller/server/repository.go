@@ -25,8 +25,8 @@ func getRepository(c *gin.Context) {
 	uc := getUsecase(c)
 
 	resp, err := uc.GetRepository(model.NewContextWith(c), &model.GitHubRepo{
-		Owner:    c.Param("owner"),
-		RepoName: c.Param("repo"),
+		Owner: c.Param("owner"),
+		Name:  c.Param("repo"),
 	})
 	if err != nil {
 		_ = c.Error(err)
@@ -41,8 +41,8 @@ func getRepositoryScan(c *gin.Context) {
 
 	req := &model.GetRepoScanRequest{
 		GitHubRepo: model.GitHubRepo{
-			Owner:    c.Param("owner"),
-			RepoName: c.Param("repo"),
+			Owner: c.Param("owner"),
+			Name:  c.Param("repo"),
 		},
 	}
 

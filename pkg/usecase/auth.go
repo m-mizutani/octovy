@@ -13,7 +13,7 @@ const authStateTimeoutSecond = 600
 const sessionTokenTimeoutSecond = 24 * 60 * 60 * 7
 const sessionTokenLength = 128
 
-func (x *usecase) CreateAuthState(ctx *model.Context) (string, error) {
+func (x *Usecase) CreateAuthState(ctx *model.Context) (string, error) {
 	state := utils.GenerateToken(128)
 
 	now := x.infra.Utils.Now().Unix()
@@ -24,7 +24,7 @@ func (x *usecase) CreateAuthState(ctx *model.Context) (string, error) {
 	return state, nil
 }
 
-func (x *usecase) LookupUser(ctx *model.Context, userID int) (*ent.User, error) {
+func (x *Usecase) LookupUser(ctx *model.Context, userID int) (*ent.User, error) {
 	user, err := x.infra.DB.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (x *usecase) LookupUser(ctx *model.Context, userID int) (*ent.User, error) 
 	return user, nil
 }
 
-func (x *usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.User, error) {
+func (x *Usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.User, error) {
 	if len(state) < 32 {
 		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Auth state is empty or not enough length")
 	}
@@ -51,7 +51,7 @@ func (x *usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.U
 		return nil, goerr.Wrap(model.ErrAuthenticationFailed, "Auth state is not found")
 	}
 
-	token, err := x.infra.GitHub.Authenticate(ctx, x.config.GitHubAppClientID, x.config.GitHubAppSecret, code)
+	token, err := x.infra.GitHub.Authenticate(ctx, code)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (x *usecase) AuthGitHubUser(ctx *model.Context, code, state string) (*ent.U
 	return user, nil
 }
 
-func (x *usecase) CreateSession(ctx *model.Context, user *ent.User) (*ent.Session, error) {
+func (x *Usecase) CreateSession(ctx *model.Context, user *ent.User) (*ent.Session, error) {
 	token := utils.GenerateToken(sessionTokenLength)
 	now := x.infra.Utils.Now()
 	ssn := &ent.Session{
@@ -111,7 +111,7 @@ func (x *usecase) CreateSession(ctx *model.Context, user *ent.User) (*ent.Sessio
 	return ssn, nil
 }
 
-func (x *usecase) ValidateSession(ctx *model.Context, ssnID string) (*ent.Session, error) {
+func (x *Usecase) ValidateSession(ctx *model.Context, ssnID string) (*ent.Session, error) {
 	ssn, err := x.infra.DB.GetSession(ctx, ssnID, x.infra.Utils.Now().Unix())
 	if err != nil {
 		return nil, err
@@ -123,6 +123,6 @@ func (x *usecase) ValidateSession(ctx *model.Context, ssnID string) (*ent.Sessio
 	return ssn, nil
 }
 
-func (x *usecase) RevokeSession(ctx *model.Context, ssnID string) error {
+func (x *Usecase) RevokeSession(ctx *model.Context, ssnID string) error {
 	return x.infra.DB.DeleteSession(ctx, ssnID)
 }

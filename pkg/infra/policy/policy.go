@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"encoding/json"
+
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/open-policy-agent/opa/ast"
@@ -21,14 +23,14 @@ func NewCheck(query string) (Check, error) {
 
 type CheckFactory func(query string) (Check, error)
 type Check interface {
-	Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error)
+	Result(ctx *model.Context, inv *model.ScanReport) (*model.GitHubCheckResult, error)
 }
 
 type checkPolicy struct {
 	compiler *ast.Compiler
 }
 
-func (x *checkPolicy) Result(ctx *model.Context, inv *model.PackageInventory) (*model.GitHubCheckResult, error) {
+func (x *checkPolicy) Result(ctx *model.Context, inv *model.ScanReport) (*model.GitHubCheckResult, error) {
 	policy := rego.New(
 		rego.Query(`response = data.octovy.check`),
 		rego.Compiler(x.compiler),
@@ -47,37 +49,21 @@ func (x *checkPolicy) Result(ctx *model.Context, inv *model.PackageInventory) (*
 	if !ok {
 		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'response' is empty")
 	}
-	respMap, ok := response.(map[string]interface{})
-	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'response' type is invalid")
+
+	raw, err := json.Marshal(response)
+	if err != nil {
+		return nil, model.ErrInvalidPolicyResult.Wrap(err)
+	}
+	var result model.GitHubCheckResult
+	if err := json.Unmarshal(raw, &result); err != nil {
+		return nil, model.ErrInvalidPolicyResult.Wrap(err)
 	}
 
-	obj, ok := respMap["result"]
-	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'result' field is not found").With("response", respMap)
-	}
-	result, ok := obj.(string)
-	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "'result' field must be string")
-	}
-
-	var msg string
-	if obj, ok := respMap["msg"]; ok {
-		if m, ok := obj.(string); ok {
-			msg = m
-		} else {
-			ctx.Log().With("msg", obj).Warn("Check rule result has 'msg' field, but not string type")
-		}
-	}
-
-	switch result {
+	switch result.Conclusion {
 	case "action_required", "cancelled", "failure", "neutral", "success", "skipped", "stale", "timed_out":
-		return &model.GitHubCheckResult{
-			Conclusion: result,
-			Message:    msg,
-		}, nil
+		return &result, nil
 
 	default:
-		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "Unsupported GitHub check conclusion").With("result", result)
+		return nil, goerr.Wrap(model.ErrInvalidPolicyResult, "Unsupported GitHub check conclusion").With("resultSet", rs)
 	}
 }

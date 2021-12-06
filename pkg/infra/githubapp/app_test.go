@@ -51,12 +51,12 @@ func TestGitHubDownload(t *testing.T) {
 	appID, err := strconv.ParseInt(props.GITHUB_APP_ID, 10, 64)
 	require.NoError(t, err)
 
-	app := githubapp.New(appID, installID, privateKey)
+	app := githubapp.New(appID, privateKey)(installID)
 
 	buf := &WriteBuffer{}
 	repo := &model.GitHubRepo{
-		Owner:    props.GITHUB_ORG,
-		RepoName: props.GITHUB_REPO_NAME,
+		Owner: props.GITHUB_ORG,
+		Name:  props.GITHUB_REPO_NAME,
 	}
 	require.NoError(t, app.GetCodeZip(repo, props.GITHUB_COMMIT, buf))
 	assert.NotEmpty(t, buf.Bytes())

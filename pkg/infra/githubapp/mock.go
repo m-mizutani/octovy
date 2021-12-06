@@ -20,10 +20,8 @@ type Mock struct {
 
 func NewMock() (Factory, *Mock) {
 	mock := &Mock{}
-	return func(appID, installID int64, pem []byte) Interface {
-		mock.AppID = appID
+	return func(installID int64) Interface {
 		mock.InstallID = installID
-		mock.PEM = pem
 
 		return mock
 	}, mock

@@ -16,27 +16,32 @@ var logger = utils.Logger
 
 // This package is used to download trivy database, not used by GitHub App.
 type Interface interface {
-	Authenticate(ctx *model.Context, clientID, clientSecret, code string) (*model.GitHubToken, error)
+	Authenticate(ctx *model.Context, code string) (*model.GitHubToken, error)
 	GetUser(ctx *model.Context, token *model.GitHubToken) (*github.User, error)
 }
 
 type Client struct {
-	client *github.Client
+	clientID     string
+	clientSecret string
+	client       *github.Client
 }
 
-func New() *Client {
-	return &Client{
-		client: github.NewClient(&http.Client{}),
-	}
-}
-
-func (x *Client) Authenticate(ctx *model.Context, clientID, clientSecret, code string) (*model.GitHubToken, error) {
-	if clientID == "" {
+func New(id, secret string) (*Client, error) {
+	if id == "" {
 		return nil, goerr.Wrap(model.ErrInvalidSystemValue, "clientID is empty")
 	}
-	if clientSecret == "" {
+	if secret == "" {
 		return nil, goerr.Wrap(model.ErrInvalidSystemValue, "clientSecret is empty")
 	}
+
+	return &Client{
+		clientID:     id,
+		clientSecret: secret,
+		client:       github.NewClient(&http.Client{}),
+	}, nil
+}
+
+func (x *Client) Authenticate(ctx *model.Context, code string) (*model.GitHubToken, error) {
 	if code == "" {
 		return nil, goerr.Wrap(model.ErrInvalidSystemValue, "code is empty")
 	}
@@ -46,8 +51,8 @@ func (x *Client) Authenticate(ctx *model.Context, clientID, clientSecret, code s
 		ClientSecret string `json:"client_secret"`
 		Code         string `json:"code"`
 	}{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
+		ClientID:     x.clientID,
+		ClientSecret: x.clientSecret,
 		Code:         code,
 	}
 	authReqBody, err := json.Marshal(authReq)

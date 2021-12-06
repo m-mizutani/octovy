@@ -9,6 +9,8 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/controller/server"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/infra"
+	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/urfave/cli/v2"
 )
@@ -47,7 +49,7 @@ func (x *Controller) RunCmd(args []string) error {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.With("config", x.Config.CopyWithoutSensitives()).With("err", err).Error("Failed")
+		logger.With("config", x.Config).With("err", err).Error("Failed")
 		return err
 	}
 
@@ -68,6 +70,7 @@ func globalSetup(c *cli.Context) error {
 
 func newServeCommand(ctrl *Controller) *cli.Command {
 	var checkRuleFile string
+	var infraCfg infra.Config
 
 	return &cli.Command{
 		Name: "serve",
@@ -93,14 +96,14 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				Name:        "db-type",
 				Usage:       "Database type [postgres|sqlite3]",
 				EnvVars:     []string{"OCTOVY_DB_TYPE"},
-				Destination: &ctrl.Config.DBType,
+				Destination: &infraCfg.DBType,
 				Value:       "sqlite3",
 			},
 			&cli.StringFlag{
 				Name:        "db-config",
 				Usage:       "Database config as DSN",
 				EnvVars:     []string{"OCTOVY_DB_CONFIG"},
-				Destination: &ctrl.Config.DBConfig,
+				Destination: &infraCfg.DBConfig,
 				Value:       "file:ent?mode=memory&cache=shared&_fk=1",
 			},
 
@@ -121,26 +124,26 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			&cli.Int64Flag{
 				Name:        "github-app-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},
-				Destination: &ctrl.Config.GitHubAppID,
+				Destination: &infraCfg.GitHubAppID,
 				Required:    true,
 			},
 			&cli.PathFlag{
 				Name:        "github-app-private-key",
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
 				Usage:       "GitHub App private key data (not file path)",
-				Destination: &ctrl.Config.GitHubAppPrivateKey,
+				Destination: &infraCfg.GitHubAppPrivateKey,
 				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "github-app-client-id",
 				EnvVars:     []string{"OCTOVY_GITHUB_CLIENT_ID"},
-				Destination: &ctrl.Config.GitHubAppClientID,
+				Destination: &infraCfg.GitHubAppClientID,
 				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "github-app-client-secret",
 				EnvVars:     []string{"OCTOVY_GITHUB_SECRET"},
-				Destination: &ctrl.Config.GitHubAppSecret,
+				Destination: &infraCfg.GitHubAppSecret,
 				Required:    true,
 			},
 			&cli.StringFlag{
@@ -153,7 +156,7 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			&cli.StringFlag{
 				Name:        "check-policy-data",
 				EnvVars:     []string{"OCTOVY_CHECK_POLICY_DATA"},
-				Destination: &ctrl.Config.CheckPolicyData,
+				Destination: &infraCfg.CheckPolicyData,
 				Usage:       "Check result policy in Rego (plain text)",
 			},
 			&cli.StringFlag{
@@ -164,9 +167,25 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.StringFlag{
+				Name:        "opa-url",
+				EnvVars:     []string{"OCTOVY_OPA_URL"},
+				Destination: &infraCfg.OPA.BaseURL,
+			},
+			&cli.StringFlag{
+				Name:        "opa-path",
+				EnvVars:     []string{"OCTOVY_OPA_PATH"},
+				Destination: &infraCfg.OPA.Path,
+			},
+			&cli.BoolFlag{
+				Name:        "opa-use-iap",
+				EnvVars:     []string{"OCTOVY_OPA_IAP"},
+				Destination: &infraCfg.OPA.UseGoogleIAP,
+			},
+
+			&cli.StringFlag{
 				Name:        "trivy-path",
 				EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
-				Destination: &ctrl.Config.TrivyPath,
+				Destination: &infraCfg.TrivyPath,
 			},
 
 			&cli.StringFlag{
@@ -186,36 +205,33 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 				if err != nil {
 					return goerr.Wrap(err, "fail to read check rule file")
 				}
-				if ctrl.Config.CheckPolicyData != "" {
-					logger.With("existed", ctrl.Config.CheckPolicyData).Warn("both of --check-rule-file and --check-rule-data are specified. check-rule-data will be overwritten")
+				if infraCfg.CheckPolicyData != "" {
+					logger.With("existed", infraCfg.CheckPolicyData).Warn("both of --check-rule-file and --check-rule-data are specified. check-rule-data will be overwritten")
 				}
-				ctrl.Config.CheckPolicyData = string(raw)
+				infraCfg.CheckPolicyData = string(raw)
 			}
 
-			if err := ctrl.usecase.Init(); err != nil {
+			clients, err := infra.New(&infraCfg)
+			if err != nil {
 				return err
 			}
+			uc := usecase.New(ctrl.Config, clients)
+			defer uc.Close()
 
-			return serveCommand(c, ctrl)
+			serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)
+
+			engine := server.New(uc)
+
+			gin.SetMode(gin.DebugMode)
+
+			logger.With("config", ctrl.Config).With("infra", infraCfg).Info("Starting server...")
+			if err := engine.Run(serverAddr); err != nil {
+				return err
+			}
+			return nil
 		},
 		After: func(c *cli.Context) error {
-			ctrl.usecase.Shutdown()
 			return nil
 		},
 	}
-}
-
-func serveCommand(c *cli.Context, ctrl *Controller) error {
-	serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)
-
-	engine := server.New(ctrl.usecase)
-
-	gin.SetMode(gin.DebugMode)
-
-	logger.With("config", ctrl.Config.CopyWithoutSensitives()).Info("Starting server...")
-	if err := engine.Run(serverAddr); err != nil {
-		logger.Err(err).With("config", ctrl.Config.CopyWithoutSensitives()).Error("Server error")
-	}
-
-	return nil
 }

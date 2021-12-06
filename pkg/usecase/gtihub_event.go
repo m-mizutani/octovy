@@ -11,7 +11,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error {
+func (x *Usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEvent) error {
 	if event == nil ||
 		event.Repo == nil ||
 		event.Repo.HTMLURL == nil ||
@@ -39,8 +39,8 @@ func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    *event.Repo.Owner.Name,
-					RepoName: *event.Repo.Name,
+					Owner: *event.Repo.Owner.Name,
+					Name:  *event.Repo.Name,
 				},
 				Branch: refs[2],
 			},
@@ -57,7 +57,7 @@ func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 
 	repo := &ent.Repository{
 		Owner:         req.Owner,
-		Name:          req.RepoName,
+		Name:          req.Name,
 		URL:           *event.Repo.HTMLURL,
 		InstallID:     *event.Installation.ID,
 		DefaultBranch: event.Repo.DefaultBranch,
@@ -72,7 +72,7 @@ func (x *usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 
 }
 
-func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error {
+func (x *Usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.PullRequestEvent) error {
 	if event == nil ||
 		event.Action == nil ||
 		event.Repo == nil ||
@@ -109,8 +109,8 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    *event.Repo.Owner.Login,
-					RepoName: *event.Repo.Name,
+					Owner: *event.Repo.Owner.Login,
+					Name:  *event.Repo.Name,
 				},
 				Branch: *event.PullRequest.Head.Label,
 			},
@@ -130,7 +130,7 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 
 	repo := &ent.Repository{
 		Owner:         req.Owner,
-		Name:          req.RepoName,
+		Name:          req.Name,
 		URL:           *event.Repo.HTMLURL,
 		InstallID:     *event.Installation.ID,
 		DefaultBranch: event.Repo.DefaultBranch,
@@ -145,7 +145,7 @@ func (x *usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 	return nil
 }
 
-func (x *usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error {
+func (x *Usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *github.InstallationEvent) error {
 	if event == nil ||
 		event.Installation == nil ||
 		event.Installation.ID == nil ||
@@ -179,7 +179,7 @@ func (x *usecase) HandleGitHubInstallationEvent(ctx *model.Context, event *githu
 	return nil
 }
 
-func (x *usecase) VerifyGitHubSecret(sigSHA256 string, body []byte) error {
+func (x *Usecase) VerifyGitHubSecret(sigSHA256 string, body []byte) error {
 	if x.config.GitHubWebhookSecret == "" {
 		if sigSHA256 == "" {
 			return nil // No secret and no signature
