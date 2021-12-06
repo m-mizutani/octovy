@@ -208,7 +208,7 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 
 	if clients.OPAClient != nil {
 		var r model.GitHubCheckResult
-		if err := clients.OPAClient.Data(ctx, scanReport, &r); err != nil {
+		if err := clients.OPAClient.Data(ctx, opa.Check, scanReport, &r); err != nil {
 			return err
 		}
 		result = &r

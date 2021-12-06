@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-github/v39/github"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/infra/opa"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 
 	"github.com/stretchr/testify/assert"
@@ -257,7 +258,7 @@ func TestScanProcedureWithOPA(t *testing.T) {
 	}
 
 	var calledOPA int
-	mock.OPA.MockData = func(ctx context.Context, input, result interface{}) error {
+	mock.OPA.MockData = func(ctx context.Context, pkg opa.RegoPkg, input, result interface{}) error {
 		var report model.ScanReport
 		raw, err := json.Marshal(input)
 		require.NoError(t, err)
@@ -265,7 +266,7 @@ func TestScanProcedureWithOPA(t *testing.T) {
 
 		assert.Equal(t, "blue", report.Repo.Owner)
 		assert.Equal(t, "five", report.Repo.Name)
-
+		assert.Equal(t, opa.Check, pkg)
 		calledOPA++
 		return nil
 	}

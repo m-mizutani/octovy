@@ -27,5 +27,5 @@ func TestOPAClient(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.NoError(t, client.Data(context.Background(), obj, resp))
+	require.NoError(t, client.Data(context.Background(), "", obj, resp))
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/m-mizutani/goerr"
 	opaclient "github.com/m-mizutani/opa-go-client"
@@ -11,12 +12,19 @@ import (
 )
 
 type Interface interface {
-	Data(ctx context.Context, input interface{}, result interface{}) error
+	Data(ctx context.Context, pkg RegoPkg, input interface{}, result interface{}) error
 }
 
+type RegoPkg string
+
+const (
+	Check RegoPkg = "check"
+)
+
 type Client struct {
-	client *opaclient.Client
-	config Config
+	client   *opaclient.Client
+	config   Config
+	basePath string
 }
 
 type Config struct {
@@ -53,14 +61,15 @@ func New(cfg *Config) (*Client, error) {
 	}
 
 	return &Client{
-		client: client,
-		config: *cfg,
+		client:   client,
+		config:   *cfg,
+		basePath: strings.TrimRight(cfg.Path, "/"),
 	}, nil
 }
 
-func (x *Client) Data(ctx context.Context, input interface{}, result interface{}) error {
+func (x *Client) Data(ctx context.Context, pkg RegoPkg, input interface{}, result interface{}) error {
 	req := &opaclient.DataRequest{
-		Path:  x.config.Path,
+		Path:  x.basePath + "/" + string(pkg),
 		Input: input,
 	}
 	if err := x.client.GetData(ctx, req, result); err != nil {

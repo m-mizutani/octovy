@@ -224,7 +224,7 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 
 			gin.SetMode(gin.DebugMode)
 
-			logger.With("config", ctrl.Config).Info("Starting server...")
+			logger.With("config", ctrl.Config).With("infra", infraCfg).Info("Starting server...")
 			if err := engine.Run(serverAddr); err != nil {
 				return err
 			}
