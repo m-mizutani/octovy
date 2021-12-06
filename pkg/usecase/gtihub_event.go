@@ -39,8 +39,8 @@ func (x *Usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    *event.Repo.Owner.Name,
-					RepoName: *event.Repo.Name,
+					Owner: *event.Repo.Owner.Name,
+					Name:  *event.Repo.Name,
 				},
 				Branch: refs[2],
 			},
@@ -57,7 +57,7 @@ func (x *Usecase) HandleGitHubPushEvent(ctx *model.Context, event *github.PushEv
 
 	repo := &ent.Repository{
 		Owner:         req.Owner,
-		Name:          req.RepoName,
+		Name:          req.Name,
 		URL:           *event.Repo.HTMLURL,
 		InstallID:     *event.Installation.ID,
 		DefaultBranch: event.Repo.DefaultBranch,
@@ -109,8 +109,8 @@ func (x *Usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    *event.Repo.Owner.Login,
-					RepoName: *event.Repo.Name,
+					Owner: *event.Repo.Owner.Login,
+					Name:  *event.Repo.Name,
 				},
 				Branch: *event.PullRequest.Head.Label,
 			},
@@ -130,7 +130,7 @@ func (x *Usecase) HandleGitHubPullReqEvent(ctx *model.Context, event *github.Pul
 
 	repo := &ent.Repository{
 		Owner:         req.Owner,
-		Name:          req.RepoName,
+		Name:          req.Name,
 		URL:           *event.Repo.HTMLURL,
 		InstallID:     *event.Installation.ID,
 		DefaultBranch: event.Repo.DefaultBranch,

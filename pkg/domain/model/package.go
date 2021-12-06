@@ -56,8 +56,8 @@ func NewScanReport(scan *ent.Scan, statuses []*ent.VulnStatus, now int64) *ScanR
 		Repo: Repository{
 			GitHubBranch: GitHubBranch{
 				GitHubRepo: GitHubRepo{
-					Owner:    repo.Owner,
-					RepoName: repo.Name,
+					Owner: repo.Owner,
+					Name:  repo.Name,
 				},
 				Branch: scan.Branch,
 			},

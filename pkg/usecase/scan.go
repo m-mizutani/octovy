@@ -94,7 +94,7 @@ func insertScanReport(ctx *model.Context, client db.Interface, req *model.ScanRe
 
 	repo, err := client.CreateRepo(ctx, &ent.Repository{
 		Owner: req.Owner,
-		Name:  req.RepoName,
+		Name:  req.Name,
 	})
 	if err != nil {
 		return nil, err

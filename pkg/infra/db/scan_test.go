@@ -133,8 +133,8 @@ func TestScan(t *testing.T) {
 
 		latest, err := client.GetLatestScan(ctx, model.GitHubBranch{
 			GitHubRepo: model.GitHubRepo{
-				Owner:    "blue",
-				RepoName: "five",
+				Owner: "blue",
+				Name:  "five",
 			},
 			Branch: "main",
 		})

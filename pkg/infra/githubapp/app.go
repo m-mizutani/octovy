@@ -78,7 +78,7 @@ func (x *Client) GetCodeZip(repo *model.GitHubRepo, commitID string, w io.WriteC
 		Debug("Sending GetArchiveLink request")
 
 	// https://docs.github.com/en/rest/reference/repos#downloads
-	url, r, err := client.Repositories.GetArchiveLink(ctx, repo.Owner, repo.RepoName, github.Zipball, opt, false)
+	url, r, err := client.Repositories.GetArchiveLink(ctx, repo.Owner, repo.Name, github.Zipball, opt, false)
 	if err != nil {
 		return goerr.Wrap(err)
 	}
@@ -121,7 +121,7 @@ func (x *Client) CreateIssueComment(repo *model.GitHubRepo, prID int, body strin
 	ctx := context.Background()
 	comment := &github.IssueComment{Body: &body}
 
-	ret, resp, err := client.Issues.CreateComment(ctx, repo.Owner, repo.RepoName, prID, comment)
+	ret, resp, err := client.Issues.CreateComment(ctx, repo.Owner, repo.Name, prID, comment)
 	if err != nil {
 		return goerr.Wrap(err, "Failed to create github comment").With("repo", repo).With("prID", prID).With("comment", comment)
 	}
@@ -146,7 +146,7 @@ func (x *Client) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, e
 		Status:  github.String("in_progress"),
 	}
 
-	run, resp, err := client.Checks.CreateCheckRun(ctx, repo.Owner, repo.RepoName, opt)
+	run, resp, err := client.Checks.CreateCheckRun(ctx, repo.Owner, repo.Name, opt)
 	if err != nil {
 		return 0, goerr.Wrap(err, "Failed to create check run").With("repo", repo).With("commit", commit)
 	}
@@ -166,7 +166,7 @@ func (x *Client) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *gith
 
 	ctx := context.Background()
 
-	_, resp, err := client.Checks.UpdateCheckRun(ctx, repo.Owner, repo.RepoName, checkID, *opt)
+	_, resp, err := client.Checks.UpdateCheckRun(ctx, repo.Owner, repo.Name, checkID, *opt)
 	if err != nil {
 		return goerr.Wrap(err, "Failed to update check status to complete").With("repo", repo).With("id", checkID).With("opt", opt)
 	}

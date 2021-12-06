@@ -127,7 +127,7 @@ func (x *Client) GetRepository(ctx *model.Context, repo *model.GitHubRepo) (*ent
 
 	resp, err := x.client.Repository.Query().
 		Where(repository.Owner(repo.Owner)).
-		Where(repository.Name(repo.RepoName)).
+		Where(repository.Name(repo.Name)).
 		WithLabels().
 		WithStatus().
 		First(ctx)

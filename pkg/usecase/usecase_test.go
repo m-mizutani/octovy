@@ -10,6 +10,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/opa"
 	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/usecase"
@@ -26,6 +27,7 @@ type mockSet struct {
 	GtiHubApp *githubapp.Mock
 	Trivy     *trivy.Mock
 	Utils     *infra.Utils
+	OPA       *opa.Mock
 }
 
 type testOption func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet)
@@ -74,6 +76,14 @@ func optGitHubAppMockZip() testOption {
 		t.Cleanup(func() {
 			assert.GreaterOrEqual(t, calledGetCodeZipMock, 1)
 		})
+	}
+}
+
+func optOPAServer() testOption {
+	return func(t *testing.T, cfg *model.Config, infra *infra.Clients, mock *mockSet) {
+		opaMock := &opa.Mock{}
+		mock.OPA = opaMock
+		infra.OPAClient = opaMock
 	}
 }
 

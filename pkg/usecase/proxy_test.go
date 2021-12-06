@@ -56,8 +56,8 @@ func TestGetRepositories(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
+					Owner: "blue",
+					Name:  "five",
 				},
 				Branch: branch,
 			},
@@ -184,8 +184,8 @@ func TestGetVulnerability(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
+					Owner: "blue",
+					Name:  "five",
 				},
 				Branch: branch,
 			},
@@ -197,8 +197,8 @@ func TestGetVulnerability(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "timeless",
+					Owner: "blue",
+					Name:  "timeless",
 				},
 				Branch: branch,
 			},
@@ -210,8 +210,8 @@ func TestGetVulnerability(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "words",
+					Owner: "blue",
+					Name:  "words",
 				},
 				Branch: branch,
 			},

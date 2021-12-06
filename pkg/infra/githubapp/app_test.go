@@ -55,8 +55,8 @@ func TestGitHubDownload(t *testing.T) {
 
 	buf := &WriteBuffer{}
 	repo := &model.GitHubRepo{
-		Owner:    props.GITHUB_ORG,
-		RepoName: props.GITHUB_REPO_NAME,
+		Owner: props.GITHUB_ORG,
+		Name:  props.GITHUB_REPO_NAME,
 	}
 	require.NoError(t, app.GetCodeZip(repo, props.GITHUB_COMMIT, buf))
 	assert.NotEmpty(t, buf.Bytes())

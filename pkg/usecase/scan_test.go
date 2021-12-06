@@ -1,6 +1,8 @@
 package usecase_test
 
 import (
+	"context"
+	"encoding/json"
 	"testing"
 
 	dtypes "github.com/aquasecurity/trivy-db/pkg/types"
@@ -58,8 +60,8 @@ func TestScanProcedure(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
+					Owner: "blue",
+					Name:  "five",
 				},
 				Branch: "main",
 			},
@@ -74,8 +76,8 @@ func TestScanProcedure(t *testing.T) {
 	ctx := model.NewContext()
 	scan, err := mock.DB.GetLatestScan(ctx, model.GitHubBranch{
 		GitHubRepo: model.GitHubRepo{
-			Owner:    "blue",
-			RepoName: "five",
+			Owner: "blue",
+			Name:  "five",
 		},
 		Branch: "main",
 	})
@@ -141,8 +143,8 @@ func TestScanProcedureWithRule(t *testing.T) {
 		ScanTarget: model.ScanTarget{
 			GitHubBranch: model.GitHubBranch{
 				GitHubRepo: model.GitHubRepo{
-					Owner:    "blue",
-					RepoName: "five",
+					Owner: "blue",
+					Name:  "five",
 				},
 				Branch: "main",
 			},
@@ -211,4 +213,92 @@ func TestScanProcedureWithRule(t *testing.T) {
 			assert.Equal(t, 1, called)
 		})
 	}
+}
+
+func TestScanProcedureWithOPA(t *testing.T) {
+	uc, mock := setupUsecase(t,
+		optDBMock(),
+		optTrivy(),
+		optGitHubMock(),
+		optGitHubAppMock(),
+		optGitHubAppMockZip(),
+		optOPAServer(),
+	)
+
+	var calledScan int
+	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
+		calledScan++
+		return &model.TrivyReport{
+			Results: model.TrivyResults{
+				{
+					Target: "Gemfile.lock",
+					Packages: []model.TrivyPackage{
+						{
+							Name:    "example",
+							Version: "6.1.4",
+						},
+					},
+					Vulnerabilities: []model.DetectedVulnerability{
+						{
+							VulnerabilityID:  "CVE-1000",
+							PkgName:          "example",
+							InstalledVersion: "6.1.4",
+							FixedVersion:     "6.1.5",
+							Vulnerability: dtypes.Vulnerability{
+								Title:       "test vuln",
+								Description: "it's test",
+								Severity:    "low",
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	var calledOPA int
+	mock.OPA.MockData = func(ctx context.Context, input, result interface{}) error {
+		var report model.ScanReport
+		raw, err := json.Marshal(input)
+		require.NoError(t, err)
+		json.Unmarshal(raw, &report)
+
+		assert.Equal(t, "blue", report.Repo.Owner)
+		assert.Equal(t, "five", report.Repo.Name)
+
+		calledOPA++
+		return nil
+	}
+
+	var callCreateCheck, callUpdateCheck int
+	mock.GtiHubApp.CreateCheckRunMock = func(repo *model.GitHubRepo, commit string) (int64, error) {
+		callCreateCheck++
+		return 0, nil
+	}
+	mock.GtiHubApp.UpdateCheckRunMock = func(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+		callUpdateCheck++
+		return nil
+	}
+
+	scanReq := &model.ScanRepositoryRequest{
+		InstallID: 1,
+		ScanTarget: model.ScanTarget{
+			GitHubBranch: model.GitHubBranch{
+				GitHubRepo: model.GitHubRepo{
+					Owner: "blue",
+					Name:  "five",
+				},
+				Branch: "main",
+			},
+			CommitID:    "1234567",
+			UpdatedAt:   2000,
+			RequestedAt: 2100,
+		},
+	}
+
+	assert.NoError(t, uc.Scan(model.NewContext(), scanReq))
+	assert.Equal(t, 1, calledScan)
+	assert.Equal(t, 1, calledOPA)
+	assert.Equal(t, 1, callCreateCheck)
+	assert.Equal(t, 1, callUpdateCheck)
 }

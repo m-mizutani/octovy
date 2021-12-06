@@ -13,7 +13,7 @@ func (x *Usecase) RegisterRepository(ctx *model.Context, repo *ent.Repository) (
 func (x *Usecase) UpdateVulnStatus(ctx *model.Context, req *model.UpdateVulnStatusRequest) (*ent.VulnStatus, error) {
 	tgt, err := x.infra.DB.CreateRepo(ctx, &ent.Repository{
 		Owner: req.Owner,
-		Name:  req.RepoName,
+		Name:  req.Name,
 	})
 	if err != nil {
 		return nil, err
@@ -127,8 +127,8 @@ func (x *Usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.
 	}
 
 	statuses, err := x.infra.DB.GetVulnStatus(ctx, &model.GitHubRepo{
-		Owner:    scan.Edges.Repository[0].Owner,
-		RepoName: scan.Edges.Repository[0].Name,
+		Owner: scan.Edges.Repository[0].Owner,
+		Name:  scan.Edges.Repository[0].Name,
 	})
 	if err != nil {
 		return nil, err
