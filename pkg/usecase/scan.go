@@ -9,6 +9,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/opa"
 	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
@@ -59,6 +60,7 @@ func (x *Usecase) Scan(ctx *model.Context, req *model.ScanRepositoryRequest) err
 		Utils:       x.infra.Utils,
 		Trivy:       x.infra.Trivy,
 		CheckPolicy: x.infra.CheckPolicy,
+		OPAClient:   x.infra.OPAClient,
 		FrontendURL: x.config.FrontendURL,
 	}
 
@@ -75,6 +77,7 @@ type scanClients struct {
 	Trivy       trivy.Interface
 	Utils       *infra.Utils
 	CheckPolicy policy.Check
+	OPAClient   opa.Interface
 
 	FrontendURL string
 }
@@ -140,7 +143,7 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 	}
 
 	check := newCheckRun(clients.GitHubApp)
-	if clients.CheckPolicy != nil {
+	if clients.CheckPolicy != nil || clients.OPAClient != nil {
 		if err := check.create(ctx, &req.GitHubRepo, req.CommitID); err != nil {
 			return err
 		}
@@ -200,13 +203,24 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		}
 	}
 
-	if clients.CheckPolicy != nil {
-		inv := model.NewScanReport(newScan, status, now)
-		result, err := clients.CheckPolicy.Result(ctx, inv)
+	scanReport := model.NewScanReport(newScan, status, now)
+	var result *model.GitHubCheckResult
+
+	if clients.OPAClient != nil {
+		var r model.GitHubCheckResult
+		if err := clients.OPAClient.Data(ctx, scanReport, &r); err != nil {
+			return err
+		}
+		result = &r
+	} else if clients.CheckPolicy != nil {
+		r, err := clients.CheckPolicy.Result(ctx, scanReport)
 		if err != nil {
 			return err
 		}
+		result = r
+	}
 
+	if result != nil {
 		if err := check.complete(ctx, newScan.ID, report, clients.FrontendURL, result); err != nil {
 			return err
 		}

@@ -162,22 +162,22 @@ func TestScanProcedureWithRule(t *testing.T) {
 			title:  "always success",
 			called: 1,
 			rule: `package octovy.check
-			result = "success"`,
+			conclusion = "success"`,
 			conclusion: "success",
 		},
 		{
 			title:  "always failure",
 			called: 1,
 			rule: `package octovy.check
-			result = "failure"`,
+			conclusion = "failure"`,
 			conclusion: "failure",
 		},
 		{
 			title:  "failure if vulnID has CVE-1000",
 			called: 1,
 			rule: `package octovy.check
-			default result = "success"
-			result = "failure" {
+			default conclusion = "success"
+			conclusion = "failure" {
 				vulnID := input.sources[_].packages[_].vuln_ids[_]
 				vulnID == "CVE-1000"
 			}
@@ -188,8 +188,8 @@ func TestScanProcedureWithRule(t *testing.T) {
 			title:  "failure if vulnID has CVE-1001, then success",
 			called: 1,
 			rule: `package octovy.check
-			default result = "success"
-			result = "failure" {
+			default conclusion = "success"
+			conclusion = "failure" {
 				vulnID := input.sources[_].packages[_].vuln_ids[_]
 				vulnID == "CVE-1001"
 			}

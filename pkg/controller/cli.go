@@ -169,12 +169,17 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			&cli.StringFlag{
 				Name:        "opa-url",
 				EnvVars:     []string{"OCTOVY_OPA_URL"},
-				Destination: &infraCfg.OPAServerURL,
+				Destination: &infraCfg.OPA.BaseURL,
+			},
+			&cli.StringFlag{
+				Name:        "opa-path",
+				EnvVars:     []string{"OCTOVY_OPA_PATH"},
+				Destination: &infraCfg.OPA.Path,
 			},
 			&cli.BoolFlag{
 				Name:        "opa-use-iap",
 				EnvVars:     []string{"OCTOVY_OPA_IAP"},
-				Destination: &infraCfg.OPAUseGoogleIAP,
+				Destination: &infraCfg.OPA.UseGoogleIAP,
 			},
 
 			&cli.StringFlag{

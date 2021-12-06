@@ -11,15 +11,17 @@ import (
 )
 
 type Interface interface {
-	Data(ctx context.Context, path string, input interface{}, result interface{}) error
+	Data(ctx context.Context, input interface{}, result interface{}) error
 }
 
 type Client struct {
 	client *opaclient.Client
+	config Config
 }
 
 type Config struct {
 	BaseURL      string
+	Path         string
 	UseGoogleIAP bool
 }
 
@@ -52,12 +54,13 @@ func New(cfg *Config) (*Client, error) {
 
 	return &Client{
 		client: client,
+		config: *cfg,
 	}, nil
 }
 
-func (x *Client) Data(ctx context.Context, path string, input interface{}, result interface{}) error {
+func (x *Client) Data(ctx context.Context, input interface{}, result interface{}) error {
 	req := &opaclient.DataRequest{
-		Path:  path,
+		Path:  x.config.Path,
 		Input: input,
 	}
 	if err := x.client.GetData(ctx, req, result); err != nil {

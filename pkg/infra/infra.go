@@ -8,6 +8,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/github"
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/opa"
 	"github.com/m-mizutani/octovy/pkg/infra/policy"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
@@ -22,8 +23,8 @@ type Config struct {
 	GitHubAppSecret     string `zlog:"secret"`
 
 	CheckPolicyData string
-	OPAServerURL    string
-	OPAUseGoogleIAP bool
+
+	OPA opa.Config
 
 	TrivyPath string
 }
@@ -34,6 +35,7 @@ type Clients struct {
 	NewGitHubApp githubapp.Factory
 	CheckPolicy  policy.Check
 	Trivy        trivy.Interface
+	OPAClient    opa.Interface
 	Utils        *Utils
 
 	config *Config
@@ -82,6 +84,14 @@ func New(cfg *Config) (*Clients, error) {
 		}
 
 		clients.CheckPolicy = check
+	}
+
+	if clients.config.OPA.BaseURL != "" {
+		client, err := opa.New(&clients.config.OPA)
+		if err != nil {
+			return nil, err
+		}
+		clients.OPAClient = client
 	}
 
 	return clients, nil

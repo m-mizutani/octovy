@@ -21,6 +21,6 @@ type GitHubToken struct {
 }
 
 type GitHubCheckResult struct {
-	Conclusion string
-	Message    string
+	Conclusion string   `json:"conclusion"`
+	Messages   []string `json:"messages"`
 }

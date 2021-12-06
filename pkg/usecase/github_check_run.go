@@ -61,11 +61,9 @@ func (x *checkRun) complete(ctx *model.Context, scanID string, report *model.Rep
 		With("url", frontendURL).
 		Debug("updating check run")
 
-	title := result.Message
-	if title == "" {
-		title = "Package scan report"
-	}
+	title := "Package scan report"
 
+	// TODO: use result.Messages
 	body := report.ToMarkdown()
 	opt := &github.UpdateCheckRunOptions{
 		Name:       "Octovy",

@@ -33,11 +33,15 @@ func NewScanReport(scan *ent.Scan, statuses []*ent.VulnStatus, now int64) *ScanR
 		}
 
 		for _, vuln := range scan.Edges.Packages[i].Edges.Vulnerabilities {
-			pkg.Vulnerabilities = append(pkg.Vulnerabilities, &Vulnerability{
-				Vulnerability:  *vuln,
-				Status:         db.Lookup(&pkg.PackageRecord, vuln.ID),
-				CustomSeverity: vuln.Edges.CustomSeverity,
-			})
+			v := &Vulnerability{
+				Vulnerability: *vuln,
+				Status:        db.Lookup(&pkg.PackageRecord, vuln.ID),
+			}
+			if vuln.Edges.CustomSeverity != nil {
+				v.CustomSeverity = vuln.Edges.CustomSeverity.Label
+			}
+
+			pkg.Vulnerabilities = append(pkg.Vulnerabilities, v)
 		}
 
 		src.Packages = append(src.Packages, pkg)
@@ -89,7 +93,7 @@ type Package struct {
 type Vulnerability struct {
 	ent.Vulnerability
 	Status         *ent.VulnStatus `json:"status,omitempty"`
-	CustomSeverity *ent.Severity   `json:"custom_severity,omitempty"`
+	CustomSeverity string          `json:"custom_severity"`
 
 	// To remove "edges" field in JSON
 	Edges *struct{} `json:"edges,omitempty"`

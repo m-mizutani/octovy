@@ -40,22 +40,22 @@ func TestCheckRule(t *testing.T) {
 	ctx := model.NewContext()
 	t.Run("always success", func(t *testing.T) {
 		check, err := policy.NewCheck(`package octovy.check
-result = "success"
+conclusion = "success"
 `)
 		require.NoError(t, err)
 
 		result, err := check.Result(ctx, inv)
 		require.NoError(t, err)
 		assert.Equal(t, "success", result.Conclusion)
-		assert.Empty(t, result.Message)
+		assert.Empty(t, result.Messages)
 	})
 
 	t.Run("failure if severity is high", func(t *testing.T) {
 		check, err := policy.NewCheck(`package octovy.check
-default result = "success"
-result = "failure" {
+default conclusion = "success"
+conclusion = "failure" {
     vuln := input.sources[_].packages[_].vulnerabilities[_]
-    vuln.custom_severity.label == "high"
+    vuln.custom_severity == "high"
 }
 `)
 		require.NoError(t, err)
@@ -63,28 +63,28 @@ result = "failure" {
 		result, err := check.Result(ctx, inv)
 		require.NoError(t, err)
 		assert.Equal(t, "failure", result.Conclusion)
-		assert.Empty(t, result.Message)
+		assert.Empty(t, result.Messages)
 	})
 
 	t.Run("message is set by msg", func(t *testing.T) {
 		check, err := policy.NewCheck(`package octovy.check
-result = "success"
-msg = "blue"
+		conclusion = "success"
+		messages = {"blue"}
 `)
 		require.NoError(t, err)
 
 		result, err := check.Result(ctx, inv)
 		require.NoError(t, err)
 		assert.Equal(t, "success", result.Conclusion)
-		assert.Equal(t, "blue", result.Message)
+		assert.Contains(t, result.Messages, "blue")
 	})
 
 	t.Run("err if invalid rego", func(t *testing.T) {
 		_, err := policy.NewCheck(`package octovy.check
 		default result = "success"
-		result = "failure" {
+		conclusion = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
-			vuln.custom_severity.label == "high"
+			vuln.custom_severity == "high"
 		`) // missing tail bracket
 		require.Error(t, err)
 	})
@@ -93,7 +93,7 @@ msg = "blue"
 		check, err := policy.NewCheck(`package octovy.check
 		xxx = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
-			vuln.custom_severity.label == "high"
+			vuln.custom_severity == "high"
 		}
 		`)
 		require.NoError(t, err)
@@ -107,9 +107,9 @@ msg = "blue"
 	t.Run("err if package name is not octovy.check", func(t *testing.T) {
 		check, err := policy.NewCheck(`package octovy.cheeeeeeeeeeeeeeeeeeek
 		default result = "success"
-		result = "failure" {
+		conclusion = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
-			vuln.custom_severity.label == "high"
+			vuln.custom_severity == "high"
 		}
 		`)
 		require.NoError(t, err)
@@ -121,10 +121,10 @@ msg = "blue"
 
 	t.Run("err if missing package", func(t *testing.T) {
 		_, err := policy.NewCheck(`
-		default result = "success"
-		field = "failure" {
+		default conclusion = "success"
+		conclusion = "failure" {
 			vuln := input.sources[_].packages[_].vulnerabilities[_]
-			vuln.custom_severity.label == "high"
+			vuln.custom_severity == "high"
 		}
 		`)
 		require.Error(t, err)
@@ -132,7 +132,7 @@ msg = "blue"
 
 	t.Run("err if result is not string", func(t *testing.T) {
 		check, err := policy.NewCheck(`package octovy.check
-result = 0
+		conclusion = 0
 `)
 		require.NoError(t, err)
 
