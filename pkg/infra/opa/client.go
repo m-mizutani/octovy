@@ -53,8 +53,11 @@ func (x *googleIAPClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 func New(cfg *Config) (*Client, error) {
+	logger.With("cfg", cfg).Debug("New opa.Client")
+
 	var options []opaclient.Option
 	if cfg.UseGoogleIAP {
+		logger.Debug("Add HTTP Client")
 		options = append(options, opaclient.WithHTTPClient(&googleIAPClient{}))
 	}
 	client, err := opaclient.New(cfg.BaseURL, options...)
@@ -70,6 +73,7 @@ func New(cfg *Config) (*Client, error) {
 }
 
 func (x *Client) Data(ctx context.Context, pkg RegoPkg, input interface{}, result interface{}) error {
+	logger.With("input", input).Debug("querying to OPA server")
 	req := &opaclient.DataRequest{
 		Path:  x.basePath + "/" + string(pkg),
 		Input: input,
