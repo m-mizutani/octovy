@@ -123,15 +123,17 @@ function Scans(props: { repo: model.repository }) {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography>{scan.edges.packages.length}</Typography>
+                    <Typography>
+                      {scan.edges.packages ? scan.edges.packages.length : 0}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography>
-                      {
-                        scan.edges.packages.filter((p) => {
-                          return p.vuln_ids !== undefined;
-                        }).length
-                      }
+                      {scan.edges.packages
+                        ? scan.edges.packages.filter((p) => {
+                            return p.vuln_ids !== undefined;
+                          }).length
+                        : 0}
                     </Typography>
                   </TableCell>
                 </TableRow>
