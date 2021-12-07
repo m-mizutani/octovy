@@ -25,6 +25,11 @@ TimeAgo.addDefaultLocale(en);
 export default VulnStatuses;
 
 function VulnStatuses(props: { repo: model.repository }) {
+  const noStatus = <Typography>No status</Typography>;
+  if (!props.repo.edges.status) {
+    return noStatus;
+  }
+
   const statusSet = props.repo.edges.status
     .map((idx) => {
       return idx.edges.latest;
@@ -33,7 +38,7 @@ function VulnStatuses(props: { repo: model.repository }) {
       return status.status !== "none";
     });
   if (statusSet.length === 0) {
-    return <Typography>No status</Typography>;
+    return noStatus;
   }
 
   return (

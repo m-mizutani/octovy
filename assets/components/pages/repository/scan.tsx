@@ -17,12 +17,7 @@ import * as model from "@/components/model";
 import ReactTimeAgo from "react-time-ago";
 import TimeAgo from "javascript-time-ago";
 import en from "javascript-time-ago/locale/en.json";
-
-let addedDefaultLocale = false;
-if (!addedDefaultLocale) {
-  TimeAgo.addDefaultLocale(en);
-  addedDefaultLocale = true;
-}
+TimeAgo.addDefaultLocale(en);
 
 export default Scans;
 
@@ -66,6 +61,12 @@ function Scans(props: { repo: model.repository }) {
     return <Alert severity="info">Loading...</Alert>;
   } else if (status.err) {
     return <Alert severity="error">{status.err}</Alert>;
+  } else if (!status.scans) {
+    return (
+      <Grid marginTop={3}>
+        <Typography>No scan results</Typography>
+      </Grid>
+    );
   }
 
   return (
