@@ -58,7 +58,7 @@ function RepoLabels(props: { repo: model.repository }) {
   }
 
   return (
-    <List sx={{ width: "100%", maxWidth: 560, bgcolor: "background.paper" }}>
+    <List sx={{ width: "100%", maxWidth: 860, bgcolor: "background.paper" }}>
       {status.labels.map((label) => {
         return <RepoLabel repo={props.repo} label={label} key={label.name} />;
       })}

@@ -35,7 +35,7 @@ function VulnStatuses(props: { repo: model.repository }) {
       return idx.edges.latest;
     })
     .filter((status) => {
-      return status.status !== "none";
+      return status && status.status !== "none";
     });
   if (statusSet.length === 0) {
     return noStatus;

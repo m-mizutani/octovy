@@ -79,13 +79,13 @@ function Scans(props: { repo: model.repository }) {
               <TableCell width={128}>
                 <Typography variant="h6">Scanned at</Typography>
               </TableCell>
-              <TableCell width={128}>
+              <TableCell>
                 <Typography variant="h6">Target</Typography>
               </TableCell>
               <TableCell width={128}>
                 <Typography variant="h6">Packages</Typography>
               </TableCell>
-              <TableCell>
+              <TableCell width={128}>
                 <Typography variant="h6">Vulnerables</Typography>
               </TableCell>
             </TableRow>
