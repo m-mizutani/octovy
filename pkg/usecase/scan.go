@@ -19,37 +19,6 @@ func (x *Usecase) SendScanRequest(req *model.ScanRepositoryRequest) error {
 	return nil
 }
 
-func (x *Usecase) InvokeScanThread() {
-	go func() {
-		if err := x.runScanThread(); err != nil {
-			x.HandleError(model.NewContext(), err)
-		}
-	}()
-}
-
-func (x *Usecase) runScanThread() error {
-	for req := range x.scanQueue {
-		ctx := model.NewContext()
-		ctx.With("scan_req", req)
-		ctx.Log().Debug("recv scan request")
-
-		clients := &scanClients{
-			DB:          x.infra.DB,
-			GitHubApp:   x.infra.NewGitHubApp(req.InstallID),
-			Utils:       x.infra.Utils,
-			Trivy:       x.infra.Trivy,
-			CheckPolicy: x.infra.CheckPolicy,
-			FrontendURL: x.config.FrontendURL,
-		}
-
-		if err := scanRepository(ctx, req, clients); err != nil {
-			x.HandleError(ctx, goerr.Wrap(err).With("request", req))
-		}
-	}
-
-	return nil
-}
-
 func (x *Usecase) Scan(ctx *model.Context, req *model.ScanRepositoryRequest) error {
 	ctx.With("scan_req", req)
 	ctx.Log().Debug("recv scan request")

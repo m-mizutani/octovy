@@ -148,8 +148,8 @@ func errorHandler(c *gin.Context) {
 	c.Next()
 
 	if ginError := c.Errors.Last(); ginError != nil {
-
 		if err := errors.Cause(ginError); err != nil {
+			getLog(c).Err(ginError).Error("caused error")
 			switch {
 			case errors.Is(err, model.ErrInvalidInput):
 				errResp(c, http.StatusNotAcceptable, err)
@@ -165,6 +165,7 @@ func errorHandler(c *gin.Context) {
 				errResp(c, http.StatusInternalServerError, err)
 			}
 		} else {
+			getLog(c).Err(ginError).Error("ginError")
 			errResp(c, http.StatusInternalServerError, ginError)
 		}
 	}

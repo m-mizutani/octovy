@@ -8,10 +8,6 @@ func SetErrorHandler(uc *Usecase, handler func(error)) {
 	uc.testErrorHandler = handler
 }
 
-func RunScanThread(uc *Usecase) error {
-	return uc.runScanThread()
-}
-
 func CloseScanQueue(uc *Usecase) {
 	close(uc.scanQueue)
 }
