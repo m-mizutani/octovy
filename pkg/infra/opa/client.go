@@ -2,7 +2,6 @@ package opa
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"strings"
 
@@ -36,31 +35,25 @@ type Config struct {
 	UseGoogleIAP bool
 }
 
-func googleIAPRequest(ctx context.Context, method, url string, data io.Reader) (*http.Response, error) {
-	logger.With("method", method).With("url", url).Debug("Called googleIAPRequest")
+type googleIAPClient struct{}
 
-	client, err := idtoken.NewClient(ctx, url)
+func (x *googleIAPClient) Do(req *http.Request) (*http.Response, error) {
+	client, err := idtoken.NewClient(req.Context(), req.URL.String())
 	if err != nil {
-		return nil, goerr.Wrap(err, "failed idtoken.NewClient for GCP IAP").With("url", url)
+		logger.Err(err).Error("failed idtoken.NewClient")
+		return nil, goerr.Wrap(err, "failed idtoken.NewClient for GCP IAP").With("req", req)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, method, url, data)
-	if err != nil {
-		return nil, err
-	}
+	logger.With("req", req).Debug("Created IAP HTTP request")
 
-	if data != nil {
-		httpReq.Header.Add("Content-Type", "application/json")
-	}
-	logger.With("req", httpReq).Debug("Created IAP HTTP request")
+	return client.Do(req)
 
-	return client.Do(httpReq)
 }
 
 func New(cfg *Config) (*Client, error) {
 	var options []opaclient.Option
 	if cfg.UseGoogleIAP {
-		options = append(options, opaclient.OptHTTPRequest(googleIAPRequest))
+		options = append(options, opaclient.WithHTTPClient(&googleIAPClient{}))
 	}
 	client, err := opaclient.New(cfg.BaseURL, options...)
 	if err != nil {
