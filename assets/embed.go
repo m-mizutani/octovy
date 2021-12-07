@@ -7,6 +7,7 @@ import "embed"
 
 //go:embed out/*
 //go:embed out/_next/static/*/*
+//go:embed out/_next/static/*/*.js
 //go:embed out/_next/static/chunks/pages/*.js
 //go:embed out/_next/static/chunks/pages/*/*.js
 var assets embed.FS
