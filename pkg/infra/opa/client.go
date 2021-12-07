@@ -7,9 +7,12 @@ import (
 	"strings"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/utils"
 	opaclient "github.com/m-mizutani/opa-go-client"
 	"google.golang.org/api/idtoken"
 )
+
+var logger = utils.Logger
 
 type Interface interface {
 	Data(ctx context.Context, pkg RegoPkg, input interface{}, result interface{}) error
@@ -34,10 +37,13 @@ type Config struct {
 }
 
 func googleIAPRequest(ctx context.Context, method, url string, data io.Reader) (*http.Response, error) {
+	logger.With("method", method).With("url", url).Debug("Called googleIAPRequest")
+
 	client, err := idtoken.NewClient(ctx, url)
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed idtoken.NewClient for GCP IAP").With("url", url)
 	}
+
 	httpReq, err := http.NewRequestWithContext(ctx, method, url, data)
 	if err != nil {
 		return nil, err
@@ -46,6 +52,7 @@ func googleIAPRequest(ctx context.Context, method, url string, data io.Reader) (
 	if data != nil {
 		httpReq.Header.Add("Content-Type", "application/json")
 	}
+	logger.With("req", httpReq).Debug("Created IAP HTTP request")
 
 	return client.Do(httpReq)
 }
