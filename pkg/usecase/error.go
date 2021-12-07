@@ -24,8 +24,4 @@ func (x *Usecase) HandleError(ctx *model.Context, err error) {
 	}
 
 	entry.Err(err).Error(err.Error())
-
-	if x.testErrorHandler != nil {
-		x.testErrorHandler(err)
-	}
 }

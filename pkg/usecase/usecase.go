@@ -46,12 +46,6 @@ func OptInjectDB(client *db.Client) TestOption {
 	}
 }
 
-func OptInjectErrorHandler(f func(error)) TestOption {
-	return func(u *Usecase) {
-		u.testErrorHandler = f
-	}
-}
-
 func NewTest(t *testing.T, options ...TestOption) *Usecase {
 
 	dbClient := db.NewMock(t)
@@ -81,9 +75,6 @@ type Usecase struct {
 
 	config *model.Config
 	infra  *infra.Clients
-
-	// Control usecase for test
-	testErrorHandler func(error)
 }
 
 func (x *Usecase) Close() {

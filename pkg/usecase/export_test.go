@@ -1,9 +1,5 @@
 package usecase
 
-func SetErrorHandler(uc *Usecase, handler func(error)) {
-	uc.testErrorHandler = handler
-}
-
 func CloseScanQueue(uc *Usecase) {
 	close(uc.scanQueue)
 }
