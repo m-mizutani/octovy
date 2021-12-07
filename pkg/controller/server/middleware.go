@@ -148,8 +148,9 @@ func errorHandler(c *gin.Context) {
 	c.Next()
 
 	if ginError := c.Errors.Last(); ginError != nil {
+		getUsecase(c).HandleError(model.NewContextWith(c), ginError)
+
 		if err := errors.Cause(ginError); err != nil {
-			getLog(c).Err(ginError).Error("caused error")
 			switch {
 			case errors.Is(err, model.ErrInvalidInput):
 				errResp(c, http.StatusNotAcceptable, err)

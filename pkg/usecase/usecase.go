@@ -3,6 +3,8 @@ package usecase
 import (
 	"testing"
 
+	"github.com/getsentry/sentry-go"
+	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/db"
@@ -10,18 +12,30 @@ import (
 	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/utils"
+	"github.com/stretchr/testify/require"
 )
 
 var logger = utils.Logger
 
-func New(cfg *model.Config, ifs *infra.Clients) *Usecase {
+func New(cfg *model.Config, ifs *infra.Clients) (*Usecase, error) {
 	uc := &Usecase{
 		config:    cfg,
 		infra:     ifs,
 		scanQueue: make(chan *model.ScanRepositoryRequest, 1024),
 	}
 
-	return uc
+	if cfg.SentryDSN != "" {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn:         cfg.SentryDSN,
+			Environment: cfg.SentryEnv,
+		})
+		if err != nil {
+			return nil, goerr.Wrap(err)
+		}
+		utils.Logger.With("dsn", cfg.SentryDSN).With("env", cfg.SentryEnv).Debug("sentry initialized")
+	}
+
+	return uc, nil
 }
 
 type TestOption func(*Usecase)
@@ -46,14 +60,14 @@ func NewTest(t *testing.T, options ...TestOption) *Usecase {
 	util := infra.NewUtils()
 	trivyClient := trivy.NewMock()
 
-	uc := New(&model.Config{}, &infra.Clients{
+	uc, err := New(&model.Config{}, &infra.Clients{
 		DB:           dbClient,
 		GitHub:       ghClient,
 		NewGitHubApp: newGitHubApp,
 		Trivy:        trivyClient,
 		Utils:        util,
 	})
-	uc.disableInvokeThread = true
+	require.NoError(t, err)
 
 	for _, opt := range options {
 		opt(uc)
@@ -69,8 +83,7 @@ type Usecase struct {
 	infra  *infra.Clients
 
 	// Control usecase for test
-	testErrorHandler    func(error)
-	disableInvokeThread bool
+	testErrorHandler func(error)
 }
 
 func (x *Usecase) Close() {

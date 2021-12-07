@@ -1,9 +1,5 @@
 package usecase
 
-func (x *Usecase) DisableInvokeThread() {
-	x.disableInvokeThread = true
-}
-
 func SetErrorHandler(uc *Usecase, handler func(error)) {
 	uc.testErrorHandler = handler
 }

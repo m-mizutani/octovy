@@ -136,12 +136,11 @@ func setupUsecase(t *testing.T, options ...testOption) (*usecase.Usecase, *mockS
 		opt(t, &cfg, inf, mock)
 	}
 
-	uc := usecase.New(&cfg, inf)
+	uc, err := usecase.New(&cfg, inf)
 	usecase.SetErrorHandler(uc, func(err error) {
 		require.NoError(t, err)
 	})
-
-	uc.DisableInvokeThread()
+	require.NoError(t, err)
 
 	return uc, mock
 }

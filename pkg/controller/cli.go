@@ -215,7 +215,10 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			if err != nil {
 				return err
 			}
-			uc := usecase.New(ctrl.Config, clients)
+			uc, err := usecase.New(ctrl.Config, clients)
+			if err != nil {
+				return err
+			}
 			defer uc.Close()
 
 			serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)

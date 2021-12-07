@@ -10,20 +10,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-func (x *Usecase) initErrorHandler() error {
-	if x.config.SentryDSN != "" {
-		err := sentry.Init(sentry.ClientOptions{
-			Dsn:         x.config.SentryDSN,
-			Environment: x.config.SentryEnv,
-		})
-		if err != nil {
-			return goerr.Wrap(err)
-		}
-		utils.Logger.With("dsn", x.config.SentryDSN).With("env", x.config.SentryEnv).Debug("sentry initialized")
-	}
-	return nil
-}
-
 func (x *Usecase) flushError() {
 	sentry.Flush(2 * time.Second)
 	utils.Logger.Debug("sentry flushed")
