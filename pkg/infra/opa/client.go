@@ -38,13 +38,15 @@ type Config struct {
 type googleIAPClient struct{}
 
 func (x *googleIAPClient) Do(req *http.Request) (*http.Response, error) {
+	logger.With("req", req).Debug("Creating IAP HTTP Client")
+
 	client, err := idtoken.NewClient(req.Context(), req.URL.String())
 	if err != nil {
 		logger.Err(err).Error("failed idtoken.NewClient")
 		return nil, goerr.Wrap(err, "failed idtoken.NewClient for GCP IAP").With("req", req)
 	}
 
-	logger.With("req", req).Debug("Created IAP HTTP request")
+	logger.With("req", req).Debug("Created IAP HTTP client")
 
 	return client.Do(req)
 
