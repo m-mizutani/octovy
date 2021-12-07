@@ -5,6 +5,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/m-mizutani/octovy/pkg/infra/ent/repository"
+	"github.com/m-mizutani/octovy/pkg/infra/ent/scan"
 )
 
 func (x *Client) CreateRepo(ctx *model.Context, repo *ent.Repository) (*ent.Repository, error) {
@@ -129,7 +130,11 @@ func (x *Client) GetRepository(ctx *model.Context, repo *model.GitHubRepo) (*ent
 		Where(repository.Owner(repo.Owner)).
 		Where(repository.Name(repo.Name)).
 		WithLabels().
-		WithStatus().
+		WithStatus(func(vsiq *ent.VulnStatusIndexQuery) {
+			vsiq.WithLatest(func(vsq *ent.VulnStatusQuery) {
+				vsq.WithAuthor()
+			})
+		}).
 		First(ctx)
 	if err != nil {
 		return nil, goerr.Wrap(err)
@@ -139,5 +144,25 @@ func (x *Client) GetRepository(ctx *model.Context, repo *model.GitHubRepo) (*ent
 }
 
 func (x *Client) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
-	panic("not implemented")
+	if x.lock {
+		x.mutex.Lock()
+		defer x.mutex.Unlock()
+	}
+
+	resp, err := x.client.Repository.Query().
+		Where(repository.Owner(req.Owner)).
+		Where(repository.Name(req.Name)).
+		WithScan(func(sq *ent.ScanQuery) {
+			sq.Order(ent.Desc(scan.FieldScannedAt)).
+				Offset(req.Offset).
+				Limit(req.Limit).
+				WithPackages()
+		}).
+		WithStatus().
+		All(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err)
+	}
+
+	return resp[0].Edges.Scan, nil
 }

@@ -51,6 +51,9 @@ func (x *Usecase) GetRepository(ctx *model.Context, req *model.GitHubRepo) (*ent
 }
 
 func (x *Usecase) GetRepositoryScan(ctx *model.Context, req *model.GetRepoScanRequest) ([]*ent.Scan, error) {
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
 	return x.infra.DB.GetRepositoryScan(ctx, req)
 }
 

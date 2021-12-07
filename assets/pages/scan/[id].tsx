@@ -102,8 +102,12 @@ function Scan() {
       <Container>
         <Grid container spacing={2}>
           <Grid item>
-            <Typography variant="h5">
-              {repo.owner}/{repo.name}
+            <Typography variant="h4">
+              <Link href={`/repository/${repo.owner}/${repo.name}`}>
+                <a style={{ color: "inherit", textDecoration: "none" }}>
+                  {repo.owner}/{repo.name}
+                </a>
+              </Link>
             </Typography>
           </Grid>
           <Grid item>
