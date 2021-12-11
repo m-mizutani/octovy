@@ -63,7 +63,7 @@ func NewScanReport(scan *ent.Scan, statuses []*ent.VulnStatus, now int64) *ScanR
 			},
 			Labels: labels,
 		},
-		Sources: make([]*PackageSource, len(srcMap)),
+		Sources: []*PackageSource{},
 	}
 	for _, v := range srcMap {
 		inventory.Sources = append(inventory.Sources, v)
