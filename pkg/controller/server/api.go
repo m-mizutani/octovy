@@ -85,7 +85,7 @@ func New(uc *usecase.Usecase, options ...*Option) *gin.Engine {
 		r.GET("/vulnerability/:vuln_id", getVulnerability)
 		r.POST("/vulnerability", postVulnerability)
 		r.GET("/scan/:scan_id", getScanReport)
-		r.GET("/scan/:scan_id/package", getScanPackages)
+		r.GET("/scan/:scan_id/report", getScanPackages)
 
 		r.POST("/status/:owner/:repo_name", postVulnStatus)
 		r.GET("/user", getUser)

@@ -7,6 +7,7 @@ import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
+import Modal from "@mui/material/Modal";
 
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -18,7 +19,9 @@ import TableRow from "@mui/material/TableRow";
 
 import * as model from "@/components/model";
 import * as app from "@/components/app";
-import Package from "@/components/package";
+
+import Package from "./package";
+import CopyClipboard from "./raw";
 
 type scanStatus = {
   isLoaded: boolean;
@@ -119,16 +122,6 @@ function Scan() {
           </Grid>
         </Grid>
       </Container>
-      <Container style={{ margin: "30px 0px" }}>
-        <Grid>
-          <Button
-            variant="outlined"
-            size="small"
-            href={`/api/v1/scan/${router.query.id}/package`}>
-            Raw data
-          </Button>
-        </Grid>
-      </Container>
       {vulnPkgMap ? (
         Object.keys(vulnPkgMap).map((key) => {
           const url = `${repo.url}/blob/${scan.commit_id}/${key}`;
@@ -141,8 +134,15 @@ function Scan() {
           );
         })
       ) : (
-        <Typography>✅ No vulnerable package</Typography>
+        <Container style={{ margin: "30px 0px" }}>
+          <Typography>✅ No vulnerable package</Typography>
+        </Container>
       )}
+      <Container style={{ margin: "30px 0px" }}>
+        <Grid>
+          <CopyClipboard scanID={router.query.id as string} />
+        </Grid>
+      </Container>
     </app.Main>
   );
 }
