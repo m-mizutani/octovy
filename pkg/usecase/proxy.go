@@ -117,7 +117,7 @@ func (x *Usecase) AssignSeverity(ctx *model.Context, vulnID string, id int) erro
 	return x.infra.DB.AssignSeverity(ctx, vulnID, id)
 }
 
-func (x *Usecase) GetPackageInventry(ctx *model.Context, scanID string) (*model.ScanReport, error) {
+func (x *Usecase) GetScanReport(ctx *model.Context, scanID string) (*model.ScanReport, error) {
 	scan, err := x.infra.DB.GetScan(ctx, scanID)
 	if err != nil {
 		return nil, err

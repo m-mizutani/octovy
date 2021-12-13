@@ -28,7 +28,7 @@ func getScanPackages(c *gin.Context) {
 	uc := getUsecase(c)
 	scanID := c.Param("scan_id")
 
-	inventry, err := uc.GetPackageInventry(model.NewContextWith(c), scanID)
+	inventry, err := uc.GetScanReport(model.NewContextWith(c), scanID)
 	if err != nil {
 		_ = c.Error(err)
 		return
