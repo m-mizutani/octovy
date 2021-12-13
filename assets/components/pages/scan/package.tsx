@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-import * as model from "./model";
+import * as model from "@/components/model";
 import { Typography } from "@mui/material";
 
 type vulnStatusRequest = {
