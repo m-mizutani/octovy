@@ -4,7 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aquasecurity/trivy-db/pkg/types"
+	ftypes "github.com/aquasecurity/fanal/types"
+	dtypes "github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/aquasecurity/trivy/pkg/report"
+	ttypes "github.com/aquasecurity/trivy/pkg/types"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
@@ -24,29 +27,29 @@ func TestTrivyReportToEnt(t *testing.T) {
 		ts2 := ts1.Add(-time.Hour * 30)
 
 		pkg, vuln := model.TrivyReportToEnt(&model.TrivyReport{
-			Results: model.TrivyResults{
+			Results: report.Results{
 				{
 					Target: "Gemfile.lock",
 					Type:   "bundler",
-					Packages: []model.TrivyPackage{
+					Packages: []ftypes.Package{
 						{
 							Name:    "example",
 							Version: "6.1.4",
 						},
 					},
-					Vulnerabilities: []model.DetectedVulnerability{
+					Vulnerabilities: []ttypes.DetectedVulnerability{
 						{
 							VulnerabilityID:  "CVE-1000",
 							PkgName:          "example",
 							InstalledVersion: "6.1.4",
 							FixedVersion:     "6.1.5",
-							Vulnerability: types.Vulnerability{
+							Vulnerability: dtypes.Vulnerability{
 								Title:       "test vuln",
 								Description: "it's test",
 								Severity:    "low",
 								CweIDs:      []string{"CWE-000"},
-								CVSS: types.VendorCVSS{
-									"x": types.CVSS{
+								CVSS: dtypes.VendorCVSS{
+									"x": dtypes.CVSS{
 										V2Vector: "test2",
 										V3Vector: "test3",
 									},
@@ -93,17 +96,17 @@ func TestTrivyReportToEnt(t *testing.T) {
 	t.Run("no matched package (invalid data, but ignore)", func(t *testing.T) {
 		t.Run("version is not matched", func(t *testing.T) {
 			pkg, vuln := model.TrivyReportToEnt(&model.TrivyReport{
-				Results: model.TrivyResults{
+				Results: report.Results{
 					{
 						Target: "Gemfile.lock",
 						Type:   "bundler",
-						Packages: []model.TrivyPackage{
+						Packages: []ftypes.Package{
 							{
 								Name:    "example",
 								Version: "1.1.4",
 							},
 						},
-						Vulnerabilities: []model.DetectedVulnerability{
+						Vulnerabilities: []ttypes.DetectedVulnerability{
 							{
 								VulnerabilityID:  "CVE-1000",
 								PkgName:          "example",
@@ -121,17 +124,17 @@ func TestTrivyReportToEnt(t *testing.T) {
 
 		t.Run("name is not matched", func(t *testing.T) {
 			pkg, vuln := model.TrivyReportToEnt(&model.TrivyReport{
-				Results: model.TrivyResults{
+				Results: report.Results{
 					{
 						Target: "Gemfile.lock",
 						Type:   "bundler",
-						Packages: []model.TrivyPackage{
+						Packages: []ftypes.Package{
 							{
 								Name:    "blue",
 								Version: "6.1.4",
 							},
 						},
-						Vulnerabilities: []model.DetectedVulnerability{
+						Vulnerabilities: []ttypes.DetectedVulnerability{
 							{
 								VulnerabilityID:  "CVE-1000",
 								PkgName:          "example",
@@ -150,17 +153,17 @@ func TestTrivyReportToEnt(t *testing.T) {
 
 	t.Run("vulnerability not duplicated", func(t *testing.T) {
 		pkg, vuln := model.TrivyReportToEnt(&model.TrivyReport{
-			Results: model.TrivyResults{
+			Results: report.Results{
 				{
 					Target: "Gemfile.lock",
 					Type:   "bundler",
-					Packages: []model.TrivyPackage{
+					Packages: []ftypes.Package{
 						{
 							Name:    "example",
 							Version: "6.1.4",
 						},
 					},
-					Vulnerabilities: []model.DetectedVulnerability{
+					Vulnerabilities: []ttypes.DetectedVulnerability{
 						{
 							VulnerabilityID:  "CVE-1000",
 							PkgName:          "example",
@@ -171,13 +174,13 @@ func TestTrivyReportToEnt(t *testing.T) {
 				{
 					Target: "tmp/Gemfile.lock",
 					Type:   "bundler",
-					Packages: []model.TrivyPackage{
+					Packages: []ftypes.Package{
 						{
 							Name:    "example",
 							Version: "6.1.4",
 						},
 					},
-					Vulnerabilities: []model.DetectedVulnerability{
+					Vulnerabilities: []ttypes.DetectedVulnerability{
 						{
 							VulnerabilityID:  "CVE-1000",
 							PkgName:          "example",

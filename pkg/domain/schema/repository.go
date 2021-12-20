@@ -17,6 +17,7 @@ func (Repository) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("owner"),
 		field.String("name"),
+		field.Int64("repo_id").Optional(),
 		field.Int64("install_id").Optional(),
 		field.String("url").Optional(),
 		field.String("avatar_url").Optional().Nillable(),
