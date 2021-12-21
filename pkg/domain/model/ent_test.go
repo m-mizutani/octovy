@@ -30,6 +30,7 @@ func TestTrivyReportToEnt(t *testing.T) {
 			Results: report.Results{
 				{
 					Target: "Gemfile.lock",
+					Class:  "lang-pkgs",
 					Type:   "bundler",
 					Packages: []ftypes.Package{
 						{
@@ -193,5 +194,56 @@ func TestTrivyReportToEnt(t *testing.T) {
 
 		require.Len(t, pkg, 2)
 		require.Len(t, vuln, 1)
+	})
+
+	t.Run("import OS package", func(t *testing.T) {
+		ts1 := time.Now()
+		ts2 := ts1.Add(-time.Hour * 30)
+
+		pkg, vuln := model.TrivyReportToEnt(&model.TrivyReport{
+			Results: report.Results{
+				{
+					Target: "gcr.io/example:xxxxxxxx",
+					Class:  "os-pkgs",
+					Type:   "debian",
+					Packages: []ftypes.Package{
+						{
+							Name:    "example",
+							Version: "6.1.4",
+						},
+					},
+					Vulnerabilities: []ttypes.DetectedVulnerability{
+						{
+							VulnerabilityID:  "CVE-1000",
+							PkgName:          "example",
+							InstalledVersion: "6.1.4",
+							FixedVersion:     "6.1.5",
+							Vulnerability: dtypes.Vulnerability{
+								Title:       "test vuln",
+								Description: "it's test",
+								Severity:    "low",
+								CweIDs:      []string{"CWE-000"},
+								CVSS: dtypes.VendorCVSS{
+									"x": dtypes.CVSS{
+										V2Vector: "test2",
+										V3Vector: "test3",
+									},
+								},
+								References: []string{
+									"https://example.com",
+								},
+								LastModifiedDate: &ts2,
+							},
+						},
+					},
+				},
+			},
+		}, ts1)
+
+		require.Len(t, pkg, 1)
+		require.Len(t, vuln, 1)
+		assert.Len(t, pkg[0].VulnIds, 1)
+		assert.Equal(t, pkg[0].Source, "os-pkgs@debian")
+		assert.Contains(t, pkg[0].VulnIds, "CVE-1000")
 	})
 }

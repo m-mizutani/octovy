@@ -51,7 +51,7 @@ type scanClients struct {
 	FrontendURL string
 }
 
-func insertScanReport(ctx *model.Context, client db.Interface, req *model.ScanRepositoryRequest, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) (*ent.Scan, error) {
+func insertScan(ctx *model.Context, client db.Interface, req *model.ScanTarget, pkgs []*ent.PackageRecord, vulnList []*ent.Vulnerability, now time.Time) (*ent.Scan, error) {
 	if err := client.PutVulnerabilities(ctx, vulnList); err != nil {
 		return nil, err
 	}
@@ -134,10 +134,11 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 		return err
 	}
 
+	// TODO: Merge insert scan procedure with PushTrivyResult
 	scannedAt := clients.Utils.Now()
 	newPkgs, vulnList := model.TrivyReportToEnt(trivyResult, scannedAt)
 
-	newScan, err := insertScanReport(ctx, clients.DB, req, newPkgs, vulnList, scannedAt)
+	newScan, err := insertScan(ctx, clients.DB, &req.ScanTarget, newPkgs, vulnList, scannedAt)
 	if err != nil {
 		return err
 	}

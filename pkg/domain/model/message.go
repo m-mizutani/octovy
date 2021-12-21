@@ -25,8 +25,3 @@ type UpdateVulnStatusRequest struct {
 	UserID int
 	ent.VulnStatus
 }
-
-type ImportRequest struct {
-	Target ScanTarget
-	Report TrivyReport
-}

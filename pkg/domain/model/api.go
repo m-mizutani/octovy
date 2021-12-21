@@ -89,3 +89,8 @@ type GetRepoScanRequest struct {
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
 }
+
+type PushTrivyResultRequest struct {
+	Target ScanTarget
+	Report TrivyReport
+}

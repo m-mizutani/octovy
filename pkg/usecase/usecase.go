@@ -87,6 +87,12 @@ func (x *Usecase) FrontendURL() string {
 func (x *Usecase) GetGitHubAppClientID() string {
 	return x.infra.GitHubAppClientID()
 }
-func (x *Usecase) WebhookOnly() bool {
-	return x.config.WebhookOnly
+func (x *Usecase) DisableWebhookGitHub() bool {
+	return x.config.DisableWebhookGitHub
+}
+func (x *Usecase) DisableWebhookTrivy() bool {
+	return x.config.DisableWebhookTrivy
+}
+func (x *Usecase) DisableFrontend() bool {
+	return x.config.DisableFrontend
 }

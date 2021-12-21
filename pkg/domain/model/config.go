@@ -2,7 +2,10 @@ package model
 
 type Config struct {
 	FrontendURL string
-	WebhookOnly bool
+
+	DisableFrontend      bool
+	DisableWebhookGitHub bool
+	DisableWebhookTrivy  bool
 
 	ServerAddr string
 	ServerPort int

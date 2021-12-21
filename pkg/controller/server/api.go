@@ -68,11 +68,19 @@ func New(uc *usecase.Usecase, options ...*Option) *gin.Engine {
 	if !opt.DisableAuth {
 		engine.Use(authControl)
 	}
-	engine.Use(getStaticFile)
+	if !uc.DisableFrontend() {
+		engine.Use(getStaticFile)
+	}
 	engine.Use(errorHandler)
 
-	engine.POST("/webhook/github", postWebhookGitHub)
-	if !uc.WebhookOnly() {
+	if !uc.DisableWebhookGitHub() {
+		engine.POST("/webhook/github", postWebhookGitHub)
+	}
+	if !uc.DisableWebhookTrivy() {
+		engine.POST("/webhook/trivy", postWebhookTrivy)
+	}
+
+	if !uc.DisableFrontend() {
 		engine.GET("/auth/github", getAuthGitHub)
 		engine.GET("/auth/github/callback", getAuthGitHubCallback)
 
