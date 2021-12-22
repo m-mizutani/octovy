@@ -19,9 +19,14 @@ func TrivyReportToEnt(report *TrivyReport, now time.Time) (pkgList []*ent.Packag
 	for _, result := range report.Results {
 		pkgPtr := map[string]*ent.PackageRecord{}
 		for _, pkg := range result.Packages {
+			src := result.Target
+			if result.Class != "lang-pkgs" {
+				src = string(result.Class) + "@" + result.Type
+			}
+
 			p := &ent.PackageRecord{
 				Type:    result.Type,
-				Source:  result.Target,
+				Source:  src,
 				Name:    pkg.Name,
 				Version: pkg.Version,
 			}

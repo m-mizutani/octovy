@@ -5,24 +5,27 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/octovy/pkg/controller/server"
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/usecase"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func newServer(t *testing.T) *gin.Engine {
 	uc := usecase.NewTest(t)
-	engine := server.New(uc, &server.Option{DisableAuth: true})
+	engine := server.New(uc, server.DisableAuth())
 	return engine
 }
 
-func newServerWithDB(t *testing.T, client *db.Client) *gin.Engine {
+func newServerWithDB(t *testing.T, client *db.Client, options ...server.Option) *gin.Engine {
 	uc := usecase.NewTest(t, usecase.OptInjectDB(client))
-	engine := server.New(uc, &server.Option{DisableAuth: true})
+	options = append(options, server.DisableAuth())
+	engine := server.New(uc, options...)
 	return engine
 }
 
@@ -49,4 +52,97 @@ func newRequest(method, url string, data interface{}) *http.Request {
 		panic(err)
 	}
 	return req
+}
+
+func TestDisableGitHub(t *testing.T) {
+	t.Run("test disable webhook-github", func(t *testing.T) {
+		mock := db.NewMock(t)
+		s := newServerWithDB(t, mock, server.DisableWebhookGitHub())
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", "http://localhost/webhook/github", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", "http://localhost/webhook/trivy", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "http://localhost/api/v1/repository", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+	})
+}
+
+func TestDisableTrivy(t *testing.T) {
+	t.Run("test disable webhook-trivy", func(t *testing.T) {
+		mock := db.NewMock(t)
+		s := newServerWithDB(t, mock, server.DisableWebhookTrivy())
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", "http://localhost/webhook/github", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", "http://localhost/webhook/trivy", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "http://localhost/api/v1/repository", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+	})
+}
+
+func TestDisableFrontend(t *testing.T) {
+	t.Run("test disable frontend", func(t *testing.T) {
+		mock := db.NewMock(t)
+		s := newServerWithDB(t, mock, server.DisableFrontend())
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", "http://localhost/webhook/github", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("POST", "http://localhost/webhook/trivy", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+
+		{
+			w := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "http://localhost/api/v1/repository", nil)
+			require.NoError(t, err)
+			s.ServeHTTP(w, req)
+			assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+		}
+	})
 }

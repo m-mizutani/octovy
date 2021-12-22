@@ -4,6 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	ftypes "github.com/aquasecurity/fanal/types"
+	"github.com/aquasecurity/trivy/pkg/report"
+	ttypes "github.com/aquasecurity/trivy/pkg/types"
+
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/ent"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +31,7 @@ func TestGetRepositories(t *testing.T) {
 		assert.FileExists(t, filepath.Join(dir, "Gemfile"))
 		assert.FileExists(t, filepath.Join(dir, "Gemfile.lock"))
 		return &model.TrivyReport{
-			Results: model.TrivyResults{
+			Results: report.Results{
 				{
 					Target: "Gemfile",
 				},
@@ -118,16 +122,16 @@ func TestGetVulnerability(t *testing.T) {
 		switch calledScan {
 		case 1: // has targeted vuln -> blue/five
 			return &model.TrivyReport{
-				Results: model.TrivyResults{
+				Results: report.Results{
 					{
 						Target: "Gemfile.lock",
-						Packages: []model.TrivyPackage{
+						Packages: []ftypes.Package{
 							{
 								Name:    "orange",
 								Version: "0.0.1",
 							},
 						},
-						Vulnerabilities: []model.DetectedVulnerability{
+						Vulnerabilities: []ttypes.DetectedVulnerability{
 							{
 								VulnerabilityID:  "CVE-0001",
 								PkgName:          "orange",
@@ -140,10 +144,10 @@ func TestGetVulnerability(t *testing.T) {
 
 		case 2: // not matched -> blue/timeless
 			return &model.TrivyReport{
-				Results: model.TrivyResults{
+				Results: report.Results{
 					{
 						Target: "Gemfile.lock",
-						Packages: []model.TrivyPackage{
+						Packages: []ftypes.Package{
 							{
 								Name:    "orange",
 								Version: "0.0.1",
@@ -155,16 +159,16 @@ func TestGetVulnerability(t *testing.T) {
 
 		case 3: // matched vuln, but not target -> blue/words
 			return &model.TrivyReport{
-				Results: model.TrivyResults{
+				Results: report.Results{
 					{
 						Target: "Gemfile.lock",
-						Packages: []model.TrivyPackage{
+						Packages: []ftypes.Package{
 							{
 								Name:    "orange",
 								Version: "0.0.1",
 							},
 						},
-						Vulnerabilities: []model.DetectedVulnerability{
+						Vulnerabilities: []ttypes.DetectedVulnerability{
 							{
 								VulnerabilityID:  "CVE-0002",
 								PkgName:          "orange",

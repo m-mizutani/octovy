@@ -115,10 +115,22 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 			},
 
 			&cli.BoolFlag{
-				Name:        "webhook-only",
-				Usage:       "Enable only webhook from GitHub. Frontend and API will be disabled",
-				Destination: &ctrl.Config.WebhookOnly,
-				EnvVars:     []string{"OCTOVY_WEBHOOK_ONLY"},
+				Name:        "disable-webhook-github",
+				Usage:       "Disable github webhook",
+				Destination: &ctrl.Config.DisableWebhookGitHub,
+				EnvVars:     []string{"OCTOVY_DISABLE_WEBHOOK_GITHUB"},
+			},
+			&cli.BoolFlag{
+				Name:        "disable-webhook-trivy",
+				Usage:       "Disable trivy webhook",
+				Destination: &ctrl.Config.DisableWebhookTrivy,
+				EnvVars:     []string{"OCTOVY_DISABLE_WEBHOOK_TRIVY"},
+			},
+			&cli.BoolFlag{
+				Name:        "disable-frontend",
+				Usage:       "Disable frontend content/API",
+				Destination: &ctrl.Config.DisableFrontend,
+				EnvVars:     []string{"OCTOVY_DISABLE_FRONTEND"},
 			},
 
 			&cli.Int64Flag{
@@ -223,7 +235,17 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 
 			serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)
 
-			engine := server.New(uc)
+			var options []server.Option
+			if ctrl.Config.DisableFrontend {
+				options = append(options, server.DisableFrontend())
+			}
+			if ctrl.Config.DisableWebhookGitHub {
+				options = append(options, server.DisableWebhookGitHub())
+			}
+			if ctrl.Config.DisableWebhookTrivy {
+				options = append(options, server.DisableWebhookTrivy())
+			}
+			engine := server.New(uc, options...)
 
 			gin.SetMode(gin.DebugMode)
 

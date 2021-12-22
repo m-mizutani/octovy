@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	ftypes "github.com/aquasecurity/fanal/types"
 	dtypes "github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/aquasecurity/trivy/pkg/report"
+	ttypes "github.com/aquasecurity/trivy/pkg/types"
+
 	"github.com/google/go-github/v39/github"
 
 	"github.com/m-mizutani/octovy/pkg/domain/model"
@@ -29,16 +33,16 @@ func TestScanProcedure(t *testing.T) {
 	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
 		calledScan++
 		return &model.TrivyReport{
-			Results: model.TrivyResults{
+			Results: report.Results{
 				{
 					Target: "Gemfile.lock",
-					Packages: []model.TrivyPackage{
+					Packages: []ftypes.Package{
 						{
 							Name:    "example",
 							Version: "6.1.4",
 						},
 					},
-					Vulnerabilities: []model.DetectedVulnerability{
+					Vulnerabilities: []ttypes.DetectedVulnerability{
 						{
 							VulnerabilityID:  "CVE-1000",
 							PkgName:          "example",
@@ -105,16 +109,16 @@ func TestScanProcedureWithRule(t *testing.T) {
 		mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
 			calledScan++
 			return &model.TrivyReport{
-				Results: model.TrivyResults{
+				Results: report.Results{
 					{
 						Target: "Gemfile.lock",
-						Packages: []model.TrivyPackage{
+						Packages: []ftypes.Package{
 							{
 								Name:    "example",
 								Version: "6.1.4",
 							},
 						},
-						Vulnerabilities: []model.DetectedVulnerability{
+						Vulnerabilities: []ttypes.DetectedVulnerability{
 							{
 								VulnerabilityID:  "CVE-1000",
 								PkgName:          "example",
@@ -230,16 +234,16 @@ func TestScanProcedureWithOPA(t *testing.T) {
 	mock.Trivy.ScanMock = func(dir string) (*model.TrivyReport, error) {
 		calledScan++
 		return &model.TrivyReport{
-			Results: model.TrivyResults{
+			Results: report.Results{
 				{
 					Target: "Gemfile.lock",
-					Packages: []model.TrivyPackage{
+					Packages: []ftypes.Package{
 						{
 							Name:    "example",
 							Version: "6.1.4",
 						},
 					},
-					Vulnerabilities: []model.DetectedVulnerability{
+					Vulnerabilities: []ttypes.DetectedVulnerability{
 						{
 							VulnerabilityID:  "CVE-1000",
 							PkgName:          "example",

@@ -104,7 +104,10 @@ func getStaticFile(c *gin.Context) {
 	c.Next()
 	logger := getLog(c)
 
-	if c.Writer.Status() != http.StatusNotFound {
+	logger.With("url", c.Request.URL).Info("fallback to static file")
+
+	if c.Writer.Status() != http.StatusNotFound ||
+		strings.HasPrefix(c.Request.URL.Path, "/webhook/") {
 		return
 	}
 

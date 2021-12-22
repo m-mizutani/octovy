@@ -89,3 +89,26 @@ type GetRepoScanRequest struct {
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
 }
+
+type PushTrivyResultRequest struct {
+	Target ScanTarget
+	Report TrivyReport
+}
+
+func (x *PushTrivyResultRequest) IsValid() error {
+	const ghNameRegex = `^[a-z0-9]+(?:(?:(?:[._]|__|[-]*)[a-z0-9]+)+)?$`
+	ghNamePtn := regexp.MustCompile(ghNameRegex)
+	commitPtn := regexp.MustCompile(`^[0-9a-f]{40}$`)
+
+	if err := validation.ValidateStruct(&x.Target,
+		validation.Field(&x.Target.Owner, validation.Required, validation.Match(ghNamePtn)),
+		validation.Field(&x.Target.Name, validation.Required, validation.Match(ghNamePtn)),
+		validation.Field(&x.Target.Branch, validation.Required, validation.Match(ghNamePtn)),
+		validation.Field(&x.Target.Branch, validation.Required, validation.Match(ghNamePtn)),
+		validation.Field(&x.Target.CommitID, validation.Length(40, 40), validation.Required, validation.Match(commitPtn)),
+	); err != nil {
+		return ErrInvalidInput.Wrap(err).With("req", x)
+	}
+
+	return nil
+}

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
@@ -62,6 +63,34 @@ func postWebhookGitHub(c *gin.Context) {
 
 	default:
 		getLog(c).With("event", event).With("type", githubEventType).Warn("Unsupported event")
+	}
+
+	c.JSON(200, baseResponse{Data: "OK"})
+}
+
+func postWebhookTrivy(c *gin.Context) {
+	uc := getUsecase(c)
+
+	// Do not use json.Encoder because body can not be viewed if failed
+	if c.Request.Body == nil {
+		_ = c.Error(goerr.Wrap(model.ErrInvalidInput, "no body"))
+		return
+	}
+	data, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		_ = c.Error(goerr.Wrap(err, "Failed to read trivy webhook event body"))
+		return
+	}
+
+	var req model.PushTrivyResultRequest
+	if err := json.Unmarshal(data, &req); err != nil {
+		_ = c.Error(goerr.Wrap(err, "Failed to unmarshal trivy result request").With("body", string(data)))
+		return
+	}
+
+	if err := uc.PushTrivyResult(model.NewContextWith(c), &req); err != nil {
+		_ = c.Error(goerr.Wrap(err).With("req", req))
+		return
 	}
 
 	c.JSON(200, baseResponse{Data: "OK"})

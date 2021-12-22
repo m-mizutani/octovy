@@ -87,6 +87,3 @@ func (x *Usecase) FrontendURL() string {
 func (x *Usecase) GetGitHubAppClientID() string {
 	return x.infra.GitHubAppClientID()
 }
-func (x *Usecase) WebhookOnly() bool {
-	return x.config.WebhookOnly
-}
