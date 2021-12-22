@@ -235,7 +235,17 @@ func newServeCommand(ctrl *Controller) *cli.Command {
 
 			serverAddr := fmt.Sprintf("%s:%d", ctrl.Config.ServerAddr, ctrl.Config.ServerPort)
 
-			engine := server.New(uc)
+			var options []server.Option
+			if ctrl.Config.DisableFrontend {
+				options = append(options, server.DisableFrontend())
+			}
+			if ctrl.Config.DisableWebhookGitHub {
+				options = append(options, server.DisableWebhookGitHub())
+			}
+			if ctrl.Config.DisableWebhookTrivy {
+				options = append(options, server.DisableWebhookTrivy())
+			}
+			engine := server.New(uc, options...)
 
 			gin.SetMode(gin.DebugMode)
 

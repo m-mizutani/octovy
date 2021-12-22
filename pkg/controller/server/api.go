@@ -45,42 +45,40 @@ func errResp(c *gin.Context, code int, err error) {
 	}
 }
 
-type Option struct {
-	DisableAuth bool
+type config struct {
+	DisableAuth          bool
+	DisableWebhookGitHub bool
+	DisableWebhookTrivy  bool
+	DisableFrontend      bool
 }
 
-func mergeOption(options []*Option) *Option {
-	var merged Option
-	for _, opt := range options {
-		merged.DisableAuth = opt.DisableAuth
-	}
-	return &merged
-}
-
-func New(uc *usecase.Usecase, options ...*Option) *gin.Engine {
+func New(uc *usecase.Usecase, options ...Option) *gin.Engine {
 	engine := gin.Default()
-	opt := mergeOption(options)
+	var cfg config
+	for _, opt := range options {
+		opt(&cfg)
+	}
 
 	engine.Use(func(c *gin.Context) {
 		c.Set(contextUsecase, uc)
 	})
 	engine.Use(requestLogging)
-	if !opt.DisableAuth {
+	if !cfg.DisableAuth {
 		engine.Use(authControl)
 	}
-	if !uc.DisableFrontend() {
+	if !cfg.DisableFrontend {
 		engine.Use(getStaticFile)
 	}
 	engine.Use(errorHandler)
 
-	if !uc.DisableWebhookGitHub() {
+	if !cfg.DisableWebhookGitHub {
 		engine.POST("/webhook/github", postWebhookGitHub)
 	}
-	if !uc.DisableWebhookTrivy() {
+	if !cfg.DisableWebhookTrivy {
 		engine.POST("/webhook/trivy", postWebhookTrivy)
 	}
 
-	if !uc.DisableFrontend() {
+	if !cfg.DisableFrontend {
 		engine.GET("/auth/github", getAuthGitHub)
 		engine.GET("/auth/github/callback", getAuthGitHubCallback)
 
