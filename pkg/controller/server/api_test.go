@@ -54,7 +54,7 @@ func newRequest(method, url string, data interface{}) *http.Request {
 	return req
 }
 
-func TestDisable(t *testing.T) {
+func TestDisableGitHub(t *testing.T) {
 	t.Run("test disable webhook-github", func(t *testing.T) {
 		mock := db.NewMock(t)
 		s := newServerWithDB(t, mock, server.DisableWebhookGitHub())
@@ -83,11 +83,12 @@ func TestDisable(t *testing.T) {
 			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
 		}
 	})
+}
 
+func TestDisableTrivy(t *testing.T) {
 	t.Run("test disable webhook-trivy", func(t *testing.T) {
 		mock := db.NewMock(t)
 		s := newServerWithDB(t, mock, server.DisableWebhookTrivy())
-
 		{
 			w := httptest.NewRecorder()
 			req, err := http.NewRequest("POST", "http://localhost/webhook/github", nil)
@@ -111,8 +112,11 @@ func TestDisable(t *testing.T) {
 			s.ServeHTTP(w, req)
 			assert.NotEqual(t, http.StatusNotFound, w.Result().StatusCode)
 		}
-	})
 
+	})
+}
+
+func TestDisableFrontend(t *testing.T) {
 	t.Run("test disable frontend", func(t *testing.T) {
 		mock := db.NewMock(t)
 		s := newServerWithDB(t, mock, server.DisableFrontend())

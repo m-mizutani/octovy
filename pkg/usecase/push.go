@@ -5,6 +5,10 @@ import (
 )
 
 func (x *Usecase) PushTrivyResult(ctx *model.Context, req *model.PushTrivyResultRequest) error {
+	if err := req.IsValid(); err != nil {
+		return err
+	}
+
 	scannedAt := x.infra.Utils.Now()
 	newPkgs, vulnList := model.TrivyReportToEnt(&req.Report, scannedAt)
 

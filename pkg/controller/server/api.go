@@ -53,7 +53,10 @@ type config struct {
 }
 
 func New(uc *usecase.Usecase, options ...Option) *gin.Engine {
-	engine := gin.Default()
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+	engine.RedirectTrailingSlash = false
+
 	var cfg config
 	for _, opt := range options {
 		opt(&cfg)

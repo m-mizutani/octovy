@@ -24,7 +24,7 @@ func TestPushTrivyResult(t *testing.T) {
 				},
 				Branch: "master",
 			},
-			CommitID: "abc123",
+			CommitID: "abcde12345abcde12345abcde12345abcde12345",
 		},
 		Report: model.TrivyReport{
 			Results: report.Results{
@@ -49,7 +49,7 @@ func TestPushTrivyResult(t *testing.T) {
 			},
 		},
 	}
-	uc.PushTrivyResult(ctx, req)
+	require.NoError(t, uc.PushTrivyResult(ctx, req))
 
 	scan, err := mock.DB.GetLatestScan(ctx, model.GitHubBranch{
 		GitHubRepo: model.GitHubRepo{
@@ -60,7 +60,7 @@ func TestPushTrivyResult(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, scan)
-	assert.Equal(t, "abc123", scan.CommitID)
+	assert.Equal(t, "abcde12345abcde12345abcde12345abcde12345", scan.CommitID)
 	require.Len(t, scan.Edges.Packages, 1)
 	assert.Equal(t, "os-pkgs@debian", scan.Edges.Packages[0].Source)
 	assert.Equal(t, "libx", scan.Edges.Packages[0].Name)
