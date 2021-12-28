@@ -53,6 +53,18 @@ jobs:
             --port 9080 \
             --allow-unauthenticated \
             --ingress=all \
+            --set-env-vars "OCTOVY_LOG_LEVEL=debug,
+              OCTOVY_LOG_FORMAT=json,
+              OCTOVY_FRONTEND_URL=https://octovy.dev,
+              OCTOVY_GITHUB_APP_ID=109024,
+              OCTOVY_GITHUB_CLIENT_ID=Iv1.6fbf414816a6e06b,
+              OCTOVY_ADDR=0.0.0.0,
+              OCTOVY_DB_TYPE=postgres,
+              OCTOVY_TRIVY_DB_PATH=tmp/trivy.db,
+              OCTOVY_OPA_URL=https://opa-server-h6tk4k5hyq-an.a.run.app,
+              OCTOVY_OPA_PATH=ubie/octovy,
+              OCTOVY_DISABLE_WEBHOOK_TRIVY=1,
+              GIN_MODE=release" \
             --service-account="octovy-service@octovy-service.iam.gserviceaccount.com"
 
       # teardown
@@ -61,4 +73,4 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "Deployed OPA server ${{ github.sha }}"
+          SLACK_MESSAGE: "Deployed octovy server ${{ github.sha }}"
