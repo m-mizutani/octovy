@@ -22,7 +22,7 @@ import Link from "next/link";
 import theme from "./theme";
 import Head from "./head";
 import * as model from "./model";
-import Settings from "@mui/icons-material/Settings";
+import { useRouter } from "next/router";
 
 type mainProp = {
   children?: React.ReactNode;
@@ -31,19 +31,27 @@ type mainProp = {
 export function Main(props: mainProp) {
   const [user, setUser] = React.useState<model.user>();
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const router = useRouter();
 
   const getUser = () => {
-    fetch(`/api/v1/user`)
-      .then((res) => res.json())
-      .then(
+    fetch(`/api/v1/user`).then((res) => {
+      if (res.status === 401 && router.pathname !== "/login") {
+        router.push(`/login?callback=${router.pathname}`);
+        return;
+      }
+
+      console.log("status", res.status);
+
+      res.json().then(
         (resp) => {
           console.log("get user resp:", { resp });
           setUser(resp.data);
         },
-        (error) => {
-          console.log("ignore error:", { error });
+        (err) => {
+          console.log("ignore error:", { err });
         }
       );
+    });
   };
 
   React.useEffect(getUser, []);

@@ -17,7 +17,6 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import Link from "next/link";
 import Stack from "@mui/material/Stack";
 
-import strftime from "strftime";
 import TimeAgo from "javascript-time-ago";
 import en from "javascript-time-ago/locale/en.json";
 

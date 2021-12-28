@@ -28,7 +28,10 @@ func getAuthGitHub(c *gin.Context) {
 
 	redirectTo := "https://github.com/login/oauth/authorize?" + v.Encode()
 
-	c.SetCookie(cookieReferrerName, c.Query("callback"), 60, "", "", true, true)
+	callback := c.Query("callback")
+	getLog(c).With("callback", callback).Info("got cookie")
+
+	c.SetCookie(cookieReferrerName, callback, 60, "", "", true, true)
 	c.Redirect(http.StatusFound, redirectTo)
 }
 
@@ -64,7 +67,8 @@ func getAuthGitHubCallback(c *gin.Context) {
 	c.SetCookie(cookieSessionSecret, ssn.Token, 86400*7, "", "", true, true)
 	redirectTo := uc.FrontendURL()
 	if v, err := c.Cookie(cookieReferrerName); err == nil {
-		redirectTo = strings.TrimSuffix(redirectTo, "/") + v
+		getLog(c).With("referrer", v).Info("got referrer")
+		redirectTo = redirectTo + "/" + strings.TrimLeft(v, "/")
 	}
 
 	c.Redirect(http.StatusFound, redirectTo)

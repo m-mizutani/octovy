@@ -10,7 +10,10 @@ import { useRouter } from "next/router";
 export function Login() {
   const router = useRouter();
   const { login_error } = router.query;
-
+  const callbackTo = router.query.callback;
+  const githubLogin = `/auth/github${
+    callbackTo ? `?callback=${callbackTo}` : ""
+  }`;
   return (
     <app.Main>
       {login_error ? (
@@ -28,7 +31,7 @@ export function Login() {
           <Button
             variant="outlined"
             startIcon={<GitHubIcon />}
-            href="/auth/github">
+            href={githubLogin}>
             Login with GitHub
           </Button>
         </Grid>
