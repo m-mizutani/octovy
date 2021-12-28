@@ -53,7 +53,7 @@ jobs:
             --port 9080 \
             --allow-unauthenticated \
             --ingress=all \
-            --service-account="octovy-app@octovy-service.iam.gserviceaccount.com"
+            --service-account="octovy-service@octovy-service.iam.gserviceaccount.com"
 
       # teardown
       - uses: actions/checkout@v2
