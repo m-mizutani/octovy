@@ -2,8 +2,8 @@ import React from "react";
 import { Grid, Alert, Typography } from "@mui/material";
 import Stack from "@mui/material/Stack";
 
-import * as app from "@/components/app";
-import * as model from "@/components/model";
+import * as app from "@/src/components/app";
+import * as model from "@/src/components/model";
 
 import Labels from "./label";
 import Scans from "./scan";

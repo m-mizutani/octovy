@@ -1,4 +1,4 @@
-import Repository from "@/components/pages/repository/repository";
+import Repository from "@/src/pages/repository";
 import { useRouter } from "next/router";
 
 export default function Page() {

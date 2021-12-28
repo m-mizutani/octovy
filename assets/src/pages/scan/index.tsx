@@ -6,8 +6,6 @@ import Grid from "@mui/material/Grid";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Modal from "@mui/material/Modal";
 
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -17,8 +15,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import * as model from "@/components/model";
-import * as app from "@/components/app";
+import * as model from "@/src/components/model";
+import * as app from "@/src/components/app";
 
 import Package from "./package";
 import CopyClipboard from "./raw";
@@ -30,7 +28,7 @@ type scanStatus = {
   err?: any;
 };
 
-function Scan() {
+export function Page() {
   const router = useRouter();
   const scanID = router.query.id;
 
@@ -146,8 +144,6 @@ function Scan() {
     </app.Main>
   );
 }
-
-export default Scan;
 
 function renderPackageSource(
   repo: model.repository,

@@ -1,5 +1,5 @@
 import React from "react";
-import Config from "@/components/pages/config/config";
+import Config from "@/src/pages/config";
 
 export default function Page() {
   return <Config />;

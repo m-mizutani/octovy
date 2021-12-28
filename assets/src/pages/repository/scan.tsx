@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@mui/material";
 
-import * as model from "@/components/model";
+import * as model from "@/src/components/model";
 
 import ReactTimeAgo from "react-time-ago";
 import TimeAgo from "javascript-time-ago";

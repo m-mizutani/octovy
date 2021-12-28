@@ -24,7 +24,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
-import * as model from "../../model";
+import * as model from "../../components/model";
 
 type severityState = {
   msg?: string;

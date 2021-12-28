@@ -23,8 +23,8 @@ import { TwitterPicker } from "react-color";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 
-import * as model from "@/components/model";
-import * as ui from "@/components/ui";
+import * as model from "@/src/components/model";
+import * as ui from "@/src/components/ui";
 
 export default function RepoLabels() {
   type status = {

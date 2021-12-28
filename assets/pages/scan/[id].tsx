@@ -1,7 +1,7 @@
 import React from "react";
 
-import Scan from "@/components/pages/scan/scan";
+import { Page } from "@/src/pages/scan";
 
-export default function Page() {
-  return <Scan />;
+export default function Index() {
+  return <Page />;
 }

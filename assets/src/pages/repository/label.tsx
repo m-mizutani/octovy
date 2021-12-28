@@ -9,8 +9,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 
-import * as model from "@/components/model";
-import * as ui from "@/components/ui";
+import * as model from "@/src/components/model";
+import * as ui from "@/src/components/ui";
 
 export default RepoLabels;
 

@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 
-import * as app from "../../app";
+import * as app from "../../components/app";
 import Severities from "./severity";
 import RepoLabels from "./repoLabel";
 

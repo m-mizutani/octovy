@@ -1,5 +1,5 @@
 import Chip from "@mui/material/Chip";
-import * as model from "@/components/model";
+import * as model from "@/src/components/model";
 
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import AccessAlarmIcon from "@mui/icons-material/AccessAlarm";
