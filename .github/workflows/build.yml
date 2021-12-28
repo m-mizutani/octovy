@@ -62,7 +62,7 @@ jobs:
               OCTOVY_DB_TYPE=postgres,
               OCTOVY_TRIVY_DB_PATH=tmp/trivy.db,
               OCTOVY_OPA_URL=https://opa-server-h6tk4k5hyq-an.a.run.app,
-              OCTOVY_OPA_PATH=ubie/octovy,
+              OCTOVY_OPA_PATH=octovy/check,
               OCTOVY_DISABLE_WEBHOOK_TRIVY=1,
               GIN_MODE=release" \
             --service-account="octovy-service@octovy-service.iam.gserviceaccount.com"
