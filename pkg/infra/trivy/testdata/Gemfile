@@ -4,6 +4,6 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-gem "rails"
+gem "rails", ">= 6.1.4.6"
 gem "rubyzip", "1.2.1"
 
