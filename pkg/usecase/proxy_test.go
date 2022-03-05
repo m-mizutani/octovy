@@ -223,7 +223,7 @@ func TestGetVulnerability(t *testing.T) {
 		},
 	}))
 
-	t.Run("3 repository with latset scan found", func(t *testing.T) {
+	t.Run("3 repository with latest scan found", func(t *testing.T) {
 		resp, err := uc.GetRepositories(ctx)
 		require.NoError(t, err)
 		require.Len(t, resp, 3)

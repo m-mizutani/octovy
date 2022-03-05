@@ -117,7 +117,7 @@ func scanRepository(ctx *model.Context, req *model.ScanRepositoryRequest, client
 			return err
 		}
 
-		// Nothing happend if check completed properly
+		// Nothing happened if check completed properly
 		defer check.fallback(ctx)
 	}
 

@@ -39,7 +39,7 @@ func TestGitHubDownload(t *testing.T) {
 		props.GITHUB_ORG == "" ||
 		props.GITHUB_REPO_NAME == "" {
 		t.Logf("props => %+v\n", props)
-		t.Skip("Not enough paramters")
+		t.Skip("Not enough parameters")
 	}
 
 	installID, err := strconv.ParseInt(props.GITHUB_INSTALL_ID, 10, 64)
