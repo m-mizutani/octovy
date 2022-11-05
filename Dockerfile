@@ -1,11 +1,5 @@
-FROM node:16.10.0-buster AS build-node
+FROM golang:1.19.3 AS build-go
 ADD . /app
-WORKDIR /app/assets
-RUN npm i
-RUN npm run export
-#
-FROM golang:1.16 AS build-go
-COPY --from=build-node /app /app
 WORKDIR /app
 RUN go build .
 
