@@ -2,7 +2,7 @@ package scan
 
 import (
 	"github.com/m-mizutani/octovy/pkg/infra"
-	"github.com/m-mizutani/octovy/pkg/service"
+	"github.com/m-mizutani/octovy/pkg/usecase"
 
 	"github.com/urfave/cli/v2"
 )
@@ -24,9 +24,9 @@ func New() *cli.Command {
 		},
 		Action: func(ctx *cli.Context) error {
 			clients := infra.New()
-			svc := service.New(clients)
+			uc := usecase.New(clients)
 
-			if err := svc.ScanRepository(dir); err != nil {
+			if err := uc.ScanRepository(dir); err != nil {
 				return err
 			}
 

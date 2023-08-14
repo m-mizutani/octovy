@@ -1,28 +1,31 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/m-mizutani/octovy/pkg/service"
+	"github.com/m-mizutani/octovy/pkg/usecase"
 )
 
-type Server struct{}
-
-func New(svc *service.Service) *Server {
-	return &Server{}
+type Server struct {
+	mux *chi.Mux
 }
 
-func (*Server) Listen(addr string, port int) error {
+func New(svc *usecase.UseCase) *Server {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
+	r.Use(preProcess)
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("hello"))
+	})
+	r.Route("/webhook", func(r chi.Router) {
 	})
 
-	http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), r)
+	return &Server{
+		mux: r,
+	}
+}
 
-	return nil
+func (x *Server) Mux() *chi.Mux {
+	return x.mux
 }

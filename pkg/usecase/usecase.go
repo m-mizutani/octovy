@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import (
 	"encoding/json"
@@ -13,13 +13,13 @@ import (
 	trivy_types "github.com/aquasecurity/trivy/pkg/types"
 )
 
-type Service struct{}
+type UseCase struct{}
 
-func New(clients *infra.Clients) *Service {
-	return &Service{}
+func New(clients *infra.Clients) *UseCase {
+	return &UseCase{}
 }
 
-func (x *Service) ScanRepository(dir string) error {
+func (x *UseCase) ScanRepository(dir string) error {
 	tmp, err := os.CreateTemp("", "trivy-scan-*.json")
 	if err != nil {
 		return goerr.Wrap(err, "creating trivy tmp output file")

@@ -1,43 +1,95 @@
 package utils
 
 import (
+	"io"
 	"os"
 
+	"log/slog"
+
+	"github.com/fatih/color"
+	"github.com/m-mizutani/clog"
 	"github.com/m-mizutani/goerr"
-	"golang.org/x/exp/slog"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
-var logger = slog.New(slog.NewTextHandler(os.Stdout))
+var logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 func Logger() *slog.Logger {
 	return logger
 }
 
-func ReconfigureLogger(logFormat, logLevel string) error {
-	switch logFormat {
-	case "text":
-		logger = slog.New(slog.NewTextHandler(os.Stdout))
-	case "json":
-		logger = slog.New(slog.NewJSONHandler(os.Stdout))
-	default:
-		return goerr.New("invalid log format, should be 'text' or 'json': %s", logFormat)
+func ReconfigureLogger(logFormat, logLevel, logOutput string) error {
+	/*
+		filter := masq.New(
+			// Mask value with `masq:"secret"` tag
+			masq.WithTag("secret"),
+
+			// Ignore time.Time type
+			masq.WithAllowedType(reflect.TypeOf(time.Time{})),
+		)
+	*/
+	levelMap := map[string]slog.Level{
+		"debug": slog.LevelDebug,
+		"info":  slog.LevelInfo,
+		"warn":  slog.LevelWarn,
+		"error": slog.LevelError,
 	}
 
-	switch logLevel {
-	case "debug":
-		logger.Enabled(slog.DebugLevel)
-		fallthrough
-	case "info":
-		logger.Enabled(slog.InfoLevel)
-		fallthrough
-	case "warn":
-		logger.Enabled(slog.WarnLevel)
-		fallthrough
-	case "error":
-		logger.Enabled(slog.ErrorLevel)
-	default:
-		return goerr.New("invalid log format, should be 'debug', 'info', 'warn' or 'error': %s", logLevel)
+	level, ok := levelMap[logLevel]
+	if !ok {
+		return goerr.Wrap(types.ErrInvalidOption, "invalid log level").With("value", logLevel)
 	}
+
+	var w io.Writer
+	switch logOutput {
+	case "stdout", "-":
+		w = os.Stdout
+	case "stderr":
+		w = os.Stderr
+	default:
+		fd, err := os.Create(logOutput)
+		if err != nil {
+			return goerr.Wrap(err, "failed to open log file").With("path", logOutput)
+		}
+		w = fd
+	}
+
+	var handler slog.Handler
+	switch logFormat {
+	case "text":
+		handler = clog.New(
+			clog.WithWriter(w),
+			clog.WithLevel(level),
+			// clog.WithReplaceAttr(filter),
+			clog.WithSource(true),
+			// clog.WithTimeFmt("2006-01-02 15:04:05"),
+			clog.WithColorMap(&clog.ColorMap{
+				Level: map[slog.Level]*color.Color{
+					slog.LevelDebug: color.New(color.FgGreen, color.Bold),
+					slog.LevelInfo:  color.New(color.FgCyan, color.Bold),
+					slog.LevelWarn:  color.New(color.FgYellow, color.Bold),
+					slog.LevelError: color.New(color.FgRed, color.Bold),
+				},
+				LevelDefault: color.New(color.FgBlue, color.Bold),
+				Time:         color.New(color.FgWhite),
+				Message:      color.New(color.FgHiWhite),
+				AttrKey:      color.New(color.FgHiCyan),
+				AttrValue:    color.New(color.FgHiWhite),
+			}),
+		)
+
+	case "json":
+		handler = slog.NewJSONHandler(w, &slog.HandlerOptions{
+			AddSource: true,
+			Level:     level,
+			// ReplaceAttr: filter,
+		})
+
+	default:
+		return goerr.Wrap(types.ErrInvalidOption, "invalid log format, should be 'json' or 'text'").With("value", logFormat)
+	}
+
+	logger = slog.New(handler)
 
 	return nil
 }

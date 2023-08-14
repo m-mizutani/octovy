@@ -18,6 +18,7 @@ func (x *CLI) Run(argv []string) error {
 	var (
 		logLevel  string
 		logFormat string
+		logOutput string
 	)
 
 	app := &cli.App{
@@ -26,16 +27,27 @@ func (x *CLI) Run(argv []string) error {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "log-level",
-				Aliases:     []string{"l"},
 				Usage:       "Log level [trace|debug|info|warn|error]",
+				Aliases:     []string{"l"},
+				EnvVars:     []string{"OCTOVY_LOG_LEVEL"},
 				Destination: &logLevel,
 				Value:       "info",
 			},
 			&cli.StringFlag{
 				Name:        "log-format",
 				Usage:       "Log format [text|json]",
+				Aliases:     []string{"f"},
+				EnvVars:     []string{"OCTOVY_LOG_FORMAT"},
 				Destination: &logFormat,
 				Value:       "text",
+			},
+			&cli.StringFlag{
+				Name:        "log-output",
+				Usage:       "Log output [-|stdout|stderr|<file>]",
+				Aliases:     []string{"o"},
+				EnvVars:     []string{"OCTOVY_LOG_OUTPUT"},
+				Destination: &logOutput,
+				Value:       "-",
 			},
 		},
 		Commands: []*cli.Command{
@@ -43,7 +55,7 @@ func (x *CLI) Run(argv []string) error {
 			scan.New(),
 		},
 		Before: func(ctx *cli.Context) error {
-			if err := utils.ReconfigureLogger(logFormat, logLevel); err != nil {
+			if err := utils.ReconfigureLogger(logFormat, logLevel, logOutput); err != nil {
 				return err
 			}
 			return nil
