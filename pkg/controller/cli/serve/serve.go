@@ -62,6 +62,8 @@ func New() *cli.Command {
 			httpServer := &http.Server{
 				Addr:    addr,
 				Handler: s.Mux(),
+
+				ReadHeaderTimeout: 10 * time.Second,
 			}
 
 			serverErr := make(chan error, 1)
