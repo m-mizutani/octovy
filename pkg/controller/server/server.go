@@ -11,7 +11,7 @@ type Server struct {
 	mux *chi.Mux
 }
 
-func New(svc *usecase.UseCase) *Server {
+func New(uc *usecase.UseCase) *Server {
 	r := chi.NewRouter()
 	r.Use(preProcess)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -19,6 +19,9 @@ func New(svc *usecase.UseCase) *Server {
 		w.Write([]byte("hello"))
 	})
 	r.Route("/webhook", func(r chi.Router) {
+		r.Post("/github", func(w http.ResponseWriter, r *http.Request) {
+
+		})
 	})
 
 	return &Server{

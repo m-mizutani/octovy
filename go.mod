@@ -8,7 +8,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/uuid v1.3.0
 	github.com/m-mizutani/clog v0.0.3
-	github.com/m-mizutani/goerr v0.1.9
+	github.com/m-mizutani/goerr v0.1.10
 	github.com/urfave/cli/v2 v2.25.7
 )
 
@@ -25,7 +25,7 @@ require (
 	github.com/spdx/tools-golang v0.5.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 )
