@@ -66,8 +66,11 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 			InstallID: types.GitHubAppInstallID(ev.GetInstallation().GetID()),
 		}
 
+	case *github.CheckRunEvent, *github.CheckSuiteEvent:
+		return nil // ignore
+
 	default:
-		utils.Logger().Warn("unsupported event", slog.Any("event", fmt.Sprintf("%t", event)))
+		utils.Logger().Warn("unsupported event", slog.Any("event", fmt.Sprintf("%T", event)))
 		return nil
 	}
 }
