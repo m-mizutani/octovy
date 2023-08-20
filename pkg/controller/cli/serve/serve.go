@@ -12,7 +12,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/controller/server"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
-	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
@@ -67,7 +67,7 @@ func New() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			ghApp, err := githubapp.New(gitHubAppID, gitHubAppPrivateKey)
+			ghApp, err := gh.New(gitHubAppID, gitHubAppPrivateKey)
 			if err != nil {
 				return err
 			}

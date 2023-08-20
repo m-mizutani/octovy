@@ -16,7 +16,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
-	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/utils"
 
 	ttype "github.com/aquasecurity/trivy/pkg/types"
@@ -51,7 +51,7 @@ func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 		return err
 	}
 
-	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &githubapp.GetArchiveURLInput{
+	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.Repo,
 		CommitID:  input.CommitID,
@@ -95,12 +95,12 @@ func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 	if err != nil {
 		return goerr.Wrap(err, "failed to create temp file for scan result")
 	}
-	// defer utils.SafeRemove(tmpZip.Name())
+	defer utils.SafeRemove(tmpResult.Name())
 	if err := tmpResult.Close(); err != nil {
 		return goerr.Wrap(err, "failed to close temp file for scan result")
 	}
 
-	if err := x.clients.Trivy().Run([]string{
+	if err := x.clients.Trivy().Run(ctx, []string{
 		"fs",
 		"--exit-code", "0",
 		"--no-progress",

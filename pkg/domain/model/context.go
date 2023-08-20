@@ -16,7 +16,8 @@ func (x *Context) Logger() *slog.Logger { return x.logger }
 
 func NewContext(options ...Option) *Context {
 	ctx := &Context{
-		logger: utils.Logger(),
+		logger:  utils.Logger(),
+		Context: context.Background(),
 	}
 
 	for _, opt := range options {

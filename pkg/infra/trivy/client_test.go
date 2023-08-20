@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/m-mizutani/gt"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -26,7 +27,8 @@ func Test(t *testing.T) {
 	gt.NoError(t, tmp.Close())
 
 	client := trivy.New(path)
-	gt.NoError(t, client.Run([]string{
+	ctx := model.NewContext()
+	gt.NoError(t, client.Run(ctx, []string{
 		"fs",
 		target,
 		"-f", "json",

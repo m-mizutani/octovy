@@ -5,10 +5,11 @@ import (
 	"os/exec"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 )
 
 type Client interface {
-	Run(args []string) error
+	Run(ctx *model.Context, args []string) error
 }
 
 type clientImpl struct {
@@ -21,8 +22,8 @@ func New(path string) Client {
 	}
 }
 
-func (x *clientImpl) Run(args []string) error {
-	cmd := exec.Command(x.path, args...)
+func (x *clientImpl) Run(ctx *model.Context, args []string) error {
+	cmd := exec.CommandContext(ctx, x.path, args...)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return goerr.Wrap(err, "retrieving stderr pipe")

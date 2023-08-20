@@ -3,12 +3,12 @@ package infra
 import (
 	"net/http"
 
-	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
 type Clients struct {
-	githubApp   githubapp.Client
+	githubApp   gh.Client
 	httpClient  HTTPClient
 	trivyClient trivy.Client
 }
@@ -32,7 +32,7 @@ func New(options ...Option) *Clients {
 	return client
 }
 
-func (x *Clients) GitHubApp() githubapp.Client {
+func (x *Clients) GitHubApp() gh.Client {
 	return x.githubApp
 }
 func (x *Clients) HTTPClient() HTTPClient {
@@ -42,7 +42,7 @@ func (x *Clients) Trivy() trivy.Client {
 	return x.trivyClient
 }
 
-func WithGitHubApp(client githubapp.Client) Option {
+func WithGitHubApp(client gh.Client) Option {
 	return func(x *Clients) {
 		x.githubApp = client
 	}
