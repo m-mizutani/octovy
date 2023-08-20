@@ -63,7 +63,7 @@ func (x *CLI) Run(argv []string) error {
 	}
 
 	if err := app.Run(argv); err != nil {
-		utils.Logger().Error("fatal error", err)
+		utils.Logger().Error("fatal error", "error", err)
 		return err
 	}
 

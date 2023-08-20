@@ -1,24 +1,20 @@
 package usecase
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"os"
-	"os/exec"
-
-	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/infra"
-
-	trivy_types "github.com/aquasecurity/trivy/pkg/types"
 )
 
-type UseCase struct{}
-
-func New(clients *infra.Clients) *UseCase {
-	return &UseCase{}
+type UseCase struct {
+	clients *infra.Clients
 }
 
+func New(clients *infra.Clients) *UseCase {
+	return &UseCase{
+		clients: clients,
+	}
+}
+
+/*
 func (x *UseCase) ScanRepository(dir string) error {
 	tmp, err := os.CreateTemp("", "trivy-scan-*.json")
 	if err != nil {
@@ -59,3 +55,4 @@ func (x *UseCase) ScanRepository(dir string) error {
 
 	return nil
 }
+*/

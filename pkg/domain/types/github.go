@@ -1,7 +1,8 @@
 package types
 
 type (
-	GitHubAppID         string
+	GitHubAppID         int64
+	GitHubAppInstallID  int64
 	GitHubAppSecret     string
 	GitHubAppPrivateKey string
 )

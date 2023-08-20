@@ -12,6 +12,8 @@ import (
 	"github.com/m-mizutani/octovy/pkg/controller/server"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
+	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
 
@@ -21,6 +23,7 @@ import (
 func New() *cli.Command {
 	var (
 		addr                string
+		trivyPath           string
 		gitHubAppID         types.GitHubAppID
 		gitHubAppSecret     types.GitHubAppSecret
 		gitHubAppPrivateKey types.GitHubAppPrivateKey
@@ -36,29 +39,47 @@ func New() *cli.Command {
 				Destination: &addr,
 			},
 			&cli.StringFlag{
+				Name:        "trivy-path",
+				Usage:       "Path to trivy binary",
+				Value:       "trivy",
+				Destination: &trivyPath,
+			},
+			&cli.Int64Flag{
 				Name:        "github-app-id",
 				Usage:       "GitHub App ID",
-				Destination: (*string)(&gitHubAppID),
+				Destination: (*int64)(&gitHubAppID),
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},
+				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "github-app-secret",
 				Usage:       "GitHub App Secret",
 				Destination: (*string)(&gitHubAppSecret),
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_SECRET"},
+				Required:    true,
 			},
 			&cli.StringFlag{
 				Name:        "github-app-private-key",
 				Usage:       "GitHub App Private Key",
 				Destination: (*string)(&gitHubAppPrivateKey),
 				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
+				Required:    true,
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			clients := infra.New()
-			uc := usecase.New(clients)
-			s := server.New(uc)
+			ghApp, err := githubapp.New(gitHubAppID, gitHubAppPrivateKey)
+			if err != nil {
+				return err
+			}
 
+			clients := infra.New(
+				infra.WithGitHubApp(ghApp),
+				infra.WithTrivy(trivy.New(trivyPath)),
+			)
+			uc := usecase.New(clients)
+			s := server.New(uc, gitHubAppSecret)
+
+			serverErr := make(chan error, 1)
 			httpServer := &http.Server{
 				Addr:    addr,
 				Handler: s.Mux(),
@@ -66,9 +87,8 @@ func New() *cli.Command {
 				ReadHeaderTimeout: 10 * time.Second,
 			}
 
-			serverErr := make(chan error, 1)
-
 			go func() {
+				utils.Logger().Info("starting server", "addr", addr)
 				if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
 					serverErr <- goerr.Wrap(err, "failed to listen and serve")
 				}

@@ -1,15 +1,33 @@
 package infra
 
-import "github.com/m-mizutani/octovy/pkg/infra/githubapp"
+import (
+	"net/http"
+
+	"github.com/m-mizutani/octovy/pkg/infra/githubapp"
+	"github.com/m-mizutani/octovy/pkg/infra/trivy"
+)
 
 type Clients struct {
-	githubApp githubapp.Client
+	githubApp   githubapp.Client
+	httpClient  HTTPClient
+	trivyClient trivy.Client
+}
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 type Option func(*Clients)
 
 func New(options ...Option) *Clients {
-	client := &Clients{}
+	client := &Clients{
+		httpClient:  http.DefaultClient,
+		trivyClient: trivy.New("trivy"),
+	}
+
+	for _, opt := range options {
+		opt(client)
+	}
 
 	return client
 }
@@ -17,9 +35,27 @@ func New(options ...Option) *Clients {
 func (x *Clients) GitHubApp() githubapp.Client {
 	return x.githubApp
 }
+func (x *Clients) HTTPClient() HTTPClient {
+	return x.httpClient
+}
+func (x *Clients) Trivy() trivy.Client {
+	return x.trivyClient
+}
 
 func WithGitHubApp(client githubapp.Client) Option {
 	return func(x *Clients) {
 		x.githubApp = client
+	}
+}
+
+func WithHTTPClient(client HTTPClient) Option {
+	return func(x *Clients) {
+		x.httpClient = client
+	}
+}
+
+func WithTrivy(client trivy.Client) Option {
+	return func(x *Clients) {
+		x.trivyClient = client
 	}
 }
