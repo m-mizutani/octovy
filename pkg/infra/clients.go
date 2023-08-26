@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"database/sql"
 	"net/http"
 
 	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
@@ -11,6 +12,7 @@ type Clients struct {
 	githubApp   gh.Client
 	httpClient  HTTPClient
 	trivyClient trivy.Client
+	dbClient    *sql.DB
 }
 
 type HTTPClient interface {
@@ -41,6 +43,9 @@ func (x *Clients) HTTPClient() HTTPClient {
 func (x *Clients) Trivy() trivy.Client {
 	return x.trivyClient
 }
+func (x *Clients) DB() *sql.DB {
+	return x.dbClient
+}
 
 func WithGitHubApp(client gh.Client) Option {
 	return func(x *Clients) {
@@ -57,5 +62,11 @@ func WithHTTPClient(client HTTPClient) Option {
 func WithTrivy(client trivy.Client) Option {
 	return func(x *Clients) {
 		x.trivyClient = client
+	}
+}
+
+func WithDB(client *sql.DB) Option {
+	return func(x *Clients) {
+		x.dbClient = client
 	}
 }

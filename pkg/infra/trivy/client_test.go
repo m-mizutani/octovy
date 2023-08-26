@@ -41,7 +41,7 @@ func Test(t *testing.T) {
 	gt.NoError(t, json.Unmarshal(body, &report))
 	gt.V(t, report.SchemaVersion).Equal(2)
 	gt.A(t, report.Results).Length(1).At(0, func(t testing.TB, v ttypes.Result) {
-		gt.A(t, v.Packages).Any(func(t testing.TB, v ftypes.Package) bool {
+		gt.A(t, v.Packages).Any(func(v ftypes.Package) bool {
 			return v.Name == "github.com/m-mizutani/goerr"
 		})
 	})

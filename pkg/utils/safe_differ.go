@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"io"
 	"os"
 
@@ -24,5 +25,11 @@ func SafeRemove(path string) {
 func SafeRemoveAll(path string) {
 	if err := os.RemoveAll(path); err != nil {
 		logger.Warn("Fail to remove file", slog.Any("error", err))
+	}
+}
+
+func SafeRollback(tx *sql.Tx) {
+	if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+		logger.Warn("Fail to rollback transaction", slog.Any("error", err))
 	}
 }

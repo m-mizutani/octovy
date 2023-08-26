@@ -8,4 +8,6 @@ var (
 	ErrInvalidRequest = goerr.New("invalid request")
 
 	ErrInvalidGitHubData = goerr.New("invalid GitHub data")
+
+	ErrLogicError = goerr.New("logic error")
 )

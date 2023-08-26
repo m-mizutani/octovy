@@ -46,6 +46,8 @@ func (x *ScanGitHubRepoInput) Validate() error {
 	return nil
 }
 
+// ScanGitHubRepo is a usecase to download a source code from GitHub and scan it with Trivy. Using GitHub App credentials to download a private repository, then the app should be installed to the repository and have read access.
+// After scanning, the result is stored to the database. The temporary files are removed after the scan.
 func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
 	if err := input.Validate(); err != nil {
 		return err
@@ -118,6 +120,10 @@ func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 	}
 
 	ctx.Logger().Info("Scan result", slog.Any("report", tmpResult.Name()))
+
+	if err := saveScanReport(ctx, x.clients.DB(), &report); err != nil {
+		return err
+	}
 
 	return nil
 }
