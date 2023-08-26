@@ -27,11 +27,13 @@ func TestScanGitHubRepo(t *testing.T) {
 	mockGH := &ghMock{}
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
+	testDB := newTestDB(t)
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
 		infra.WithHTTPClient(mockHTTP),
 		infra.WithTrivy(mockTrivy),
+		infra.WithDB(testDB),
 	))
 
 	ctx := model.NewContext()
