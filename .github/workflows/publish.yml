@@ -7,9 +7,6 @@ env:
   TAG_NAME: octovy:${{ github.sha }}
   GITHUB_IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/octovy
   GITHUB_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/octovy:${{ github.sha }}
-  GCP_IMAGE_REPO: gcr.io/octovy/octovy
-  GCP_IMAGE_NAME: gcr.io/octovy/octovy:${{ github.sha }}
-  GCP_PROJECT_ID: octovy
 
 jobs:
   build:
