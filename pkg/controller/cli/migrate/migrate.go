@@ -57,7 +57,9 @@ func New() *cli.Command {
 				Host:     dbConfig.Host,
 				Port:     dbConfig.Port,
 			}
-			os.Setenv("PGSSLMODE", dbConfig.SSLMode)
+			if err := os.Setenv("PGSSLMODE", dbConfig.SSLMode); err != nil {
+				return goerr.Wrap(err, "failed to set PGSSLMODE")
+			}
 
 			db, err := postgres.NewDatabase(config)
 			if err != nil {
