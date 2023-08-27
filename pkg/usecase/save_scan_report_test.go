@@ -30,7 +30,8 @@ func TestCalcPackageID(t *testing.T) {
 func newTestDB(t *testing.T) *sql.DB {
 	testDSN, ok := os.LookupEnv("TEST_DB_DSN")
 	if !ok {
-		t.Skip("TEST_DB_DSN is not set")
+		t.Errorf("TEST_DB_DSN is not set")
+		t.FailNow()
 	}
 	dbClient := gt.R1(sql.Open("postgres", testDSN)).NoError(t)
 	t.Cleanup(func() {
