@@ -31,5 +31,5 @@ jobs:
           OCTOVY_DB_NAME: testdb
       - run: go test --tags github ./...
         env:
-          TEST_DB_DSN: "user=pguser password=pgpass dbname=testdb"
+          TEST_DB_DSN: "user=pguser password=pgpass dbname=testdb sslmode=disable"
       - run: go vet --tags github ./...
