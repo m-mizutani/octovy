@@ -57,4 +57,4 @@ while true; do
     fi
 done
 
-psqldef -U ${POSTGRES_USER} -p 6432 -h localhost -f database/schema.sql ${POSTGRES_DB}
+# psqldef -U ${POSTGRES_USER} -p 6432 -h localhost -f database/schema.sql ${POSTGRES_DB}

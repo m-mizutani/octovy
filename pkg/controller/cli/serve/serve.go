@@ -2,6 +2,7 @@ package serve
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"os"
 	"os/signal"
@@ -9,75 +10,70 @@ import (
 	"time"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/gots/slice"
+	"github.com/m-mizutani/octovy/pkg/controller/cli/config"
 	"github.com/m-mizutani/octovy/pkg/controller/server"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
-	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
+	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
 
 	"github.com/urfave/cli/v2"
+
+	_ "github.com/lib/pq"
 )
 
 func New() *cli.Command {
 	var (
-		addr                string
-		trivyPath           string
-		gitHubAppID         types.GitHubAppID
-		gitHubAppSecret     types.GitHubAppSecret
-		gitHubAppPrivateKey types.GitHubAppPrivateKey
+		addr      string
+		trivyPath string
+
+		githubApp config.GitHubApp
+		database  config.DB
 	)
+	serveFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:        "addr",
+			Usage:       "Binding address",
+			Value:       "127.0.0.1:8000",
+			Destination: &addr,
+		},
+		&cli.StringFlag{
+			Name:        "trivy-path",
+			Usage:       "Path to trivy binary",
+			Value:       "trivy",
+			Destination: &trivyPath,
+		},
+	}
+
 	return &cli.Command{
 		Name:  "serve",
 		Usage: "Server mode",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "addr",
-				Usage:       "Binding address",
-				Value:       "127.0.0.1:8000",
-				Destination: &addr,
-			},
-			&cli.StringFlag{
-				Name:        "trivy-path",
-				Usage:       "Path to trivy binary",
-				Value:       "trivy",
-				Destination: &trivyPath,
-			},
-			&cli.Int64Flag{
-				Name:        "github-app-id",
-				Usage:       "GitHub App ID",
-				Destination: (*int64)(&gitHubAppID),
-				EnvVars:     []string{"OCTOVY_GITHUB_APP_ID"},
-				Required:    true,
-			},
-			&cli.StringFlag{
-				Name:        "github-app-secret",
-				Usage:       "GitHub App Secret",
-				Destination: (*string)(&gitHubAppSecret),
-				EnvVars:     []string{"OCTOVY_GITHUB_APP_SECRET"},
-				Required:    true,
-			},
-			&cli.StringFlag{
-				Name:        "github-app-private-key",
-				Usage:       "GitHub App Private Key",
-				Destination: (*string)(&gitHubAppPrivateKey),
-				EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
-				Required:    true,
-			},
-		},
+		Flags: slice.Flatten(
+			serveFlags,
+			githubApp.Flags(),
+			database.Flags(),
+		),
 		Action: func(ctx *cli.Context) error {
-			ghApp, err := gh.New(gitHubAppID, gitHubAppPrivateKey)
+			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey)
 			if err != nil {
 				return err
 			}
 
+			dbClient, err := sql.Open("postgres", database.DSN())
+			if err != nil {
+				return goerr.Wrap(err, "failed to open database")
+			}
+			defer utils.SafeClose(dbClient)
+
 			clients := infra.New(
 				infra.WithGitHubApp(ghApp),
 				infra.WithTrivy(trivy.New(trivyPath)),
+				infra.WithDB(dbClient),
 			)
 			uc := usecase.New(clients)
-			s := server.New(uc, gitHubAppSecret)
+			s := server.New(uc, githubApp.Secret)
 
 			serverErr := make(chan error, 1)
 			httpServer := &http.Server{

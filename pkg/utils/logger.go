@@ -3,12 +3,15 @@ package utils
 import (
 	"io"
 	"os"
+	"reflect"
+	"time"
 
 	"log/slog"
 
 	"github.com/fatih/color"
 	"github.com/m-mizutani/clog"
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/masq"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
@@ -19,15 +22,14 @@ func Logger() *slog.Logger {
 }
 
 func ReconfigureLogger(logFormat, logLevel, logOutput string) error {
-	/*
-		filter := masq.New(
-			// Mask value with `masq:"secret"` tag
-			masq.WithTag("secret"),
+	filter := masq.New(
+		// Mask value with `masq:"secret"` tag
+		masq.WithTag("secret"),
 
-			// Ignore time.Time type
-			masq.WithAllowedType(reflect.TypeOf(time.Time{})),
-		)
-	*/
+		// Ignore time.Time type
+		masq.WithAllowedType(reflect.TypeOf(time.Time{})),
+	)
+
 	levelMap := map[string]slog.Level{
 		"debug": slog.LevelDebug,
 		"info":  slog.LevelInfo,
@@ -76,13 +78,14 @@ func ReconfigureLogger(logFormat, logLevel, logOutput string) error {
 				AttrKey:      color.New(color.FgHiCyan),
 				AttrValue:    color.New(color.FgHiWhite),
 			}),
+			clog.WithReplaceAttr(filter),
 		)
 
 	case "json":
 		handler = slog.NewJSONHandler(w, &slog.HandlerOptions{
-			AddSource: true,
-			Level:     level,
-			// ReplaceAttr: filter,
+			AddSource:   true,
+			Level:       level,
+			ReplaceAttr: filter,
 		})
 
 	default:

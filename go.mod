@@ -10,11 +10,13 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/go-github/v53 v53.2.0
 	github.com/google/uuid v1.3.0
+	github.com/k0kubun/sqldef v0.16.4
 	github.com/lib/pq v1.10.9
 	github.com/m-mizutani/clog v0.0.3
 	github.com/m-mizutani/goerr v0.1.10
 	github.com/m-mizutani/gots v0.0.0-20230529013424-0639119b2cdd
 	github.com/m-mizutani/gt v0.0.7-0.20230826102229-4ab501e90edd
+	github.com/m-mizutani/masq v0.1.2
 	github.com/tabbed/pqtype v0.1.1
 	github.com/urfave/cli/v2 v2.25.7
 )
@@ -30,8 +32,10 @@ require (
 	github.com/google/go-containerregistry v0.16.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/k0kubun/pp/v3 v3.2.0 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/pganalyze/pg_query_go/v4 v4.2.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/samber/lo v1.38.1 // indirect
 	github.com/spdx/tools-golang v0.5.3 // indirect
@@ -45,4 +49,5 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
