@@ -1,5 +1,6 @@
 package migrate
 
+/*
 import (
 	"log/slog"
 	"os"
@@ -74,3 +75,4 @@ func New() *cli.Command {
 		},
 	}
 }
+*/

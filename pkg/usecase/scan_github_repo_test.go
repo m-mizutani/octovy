@@ -1,8 +1,11 @@
 package usecase_test
 
 import (
+	"database/sql"
 	_ "embed"
+	"fmt"
 	"os"
+	"strconv"
 
 	"bytes"
 	"io"
@@ -12,9 +15,11 @@ import (
 
 	"github.com/m-mizutani/gt"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/usecase"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 //go:embed testdata/octovy-test-code-main.zip
@@ -106,4 +111,62 @@ type httpMock struct {
 
 func (x *httpMock) Do(req *http.Request) (*http.Response, error) {
 	return x.mockDo(req)
+}
+
+func TestScanGitHubRepoWithData(t *testing.T) {
+	if _, ok := os.LookupEnv("TEST_SCAN_GITHUB_REPO"); !ok {
+		t.Skip("TEST_SCAN_GITHUB_REPO is not set")
+	}
+
+	// Setting up GitHub App
+	strAppID, ok := os.LookupEnv("OCTOVY_GITHUB_APP_ID")
+	if !ok {
+		t.Error("OCTOVY_GITHUB_APP_ID is not set")
+	}
+	privateKey, ok := os.LookupEnv("OCTOVY_GITHUB_APP_PRIVATE_KEY")
+	if !ok {
+		t.Error("OCTOVY_GITHUB_APP_PRIVATE_KEY is not set")
+	}
+	appID := gt.R1(strconv.ParseInt(strAppID, 10, 64)).NoError(t)
+	ghApp := gt.R1(gh.New(types.GitHubAppID(appID), types.GitHubAppPrivateKey(privateKey))).NoError(t)
+
+	// Setting up database
+	dbUser, ok := os.LookupEnv("OCTOVY_DB_USER")
+	if !ok {
+		t.Error("OCTOVY_DB_USER is not set")
+	}
+	dbPass, ok := os.LookupEnv("OCTOVY_DB_PASSWORD")
+	if !ok {
+		t.Error("OCTOVY_DB_PASS is not set")
+	}
+	dbName, ok := os.LookupEnv("OCTOVY_DB_NAME")
+	if !ok {
+		t.Error("OCTOVY_DB_NAME is not set")
+	}
+	dbPort, ok := os.LookupEnv("OCTOVY_DB_PORT")
+	if !ok {
+		t.Error("OCTOVY_DB_PORT is not set")
+	}
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s port=%s sslmode=disable", dbUser, dbPass, dbName, dbPort)
+
+	dbClient := gt.R1(sql.Open("postgres", dsn)).NoError(t)
+	defer utils.SafeClose(dbClient)
+
+	if t.Failed() {
+		t.FailNow()
+	}
+
+	uc := usecase.New(infra.New(
+		infra.WithGitHubApp(ghApp),
+		infra.WithDB(dbClient),
+	))
+
+	ctx := model.NewContext()
+
+	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
+		Owner:     "m-mizutani",
+		Repo:      "octovy",
+		CommitID:  "6581604ef668e77a178e18dbc56e898f5fd87014",
+		InstallID: 18650154,
+	}))
 }

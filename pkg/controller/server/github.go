@@ -37,6 +37,7 @@ func handleGitHubEvent(uc *usecase.UseCase, r *http.Request, key types.GitHubApp
 		return nil
 	}
 
+	utils.Logger().With(slog.Any("input", scanInput)).Info("Scan GitHub repository")
 	if err := uc.ScanGitHubRepo(octovyCtx, scanInput); err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/utils"
-	"github.com/tabbed/pqtype"
+	"github.com/sqlc-dev/pqtype"
 
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	ttypes "github.com/aquasecurity/trivy/pkg/types"

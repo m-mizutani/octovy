@@ -25,6 +25,8 @@ func ReconfigureLogger(logFormat, logLevel, logOutput string) error {
 	filter := masq.New(
 		// Mask value with `masq:"secret"` tag
 		masq.WithTag("secret"),
+		masq.WithType[types.GitHubAppSecret](masq.MaskWithSymbol('*', 64)),
+		masq.WithType[types.GitHubAppPrivateKey](masq.MaskWithSymbol('*', 16)),
 
 		// Ignore time.Time type
 		masq.WithAllowedType(reflect.TypeOf(time.Time{})),

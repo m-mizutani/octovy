@@ -3,6 +3,7 @@ package serve
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -56,6 +57,13 @@ func New() *cli.Command {
 			database.Flags(),
 		),
 		Action: func(ctx *cli.Context) error {
+			utils.Logger().Info("starting serve",
+				slog.Any("addr", addr),
+				slog.Any("trivyPath", trivyPath),
+				slog.Any("githubApp", githubApp),
+				slog.Any("database", database),
+			)
+
 			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey)
 			if err != nil {
 				return err
@@ -81,10 +89,12 @@ func New() *cli.Command {
 				Handler: s.Mux(),
 
 				ReadHeaderTimeout: 10 * time.Second,
+				ReadTimeout:       30 * time.Second,
+				WriteTimeout:      30 * time.Second,
 			}
 
 			go func() {
-				utils.Logger().Info("starting server", "addr", addr)
+				utils.Logger().Info("starting http server", "addr", addr)
 				if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
 					serverErr <- goerr.Wrap(err, "failed to listen and serve")
 				}

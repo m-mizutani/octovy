@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"github.com/m-mizutani/octovy/pkg/controller/cli/migrate"
 	"github.com/m-mizutani/octovy/pkg/controller/cli/scan"
 	"github.com/m-mizutani/octovy/pkg/controller/cli/serve"
 	"github.com/m-mizutani/octovy/pkg/utils"
@@ -54,7 +53,6 @@ func (x *CLI) Run(argv []string) error {
 		Commands: []*cli.Command{
 			serve.New(),
 			scan.New(),
-			migrate.New(),
 		},
 		Before: func(ctx *cli.Context) error {
 			if err := utils.ReconfigureLogger(logFormat, logLevel, logOutput); err != nil {

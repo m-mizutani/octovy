@@ -58,6 +58,12 @@ func (x *clientImpl) buildGithubClient(installID types.GitHubAppInstallID) (*git
 }
 
 func (x *clientImpl) GetArchiveURL(ctx *model.Context, input *GetArchiveURLInput) (*url.URL, error) {
+	ctx.Logger().Info("Sending GetArchiveLink request",
+		slog.Any("appID", x.appID),
+		slog.Any("privateKey", x.pem),
+		slog.Any("input", input),
+	)
+
 	client, err := x.buildGithubClient(input.InstallID)
 	if err != nil {
 		return nil, err
@@ -66,13 +72,6 @@ func (x *clientImpl) GetArchiveURL(ctx *model.Context, input *GetArchiveURLInput
 	opt := &github.RepositoryContentGetOptions{
 		Ref: input.CommitID,
 	}
-
-	ctx.Logger().Debug("Sending GetArchiveLink request",
-		slog.Any("appID", x.appID),
-		slog.Any("repo", input.Repo),
-		slog.Any("installID", input.InstallID),
-		slog.Any("privateKey.length", len(x.pem)),
-	)
 
 	// https://docs.github.com/en/rest/reference/repos#downloads
 	// https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-archive-link

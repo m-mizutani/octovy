@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"log/slog"
 
@@ -20,6 +21,8 @@ func preProcess(next http.Handler) http.Handler {
 		)
 
 		lw := &statusCodeLogger{ResponseWriter: w}
+
+		requestedAt := time.Now()
 		next.ServeHTTP(lw, r.WithContext(ctx))
 
 		logger.Info("http access",
@@ -30,6 +33,7 @@ func preProcess(next http.Handler) http.Handler {
 			slog.Int64("content_length", r.ContentLength),
 			slog.String("user_agent", r.UserAgent()),
 			slog.String("referer", r.Referer()),
+			slog.Duration("elapsed", time.Since(requestedAt)),
 		)
 	})
 }

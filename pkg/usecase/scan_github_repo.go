@@ -53,6 +53,18 @@ func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 		return err
 	}
 
+	go func() {
+		if err := x.scanGitHubRepo(ctx, input); err != nil {
+			ctx.Logger().Error("failed to scan GitHub repo", slog.Any("error", err))
+			return
+		}
+		ctx.Logger().Info("scan finished", slog.Any("input", input))
+	}()
+
+	return nil
+}
+
+func (x *UseCase) scanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
 	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.Repo,
