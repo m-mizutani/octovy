@@ -94,7 +94,7 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 			InstallID: types.GitHubAppInstallID(ev.GetInstallation().GetID()),
 		}
 
-	case *github.CheckRunEvent, *github.CheckSuiteEvent:
+	case *github.InstallationEvent, *github.InstallationRepositoriesEvent:
 		return nil // ignore
 
 	default:
