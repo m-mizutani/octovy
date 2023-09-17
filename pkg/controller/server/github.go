@@ -77,13 +77,18 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 			branch = ref[2]
 		}
 
+		baseCommitID := ev.GetBefore()
+		if baseCommitID == "" {
+			baseCommitID = ev.GetPullRequest().GetBase().GetSHA()
+		}
+
 		return &usecase.ScanGitHubRepoInput{
 			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 				Owner:         ev.GetRepo().GetOwner().GetLogin(),
 				Repo:          ev.GetRepo().GetName(),
 				CommitID:      ev.GetPullRequest().GetHead().GetSHA(),
 				Branch:        branch,
-				BaseCommitID:  ev.GetPullRequest().GetBase().GetSHA(),
+				BaseCommitID:  baseCommitID,
 				PullRequestID: ev.GetPullRequest().GetNumber(),
 			},
 			InstallID: types.GitHubAppInstallID(ev.GetInstallation().GetID()),
