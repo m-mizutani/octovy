@@ -92,6 +92,10 @@ func TestSaveScan(t *testing.T) {
 
 	dbClient := newTestDB(t)
 	ctx := model.NewContext()
-
-	gt.NoError(t, usecase.SaveScanReport(ctx, dbClient, &report))
+	meta := &usecase.GitHubRepoMetadata{
+		Owner:    "m-mizutani",
+		Repo:     "octovy",
+		CommitID: "1234567890",
+	}
+	gt.NoError(t, usecase.SaveScanReportGitHubRepo(ctx, dbClient, &report, meta))
 }

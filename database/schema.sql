@@ -6,8 +6,37 @@ create table scans (
     artifact_name text not null,
     artifact_type text not null,
 
-    repository text,
+    page_seq serial
+);
+
+create table meta_github_repository (
+    id uuid primary key not null,
+    scan_id uuid not null references scans(id),
+
+    owner text not null,
+    repo_name text not null,
+    commit_id text not null,
     branch text,
+    base_commit_id text,
+    pull_request_id int,
+
+    page_seq serial
+);
+
+CREATE INDEX meta_github_repository_commit ON meta_github_repository (commit_id);
+
+create table meta_container_repository (
+    id uuid primary key not null,
+    scan_id uuid not null references scans(id),
+
+    os_family text,
+    os_name text,
+    image_id text,
+    image_created_at timestamp with time zone,
+
+    repo_name text,
+    repo_tags text[],
+    repo_digests text[],
 
     page_seq serial
 );

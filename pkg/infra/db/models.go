@@ -56,6 +56,31 @@ func (ns NullTargetClass) Value() (driver.Value, error) {
 	return string(ns.TargetClass), nil
 }
 
+type MetaContainerRepository struct {
+	ID             uuid.UUID
+	ScanID         uuid.UUID
+	OsFamily       sql.NullString
+	OsName         sql.NullString
+	ImageID        sql.NullString
+	ImageCreatedAt sql.NullTime
+	RepoName       sql.NullString
+	RepoTags       []string
+	RepoDigests    []string
+	PageSeq        sql.NullInt32
+}
+
+type MetaGithubRepository struct {
+	ID            uuid.UUID
+	ScanID        uuid.UUID
+	Owner         string
+	RepoName      string
+	CommitID      string
+	Branch        sql.NullString
+	BaseCommitID  sql.NullString
+	PullRequestID sql.NullInt32
+	PageSeq       sql.NullInt32
+}
+
 type Package struct {
 	ID         string
 	TargetType string
@@ -91,8 +116,6 @@ type Scan struct {
 	CreatedAt    time.Time
 	ArtifactName string
 	ArtifactType string
-	Repository   sql.NullString
-	Branch       sql.NullString
 	PageSeq      sql.NullInt32
 }
 

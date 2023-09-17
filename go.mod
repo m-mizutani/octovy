@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/lib/pq v1.10.9
 	github.com/m-mizutani/clog v0.0.4
-	github.com/m-mizutani/goerr v0.1.10
+	github.com/m-mizutani/goerr v0.1.11
 	github.com/m-mizutani/gots v0.0.0-20230529013424-0639119b2cdd
 	github.com/m-mizutani/gt v0.0.7
 	github.com/m-mizutani/masq v0.1.4

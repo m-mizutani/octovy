@@ -82,9 +82,11 @@ func TestScanGitHubRepo(t *testing.T) {
 	}
 
 	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
-		Owner:     "m-mizutani",
-		Repo:      "octovy",
-		CommitID:  "1234567890",
+		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
+			Owner:    "m-mizutani",
+			Repo:     "octovy",
+			CommitID: "1234567890",
+		},
 		InstallID: 12345,
 	}))
 }
@@ -164,9 +166,11 @@ func TestScanGitHubRepoWithData(t *testing.T) {
 	ctx := model.NewContext()
 
 	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
-		Owner:     "m-mizutani",
-		Repo:      "octovy",
-		CommitID:  "6581604ef668e77a178e18dbc56e898f5fd87014",
-		InstallID: 18650154,
+		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
+			Owner:    "m-mizutani",
+			Repo:     "octovy",
+			CommitID: "6581604ef668e77a178e18dbc56e898f5fd87014",
+		},
+		InstallID: 41633205,
 	}))
 }

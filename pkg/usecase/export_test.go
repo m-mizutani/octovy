@@ -1,6 +1,6 @@
 package usecase
 
 var (
-	CalcPackageID  = calcPackageID
-	SaveScanReport = saveScanReport
+	CalcPackageID            = calcPackageID
+	SaveScanReportGitHubRepo = saveScanReportGitHubRepo
 )

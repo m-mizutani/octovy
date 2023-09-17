@@ -19,7 +19,7 @@ import (
 	ttypes "github.com/aquasecurity/trivy/pkg/types"
 )
 
-func saveScanReport(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report) error {
+func saveScanReportGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report, meta *GitHubRepoMetadata) error {
 	for _, result := range report.Results {
 		if err := saveVulnerabilities(ctx, dbClient, result.Vulnerabilities); err != nil {
 			return err
@@ -30,14 +30,14 @@ func saveScanReport(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report)
 		}
 	}
 
-	if err := saveScan(ctx, dbClient, report); err != nil {
+	if err := saveScanGitHubRepo(ctx, dbClient, report, meta); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func saveScan(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report) error {
+func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report, meta *GitHubRepoMetadata) error {
 	tx, err := dbClient.Begin()
 	if err != nil {
 		return goerr.Wrap(err, "starting transaction")
@@ -54,7 +54,34 @@ func saveScan(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report) error
 		return goerr.Wrap(err, "saving scan")
 	}
 
+	if err := q.SaveMetaGithubRepository(ctx, db.SaveMetaGithubRepositoryParams{
+		ID:       uuid.New(),
+		ScanID:   scanID,
+		Owner:    meta.Owner,
+		RepoName: meta.Repo,
+		CommitID: meta.CommitID,
+		Branch: sql.NullString{
+			String: meta.Branch,
+			Valid:  meta.Branch != "",
+		},
+		BaseCommitID: sql.NullString{
+			String: meta.BaseCommitID,
+			Valid:  meta.BaseCommitID != "",
+		},
+		PullRequestID: sql.NullInt32{
+			Int32: int32(meta.PullRequestID),
+			Valid: meta.PullRequestID != 0,
+		},
+	}); err != nil {
+		return goerr.Wrap(err, "saving meta github repository")
+	}
+
 	for _, result := range report.Results {
+		// @TODO: Support other types
+		if result.Class != ttypes.ClassLangPkg && result.Class != ttypes.ClassOSPkg {
+			continue
+		}
+
 		resultID := uuid.New()
 		if err := q.SaveResult(ctx, db.SaveResultParams{
 			ID:         resultID,
@@ -149,7 +176,7 @@ func savePackages(ctx *model.Context, dbClient *sql.DB, typ string, packages []f
 			Name:       pkg.Name,
 			Version:    pkg.Version,
 		}); err != nil {
-			return goerr.Wrap(err, "saving package")
+			return goerr.Wrap(err, "saving package").With("pkgID", pkgID).With("pkg", pkg)
 		}
 	}
 

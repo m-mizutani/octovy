@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v53/github"
 	"github.com/m-mizutani/goerr"
@@ -48,10 +49,20 @@ func handleGitHubEvent(uc *usecase.UseCase, r *http.Request, key types.GitHubApp
 func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 	switch ev := event.(type) {
 	case *github.PushEvent:
+		var branch string
+		if ref := strings.Split(ev.GetRef(), "/"); len(ref) == 3 && ref[1] == "heads" {
+			branch = ref[2]
+		}
+
 		return &usecase.ScanGitHubRepoInput{
-			Owner:     ev.GetRepo().GetOwner().GetLogin(),
-			Repo:      ev.GetRepo().GetName(),
-			CommitID:  ev.GetHeadCommit().GetID(),
+			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
+				Owner:         ev.GetRepo().GetOwner().GetLogin(),
+				Repo:          ev.GetRepo().GetName(),
+				CommitID:      ev.GetHeadCommit().GetID(),
+				Branch:        branch,
+				BaseCommitID:  ev.GetBefore(),
+				PullRequestID: 0,
+			},
 			InstallID: types.GitHubAppInstallID(ev.GetInstallation().GetID()),
 		}
 
@@ -60,10 +71,21 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 			utils.Logger().Debug("ignore PR event", slog.String("action", ev.GetAction()))
 			return nil
 		}
+
+		var branch string
+		if ref := strings.Split(ev.GetPullRequest().GetHead().GetRef(), "/"); len(ref) == 3 && ref[1] == "heads" {
+			branch = ref[2]
+		}
+
 		return &usecase.ScanGitHubRepoInput{
-			Owner:     ev.GetRepo().GetOwner().GetLogin(),
-			Repo:      ev.GetRepo().GetName(),
-			CommitID:  ev.GetPullRequest().GetHead().GetSHA(),
+			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
+				Owner:         ev.GetRepo().GetOwner().GetLogin(),
+				Repo:          ev.GetRepo().GetName(),
+				CommitID:      ev.GetPullRequest().GetHead().GetSHA(),
+				Branch:        branch,
+				BaseCommitID:  ev.GetPullRequest().GetBase().GetSHA(),
+				PullRequestID: ev.GetPullRequest().GetNumber(),
+			},
 			InstallID: types.GitHubAppInstallID(ev.GetInstallation().GetID()),
 		}
 

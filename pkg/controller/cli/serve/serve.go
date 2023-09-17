@@ -56,7 +56,7 @@ func New() *cli.Command {
 			githubApp.Flags(),
 			database.Flags(),
 		),
-		Action: func(ctx *cli.Context) error {
+		Action: func(c *cli.Context) error {
 			utils.Logger().Info("starting serve",
 				slog.Any("addr", addr),
 				slog.Any("trivyPath", trivyPath),

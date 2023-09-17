@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,10 +24,17 @@ import (
 )
 
 type ScanGitHubRepoInput struct {
-	Owner     string
-	Repo      string
-	CommitID  string
+	GitHubRepoMetadata
 	InstallID types.GitHubAppInstallID
+}
+
+type GitHubRepoMetadata struct {
+	Owner         string
+	Repo          string
+	CommitID      string
+	Branch        string
+	BaseCommitID  string
+	PullRequestID int
 }
 
 func (x *ScanGitHubRepoInput) Validate() error {
@@ -53,18 +61,32 @@ func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 		return err
 	}
 
-	go func() {
-		if err := x.scanGitHubRepo(ctx, input); err != nil {
-			ctx.Logger().Error("failed to scan GitHub repo", slog.Any("error", err))
-			return
-		}
-		ctx.Logger().Info("scan finished", slog.Any("input", input))
-	}()
+	// Extract zip file to local temp directory
+	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("octovy.%s.%s.%s.*", input.Owner, input.Repo, input.CommitID))
+	if err != nil {
+		return goerr.Wrap(err, "failed to create temp directory for zip file")
+	}
+	defer utils.SafeRemoveAll(tmpDir)
+
+	if err := x.downloadGitHubRepo(ctx, input, tmpDir); err != nil {
+		return err
+	}
+
+	ctx = ctx.New(model.WithBase(context.Background()))
+	report, err := x.scanGitHubRepo(ctx, tmpDir)
+	if err != nil {
+		return err
+	}
+	ctx.Logger().Info("scan finished", slog.Any("input", input))
+
+	if err := saveScanReportGitHubRepo(ctx, x.clients.DB(), report, &input.GitHubRepoMetadata); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (x *UseCase) scanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
+func (x *UseCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput, dstDir string) error {
 	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.Repo,
@@ -91,27 +113,23 @@ func (x *UseCase) scanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 		return goerr.Wrap(err, "failed to close temp file for zip file")
 	}
 
-	// Extract zip file to local temp directory
-	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("octovy.%s.%s.%s.*", input.Owner, input.Repo, input.CommitID))
-	if err != nil {
-		return goerr.Wrap(err, "failed to create temp directory for zip file")
-	}
-	defer utils.SafeRemoveAll(tmpDir)
-
-	if err := extractZipFile(ctx, tmpZip.Name(), tmpDir); err != nil {
+	if err := extractZipFile(ctx, tmpZip.Name(), dstDir); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (x *UseCase) scanGitHubRepo(ctx *model.Context, codeDir string) (*ttype.Report, error) {
 	// Scan local directory
-	tmpResult, err := os.CreateTemp("", fmt.Sprintf("octovy_result.%s.%s.%s.*.json",
-		input.Owner, input.Repo, input.CommitID,
-	))
+	tmpResult, err := os.CreateTemp("", "octovy_result.*.json")
 	if err != nil {
-		return goerr.Wrap(err, "failed to create temp file for scan result")
+		return nil, goerr.Wrap(err, "failed to create temp file for scan result")
 	}
 	defer utils.SafeRemove(tmpResult.Name())
+
 	if err := tmpResult.Close(); err != nil {
-		return goerr.Wrap(err, "failed to close temp file for scan result")
+		return nil, goerr.Wrap(err, "failed to close temp file for scan result")
 	}
 
 	if err := x.clients.Trivy().Run(ctx, []string{
@@ -121,23 +139,19 @@ func (x *UseCase) scanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 		"--format", "json",
 		"--output", tmpResult.Name(),
 		"--list-all-pkgs",
-		tmpDir,
+		codeDir,
 	}); err != nil {
-		return goerr.Wrap(err, "failed to scan local directory")
+		return nil, goerr.Wrap(err, "failed to scan local directory")
 	}
 
 	var report ttype.Report
 	if err := unmarshalFile(tmpResult.Name(), &report); err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx.Logger().Info("Scan result", slog.Any("report", tmpResult.Name()))
 
-	if err := saveScanReport(ctx, x.clients.DB(), &report); err != nil {
-		return err
-	}
-
-	return nil
+	return &report, nil
 }
 
 func unmarshalFile(path string, v any) error {

@@ -7,6 +7,20 @@ INSERT INTO scans (
     $1, $2, $3
 );
 
+-- name: SaveMetaGithubRepository :exec
+INSERT INTO meta_github_repository (
+    id,
+    scan_id,
+    owner,
+    repo_name,
+    branch,
+    commit_id,
+    base_commit_id,
+    pull_request_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+);
+
 -- name: SaveResult :exec
 INSERT INTO results (
     id,

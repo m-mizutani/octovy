@@ -83,6 +83,46 @@ func (q *Queries) GetVulnerabilities(ctx context.Context, dollar_1 []string) ([]
 	return items, nil
 }
 
+const saveMetaGithubRepository = `-- name: SaveMetaGithubRepository :exec
+INSERT INTO meta_github_repository (
+    id,
+    scan_id,
+    owner,
+    repo_name,
+    branch,
+    commit_id,
+    base_commit_id,
+    pull_request_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+`
+
+type SaveMetaGithubRepositoryParams struct {
+	ID            uuid.UUID
+	ScanID        uuid.UUID
+	Owner         string
+	RepoName      string
+	Branch        sql.NullString
+	CommitID      string
+	BaseCommitID  sql.NullString
+	PullRequestID sql.NullInt32
+}
+
+func (q *Queries) SaveMetaGithubRepository(ctx context.Context, arg SaveMetaGithubRepositoryParams) error {
+	_, err := q.db.ExecContext(ctx, saveMetaGithubRepository,
+		arg.ID,
+		arg.ScanID,
+		arg.Owner,
+		arg.RepoName,
+		arg.Branch,
+		arg.CommitID,
+		arg.BaseCommitID,
+		arg.PullRequestID,
+	)
+	return err
+}
+
 const savePackage = `-- name: SavePackage :exec
 INSERT INTO packages (
     id,

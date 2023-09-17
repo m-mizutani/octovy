@@ -13,6 +13,13 @@ type Context struct {
 }
 
 func (x *Context) Logger() *slog.Logger { return x.logger }
+func (x *Context) New(options ...Option) *Context {
+	newCtx := *x
+	for _, opt := range options {
+		opt(&newCtx)
+	}
+	return &newCtx
+}
 
 func NewContext(options ...Option) *Context {
 	ctx := &Context{

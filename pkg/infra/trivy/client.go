@@ -1,7 +1,7 @@
 package trivy
 
 import (
-	"io"
+	"bytes"
 	"os/exec"
 
 	"github.com/m-mizutani/goerr"
@@ -24,13 +24,16 @@ func New(path string) Client {
 
 func (x *clientImpl) Run(ctx *model.Context, args []string) error {
 	cmd := exec.CommandContext(ctx, x.path, args...)
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return goerr.Wrap(err, "retrieving stderr pipe")
-	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
 	if err := cmd.Run(); err != nil {
-		msg, _ := io.ReadAll(stderr)
-		return goerr.Wrap(err, "executing trivy").With("stderr", msg)
+		ctx.Logger().With("stderr", stderr.String()).With("stdout", stdout.String()).Error("trivy failed")
+		return goerr.Wrap(err, "executing trivy").
+			With("stderr", stderr.String()).
+			With("stdout", stdout.String())
 	}
 
 	return nil
