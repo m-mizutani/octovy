@@ -1,18 +1,36 @@
-name: Unit test
+name: test
 
 on: [push]
 
 jobs:
   testing:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: pguser
+          POSTGRES_PASSWORD: pgpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout upstream repo
         uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
-          go-version: "1.16"
+          go-version-file: "go.mod"
+      - run: |
+          curl -Lsf -O https://github.com/k0kubun/sqldef/releases/download/v0.16.5/psqldef_linux_amd64.tar.gz
+          tar xzf psqldef_linux_amd64.tar.gz
+          ./psqldef -U pguser -f ./database/schema.sql testdb
+        env:
+          PGPASSWORD: pgpass
       - run: go test --tags github ./...
+        env:
+          TEST_DB_DSN: "user=pguser password=pgpass dbname=testdb sslmode=disable"
       - run: go vet --tags github ./...

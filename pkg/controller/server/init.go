@@ -1,4 +1,0 @@
-package server
-
-func init() {
-}

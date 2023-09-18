@@ -2,59 +2,48 @@ package model
 
 import (
 	"context"
-	"time"
+	"log/slog"
 
-	"github.com/gin-gonic/gin"
 	"github.com/m-mizutani/octovy/pkg/utils"
-	"github.com/m-mizutani/zlog"
-)
-
-const (
-	ContextKeyLogger = "logger"
 )
 
 type Context struct {
-	base context.Context
-	log  *zlog.LogEntity
+	logger *slog.Logger
+	context.Context
 }
 
-func NewContext() *Context {
-	return NewContextWith(context.Background())
-}
-
-func NewContextWith(ctx context.Context) *Context {
-	newCtx := &Context{
-		base: ctx,
+func (x *Context) Logger() *slog.Logger { return x.logger }
+func (x *Context) New(options ...Option) *Context {
+	newCtx := *x
+	for _, opt := range options {
+		opt(&newCtx)
 	}
-	if ginCtx, ok := ctx.(*gin.Context); ok {
-		if obj, ok := ginCtx.Get(ContextKeyLogger); ok {
-			if log, ok := obj.(*zlog.LogEntity); ok {
-				newCtx.log = log
-			}
-		}
-	}
-
-	return newCtx
+	return &newCtx
 }
 
-func (x *Context) Deadline() (deadline time.Time, ok bool) {
-	return x.base.Deadline()
-}
-func (x *Context) Done() <-chan struct{}             { return x.base.Done() }
-func (x *Context) Err() error                        { return x.base.Err() }
-func (x *Context) Value(key interface{}) interface{} { return x.base.Value(key) }
+func NewContext(options ...Option) *Context {
+	ctx := &Context{
+		logger:  utils.Logger(),
+		Context: context.Background(),
+	}
 
-// Logging feature
-func (x *Context) Log() *zlog.LogEntity {
-	if x.log == nil {
-		x.log = utils.Logger.Log()
+	for _, opt := range options {
+		opt(ctx)
 	}
-	return x.log
+
+	return ctx
 }
-func (x *Context) With(key string, value interface{}) *zlog.LogEntity {
-	if x.log == nil {
-		x.log = utils.Logger.Log()
+
+type Option func(*Context)
+
+func WithLogger(logger *slog.Logger) Option {
+	return func(ctx *Context) {
+		ctx.logger = logger
 	}
-	x.log = x.log.With(key, value)
-	return x.log
+}
+
+func WithBase(base context.Context) Option {
+	return func(ctx *Context) {
+		ctx.Context = base
+	}
 }
