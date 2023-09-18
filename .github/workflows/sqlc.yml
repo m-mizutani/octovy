@@ -13,5 +13,5 @@ jobs:
           ref: ${{ github.head_ref }}
       - uses: sqlc-dev/setup-sqlc@v3
         with:
-          sqlc-version: "1.18.0"
+          sqlc-version: "v1.21.0"
       - run: sqlc diff
