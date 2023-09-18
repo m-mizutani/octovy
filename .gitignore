@@ -5,7 +5,7 @@
 node_modules
 assets/out
 assets/.next
-*.json
+/*.json
 
 tmp
 

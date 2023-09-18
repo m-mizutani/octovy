@@ -22,7 +22,7 @@ func safeWrite(w http.ResponseWriter, code int, body []byte) {
 	}
 }
 
-func New(uc *usecase.UseCase, secret types.GitHubAppSecret) *Server {
+func New(uc usecase.UseCase, secret types.GitHubAppSecret) *Server {
 	r := chi.NewRouter()
 	r.Use(preProcess)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

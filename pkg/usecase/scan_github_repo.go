@@ -29,12 +29,13 @@ type ScanGitHubRepoInput struct {
 }
 
 type GitHubRepoMetadata struct {
-	Owner         string
-	Repo          string
-	CommitID      string
-	Branch        string
-	BaseCommitID  string
-	PullRequestID int
+	Owner           string
+	Repo            string
+	CommitID        string
+	Branch          string
+	IsDefaultBranch bool
+	BaseCommitID    string
+	PullRequestID   int
 }
 
 func (x *ScanGitHubRepoInput) Validate() error {
@@ -56,7 +57,7 @@ func (x *ScanGitHubRepoInput) Validate() error {
 
 // ScanGitHubRepo is a usecase to download a source code from GitHub and scan it with Trivy. Using GitHub App credentials to download a private repository, then the app should be installed to the repository and have read access.
 // After scanning, the result is stored to the database. The temporary files are removed after the scan.
-func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
+func (x *useCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (x *UseCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 	return nil
 }
 
-func (x *UseCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput, dstDir string) error {
+func (x *useCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput, dstDir string) error {
 	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.Repo,
@@ -120,7 +121,7 @@ func (x *UseCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoIn
 	return nil
 }
 
-func (x *UseCase) scanGitHubRepo(ctx *model.Context, codeDir string) (*ttype.Report, error) {
+func (x *useCase) scanGitHubRepo(ctx *model.Context, codeDir string) (*ttype.Report, error) {
 	// Scan local directory
 	tmpResult, err := os.CreateTemp("", "octovy_result.*.json")
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
-func handleGitHubEvent(uc *usecase.UseCase, r *http.Request, key types.GitHubAppSecret) error {
+func handleGitHubEvent(uc usecase.UseCase, r *http.Request, key types.GitHubAppSecret) error {
 	payload, err := github.ValidatePayload(r, []byte(key))
 	if err != nil {
 		return goerr.Wrap(err, "validating payload")
@@ -46,22 +46,28 @@ func handleGitHubEvent(uc *usecase.UseCase, r *http.Request, key types.GitHubApp
 	return nil
 }
 
+func refToBranch(v string) string {
+	if ref := strings.SplitN(v, "/", 3); len(ref) == 3 && ref[1] == "heads" {
+		return ref[2]
+	}
+	return v
+}
+
 func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 	switch ev := event.(type) {
 	case *github.PushEvent:
-		var branch string
-		if ref := strings.Split(ev.GetRef(), "/"); len(ref) == 3 && ref[1] == "heads" {
-			branch = ref[2]
-		}
+		branch := refToBranch(ev.GetRef())
+		isDefaultBranch := branch == ev.GetRepo().GetDefaultBranch()
 
 		return &usecase.ScanGitHubRepoInput{
 			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-				Owner:         ev.GetRepo().GetOwner().GetLogin(),
-				Repo:          ev.GetRepo().GetName(),
-				CommitID:      ev.GetHeadCommit().GetID(),
-				Branch:        branch,
-				BaseCommitID:  ev.GetBefore(),
-				PullRequestID: 0,
+				Owner:           ev.GetRepo().GetOwner().GetLogin(),
+				Repo:            ev.GetRepo().GetName(),
+				CommitID:        ev.GetHeadCommit().GetID(),
+				Branch:          branch,
+				BaseCommitID:    ev.GetBefore(),
+				PullRequestID:   0,
+				IsDefaultBranch: isDefaultBranch,
 			},
 			InstallID: types.GitHubAppInstallID(ev.GetInstallation().GetID()),
 		}
@@ -72,11 +78,7 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 			return nil
 		}
 
-		var branch string
-		if ref := strings.Split(ev.GetPullRequest().GetHead().GetRef(), "/"); len(ref) == 3 && ref[1] == "heads" {
-			branch = ref[2]
-		}
-
+		branch := refToBranch(ev.GetPullRequest().GetHead().GetRef())
 		baseCommitID := ev.GetBefore()
 		if baseCommitID == "" {
 			baseCommitID = ev.GetPullRequest().GetBase().GetSHA()
