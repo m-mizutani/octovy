@@ -24,11 +24,12 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
-      - run: go run . migrate
+      - run: |
+          curl -Lsf -O https://github.com/k0kubun/sqldef/releases/download/v0.16.5/psqldef_linux_amd64.tar.gz
+          tar xzf psqldef_linux_amd64.tar.gz
+          ./psqldef -U pguser -f ./database/schema.sql testdb
         env:
-          OCTOVY_DB_USER: pguser
-          OCTOVY_DB_PASSWORD: pgpass
-          OCTOVY_DB_NAME: testdb
+          PGPASSWORD: pgpass
       - run: go test --tags github ./...
         env:
           TEST_DB_DSN: "user=pguser password=pgpass dbname=testdb sslmode=disable"
