@@ -1,49 +1,50 @@
-# Octovy [![Go Report Card](https://goreportcard.com/badge/github.com/m-mizutani/octovy)](https://goreportcard.com/report/github.com/m-mizutani/octovy) [![Test](https://github.com/m-mizutani/octovy/actions/workflows/test.yml/badge.svg)](https://github.com/m-mizutani/octovy/actions/workflows/test.yml) [![trivy](https://github.com/m-mizutani/octovy/actions/workflows/trivy.yml/badge.svg)](https://github.com/m-mizutani/octovy/actions/workflows/trivy.yml) [![gosec](https://github.com/m-mizutani/octovy/actions/workflows/gosec.yml/badge.svg)](https://github.com/m-mizutani/octovy/actions/workflows/gosec.yml)
+# Octovy
 
-Octovy is a GitHub App to detect vulnerable dependencies in your repository by [trivy](https://github.com/aquasecurity/trivy) and save the result to database.
+Octovy is a GitHub application designed to identify and alert you to any dependencies in your repository that could be potentially vulnerable. It uses [trivy](https://github.com/aquasecurity/trivy) for detection and then stores the results in a database for your reference.
 
 ![architecture](https://github.com/m-mizutani/octovy/assets/605953/81eeb92d-a4e9-4baf-aae0-ace6b9dc447f)
 
 ## Setup
 
-### 1. Create GitHub App
+### 1. Creating a GitHub App
 
-Create GitHub App from [here](https://github.com/settings/apps). You can use any name and description, but you need to set following configurations.
+Start by creating a GitHub App [here](https://github.com/settings/apps). You can use any name and description you like. However, ensure you set the following configurations:
 
 - **General**
   - **Webhook URL**: `https://<your domain>/webhook/github`
-  - **Webhook secret**: Any string (e.g. `mysecret_XOIJPOIFEA`)
+  - **Webhook secret**: A string of your choosing (e.g. `mysecret_XOIJPOIFEA`)
+
 - **Permissions & events**
   - Repository Permissions
-    - **Contents**: Read-only
-    - **Metadata**: Read-only
-    - **Pull Requests**: Read & Write
+    - **Contents**: Set to Read-only
+    - **Metadata**: Set to Read-only
+    - **Pull Requests**: Set to Read & Write
   - Subscribe to events
     - **Pull request**
     - **Push**
 
-Additionally, save following information from **General** section for later use.
+Once complete, note down the following information from the **General** section for later:
 
 - **App ID** (e.g. `123456`)
 - **Private Key**: Click `Generate a private key` and download the key file (e.g. `your-app-name.2023-08-14.private-key.pem`)
 
-### 2. Setup Database
+### 2. Setting Up the Database
 
-Octovy requires PostgreSQL database. You can use any PostgreSQL instance, but we recommend to use Cloud based database services like [Google Cloud SQL](https://cloud.google.com/sql) and [Amazon RDS](https://aws.amazon.com/rds/).
+Octovy requires a PostgreSQL database. You can use any PostgreSQL instance you like, but we recommend cloud-based database services such as [Google Cloud SQL](https://cloud.google.com/sql) or [Amazon RDS](https://aws.amazon.com/rds/).
 
-For database migration, [sqldef] is recommended. Installation steps should be reffered to [sqldef document](https://github.com/k0kubun/sqldef). Then you can migrate database schema by following command.
+For database migration, [sqldef](https://github.com/k0kubun/sqldef) is recommended. After installing sqldef, you can migrate your database schema using the command below. Be sure to replace the placeholders with your actual database information.
 
 ```bash
-# NOTICE: Be careful not to save password to shell history
+# NOTICE: Be careful not to save the password to shell history
 $ export PGPASSWORD=[db_password]
 $ psqldef -U [db_user] -p [db_port] -h [db_host] -f database/schema.sql [db_name]
 ```
 
-### 3. Deploy Octovy
+### 3. Deploying Octovy
 
-A recommended way to deploy Octovy is using container image. You can use `ghcr.io/m-mizutani/octovy`. The image is built by GitHub Actions and published to GitHub Container Registry.
+The recommended method of deploying Octovy is via a container image, available at `ghcr.io/m-mizutani/octovy`. This image is built using GitHub Actions and published to the GitHub Container Registry.
 
-Following environment variables are required to run Octovy.
+To run Octovy, set the following environment variables:
 
 - GitHub App
   - `OCTOVY_GITHUB_APP_ID`: App ID of your GitHub App
@@ -63,4 +64,4 @@ Following environment variables are required to run Octovy.
 
 ## License
 
-Apache License 2.0. Copyright 2021 Masayoshi Mizutani <mizutani@hey.com>
+Octovy is licensed under the Apache License 2.0. Copyright 2023 Masayoshi Mizutani <mizutani@hey.com>
