@@ -25,22 +25,6 @@ create table meta_github_repository (
 
 CREATE INDEX meta_github_repository_commit ON meta_github_repository (commit_id);
 
-create table meta_container_repository (
-    id uuid primary key not null,
-    scan_id uuid not null references scans(id),
-
-    os_family text,
-    os_name text,
-    image_id text,
-    image_created_at timestamp with time zone,
-
-    repo_name text,
-    repo_tags text[],
-    repo_digests text[],
-
-    page_seq serial
-);
-
 create table results (
     id uuid primary key not null,
     scan_id uuid not null references scans(id),

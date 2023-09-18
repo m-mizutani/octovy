@@ -38,12 +38,14 @@ func New() *cli.Command {
 			Name:        "addr",
 			Usage:       "Binding address",
 			Value:       "127.0.0.1:8000",
+			EnvVars:     []string{"OCTOVY_ADDR"},
 			Destination: &addr,
 		},
 		&cli.StringFlag{
 			Name:        "trivy-path",
 			Usage:       "Path to trivy binary",
 			Value:       "trivy",
+			EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 			Destination: &trivyPath,
 		},
 	}

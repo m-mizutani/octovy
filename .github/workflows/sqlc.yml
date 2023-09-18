@@ -1,4 +1,4 @@
-name: sqlc check
+name: sqlc
 
 on: [push]
 

@@ -1,11 +1,12 @@
-FROM golang:1.19.3 AS build-go
-ADD . /app
+FROM golang:1.21 AS build-go
+COPY . /app
 WORKDIR /app
+ENV CGO_ENABLED=0
 RUN go build .
 
-#gcr.io/distroless/static is not enough because of github.com/mattn/go-sqlite3
 FROM gcr.io/distroless/base
 COPY --from=build-go /app/octovy /octovy
+COPY --from=build-go /app/database /database
 COPY --from=aquasec/trivy:0.44.1 /usr/local/bin/trivy /trivy
 WORKDIR /
 ENV OCTOVY_ADDR="0.0.0.0:8000"

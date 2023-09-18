@@ -15,7 +15,7 @@ require (
 	github.com/m-mizutani/goerr v0.1.11
 	github.com/m-mizutani/gots v0.0.0-20230529013424-0639119b2cdd
 	github.com/m-mizutani/gt v0.0.7
-	github.com/m-mizutani/masq v0.1.4
+	github.com/m-mizutani/masq v0.1.5
 	github.com/sqlc-dev/pqtype v0.2.0
 	github.com/urfave/cli/v2 v2.25.7
 )
