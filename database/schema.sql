@@ -17,6 +17,7 @@ create table meta_github_repository (
     repo_name text not null,
     commit_id text not null,
     branch text,
+    is_default_branch boolean,
     base_commit_id text,
     pull_request_id int,
 

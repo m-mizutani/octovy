@@ -64,6 +64,10 @@ func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Rep
 			String: meta.Branch,
 			Valid:  meta.Branch != "",
 		},
+		IsDefaultBranch: sql.NullBool{
+			Bool:  meta.IsDefaultBranch,
+			Valid: meta.Branch != "",
+		},
 		BaseCommitID: sql.NullString{
 			String: meta.BaseCommitID,
 			Valid:  meta.BaseCommitID != "",

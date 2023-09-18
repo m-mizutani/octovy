@@ -14,11 +14,12 @@ INSERT INTO meta_github_repository (
     owner,
     repo_name,
     branch,
+    is_default_branch,
     commit_id,
     base_commit_id,
     pull_request_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 );
 
 -- name: SaveResult :exec

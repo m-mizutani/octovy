@@ -57,15 +57,16 @@ func (ns NullTargetClass) Value() (driver.Value, error) {
 }
 
 type MetaGithubRepository struct {
-	ID            uuid.UUID
-	ScanID        uuid.UUID
-	Owner         string
-	RepoName      string
-	CommitID      string
-	Branch        sql.NullString
-	BaseCommitID  sql.NullString
-	PullRequestID sql.NullInt32
-	PageSeq       sql.NullInt32
+	ID              uuid.UUID
+	ScanID          uuid.UUID
+	Owner           string
+	RepoName        string
+	CommitID        string
+	Branch          sql.NullString
+	IsDefaultBranch sql.NullBool
+	BaseCommitID    sql.NullString
+	PullRequestID   sql.NullInt32
+	PageSeq         sql.NullInt32
 }
 
 type Package struct {

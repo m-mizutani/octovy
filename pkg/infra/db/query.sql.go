@@ -90,23 +90,25 @@ INSERT INTO meta_github_repository (
     owner,
     repo_name,
     branch,
+    is_default_branch,
     commit_id,
     base_commit_id,
     pull_request_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 `
 
 type SaveMetaGithubRepositoryParams struct {
-	ID            uuid.UUID
-	ScanID        uuid.UUID
-	Owner         string
-	RepoName      string
-	Branch        sql.NullString
-	CommitID      string
-	BaseCommitID  sql.NullString
-	PullRequestID sql.NullInt32
+	ID              uuid.UUID
+	ScanID          uuid.UUID
+	Owner           string
+	RepoName        string
+	Branch          sql.NullString
+	IsDefaultBranch sql.NullBool
+	CommitID        string
+	BaseCommitID    sql.NullString
+	PullRequestID   sql.NullInt32
 }
 
 func (q *Queries) SaveMetaGithubRepository(ctx context.Context, arg SaveMetaGithubRepositoryParams) error {
@@ -116,6 +118,7 @@ func (q *Queries) SaveMetaGithubRepository(ctx context.Context, arg SaveMetaGith
 		arg.Owner,
 		arg.RepoName,
 		arg.Branch,
+		arg.IsDefaultBranch,
 		arg.CommitID,
 		arg.BaseCommitID,
 		arg.PullRequestID,
