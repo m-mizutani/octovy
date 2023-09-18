@@ -56,19 +56,6 @@ func (ns NullTargetClass) Value() (driver.Value, error) {
 	return string(ns.TargetClass), nil
 }
 
-type MetaContainerRepository struct {
-	ID             uuid.UUID
-	ScanID         uuid.UUID
-	OsFamily       sql.NullString
-	OsName         sql.NullString
-	ImageID        sql.NullString
-	ImageCreatedAt sql.NullTime
-	RepoName       sql.NullString
-	RepoTags       []string
-	RepoDigests    []string
-	PageSeq        sql.NullInt32
-}
-
 type MetaGithubRepository struct {
 	ID            uuid.UUID
 	ScanID        uuid.UUID
