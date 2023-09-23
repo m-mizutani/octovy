@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/aquasecurity/trivy v0.45.1
-	github.com/aquasecurity/trivy-db v0.0.0-20230907201540-a70e1619ce26
+	github.com/aquasecurity/trivy-db v0.0.0-20230921115630-2e93bc3997cc
 	github.com/bradleyfalzon/ghinstallation/v2 v2.7.0
 	github.com/fatih/color v1.15.0
 	github.com/go-chi/chi/v5 v5.0.10

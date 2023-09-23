@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/sqlc-dev/pqtype"
@@ -103,13 +102,13 @@ func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Rep
 				ResultID: resultID,
 				VulnID:   vuln.VulnerabilityID,
 				PkgID:    calcPackageID(result.Type, vuln.PkgName, vuln.InstalledVersion),
+				InstalledVersion: sql.NullString{
+					String: vuln.InstalledVersion,
+					Valid:  vuln.InstalledVersion != "",
+				},
 				FixedVersion: sql.NullString{
 					String: vuln.FixedVersion,
 					Valid:  vuln.FixedVersion != "",
-				},
-				PrimaryUrl: sql.NullString{
-					String: vuln.PrimaryURL,
-					Valid:  vuln.PrimaryURL != "",
 				},
 			}); err != nil {
 				return goerr.Wrap(err, "saving result vulnerability")
@@ -199,85 +198,27 @@ func saveVulnerabilities(ctx *model.Context, dbClient *sql.DB, vulns []ttypes.De
 	defer utils.SafeRollback(tx)
 	q := db.New(tx)
 
-	vulnSet := map[string]*ttypes.DetectedVulnerability{}
-	vulnIDs := []string{}
-	for i, vuln := range vulns {
-		vulnSet[vuln.VulnerabilityID] = &vulns[i]
-		vulnIDs = append(vulnIDs, vuln.VulnerabilityID)
-	}
-
-	exists, err := q.GetVulnerabilities(ctx, vulnIDs)
-	if err != nil {
-		return goerr.Wrap(err, "getting vulnerabilities")
-	}
-
-	var updated []*ttypes.DetectedVulnerability
-	for _, vuln := range exists {
-		v, ok := vulnSet[vuln.ID]
-		if !ok {
-			return goerr.Wrap(types.ErrLogicError, "vulnerability ID is not found in vulnSet").With("vulnID", vuln.ID)
-		}
-
-		if v.LastModifiedDate.Before(vuln.LastModifiedAt.Time) {
-			updated = append(updated, v)
-		} else {
-			delete(vulnSet, vuln.ID)
-		}
-	}
-
-	// Update existing vulnerabilities
-	for _, v := range updated {
-		cvss, err := json.Marshal(v.CVSS)
+	for _, vuln := range vulns {
+		data, err := json.Marshal(vuln.Vulnerability)
 		if err != nil {
-			return goerr.Wrap(err, "marshaling CVSS").With("vulnID", v.VulnerabilityID).With("cvss", v.CVSS)
+			return goerr.Wrap(err, "marshaling vulnerability").With("vuln", vuln)
 		}
 
-		param := db.UpdateVulnerabilityParams{
-			ID:          v.VulnerabilityID,
-			Title:       v.Title,
-			Description: v.Description,
-			Severity:    v.Severity,
-			CweIds:      v.CweIDs,
-			Cvss:        pqtype.NullRawMessage{Valid: true, RawMessage: cvss},
-			Reference:   v.References,
-		}
-		if v.PublishedDate != nil {
-			param.PublishedAt = sql.NullTime{Valid: true, Time: *v.PublishedDate}
-		}
-		if v.LastModifiedDate != nil {
-			param.LastModifiedAt = sql.NullTime{Valid: true, Time: *v.LastModifiedDate}
-		}
-
-		if err := q.UpdateVulnerability(ctx, param); err != nil {
-			return goerr.Wrap(err, "updating vulnerability").With("vulnID", v.VulnerabilityID)
-		}
-	}
-
-	// Insert new vulnerabilities
-	for _, v := range vulnSet {
-		cvss, err := json.Marshal(v.CVSS)
-		if err != nil {
-			return goerr.Wrap(err, "marshaling CVSS").With("vulnID", v.VulnerabilityID).With("cvss", v.CVSS)
-		}
-
-		param := db.SaveVulnerabilityParams{
-			ID:          v.VulnerabilityID,
-			Title:       v.Title,
-			Description: v.Description,
-			Severity:    v.Severity,
-			CweIds:      v.CweIDs,
-			Cvss:        pqtype.NullRawMessage{Valid: true, RawMessage: cvss},
-			Reference:   v.References,
-		}
-		if v.PublishedDate != nil {
-			param.PublishedAt = sql.NullTime{Valid: true, Time: *v.PublishedDate}
-		}
-		if v.LastModifiedDate != nil {
-			param.LastModifiedAt = sql.NullTime{Valid: true, Time: *v.LastModifiedDate}
-		}
-
-		if err := q.SaveVulnerability(ctx, param); err != nil {
-			return goerr.Wrap(err, "saving vulnerability").With("vulnID", v.VulnerabilityID)
+		if err := q.SaveVulnerability(ctx, db.SaveVulnerabilityParams{
+			ID:       vuln.VulnerabilityID,
+			Title:    vuln.Title,
+			Severity: vuln.Severity,
+			PublishedAt: sql.NullTime{
+				Valid: vuln.PublishedDate != nil,
+				Time:  *vuln.PublishedDate,
+			},
+			LastModifiedAt: sql.NullTime{
+				Valid: vuln.LastModifiedDate != nil,
+				Time:  *vuln.LastModifiedDate,
+			},
+			Data: pqtype.NullRawMessage{Valid: true, RawMessage: data},
+		}); err != nil {
+			return goerr.Wrap(err, "saving vulnerability").With("vuln", vuln)
 		}
 	}
 
