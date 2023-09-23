@@ -59,28 +59,23 @@ INSERT INTO result_packages (
 INSERT INTO vulnerabilities (
     id,
     title,
-    description,
     severity,
-    cwe_ids,
-    cvss,
-    reference,
     published_at,
-    last_modified_at
+    last_modified_at,
+    data
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
-);
-
--- name: UpdateVulnerability :exec
-UPDATE vulnerabilities SET
+    $1, $2, $3, $4, $5, $6
+) ON CONFLICT (id)
+DO UPDATE SET
     title = $2,
-    description = $3,
-    severity = $4,
-    cwe_ids = $5,
-    cvss = $6,
-    reference = $7,
-    published_at = $8,
-    last_modified_at = $9
-WHERE id = $1 and last_modified_at < $9;
+    severity = $3,
+    published_at = $4,
+    last_modified_at = $5,
+    data = $6
+WHERE vulnerabilities.last_modified_at < $5;
+
+-- name: GetVulnerability :one
+SELECT * FROM vulnerabilities WHERE id = $1;
 
 -- name: GetVulnerabilities :many
 SELECT * FROM vulnerabilities WHERE id = ANY($1::text[]);

@@ -110,11 +110,9 @@ type Scan struct {
 type Vulnerability struct {
 	ID             string
 	Title          string
-	Description    string
 	Severity       string
-	CweIds         []string
-	Cvss           pqtype.NullRawMessage
-	Reference      []string
 	PublishedAt    sql.NullTime
 	LastModifiedAt sql.NullTime
+	Data           pqtype.NullRawMessage
+	PageSeq        sql.NullInt32
 }

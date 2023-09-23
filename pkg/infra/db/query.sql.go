@@ -47,7 +47,7 @@ func (q *Queries) GetPackages(ctx context.Context, dollar_1 []string) ([]Package
 }
 
 const getVulnerabilities = `-- name: GetVulnerabilities :many
-SELECT id, title, description, severity, cwe_ids, cvss, reference, published_at, last_modified_at FROM vulnerabilities WHERE id = ANY($1::text[])
+SELECT id, title, severity, published_at, last_modified_at, data, page_seq FROM vulnerabilities WHERE id = ANY($1::text[])
 `
 
 func (q *Queries) GetVulnerabilities(ctx context.Context, dollar_1 []string) ([]Vulnerability, error) {
@@ -62,13 +62,11 @@ func (q *Queries) GetVulnerabilities(ctx context.Context, dollar_1 []string) ([]
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
-			&i.Description,
 			&i.Severity,
-			pq.Array(&i.CweIds),
-			&i.Cvss,
-			pq.Array(&i.Reference),
 			&i.PublishedAt,
 			&i.LastModifiedAt,
+			&i.Data,
+			&i.PageSeq,
 		); err != nil {
 			return nil, err
 		}
@@ -81,6 +79,25 @@ func (q *Queries) GetVulnerabilities(ctx context.Context, dollar_1 []string) ([]
 		return nil, err
 	}
 	return items, nil
+}
+
+const getVulnerability = `-- name: GetVulnerability :one
+SELECT id, title, severity, published_at, last_modified_at, data, page_seq FROM vulnerabilities WHERE id = $1
+`
+
+func (q *Queries) GetVulnerability(ctx context.Context, id string) (Vulnerability, error) {
+	row := q.db.QueryRowContext(ctx, getVulnerability, id)
+	var i Vulnerability
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Severity,
+		&i.PublishedAt,
+		&i.LastModifiedAt,
+		&i.Data,
+		&i.PageSeq,
+	)
+	return i, err
 }
 
 const saveMetaGithubRepository = `-- name: SaveMetaGithubRepository :exec
@@ -265,81 +282,39 @@ const saveVulnerability = `-- name: SaveVulnerability :exec
 INSERT INTO vulnerabilities (
     id,
     title,
-    description,
     severity,
-    cwe_ids,
-    cvss,
-    reference,
     published_at,
-    last_modified_at
+    last_modified_at,
+    data
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
-)
+    $1, $2, $3, $4, $5, $6
+) ON CONFLICT (id)
+DO UPDATE SET
+    title = $2,
+    severity = $3,
+    published_at = $4,
+    last_modified_at = $5,
+    data = $6
+WHERE vulnerabilities.last_modified_at < $5
 `
 
 type SaveVulnerabilityParams struct {
 	ID             string
 	Title          string
-	Description    string
 	Severity       string
-	CweIds         []string
-	Cvss           pqtype.NullRawMessage
-	Reference      []string
 	PublishedAt    sql.NullTime
 	LastModifiedAt sql.NullTime
+	Data           pqtype.NullRawMessage
 }
 
 func (q *Queries) SaveVulnerability(ctx context.Context, arg SaveVulnerabilityParams) error {
 	_, err := q.db.ExecContext(ctx, saveVulnerability,
 		arg.ID,
 		arg.Title,
-		arg.Description,
 		arg.Severity,
-		pq.Array(arg.CweIds),
-		arg.Cvss,
-		pq.Array(arg.Reference),
 		arg.PublishedAt,
 		arg.LastModifiedAt,
-	)
-	return err
-}
-
-const updateVulnerability = `-- name: UpdateVulnerability :exec
-UPDATE vulnerabilities SET
-    title = $2,
-    description = $3,
-    severity = $4,
-    cwe_ids = $5,
-    cvss = $6,
-    reference = $7,
-    published_at = $8,
-    last_modified_at = $9
-WHERE id = $1 and last_modified_at < $9
-`
-
-type UpdateVulnerabilityParams struct {
-	ID             string
-	Title          string
-	Description    string
-	Severity       string
-	CweIds         []string
-	Cvss           pqtype.NullRawMessage
-	Reference      []string
-	PublishedAt    sql.NullTime
-	LastModifiedAt sql.NullTime
-}
-
-func (q *Queries) UpdateVulnerability(ctx context.Context, arg UpdateVulnerabilityParams) error {
-	_, err := q.db.ExecContext(ctx, updateVulnerability,
-		arg.ID,
-		arg.Title,
-		arg.Description,
-		arg.Severity,
-		pq.Array(arg.CweIds),
-		arg.Cvss,
-		pq.Array(arg.Reference),
-		arg.PublishedAt,
-		arg.LastModifiedAt,
+		arg.Data,
 	)
 	return err
 }

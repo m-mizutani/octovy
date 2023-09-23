@@ -54,14 +54,12 @@ create table vulnerabilities (
     id text primary key not null,
 
     title text not null,
-    description text not null,
     severity text not null,
-    cwe_ids text[],
-    cvss JSONB,
-    reference text[],
-
     published_at timestamp with time zone,
-    last_modified_at timestamp with time zone
+    last_modified_at timestamp with time zone,
+
+    data JSONB,
+    page_seq serial
 );
 
 create table result_vulnerabilities (
