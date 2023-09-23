@@ -69,5 +69,5 @@ create table result_vulnerabilities (
 
     pkg_id text not null references packages(id),
     fixed_version text,
-    primary_url text
+    installed_version text
 );

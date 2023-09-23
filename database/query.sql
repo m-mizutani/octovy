@@ -86,8 +86,8 @@ INSERT INTO result_vulnerabilities (
     result_id,
     vuln_id,
     pkg_id,
-    fixed_version,
-    primary_url
+    installed_version,
+    fixed_version
 ) VALUES (
     $1, $2, $3, $4, $5, $6
 );

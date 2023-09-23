@@ -102,13 +102,13 @@ func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Rep
 				ResultID: resultID,
 				VulnID:   vuln.VulnerabilityID,
 				PkgID:    calcPackageID(result.Type, vuln.PkgName, vuln.InstalledVersion),
+				InstalledVersion: sql.NullString{
+					String: vuln.InstalledVersion,
+					Valid:  vuln.InstalledVersion != "",
+				},
 				FixedVersion: sql.NullString{
 					String: vuln.FixedVersion,
 					Valid:  vuln.FixedVersion != "",
-				},
-				PrimaryUrl: sql.NullString{
-					String: vuln.PrimaryURL,
-					Valid:  vuln.PrimaryURL != "",
 				},
 			}); err != nil {
 				return goerr.Wrap(err, "saving result vulnerability")

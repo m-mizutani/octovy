@@ -91,12 +91,12 @@ type ResultPackage struct {
 }
 
 type ResultVulnerability struct {
-	ID           uuid.UUID
-	ResultID     uuid.UUID
-	VulnID       string
-	PkgID        string
-	FixedVersion sql.NullString
-	PrimaryUrl   sql.NullString
+	ID               uuid.UUID
+	ResultID         uuid.UUID
+	VulnID           string
+	PkgID            string
+	FixedVersion     sql.NullString
+	InstalledVersion sql.NullString
 }
 
 type Scan struct {

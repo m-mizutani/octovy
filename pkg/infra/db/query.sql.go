@@ -229,20 +229,20 @@ INSERT INTO result_vulnerabilities (
     result_id,
     vuln_id,
     pkg_id,
-    fixed_version,
-    primary_url
+    installed_version,
+    fixed_version
 ) VALUES (
     $1, $2, $3, $4, $5, $6
 )
 `
 
 type SaveResultVulnerabilityParams struct {
-	ID           uuid.UUID
-	ResultID     uuid.UUID
-	VulnID       string
-	PkgID        string
-	FixedVersion sql.NullString
-	PrimaryUrl   sql.NullString
+	ID               uuid.UUID
+	ResultID         uuid.UUID
+	VulnID           string
+	PkgID            string
+	InstalledVersion sql.NullString
+	FixedVersion     sql.NullString
 }
 
 func (q *Queries) SaveResultVulnerability(ctx context.Context, arg SaveResultVulnerabilityParams) error {
@@ -251,8 +251,8 @@ func (q *Queries) SaveResultVulnerability(ctx context.Context, arg SaveResultVul
 		arg.ResultID,
 		arg.VulnID,
 		arg.PkgID,
+		arg.InstalledVersion,
 		arg.FixedVersion,
-		arg.PrimaryUrl,
 	)
 	return err
 }
