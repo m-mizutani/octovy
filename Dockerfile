@@ -2,6 +2,7 @@ FROM golang:1.21 AS build-go
 COPY . /app
 WORKDIR /app
 ENV CGO_ENABLED=0
+RUN go get -v
 RUN go build .
 
 FROM gcr.io/distroless/base
