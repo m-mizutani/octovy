@@ -91,3 +91,15 @@ INSERT INTO result_vulnerabilities (
 ) VALUES (
     $1, $2, $3, $4, $5, $6
 );
+
+-- name: GetLatestResultsByCommit :many
+SELECT results.* FROM results
+INNER JOIN (
+    SELECT scans.id AS id FROM meta_github_repository
+    INNER JOIN scans ON scans.id = results.scan_id
+    WHERE meta_github_repository.commit_id = $1
+    AND meta_github_repository.owner = $2
+    AND meta_github_repository.repo_name = $3
+    ORDER BY scans.created_at DESC
+    LIMIT 1
+) AS latest_scan ON latest_scan.id = results.scan_id;

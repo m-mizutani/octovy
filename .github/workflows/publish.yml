@@ -25,6 +25,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+        with:
+          context: .
+          tags: ${{ env.GITHUB_IMAGE_NAME }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
       - name: Rename image
         run: docker tag ${{ env.TAG_NAME }} ${{ env.GITHUB_IMAGE_NAME }}
       - name: Push image

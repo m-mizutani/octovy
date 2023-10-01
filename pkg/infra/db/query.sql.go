@@ -14,6 +14,54 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const getLatestResultsByCommit = `-- name: GetLatestResultsByCommit :many
+SELECT results.id, results.scan_id, results.target, results.target_type, results.class FROM results
+INNER JOIN (
+    SELECT scans.id AS id FROM meta_github_repository
+    INNER JOIN scans ON scans.id = results.scan_id
+    WHERE meta_github_repository.commit_id = $1
+    AND meta_github_repository.owner = $2
+    AND meta_github_repository.repo_name = $3
+    ORDER BY scans.created_at DESC
+    LIMIT 1
+) AS latest_scan ON latest_scan.id = results.scan_id
+`
+
+type GetLatestResultsByCommitParams struct {
+	CommitID string
+	Owner    string
+	RepoName string
+}
+
+func (q *Queries) GetLatestResultsByCommit(ctx context.Context, arg GetLatestResultsByCommitParams) ([]Result, error) {
+	rows, err := q.db.QueryContext(ctx, getLatestResultsByCommit, arg.CommitID, arg.Owner, arg.RepoName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Result
+	for rows.Next() {
+		var i Result
+		if err := rows.Scan(
+			&i.ID,
+			&i.ScanID,
+			&i.Target,
+			&i.TargetType,
+			&i.Class,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPackages = `-- name: GetPackages :many
 SELECT id, target_type, name, version FROM packages WHERE id = ANY($1::text[])
 `
