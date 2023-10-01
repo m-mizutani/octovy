@@ -13,4 +13,4 @@ WORKDIR /
 ENV OCTOVY_ADDR="0.0.0.0:8000"
 ENV OCTOVY_TRIVY_PATH=/trivy
 EXPOSE 8000
-ENTRYPOINT ["/octovy"]
+CMD ["/octovy", "serve"]
