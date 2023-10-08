@@ -3,6 +3,7 @@ package utils
 import (
 	"io"
 	"os"
+	"path/filepath"
 
 	"log/slog"
 
@@ -50,7 +51,7 @@ func ReconfigureLogger(logFormat, logLevel, logOutput string) error {
 	case "stderr":
 		w = os.Stderr
 	default:
-		fd, err := os.Create(logOutput)
+		fd, err := os.Create(filepath.Clean(logOutput))
 		if err != nil {
 			return goerr.Wrap(err, "failed to open log file").With("path", logOutput)
 		}
