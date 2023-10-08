@@ -30,6 +30,8 @@ func New() *cli.Command {
 		addr      string
 		trivyPath string
 
+		skipMigration bool
+
 		githubApp config.GitHubApp
 		database  config.DB
 	)
@@ -48,11 +50,17 @@ func New() *cli.Command {
 			EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 			Destination: &trivyPath,
 		},
+		&cli.BoolFlag{
+			Name:        "skip-migration",
+			Usage:       "Skip database migration",
+			Destination: &skipMigration,
+		},
 	}
 
 	return &cli.Command{
-		Name:  "serve",
-		Usage: "Server mode",
+		Name:    "serve",
+		Aliases: []string{"s"},
+		Usage:   "Server mode",
 		Flags: slice.Flatten(
 			serveFlags,
 			githubApp.Flags(),
@@ -65,6 +73,12 @@ func New() *cli.Command {
 				slog.Any("githubApp", githubApp),
 				slog.Any("database", database),
 			)
+
+			if !skipMigration {
+				if err := database.Migrate(false); err != nil {
+					return err
+				}
+			}
 
 			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey)
 			if err != nil {
