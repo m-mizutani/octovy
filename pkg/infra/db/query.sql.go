@@ -14,6 +14,54 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const getLatestResultsByCommit = `-- name: GetLatestResultsByCommit :many
+SELECT results.id, results.scan_id, results.target, results.target_type, results.class FROM results
+INNER JOIN (
+    SELECT scans.id AS id FROM meta_github_repository
+    INNER JOIN scans ON scans.id = meta_github_repository.scan_id
+    WHERE meta_github_repository.commit_id = $1
+    AND meta_github_repository.owner = $2
+    AND meta_github_repository.repo_name = $3
+    ORDER BY scans.created_at DESC
+    LIMIT 1
+) AS latest_scan ON latest_scan.id = results.scan_id
+`
+
+type GetLatestResultsByCommitParams struct {
+	CommitID string
+	Owner    string
+	RepoName string
+}
+
+func (q *Queries) GetLatestResultsByCommit(ctx context.Context, arg GetLatestResultsByCommitParams) ([]Result, error) {
+	rows, err := q.db.QueryContext(ctx, getLatestResultsByCommit, arg.CommitID, arg.Owner, arg.RepoName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Result
+	for rows.Next() {
+		var i Result
+		if err := rows.Scan(
+			&i.ID,
+			&i.ScanID,
+			&i.Target,
+			&i.TargetType,
+			&i.Class,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPackages = `-- name: GetPackages :many
 SELECT id, target_type, name, version FROM packages WHERE id = ANY($1::text[])
 `
@@ -81,6 +129,42 @@ func (q *Queries) GetVulnerabilities(ctx context.Context, dollar_1 []string) ([]
 	return items, nil
 }
 
+const getVulnerabilitiesByResultID = `-- name: GetVulnerabilitiesByResultID :many
+SELECT detected_vulnerabilities.id, detected_vulnerabilities.result_id, detected_vulnerabilities.vuln_id, detected_vulnerabilities.pkg_id, detected_vulnerabilities.fixed_version, detected_vulnerabilities.installed_version, detected_vulnerabilities.data FROM detected_vulnerabilities
+WHERE detected_vulnerabilities.result_id = $1
+`
+
+func (q *Queries) GetVulnerabilitiesByResultID(ctx context.Context, resultID uuid.UUID) ([]DetectedVulnerability, error) {
+	rows, err := q.db.QueryContext(ctx, getVulnerabilitiesByResultID, resultID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DetectedVulnerability
+	for rows.Next() {
+		var i DetectedVulnerability
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResultID,
+			&i.VulnID,
+			&i.PkgID,
+			&i.FixedVersion,
+			&i.InstalledVersion,
+			&i.Data,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getVulnerability = `-- name: GetVulnerability :one
 SELECT id, title, severity, published_at, last_modified_at, data, page_seq FROM vulnerabilities WHERE id = $1
 `
@@ -98,6 +182,64 @@ func (q *Queries) GetVulnerability(ctx context.Context, id string) (Vulnerabilit
 		&i.PageSeq,
 	)
 	return i, err
+}
+
+const saveDetectedPackage = `-- name: SaveDetectedPackage :exec
+INSERT INTO detected_packages (
+    id,
+    result_id,
+    pkg_id
+) VALUES (
+    $1, $2, $3
+)
+`
+
+type SaveDetectedPackageParams struct {
+	ID       uuid.UUID
+	ResultID uuid.UUID
+	PkgID    string
+}
+
+func (q *Queries) SaveDetectedPackage(ctx context.Context, arg SaveDetectedPackageParams) error {
+	_, err := q.db.ExecContext(ctx, saveDetectedPackage, arg.ID, arg.ResultID, arg.PkgID)
+	return err
+}
+
+const saveDetectedVulnerability = `-- name: SaveDetectedVulnerability :exec
+INSERT INTO detected_vulnerabilities (
+    id,
+    result_id,
+    vuln_id,
+    pkg_id,
+    installed_version,
+    fixed_version,
+    data
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+`
+
+type SaveDetectedVulnerabilityParams struct {
+	ID               uuid.UUID
+	ResultID         uuid.UUID
+	VulnID           string
+	PkgID            string
+	InstalledVersion sql.NullString
+	FixedVersion     sql.NullString
+	Data             pqtype.NullRawMessage
+}
+
+func (q *Queries) SaveDetectedVulnerability(ctx context.Context, arg SaveDetectedVulnerabilityParams) error {
+	_, err := q.db.ExecContext(ctx, saveDetectedVulnerability,
+		arg.ID,
+		arg.ResultID,
+		arg.VulnID,
+		arg.PkgID,
+		arg.InstalledVersion,
+		arg.FixedVersion,
+		arg.Data,
+	)
+	return err
 }
 
 const saveMetaGithubRepository = `-- name: SaveMetaGithubRepository :exec
@@ -198,61 +340,6 @@ func (q *Queries) SaveResult(ctx context.Context, arg SaveResultParams) error {
 		arg.Target,
 		arg.TargetType,
 		arg.Class,
-	)
-	return err
-}
-
-const saveResultPackage = `-- name: SaveResultPackage :exec
-INSERT INTO result_packages (
-    id,
-    result_id,
-    pkg_id
-) VALUES (
-    $1, $2, $3
-)
-`
-
-type SaveResultPackageParams struct {
-	ID       uuid.UUID
-	ResultID uuid.UUID
-	PkgID    string
-}
-
-func (q *Queries) SaveResultPackage(ctx context.Context, arg SaveResultPackageParams) error {
-	_, err := q.db.ExecContext(ctx, saveResultPackage, arg.ID, arg.ResultID, arg.PkgID)
-	return err
-}
-
-const saveResultVulnerability = `-- name: SaveResultVulnerability :exec
-INSERT INTO result_vulnerabilities (
-    id,
-    result_id,
-    vuln_id,
-    pkg_id,
-    installed_version,
-    fixed_version
-) VALUES (
-    $1, $2, $3, $4, $5, $6
-)
-`
-
-type SaveResultVulnerabilityParams struct {
-	ID               uuid.UUID
-	ResultID         uuid.UUID
-	VulnID           string
-	PkgID            string
-	InstalledVersion sql.NullString
-	FixedVersion     sql.NullString
-}
-
-func (q *Queries) SaveResultVulnerability(ctx context.Context, arg SaveResultVulnerabilityParams) error {
-	_, err := q.db.ExecContext(ctx, saveResultVulnerability,
-		arg.ID,
-		arg.ResultID,
-		arg.VulnID,
-		arg.PkgID,
-		arg.InstalledVersion,
-		arg.FixedVersion,
 	)
 	return err
 }

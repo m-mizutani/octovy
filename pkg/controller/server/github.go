@@ -61,9 +61,13 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 
 		return &usecase.ScanGitHubRepoInput{
 			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-				Owner:           ev.GetRepo().GetOwner().GetLogin(),
-				Repo:            ev.GetRepo().GetName(),
-				CommitID:        ev.GetHeadCommit().GetID(),
+				GitHubCommit: usecase.GitHubCommit{
+					GitHubRepo: usecase.GitHubRepo{
+						Owner: ev.GetRepo().GetOwner().GetLogin(),
+						Repo:  ev.GetRepo().GetName(),
+					},
+					CommitID: ev.GetHeadCommit().GetID(),
+				},
 				Branch:          branch,
 				BaseCommitID:    ev.GetBefore(),
 				PullRequestID:   0,
@@ -86,9 +90,13 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 
 		return &usecase.ScanGitHubRepoInput{
 			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-				Owner:         ev.GetRepo().GetOwner().GetLogin(),
-				Repo:          ev.GetRepo().GetName(),
-				CommitID:      ev.GetPullRequest().GetHead().GetSHA(),
+				GitHubCommit: usecase.GitHubCommit{
+					GitHubRepo: usecase.GitHubRepo{
+						Owner: ev.GetRepo().GetOwner().GetLogin(),
+						Repo:  ev.GetRepo().GetName(),
+					},
+					CommitID: ev.GetPullRequest().GetHead().GetSHA(),
+				},
 				Branch:        branch,
 				BaseCommitID:  baseCommitID,
 				PullRequestID: ev.GetPullRequest().GetNumber(),

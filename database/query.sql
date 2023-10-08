@@ -46,8 +46,8 @@ INSERT INTO packages (
 -- name: GetPackages :many
 SELECT * FROM packages WHERE id = ANY($1::text[]);
 
--- name: SaveResultPackage :exec
-INSERT INTO result_packages (
+-- name: SaveDetectedPackage :exec
+INSERT INTO detected_packages (
     id,
     result_id,
     pkg_id
@@ -80,14 +80,31 @@ SELECT * FROM vulnerabilities WHERE id = $1;
 -- name: GetVulnerabilities :many
 SELECT * FROM vulnerabilities WHERE id = ANY($1::text[]);
 
--- name: SaveResultVulnerability :exec
-INSERT INTO result_vulnerabilities (
+-- name: SaveDetectedVulnerability :exec
+INSERT INTO detected_vulnerabilities (
     id,
     result_id,
     vuln_id,
     pkg_id,
     installed_version,
-    fixed_version
+    fixed_version,
+    data
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 );
+
+-- name: GetLatestResultsByCommit :many
+SELECT results.* FROM results
+INNER JOIN (
+    SELECT scans.id AS id FROM meta_github_repository
+    INNER JOIN scans ON scans.id = meta_github_repository.scan_id
+    WHERE meta_github_repository.commit_id = $1
+    AND meta_github_repository.owner = $2
+    AND meta_github_repository.repo_name = $3
+    ORDER BY scans.created_at DESC
+    LIMIT 1
+) AS latest_scan ON latest_scan.id = results.scan_id;
+
+-- name: GetVulnerabilitiesByResultID :many
+SELECT detected_vulnerabilities.* FROM detected_vulnerabilities
+WHERE detected_vulnerabilities.result_id = $1;

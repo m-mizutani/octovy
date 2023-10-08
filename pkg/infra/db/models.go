@@ -56,6 +56,22 @@ func (ns NullTargetClass) Value() (driver.Value, error) {
 	return string(ns.TargetClass), nil
 }
 
+type DetectedPackage struct {
+	ID       uuid.UUID
+	ResultID uuid.UUID
+	PkgID    string
+}
+
+type DetectedVulnerability struct {
+	ID               uuid.UUID
+	ResultID         uuid.UUID
+	VulnID           string
+	PkgID            string
+	FixedVersion     sql.NullString
+	InstalledVersion sql.NullString
+	Data             pqtype.NullRawMessage
+}
+
 type MetaGithubRepository struct {
 	ID              uuid.UUID
 	ScanID          uuid.UUID
@@ -82,21 +98,6 @@ type Result struct {
 	Target     string
 	TargetType string
 	Class      TargetClass
-}
-
-type ResultPackage struct {
-	ID       uuid.UUID
-	ResultID uuid.UUID
-	PkgID    string
-}
-
-type ResultVulnerability struct {
-	ID               uuid.UUID
-	ResultID         uuid.UUID
-	VulnID           string
-	PkgID            string
-	FixedVersion     sql.NullString
-	InstalledVersion sql.NullString
 }
 
 type Scan struct {

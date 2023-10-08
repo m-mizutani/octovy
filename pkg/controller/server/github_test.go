@@ -43,9 +43,13 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPullRequestOpened,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					Owner:           "m-mizutani",
-					Repo:            "masq",
-					CommitID:        "aa0378cad00d375c1897c1b5b5a4dd125984b511",
+					GitHubCommit: usecase.GitHubCommit{
+						GitHubRepo: usecase.GitHubRepo{
+							Owner: "m-mizutani",
+							Repo:  "masq",
+						},
+						CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
+					},
 					PullRequestID:   13,
 					Branch:          "update/packages/20230918",
 					BaseCommitID:    "8acdc26c9f12b9cc88e5f0b23f082f648d9e5645",
@@ -59,9 +63,13 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPullRequestSynchronize,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					Owner:           "m-mizutani",
-					Repo:            "octovy",
-					CommitID:        "69454c171c2f0f2dbc9ccb0c9ef9b72fd769f046",
+					GitHubCommit: usecase.GitHubCommit{
+						GitHubRepo: usecase.GitHubRepo{
+							Owner: "m-mizutani",
+							Repo:  "octovy",
+						},
+						CommitID: "69454c171c2f0f2dbc9ccb0c9ef9b72fd769f046",
+					},
 					PullRequestID:   89,
 					Branch:          "release/v0.2.0",
 					BaseCommitID:    "bca5ddd2023d5c906a0420492deb2ede8d99eb79",
@@ -76,9 +84,13 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPush,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					Owner:           "m-mizutani",
-					Repo:            "masq",
-					CommitID:        "aa0378cad00d375c1897c1b5b5a4dd125984b511",
+					GitHubCommit: usecase.GitHubCommit{
+						GitHubRepo: usecase.GitHubRepo{
+							Owner: "m-mizutani",
+							Repo:  "masq",
+						},
+						CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
+					},
 					PullRequestID:   0,
 					Branch:          "update/packages/20230918",
 					BaseCommitID:    "0000000000000000000000000000000000000000",
@@ -92,9 +104,13 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPushDefault,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					Owner:           "m-mizutani",
-					Repo:            "ops",
-					CommitID:        "f58ae7668c3dfc193a1d2c0372cc52847613cde4",
+					GitHubCommit: usecase.GitHubCommit{
+						GitHubRepo: usecase.GitHubRepo{
+							Owner: "m-mizutani",
+							Repo:  "ops",
+						},
+						CommitID: "f58ae7668c3dfc193a1d2c0372cc52847613cde4",
+					},
 					PullRequestID:   0,
 					Branch:          "master",
 					BaseCommitID:    "987e1005c2e3c79631b620c4a76afd4b8111b7b1",

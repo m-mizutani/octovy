@@ -96,9 +96,13 @@ func TestSaveScan(t *testing.T) {
 	dbClient := newTestDB(t)
 	ctx := model.NewContext()
 	meta := &usecase.GitHubRepoMetadata{
-		Owner:    "m-mizutani",
-		Repo:     "octovy",
-		CommitID: "1234567890",
+		GitHubCommit: usecase.GitHubCommit{
+			GitHubRepo: usecase.GitHubRepo{
+				Owner: "m-mizutani",
+				Repo:  "octovy",
+			},
+			CommitID: "1234567890",
+		},
 	}
 	gt.NoError(t, usecase.SaveScanReportGitHubRepo(ctx, dbClient, &report, meta))
 }
@@ -145,9 +149,13 @@ func TestUpsertVulnerability(t *testing.T) {
 	q := db.New(dbClient)
 	ctx := model.NewContext()
 	meta := &usecase.GitHubRepoMetadata{
-		Owner:    "m-mizutani",
-		Repo:     "octovy",
-		CommitID: uuid.NewString(),
+		GitHubCommit: usecase.GitHubCommit{
+			GitHubRepo: usecase.GitHubRepo{
+				Owner: "m-mizutani",
+				Repo:  "octovy",
+			},
+			CommitID: uuid.NewString(),
+		},
 	}
 
 	t.Run("save vulnerability", func(t *testing.T) {
