@@ -2,9 +2,19 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"strings"
 
+	"github.com/k0kubun/sqldef"
+	"github.com/k0kubun/sqldef/database"
+	"github.com/k0kubun/sqldef/database/postgres"
+	"github.com/k0kubun/sqldef/schema"
+	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/utils"
 	"github.com/urfave/cli/v2"
+
+	db "github.com/m-mizutani/octovy/database"
 )
 
 type DB struct {
@@ -90,4 +100,39 @@ func (x *DB) DSN() string {
 	}
 
 	return strings.Join(options, " ")
+}
+
+func (x *DB) Migrate(dryRun bool) error {
+	utils.Logger().Info("migrating database", slog.Any("config.DB", x))
+
+	options := &sqldef.Options{
+		DesiredDDLs:     db.Schema(),
+		DryRun:          dryRun,
+		Export:          false,
+		EnableDropTable: true,
+		// BeforeApply:     opts.BeforeApply,
+		// Config: database.ParseGeneratorConfig(opts.Config),
+	}
+
+	config := database.Config{
+		DbName:   x.DBName,
+		User:     x.User,
+		Password: x.Password,
+		Host:     x.Host,
+		Port:     x.Port,
+	}
+	if err := os.Setenv("PGSSLMODE", x.SSLMode); err != nil {
+		return goerr.Wrap(err, "failed to set PGSSLMODE")
+	}
+
+	db, err := postgres.NewDatabase(config)
+	if err != nil {
+		return goerr.Wrap(err, "failed to open database")
+	}
+	defer utils.SafeClose(db)
+
+	sqlParser := postgres.NewParser()
+	sqldef.Run(schema.GeneratorModePostgres, db, sqlParser, options)
+
+	return nil
 }
