@@ -97,7 +97,12 @@ func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Rep
 		}
 
 		for _, vuln := range result.Vulnerabilities {
-			if err := q.SaveResultVulnerability(ctx, db.SaveResultVulnerabilityParams{
+			data, err := json.Marshal(vuln)
+			if err != nil {
+				return goerr.Wrap(err, "marshaling vulnerability").With("vuln", vuln)
+			}
+
+			if err := q.SaveDetectedVulnerability(ctx, db.SaveDetectedVulnerabilityParams{
 				ID:       uuid.New(),
 				ResultID: resultID,
 				VulnID:   vuln.VulnerabilityID,
@@ -110,13 +115,14 @@ func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Rep
 					String: vuln.FixedVersion,
 					Valid:  vuln.FixedVersion != "",
 				},
+				Data: pqtype.NullRawMessage{Valid: true, RawMessage: data},
 			}); err != nil {
 				return goerr.Wrap(err, "saving result vulnerability")
 			}
 		}
 
 		for _, pkg := range result.Packages {
-			if err := q.SaveResultPackage(ctx, db.SaveResultPackageParams{
+			if err := q.SaveDetectedPackage(ctx, db.SaveDetectedPackageParams{
 				ID:       uuid.New(),
 				ResultID: resultID,
 				PkgID:    calcPackageID(result.Type, pkg.Name, pkg.Version),

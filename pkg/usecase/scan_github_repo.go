@@ -28,10 +28,18 @@ type ScanGitHubRepoInput struct {
 	InstallID types.GitHubAppInstallID
 }
 
+type GitHubRepo struct {
+	Owner string
+	Repo  string
+}
+
+type GitHubCommit struct {
+	GitHubRepo
+	CommitID string
+}
+
 type GitHubRepoMetadata struct {
-	Owner           string
-	Repo            string
-	CommitID        string
+	GitHubCommit
 	Branch          string
 	IsDefaultBranch bool
 	BaseCommitID    string

@@ -3,8 +3,6 @@ package utils
 import (
 	"io"
 	"os"
-	"reflect"
-	"time"
 
 	"log/slog"
 
@@ -17,6 +15,10 @@ import (
 
 var logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
+func init() {
+	_ = ReconfigureLogger("text", "info", "stdout")
+}
+
 func Logger() *slog.Logger {
 	return logger
 }
@@ -27,9 +29,6 @@ func ReconfigureLogger(logFormat, logLevel, logOutput string) error {
 		masq.WithTag("secret"),
 		masq.WithType[types.GitHubAppSecret](masq.MaskWithSymbol('*', 64)),
 		masq.WithType[types.GitHubAppPrivateKey](masq.MaskWithSymbol('*', 16)),
-
-		// Ignore time.Time type
-		masq.WithAllowedType(reflect.TypeOf(time.Time{})),
 	)
 
 	levelMap := map[string]slog.Level{

@@ -44,7 +44,7 @@ create table packages (
     version text not null
 );
 
-create table result_packages (
+create table detected_packages (
     id uuid primary key not null,
     result_id uuid not null references results(id),
     pkg_id text not null references packages(id)
@@ -62,12 +62,14 @@ create table vulnerabilities (
     page_seq serial
 );
 
-create table result_vulnerabilities (
+create table detected_vulnerabilities (
     id uuid primary key not null,
     result_id uuid not null references results(id),
     vuln_id text not null references vulnerabilities(id),
 
     pkg_id text not null references packages(id),
     fixed_version text,
-    installed_version text
+    installed_version text,
+
+    data JSONB
 );
