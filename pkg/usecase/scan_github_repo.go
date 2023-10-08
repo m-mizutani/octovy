@@ -164,7 +164,7 @@ func (x *useCase) scanGitHubRepo(ctx *model.Context, codeDir string) (*ttype.Rep
 }
 
 func unmarshalFile(path string, v any) error {
-	fd, err := os.Open(path)
+	fd, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return goerr.Wrap(err, "failed to open file").With("path", path)
 	}
