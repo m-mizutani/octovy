@@ -1,10 +1,14 @@
 package config
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/k0kubun/sqldef"
 	"github.com/k0kubun/sqldef/database"
@@ -100,6 +104,38 @@ func (x *DB) DSN() string {
 	}
 
 	return strings.Join(options, " ")
+}
+
+func (x *DB) Connect(ctx context.Context) (*sql.DB, error) {
+	dbClient, err := sql.Open("postgres", x.DSN())
+	if err != nil {
+		return nil, goerr.Wrap(err, "failed to open database")
+	}
+	defer utils.SafeClose(dbClient)
+
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(20*time.Second))
+	defer cancel()
+
+	if err := waitDBReady(ctx, dbClient); err != nil {
+		return nil, err
+	}
+
+	return dbClient, nil
+}
+
+func waitDBReady(ctx context.Context, db *sql.DB) error {
+	utils.Logger().Info("waiting database ready")
+	for {
+		err := db.PingContext(ctx)
+		if err == nil {
+			utils.Logger().Info("database is ready")
+			return nil
+		} else if errors.Is(err, context.DeadlineExceeded) {
+			return goerr.Wrap(err, "database is not ready, and timeout")
+		}
+		utils.Logger().Warn("database is not ready", slog.Any("error", err))
+		time.Sleep(1 * time.Second)
+	}
 }
 
 func (x *DB) Migrate(dryRun bool) error {
