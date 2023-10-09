@@ -85,7 +85,7 @@ func New() *cli.Command {
 				}
 			}
 
-			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey)
+			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey())
 			if err != nil {
 				return err
 			}
