@@ -2,7 +2,6 @@ package serve
 
 import (
 	"context"
-	"database/sql"
 	"log/slog"
 	"net/http"
 	"os"
@@ -74,6 +73,12 @@ func New() *cli.Command {
 				slog.Any("database", database),
 			)
 
+			dbClient, err := database.Connect(c.Context)
+			if err != nil {
+				return goerr.Wrap(err, "failed to open database")
+			}
+			defer utils.SafeClose(dbClient)
+
 			if !skipMigration {
 				if err := database.Migrate(false); err != nil {
 					return err
@@ -84,12 +89,6 @@ func New() *cli.Command {
 			if err != nil {
 				return err
 			}
-
-			dbClient, err := sql.Open("postgres", database.DSN())
-			if err != nil {
-				return goerr.Wrap(err, "failed to open database")
-			}
-			defer utils.SafeClose(dbClient)
 
 			clients := infra.New(
 				infra.WithGitHubApp(ghApp),
