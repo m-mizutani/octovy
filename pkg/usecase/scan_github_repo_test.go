@@ -83,8 +83,8 @@ func TestScanGitHubRepo(t *testing.T) {
 
 	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
 		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-			GitHubCommit: usecase.GitHubCommit{
-				GitHubRepo: usecase.GitHubRepo{
+			GitHubCommit: model.GitHubCommit{
+				GitHubRepo: model.GitHubRepo{
 					Owner: "m-mizutani",
 					Repo:  "octovy",
 				},
@@ -171,8 +171,8 @@ func TestScanGitHubRepoWithData(t *testing.T) {
 
 	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
 		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-			GitHubCommit: usecase.GitHubCommit{
-				GitHubRepo: usecase.GitHubRepo{
+			GitHubCommit: model.GitHubCommit{
+				GitHubRepo: model.GitHubRepo{
 					Owner: "m-mizutani",
 					Repo:  "octovy",
 				},

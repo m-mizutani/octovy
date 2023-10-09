@@ -61,8 +61,8 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 
 		return &usecase.ScanGitHubRepoInput{
 			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-				GitHubCommit: usecase.GitHubCommit{
-					GitHubRepo: usecase.GitHubRepo{
+				GitHubCommit: model.GitHubCommit{
+					GitHubRepo: model.GitHubRepo{
 						Owner: ev.GetRepo().GetOwner().GetLogin(),
 						Repo:  ev.GetRepo().GetName(),
 					},
@@ -90,8 +90,8 @@ func githubEventToScanInput(event interface{}) *usecase.ScanGitHubRepoInput {
 
 		return &usecase.ScanGitHubRepoInput{
 			GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-				GitHubCommit: usecase.GitHubCommit{
-					GitHubRepo: usecase.GitHubRepo{
+				GitHubCommit: model.GitHubCommit{
+					GitHubRepo: model.GitHubRepo{
 						Owner: ev.GetRepo().GetOwner().GetLogin(),
 						Repo:  ev.GetRepo().GetName(),
 					},

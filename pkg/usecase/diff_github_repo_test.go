@@ -27,8 +27,8 @@ func TestGetVulnDiffForGitHubRepo(t *testing.T) {
 	dbClient := newTestDB(t)
 	ctx := model.NewContext()
 	meta := &usecase.GitHubRepoMetadata{
-		GitHubCommit: usecase.GitHubCommit{
-			GitHubRepo: usecase.GitHubRepo{
+		GitHubCommit: model.GitHubCommit{
+			GitHubRepo: model.GitHubRepo{
 				Owner: "m-mizutani",
 				Repo:  "octovy",
 			},
