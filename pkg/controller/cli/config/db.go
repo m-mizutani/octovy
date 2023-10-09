@@ -111,7 +111,6 @@ func (x *DB) Connect(ctx context.Context) (*sql.DB, error) {
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed to open database")
 	}
-	defer utils.SafeClose(dbClient)
 
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(20*time.Second))
 	defer cancel()
