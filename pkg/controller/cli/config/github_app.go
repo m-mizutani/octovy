@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/base64"
+
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/urfave/cli/v2"
 )
@@ -8,7 +10,7 @@ import (
 type GitHubApp struct {
 	ID         types.GitHubAppID
 	Secret     types.GitHubAppSecret
-	PrivateKey types.GitHubAppPrivateKey
+	privateKey types.GitHubAppPrivateKey
 }
 
 func (x *GitHubApp) Flags() []cli.Flag {
@@ -33,9 +35,16 @@ func (x *GitHubApp) Flags() []cli.Flag {
 			Name:        "github-app-private-key",
 			Usage:       "GitHub App Private Key",
 			Category:    "GitHub App",
-			Destination: (*string)(&x.PrivateKey),
+			Destination: (*string)(&x.privateKey),
 			EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
 			Required:    true,
 		},
 	}
+}
+
+func (x *GitHubApp) PrivateKey() types.GitHubAppPrivateKey {
+	if raw, err := base64.StdEncoding.DecodeString(string(x.privateKey)); err == nil {
+		return types.GitHubAppPrivateKey(raw)
+	}
+	return x.privateKey
 }
