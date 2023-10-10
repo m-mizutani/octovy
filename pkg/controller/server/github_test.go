@@ -43,8 +43,8 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPullRequestOpened,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: usecase.GitHubCommit{
-						GitHubRepo: usecase.GitHubRepo{
+					GitHubCommit: model.GitHubCommit{
+						GitHubRepo: model.GitHubRepo{
 							Owner: "m-mizutani",
 							Repo:  "masq",
 						},
@@ -63,8 +63,8 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPullRequestSynchronize,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: usecase.GitHubCommit{
-						GitHubRepo: usecase.GitHubRepo{
+					GitHubCommit: model.GitHubCommit{
+						GitHubRepo: model.GitHubRepo{
 							Owner: "m-mizutani",
 							Repo:  "octovy",
 						},
@@ -84,8 +84,8 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPush,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: usecase.GitHubCommit{
-						GitHubRepo: usecase.GitHubRepo{
+					GitHubCommit: model.GitHubCommit{
+						GitHubRepo: model.GitHubRepo{
 							Owner: "m-mizutani",
 							Repo:  "masq",
 						},
@@ -104,8 +104,8 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			body:  testGitHubPushDefault,
 			input: usecase.ScanGitHubRepoInput{
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: usecase.GitHubCommit{
-						GitHubRepo: usecase.GitHubRepo{
+					GitHubCommit: model.GitHubCommit{
+						GitHubRepo: model.GitHubRepo{
 							Owner: "m-mizutani",
 							Repo:  "ops",
 						},

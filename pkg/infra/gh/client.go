@@ -89,6 +89,23 @@ func (x *clientImpl) GetArchiveURL(ctx *model.Context, input *GetArchiveURLInput
 	return url, nil
 }
 
+func (x *clientImpl) CreateIssue(ctx *model.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, req *github.IssueRequest) (*github.Issue, error) {
+	client, err := x.buildGithubClient(id)
+	if err != nil {
+		return nil, err
+	}
+
+	issue, resp, err := client.Issues.Create(ctx, repo.Owner, repo.Repo, req)
+	if err != nil {
+		return nil, goerr.Wrap(err, "Failed to create github comment").With("repo", repo).With("req", req)
+	}
+	if resp.StatusCode != http.StatusCreated {
+		return nil, goerr.Wrap(err, "failed to create issue").With("repo", repo).With("req", req).With("resp", resp)
+	}
+
+	return issue, nil
+}
+
 /*
 func (x *clientImpl) CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error {
 	client, err := x.githubClient()

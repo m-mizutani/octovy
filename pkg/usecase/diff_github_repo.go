@@ -31,7 +31,7 @@ type DiffResult struct {
 	Del    []ttypes.DetectedVulnerability `json:"del"`
 }
 
-func getVulnDiffForGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report, commit *GitHubCommit) ([]DiffResult, error) {
+func getVulnDiffForGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Report, commit *model.GitHubCommit) ([]DiffResult, error) {
 	reportResults := map[DiffResultKey]*ttypes.Result{}
 	for i, result := range report.Results {
 		key := DiffResultKey{
