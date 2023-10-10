@@ -11,16 +11,31 @@ INSERT INTO scans (
 INSERT INTO meta_github_repository (
     id,
     scan_id,
-    owner,
-    repo_name,
+    repository_id,
     branch,
     is_default_branch,
     commit_id,
     base_commit_id,
     pull_request_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8
 );
+
+-- name: SaveGithubRepository :one
+WITH ins AS (
+    INSERT INTO github_repository (
+        id,
+        repo_id,
+        owner,
+        repo_name
+    ) VALUES (
+        $1, $2, $3, $4
+    ) ON CONFLICT (repo_id) DO NOTHING
+    RETURNING id
+)
+SELECT id FROM ins
+UNION ALL
+SELECT id FROM github_repository WHERE repo_id = $2 AND NOT EXISTS (SELECT 1 FROM ins);
 
 -- name: SaveResult :exec
 INSERT INTO results (
@@ -98,9 +113,9 @@ SELECT results.* FROM results
 INNER JOIN (
     SELECT scans.id AS id FROM meta_github_repository
     INNER JOIN scans ON scans.id = meta_github_repository.scan_id
+    INNER JOIN github_repository ON github_repository.id = meta_github_repository.repository_id
     WHERE meta_github_repository.commit_id = $1
-    AND meta_github_repository.owner = $2
-    AND meta_github_repository.repo_name = $3
+    AND github_repository.repo_id = $2
     ORDER BY scans.created_at DESC
     LIMIT 1
 ) AS latest_scan ON latest_scan.id = results.scan_id;

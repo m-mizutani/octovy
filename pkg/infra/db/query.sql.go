@@ -19,9 +19,9 @@ SELECT results.id, results.scan_id, results.target, results.target_type, results
 INNER JOIN (
     SELECT scans.id AS id FROM meta_github_repository
     INNER JOIN scans ON scans.id = meta_github_repository.scan_id
+    INNER JOIN github_repository ON github_repository.id = meta_github_repository.repository_id
     WHERE meta_github_repository.commit_id = $1
-    AND meta_github_repository.owner = $2
-    AND meta_github_repository.repo_name = $3
+    AND github_repository.repo_id = $2
     ORDER BY scans.created_at DESC
     LIMIT 1
 ) AS latest_scan ON latest_scan.id = results.scan_id
@@ -29,12 +29,11 @@ INNER JOIN (
 
 type GetLatestResultsByCommitParams struct {
 	CommitID string
-	Owner    string
-	RepoName string
+	RepoID   int64
 }
 
 func (q *Queries) GetLatestResultsByCommit(ctx context.Context, arg GetLatestResultsByCommitParams) ([]Result, error) {
-	rows, err := q.db.QueryContext(ctx, getLatestResultsByCommit, arg.CommitID, arg.Owner, arg.RepoName)
+	rows, err := q.db.QueryContext(ctx, getLatestResultsByCommit, arg.CommitID, arg.RepoID)
 	if err != nil {
 		return nil, err
 	}
@@ -242,27 +241,61 @@ func (q *Queries) SaveDetectedVulnerability(ctx context.Context, arg SaveDetecte
 	return err
 }
 
+const saveGithubRepository = `-- name: SaveGithubRepository :one
+WITH ins AS (
+    INSERT INTO github_repository (
+        id,
+        repo_id,
+        owner,
+        repo_name
+    ) VALUES (
+        $1, $2, $3, $4
+    ) ON CONFLICT (repo_id) DO NOTHING
+    RETURNING id
+)
+SELECT id FROM ins
+UNION ALL
+SELECT id FROM github_repository WHERE repo_id = $2 AND NOT EXISTS (SELECT 1 FROM ins)
+`
+
+type SaveGithubRepositoryParams struct {
+	ID       uuid.UUID
+	RepoID   int64
+	Owner    string
+	RepoName string
+}
+
+func (q *Queries) SaveGithubRepository(ctx context.Context, arg SaveGithubRepositoryParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, saveGithubRepository,
+		arg.ID,
+		arg.RepoID,
+		arg.Owner,
+		arg.RepoName,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const saveMetaGithubRepository = `-- name: SaveMetaGithubRepository :exec
 INSERT INTO meta_github_repository (
     id,
     scan_id,
-    owner,
-    repo_name,
+    repository_id,
     branch,
     is_default_branch,
     commit_id,
     base_commit_id,
     pull_request_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
 `
 
 type SaveMetaGithubRepositoryParams struct {
 	ID              uuid.UUID
 	ScanID          uuid.UUID
-	Owner           string
-	RepoName        string
+	RepositoryID    uuid.UUID
 	Branch          sql.NullString
 	IsDefaultBranch sql.NullBool
 	CommitID        string
@@ -274,8 +307,7 @@ func (q *Queries) SaveMetaGithubRepository(ctx context.Context, arg SaveMetaGith
 	_, err := q.db.ExecContext(ctx, saveMetaGithubRepository,
 		arg.ID,
 		arg.ScanID,
-		arg.Owner,
-		arg.RepoName,
+		arg.RepositoryID,
 		arg.Branch,
 		arg.IsDefaultBranch,
 		arg.CommitID,

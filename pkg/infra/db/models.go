@@ -72,11 +72,18 @@ type DetectedVulnerability struct {
 	Data             pqtype.NullRawMessage
 }
 
+type GithubRepository struct {
+	ID       uuid.UUID
+	RepoID   int64
+	Owner    string
+	RepoName string
+	PageSeq  sql.NullInt32
+}
+
 type MetaGithubRepository struct {
 	ID              uuid.UUID
 	ScanID          uuid.UUID
-	Owner           string
-	RepoName        string
+	RepositoryID    uuid.UUID
 	CommitID        string
 	Branch          sql.NullString
 	IsDefaultBranch sql.NullBool

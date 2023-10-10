@@ -9,12 +9,24 @@ create table scans (
     page_seq serial
 );
 
+create table github_repository (
+    id uuid primary key not null,
+
+    -- this id is the same as the id in GitHub
+    repo_id bigint not null unique,
+    owner text not null,
+    repo_name text not null,
+
+    page_seq serial
+);
+
+create index github_repository_repo_id on github_repository (repo_id);
+
 create table meta_github_repository (
     id uuid primary key not null,
     scan_id uuid not null references scans(id),
 
-    owner text not null,
-    repo_name text not null,
+    repository_id uuid not null references github_repository(id),
     commit_id text not null,
     branch text,
     is_default_branch boolean,
