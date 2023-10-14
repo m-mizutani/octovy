@@ -2,7 +2,7 @@
 
 Octovy is a GitHub application designed to identify and alert you to any dependencies in your repository that could be potentially vulnerable. It uses [trivy](https://github.com/aquasecurity/trivy) for detection and then stores the results in a database for your reference.
 
-![architecture](https://github.com/m-mizutani/octovy/assets/605953/81eeb92d-a4e9-4baf-aae0-ace6b9dc447f)
+![architecture](https://github.com/m-mizutani/octovy/assets/605953/a58c93e1-cfbf-4ff7-9427-1fc385cf7b9c)
 
 ## Setup
 
