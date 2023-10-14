@@ -95,7 +95,7 @@ func (x *clientImpl) CreateIssue(ctx *model.Context, id types.GitHubAppInstallID
 		return nil, err
 	}
 
-	issue, resp, err := client.Issues.Create(ctx, repo.Owner, repo.Repo, req)
+	issue, resp, err := client.Issues.Create(ctx, repo.Owner, repo.RepoName, req)
 	if err != nil {
 		return nil, goerr.Wrap(err, "Failed to create github comment").With("repo", repo).With("req", req)
 	}

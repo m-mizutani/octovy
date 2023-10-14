@@ -85,8 +85,9 @@ func TestScanGitHubRepo(t *testing.T) {
 		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 			GitHubCommit: model.GitHubCommit{
 				GitHubRepo: model.GitHubRepo{
-					Owner: "m-mizutani",
-					Repo:  "octovy",
+					RepoID:   12345,
+					Owner:    "m-mizutani",
+					RepoName: "octovy",
 				},
 				CommitID: "1234567890",
 			},
@@ -173,8 +174,9 @@ func TestScanGitHubRepoWithData(t *testing.T) {
 		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 			GitHubCommit: model.GitHubCommit{
 				GitHubRepo: model.GitHubRepo{
-					Owner: "m-mizutani",
-					Repo:  "octovy",
+					RepoID:   41633205,
+					Owner:    "m-mizutani",
+					RepoName: "octovy",
 				},
 				CommitID: "6581604ef668e77a178e18dbc56e898f5fd87014",
 			},

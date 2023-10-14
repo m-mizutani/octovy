@@ -44,8 +44,7 @@ func getVulnDiffForGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttyp
 
 	query := db.New(dbClient)
 	resp, err := query.GetLatestResultsByCommit(ctx, db.GetLatestResultsByCommitParams{
-		Owner:    commit.Owner,
-		RepoName: commit.Repo,
+		RepoID:   commit.RepoID,
 		CommitID: commit.CommitID,
 	})
 	if err != nil {

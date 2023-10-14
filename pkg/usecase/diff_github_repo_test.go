@@ -29,8 +29,9 @@ func TestGetVulnDiffForGitHubRepo(t *testing.T) {
 	meta := &usecase.GitHubRepoMetadata{
 		GitHubCommit: model.GitHubCommit{
 			GitHubRepo: model.GitHubRepo{
-				Owner: "m-mizutani",
-				Repo:  "octovy",
+				RepoID:   287748079,
+				Owner:    "m-mizutani",
+				RepoName: "octovy",
 			},
 			CommitID: uuid.NewString(),
 		},

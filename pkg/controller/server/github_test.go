@@ -45,8 +45,9 @@ func TestGitHubPullRequestSync(t *testing.T) {
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 					GitHubCommit: model.GitHubCommit{
 						GitHubRepo: model.GitHubRepo{
-							Owner: "m-mizutani",
-							Repo:  "masq",
+							RepoID:   581995051,
+							Owner:    "m-mizutani",
+							RepoName: "masq",
 						},
 						CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
 					},
@@ -65,8 +66,9 @@ func TestGitHubPullRequestSync(t *testing.T) {
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 					GitHubCommit: model.GitHubCommit{
 						GitHubRepo: model.GitHubRepo{
-							Owner: "m-mizutani",
-							Repo:  "octovy",
+							RepoID:   359010704,
+							Owner:    "m-mizutani",
+							RepoName: "octovy",
 						},
 						CommitID: "69454c171c2f0f2dbc9ccb0c9ef9b72fd769f046",
 					},
@@ -86,8 +88,9 @@ func TestGitHubPullRequestSync(t *testing.T) {
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 					GitHubCommit: model.GitHubCommit{
 						GitHubRepo: model.GitHubRepo{
-							Owner: "m-mizutani",
-							Repo:  "masq",
+							RepoID:   581995051,
+							Owner:    "m-mizutani",
+							RepoName: "masq",
 						},
 						CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
 					},
@@ -106,8 +109,9 @@ func TestGitHubPullRequestSync(t *testing.T) {
 				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
 					GitHubCommit: model.GitHubCommit{
 						GitHubRepo: model.GitHubRepo{
-							Owner: "m-mizutani",
-							Repo:  "ops",
+							RepoID:   281879096,
+							Owner:    "m-mizutani",
+							RepoName: "ops",
 						},
 						CommitID: "f58ae7668c3dfc193a1d2c0372cc52847613cde4",
 					},

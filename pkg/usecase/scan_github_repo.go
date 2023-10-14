@@ -37,14 +37,8 @@ type GitHubRepoMetadata struct {
 }
 
 func (x *ScanGitHubRepoInput) Validate() error {
-	if x.Owner == "" {
-		return goerr.Wrap(types.ErrInvalidOption, "owner is empty")
-	}
-	if x.Repo == "" {
-		return goerr.Wrap(types.ErrInvalidOption, "repo is empty")
-	}
-	if x.CommitID == "" {
-		return goerr.Wrap(types.ErrInvalidOption, "commit ID is empty")
+	if err := x.GitHubRepoMetadata.Validate(); err != nil {
+		return err
 	}
 	if x.InstallID == 0 {
 		return goerr.Wrap(types.ErrInvalidOption, "install ID is empty")
@@ -61,7 +55,7 @@ func (x *useCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 	}
 
 	// Extract zip file to local temp directory
-	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("octovy.%s.%s.%s.*", input.Owner, input.Repo, input.CommitID))
+	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("octovy.%s.%s.%s.*", input.Owner, input.RepoName, input.CommitID))
 	if err != nil {
 		return goerr.Wrap(err, "failed to create temp directory for zip file")
 	}
@@ -88,7 +82,7 @@ func (x *useCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 func (x *useCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput, dstDir string) error {
 	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
 		Owner:     input.Owner,
-		Repo:      input.Repo,
+		Repo:      input.RepoName,
 		CommitID:  input.CommitID,
 		InstallID: input.InstallID,
 	})
@@ -98,7 +92,7 @@ func (x *useCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoIn
 
 	// Download zip file
 	tmpZip, err := os.CreateTemp("", fmt.Sprintf("octovy_code.%s.%s.%s.*.zip",
-		input.Owner, input.Repo, input.CommitID,
+		input.Owner, input.RepoName, input.CommitID,
 	))
 	if err != nil {
 		return goerr.Wrap(err, "failed to create temp file for zip file")

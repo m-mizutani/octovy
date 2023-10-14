@@ -53,12 +53,21 @@ func saveScanGitHubRepo(ctx *model.Context, dbClient *sql.DB, report *ttypes.Rep
 		return goerr.Wrap(err, "saving scan")
 	}
 
-	if err := q.SaveMetaGithubRepository(ctx, db.SaveMetaGithubRepositoryParams{
+	repoID, err := q.SaveGithubRepository(ctx, db.SaveGithubRepositoryParams{
 		ID:       uuid.New(),
-		ScanID:   scanID,
+		RepoID:   meta.RepoID,
 		Owner:    meta.Owner,
-		RepoName: meta.Repo,
-		CommitID: meta.CommitID,
+		RepoName: meta.RepoName,
+	})
+	if err != nil {
+		return goerr.Wrap(err, "saving github repository")
+	}
+
+	if err := q.SaveMetaGithubRepository(ctx, db.SaveMetaGithubRepositoryParams{
+		ID:           uuid.New(),
+		ScanID:       scanID,
+		RepositoryID: repoID,
+		CommitID:     meta.CommitID,
 		Branch: sql.NullString{
 			String: meta.Branch,
 			Valid:  meta.Branch != "",
