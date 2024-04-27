@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/gots/slice"
@@ -73,7 +74,7 @@ func insertCommand() *cli.Command {
 			case "-":
 				r = c.App.Reader
 			default:
-				f, err := os.Open(filePath)
+				f, err := os.Open(filepath.Clean(filePath))
 				if err != nil {
 					return goerr.Wrap(err).With("file", filePath)
 				}

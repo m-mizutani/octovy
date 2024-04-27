@@ -24,8 +24,9 @@ func New(path string) Client {
 }
 
 func (x *clientImpl) Run(ctx context.Context, args []string) error {
-	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
 	// Why: The arguments are not from user input
+	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	// #nosec: G204
 	cmd := exec.CommandContext(ctx, x.path, args...)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
