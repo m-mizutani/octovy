@@ -15,41 +15,16 @@ import (
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
-	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
+	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/utils"
-
-	ttype "github.com/aquasecurity/trivy/pkg/types"
 )
-
-type ScanGitHubRepoInput struct {
-	GitHubRepoMetadata
-	InstallID types.GitHubAppInstallID
-}
-
-type GitHubRepoMetadata struct {
-	model.GitHubCommit
-	Branch          string
-	IsDefaultBranch bool
-	BaseCommitID    string
-	PullRequestID   int
-}
-
-func (x *ScanGitHubRepoInput) Validate() error {
-	if err := x.GitHubRepoMetadata.Validate(); err != nil {
-		return err
-	}
-	if x.InstallID == 0 {
-		return goerr.Wrap(types.ErrInvalidOption, "install ID is empty")
-	}
-
-	return nil
-}
 
 // ScanGitHubRepo is a usecase to download a source code from GitHub and scan it with Trivy. Using GitHub App credentials to download a private repository, then the app should be installed to the repository and have read access.
 // After scanning, the result is stored to the database. The temporary files are removed after the scan.
-func (x *useCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
+func (x *useCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -65,21 +40,26 @@ func (x *useCase) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput)
 		return err
 	}
 
-	ctx = ctx.New(model.WithBase(context.Background()))
+	ctx = context.Background()
 	report, err := x.scanGitHubRepo(ctx, tmpDir)
 	if err != nil {
 		return err
 	}
-	ctx.Logger().Info("scan finished", slog.Any("input", input))
+	utils.CtxLogger(ctx).Info("scan finished", "input", input, "report", report)
 
-	if err := saveScanReportGitHubRepo(ctx, x.clients.DB(), report, &input.GitHubRepoMetadata); err != nil {
+	if x.clients.BigQuery() == nil {
+		utils.CtxLogger(ctx).Warn("skip BigQuery logging")
+		return nil
+	}
+
+	if err := x.InsertScanResult(ctx, input.GitHubMetadata, *report); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (x *useCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput, dstDir string) error {
+func (x *useCase) downloadGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput, dstDir string) error {
 	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.RepoName,
@@ -113,7 +93,7 @@ func (x *useCase) downloadGitHubRepo(ctx *model.Context, input *ScanGitHubRepoIn
 	return nil
 }
 
-func (x *useCase) scanGitHubRepo(ctx *model.Context, codeDir string) (*ttype.Report, error) {
+func (x *useCase) scanGitHubRepo(ctx context.Context, codeDir string) (*trivy.Report, error) {
 	// Scan local directory
 	tmpResult, err := os.CreateTemp("", "octovy_result.*.json")
 	if err != nil {
@@ -137,12 +117,12 @@ func (x *useCase) scanGitHubRepo(ctx *model.Context, codeDir string) (*ttype.Rep
 		return nil, goerr.Wrap(err, "failed to scan local directory")
 	}
 
-	var report ttype.Report
+	var report trivy.Report
 	if err := unmarshalFile(tmpResult.Name(), &report); err != nil {
 		return nil, err
 	}
 
-	ctx.Logger().Info("Scan result", slog.Any("report", tmpResult.Name()))
+	utils.CtxLogger(ctx).Info("Scan result", slog.Any("report", tmpResult.Name()))
 
 	return &report, nil
 }
@@ -161,7 +141,7 @@ func unmarshalFile(path string, v any) error {
 	return nil
 }
 
-func downloadZipFile(ctx *model.Context, httpClient infra.HTTPClient, zipURL *url.URL, w io.Writer) error {
+func downloadZipFile(ctx context.Context, httpClient infra.HTTPClient, zipURL *url.URL, w io.Writer) error {
 	zipReq, err := http.NewRequestWithContext(ctx, http.MethodGet, zipURL.String(), nil)
 	if err != nil {
 		return goerr.Wrap(err, "failed to create request for zip file").With("url", zipURL)
@@ -185,7 +165,7 @@ func downloadZipFile(ctx *model.Context, httpClient infra.HTTPClient, zipURL *ur
 	return nil
 }
 
-func extractZipFile(ctx *model.Context, src, dst string) error {
+func extractZipFile(ctx context.Context, src, dst string) error {
 	zipFile, err := zip.OpenReader(src)
 	if err != nil {
 		return goerr.Wrap(err).With("file", src)
@@ -202,7 +182,7 @@ func extractZipFile(ctx *model.Context, src, dst string) error {
 	return nil
 }
 
-func extractCode(ctx *model.Context, f *zip.File, dst string) error {
+func extractCode(_ context.Context, f *zip.File, dst string) error {
 	if f.FileInfo().IsDir() {
 		return nil
 	}

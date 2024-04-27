@@ -11,6 +11,9 @@ import (
 func SafeClose(closer io.Closer) {
 	if closer != nil {
 		if err := closer.Close(); err != nil {
+			if err == io.EOF {
+				return
+			}
 			logger.Warn("Fail to close resource", slog.Any("error", err))
 		}
 	}

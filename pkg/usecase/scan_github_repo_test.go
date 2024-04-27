@@ -1,9 +1,8 @@
 package usecase_test
 
 import (
-	"database/sql"
+	"context"
 	_ "embed"
-	"fmt"
 	"os"
 	"strconv"
 
@@ -13,10 +12,12 @@ import (
 	"net/url"
 	"testing"
 
+	"cloud.google.com/go/bigquery"
 	"github.com/m-mizutani/gt"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
+	"github.com/m-mizutani/octovy/pkg/infra/bq"
 	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
@@ -32,21 +33,21 @@ func TestScanGitHubRepo(t *testing.T) {
 	mockGH := &ghMock{}
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
-	testDB := newTestDB(t)
+	mockBQ := &bq.Mock{}
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
 		infra.WithHTTPClient(mockHTTP),
 		infra.WithTrivy(mockTrivy),
-		infra.WithDB(testDB),
+		infra.WithBigQuery(mockBQ),
 	))
 
-	ctx := model.NewContext()
+	ctx := context.Background()
 
-	mockGH.mockGetArchiveURL = func(ctx *model.Context, input *gh.GetArchiveURLInput) (*url.URL, error) {
+	mockGH.mockGetArchiveURL = func(ctx context.Context, input *gh.GetArchiveURLInput) (*url.URL, error) {
 		gt.V(t, input.Owner).Equal("m-mizutani")
 		gt.V(t, input.Repo).Equal("octovy")
-		gt.V(t, input.CommitID).Equal("1234567890")
+		gt.V(t, input.CommitID).Equal("f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca")
 		gt.V(t, input.InstallID).Equal(12345)
 
 		resp := gt.R1(url.Parse("https://example.com/some/url.zip")).NoError(t)
@@ -63,7 +64,7 @@ func TestScanGitHubRepo(t *testing.T) {
 		return resp, nil
 	}
 
-	mockTrivy.mockRun = func(ctx *model.Context, args []string) error {
+	mockTrivy.mockRun = func(ctx context.Context, args []string) error {
 		gt.A(t, args).
 			Contain([]string{"--format", "json"}).
 			Contain([]string{"--list-all-pkgs"})
@@ -81,34 +82,53 @@ func TestScanGitHubRepo(t *testing.T) {
 		return nil
 	}
 
-	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
-		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
+	var calledBQCreateTable int
+	mockBQ.FnCreateTable = func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
+		calledBQCreateTable++
+		gt.Equal(t, table, "scans")
+		return nil
+	}
+
+	mockBQ.FnGetMetadata = func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
+		return nil, nil
+	}
+
+	var calledBQInsert int
+	mockBQ.FnInsert = func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
+		calledBQInsert++
+		return nil
+	}
+
+	gt.NoError(t, uc.ScanGitHubRepo(ctx, &model.ScanGitHubRepoInput{
+		GitHubMetadata: model.GitHubMetadata{
 			GitHubCommit: model.GitHubCommit{
 				GitHubRepo: model.GitHubRepo{
 					RepoID:   12345,
 					Owner:    "m-mizutani",
 					RepoName: "octovy",
 				},
-				CommitID: "1234567890",
+				CommitID: "f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca",
 			},
 		},
 		InstallID: 12345,
 	}))
+	gt.Equal(t, calledBQCreateTable, 1)
+	gt.Equal(t, calledBQInsert, 1)
 }
 
 type ghMock struct {
-	mockGetArchiveURL func(ctx *model.Context, input *gh.GetArchiveURLInput) (*url.URL, error)
+	mockGetArchiveURL func(ctx context.Context, input *gh.GetArchiveURLInput) (*url.URL, error)
 }
 
-func (x *ghMock) GetArchiveURL(ctx *model.Context, input *gh.GetArchiveURLInput) (*url.URL, error) {
+func (x *ghMock) GetArchiveURL(ctx context.Context, input *gh.GetArchiveURLInput) (*url.URL, error) {
 	return x.mockGetArchiveURL(ctx, input)
 }
 
 type trivyMock struct {
-	mockRun func(ctx *model.Context, args []string) error
+	mockRun func(ctx context.Context, args []string) error
 }
 
-func (x *trivyMock) Run(ctx *model.Context, args []string) error {
+func (x *trivyMock) Run(ctx context.Context, args []string) error {
 	return x.mockRun(ctx, args)
 }
 
@@ -121,57 +141,26 @@ func (x *httpMock) Do(req *http.Request) (*http.Response, error) {
 }
 
 func TestScanGitHubRepoWithData(t *testing.T) {
+
 	if _, ok := os.LookupEnv("TEST_SCAN_GITHUB_REPO"); !ok {
 		t.Skip("TEST_SCAN_GITHUB_REPO is not set")
 	}
 
 	// Setting up GitHub App
-	strAppID, ok := os.LookupEnv("OCTOVY_GITHUB_APP_ID")
-	if !ok {
-		t.Error("OCTOVY_GITHUB_APP_ID is not set")
-	}
-	privateKey, ok := os.LookupEnv("OCTOVY_GITHUB_APP_PRIVATE_KEY")
-	if !ok {
-		t.Error("OCTOVY_GITHUB_APP_PRIVATE_KEY is not set")
-	}
+	strAppID := utils.LoadEnv(t, "TEST_OCTOVY_GITHUB_APP_ID")
+	privateKey := utils.LoadEnv(t, "TEST_OCTOVY_GITHUB_APP_PRIVATE_KEY")
+
 	appID := gt.R1(strconv.ParseInt(strAppID, 10, 64)).NoError(t)
 	ghApp := gt.R1(gh.New(types.GitHubAppID(appID), types.GitHubAppPrivateKey(privateKey))).NoError(t)
 
-	// Setting up database
-	dbUser, ok := os.LookupEnv("OCTOVY_DB_USER")
-	if !ok {
-		t.Error("OCTOVY_DB_USER is not set")
-	}
-	dbPass, ok := os.LookupEnv("OCTOVY_DB_PASSWORD")
-	if !ok {
-		t.Error("OCTOVY_DB_PASS is not set")
-	}
-	dbName, ok := os.LookupEnv("OCTOVY_DB_NAME")
-	if !ok {
-		t.Error("OCTOVY_DB_NAME is not set")
-	}
-	dbPort, ok := os.LookupEnv("OCTOVY_DB_PORT")
-	if !ok {
-		t.Error("OCTOVY_DB_PORT is not set")
-	}
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s port=%s sslmode=disable", dbUser, dbPass, dbName, dbPort)
-
-	dbClient := gt.R1(sql.Open("postgres", dsn)).NoError(t)
-	defer utils.SafeClose(dbClient)
-
-	if t.Failed() {
-		t.FailNow()
-	}
-
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(ghApp),
-		infra.WithDB(dbClient),
 	))
 
-	ctx := model.NewContext()
+	ctx := context.Background()
 
-	gt.NoError(t, uc.ScanGitHubRepo(ctx, &usecase.ScanGitHubRepoInput{
-		GitHubRepoMetadata: usecase.GitHubRepoMetadata{
+	gt.NoError(t, uc.ScanGitHubRepo(ctx, &model.ScanGitHubRepoInput{
+		GitHubMetadata: model.GitHubMetadata{
 			GitHubCommit: model.GitHubCommit{
 				GitHubRepo: model.GitHubRepo{
 					RepoID:   41633205,

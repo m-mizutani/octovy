@@ -1,6 +1,7 @@
 package gh
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -11,10 +12,11 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 type Client interface {
-	GetArchiveURL(ctx *model.Context, input *GetArchiveURLInput) (*url.URL, error)
+	GetArchiveURL(ctx context.Context, input *GetArchiveURLInput) (*url.URL, error)
 	// CreateIssueComment(repo *model.GitHubRepo, prID int, body string) error
 	// CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error)
 	// UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error
@@ -57,8 +59,8 @@ func (x *clientImpl) buildGithubClient(installID types.GitHubAppInstallID) (*git
 	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
-func (x *clientImpl) GetArchiveURL(ctx *model.Context, input *GetArchiveURLInput) (*url.URL, error) {
-	ctx.Logger().Info("Sending GetArchiveLink request",
+func (x *clientImpl) GetArchiveURL(ctx context.Context, input *GetArchiveURLInput) (*url.URL, error) {
+	utils.CtxLogger(ctx).Info("Sending GetArchiveLink request",
 		slog.Any("appID", x.appID),
 		slog.Any("privateKey", x.pem),
 		slog.Any("input", input),
@@ -84,12 +86,12 @@ func (x *clientImpl) GetArchiveURL(ctx *model.Context, input *GetArchiveURLInput
 		return nil, goerr.Wrap(err, "Failed to get archive link").With("status", r.StatusCode).With("body", string(body))
 	}
 
-	ctx.Logger().Debug("GetArchiveLink response", slog.Any("url", url), slog.Any("r", r))
+	utils.CtxLogger(ctx).Debug("GetArchiveLink response", slog.Any("url", url), slog.Any("r", r))
 
 	return url, nil
 }
 
-func (x *clientImpl) CreateIssue(ctx *model.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, req *github.IssueRequest) (*github.Issue, error) {
+func (x *clientImpl) CreateIssue(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, req *github.IssueRequest) (*github.Issue, error) {
 	client, err := x.buildGithubClient(id)
 	if err != nil {
 		return nil, err

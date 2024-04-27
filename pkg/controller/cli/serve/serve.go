@@ -32,7 +32,8 @@ func New() *cli.Command {
 		skipMigration bool
 
 		githubApp config.GitHubApp
-		database  config.DB
+		bigQuery  config.BigQuery
+		sentry    config.Sentry
 	)
 	serveFlags := []cli.Flag{
 		&cli.StringFlag{
@@ -63,26 +64,20 @@ func New() *cli.Command {
 		Flags: slice.Flatten(
 			serveFlags,
 			githubApp.Flags(),
-			database.Flags(),
+			bigQuery.Flags(),
+			sentry.Flags(),
 		),
 		Action: func(c *cli.Context) error {
 			utils.Logger().Info("starting serve",
-				slog.Any("addr", addr),
-				slog.Any("trivyPath", trivyPath),
-				slog.Any("githubApp", githubApp),
-				slog.Any("database", database),
+				slog.Any("Addr", addr),
+				slog.Any("TrivyPath", trivyPath),
+				slog.Any("GitHubApp", githubApp),
+				slog.Any("BigQuery", bigQuery),
+				slog.Any("Sentry", sentry),
 			)
 
-			dbClient, err := database.Connect(c.Context)
-			if err != nil {
-				return goerr.Wrap(err, "failed to open database")
-			}
-			defer utils.SafeClose(dbClient)
-
-			if !skipMigration {
-				if err := database.Migrate(false); err != nil {
-					return err
-				}
+			if err := sentry.Configure(); err != nil {
+				return err
 			}
 
 			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey())
@@ -93,10 +88,9 @@ func New() *cli.Command {
 			clients := infra.New(
 				infra.WithGitHubApp(ghApp),
 				infra.WithTrivy(trivy.New(trivyPath)),
-				infra.WithDB(dbClient),
 			)
 			uc := usecase.New(clients)
-			s := server.New(uc, githubApp.Secret)
+			s := server.New(uc, server.WithGitHubSecret(githubApp.Secret))
 
 			serverErr := make(chan error, 1)
 			httpServer := &http.Server{

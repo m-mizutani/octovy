@@ -1,15 +1,29 @@
 package usecase
 
-import "github.com/m-mizutani/octovy/pkg/domain/model"
+import (
+	"context"
+
+	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
+)
 
 type Mock struct {
-	MockScanGitHubRepo func(ctx *model.Context, input *ScanGitHubRepoInput) error
+	MockInsertScanResult func(ctx context.Context, meta model.GitHubMetadata, report trivy.Report) error
+	MockScanGitHubRepo   func(ctx context.Context, input *model.ScanGitHubRepoInput) error
 }
 
-func NewMock() UseCase {
+func NewMock() *Mock {
 	return &Mock{}
 }
 
-func (x *Mock) ScanGitHubRepo(ctx *model.Context, input *ScanGitHubRepoInput) error {
+var _ interfaces.UseCase = &Mock{}
+
+func (x *Mock) InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report) error {
+	return x.MockInsertScanResult(ctx, meta, report)
+}
+
+// ScanGitHubRepo implements interfaces.UseCase.
+func (x *Mock) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 	return x.MockScanGitHubRepo(ctx, input)
 }
