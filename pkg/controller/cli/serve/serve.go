@@ -85,10 +85,17 @@ func New() *cli.Command {
 				return err
 			}
 
+			bqClient, err := bigQuery.NewClient(c.Context)
+			if err != nil {
+				return err
+			}
+
 			clients := infra.New(
 				infra.WithGitHubApp(ghApp),
 				infra.WithTrivy(trivy.New(trivyPath)),
+				infra.WithBigQuery(bqClient),
 			)
+
 			uc := usecase.New(clients)
 			s := server.New(uc, server.WithGitHubSecret(githubApp.Secret))
 
