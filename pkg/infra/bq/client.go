@@ -94,7 +94,6 @@ func (x *Client) Insert(ctx context.Context, table types.BQTableID, schema bigqu
 		return goerr.Wrap(err, "failed to Marshal json message").With("v", data)
 	}
 
-	utils.DumpJson(nil, "data.json", &data)
 	// First, json->proto message
 	err = protojson.Unmarshal(raw, message)
 	if err != nil {
