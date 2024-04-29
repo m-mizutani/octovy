@@ -25,19 +25,42 @@ func (x *useCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadat
 		Report:    report,
 	}
 
-	schema, err := createOrUpdateBigQueryTable(ctx, x.clients.BigQuery(), x.tableID, scan)
-	if err != nil {
-		return err
+	if x.clients.BigQuery() != nil {
+		schema, err := createOrUpdateBigQueryTable(ctx, x.clients.BigQuery(), x.tableID, scan)
+		if err != nil {
+			return err
+		}
+
+		rawRecord := &model.ScanRawRecord{
+			Scan:      *scan,
+			Timestamp: scan.Timestamp.UnixMicro(),
+		}
+		if err := x.clients.BigQuery().Insert(ctx, x.tableID, schema, rawRecord); err != nil {
+			return goerr.Wrap(err, "failed to insert scan data to BigQuery")
+		}
 	}
 
-	rawRecord := &model.ScanRawRecord{
-		Scan:      *scan,
-		Timestamp: scan.Timestamp.UnixMicro(),
-	}
-	if err := x.clients.BigQuery().Insert(ctx, x.tableID, schema, rawRecord); err != nil {
-		return goerr.Wrap(err, "failed to insert scan data to BigQuery")
-	}
+	if x.clients.Firestore() != nil {
+		repoRef := types.FireStoreRef{
+			CollectionID: types.FSCollectionID(scan.GitHub.Owner),
+			DocumentID:   types.FSDocumentID(scan.GitHub.RepoName),
+		}
+		commitRef := types.FireStoreRef{
+			CollectionID: "commit",
+			DocumentID:   types.FSDocumentID(scan.GitHub.CommitID),
+		}
+		branchRef := types.FireStoreRef{
+			CollectionID: "branch",
+			DocumentID:   types.FSDocumentID(scan.GitHub.Branch),
+		}
 
+		if err := x.clients.Firestore().Put(ctx, scan, repoRef, commitRef); err != nil {
+			return err
+		}
+		if err := x.clients.Firestore().Put(ctx, scan, repoRef, branchRef); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

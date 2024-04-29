@@ -18,6 +18,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/bq"
+	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
@@ -34,12 +35,14 @@ func TestScanGitHubRepo(t *testing.T) {
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
 	mockBQ := &bq.Mock{}
+	mockDB := db.NewMock()
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
 		infra.WithHTTPClient(mockHTTP),
 		infra.WithTrivy(mockTrivy),
 		infra.WithBigQuery(mockBQ),
+		infra.WithFirestore(mockDB),
 	))
 
 	ctx := context.Background()
@@ -108,12 +111,41 @@ func TestScanGitHubRepo(t *testing.T) {
 					RepoName: "octovy",
 				},
 				CommitID: "f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca",
+				Branch:   "main",
 			},
 		},
 		InstallID: 12345,
 	}))
 	gt.Equal(t, calledBQCreateTable, 1)
 	gt.Equal(t, calledBQInsert, 1)
+
+	var commitScan *model.Scan
+	commitRefs := []types.FireStoreRef{
+		{
+			CollectionID: "m-mizutani",
+			DocumentID:   "octovy",
+		},
+		{
+			CollectionID: "commit",
+			DocumentID:   "f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca",
+		},
+	}
+	gt.NoError(t, mockDB.Get(ctx, &commitScan, commitRefs...))
+	gt.Equal(t, commitScan.GitHub.Owner, "m-mizutani")
+
+	var branchScan *model.Scan
+	branchRefs := []types.FireStoreRef{
+		{
+			CollectionID: "m-mizutani",
+			DocumentID:   "octovy",
+		},
+		{
+			CollectionID: "branch",
+			DocumentID:   "main",
+		},
+	}
+	gt.NoError(t, mockDB.Get(ctx, &branchScan, branchRefs...))
+	gt.Equal(t, branchScan.GitHub.Owner, "m-mizutani")
 }
 
 type ghMock struct {

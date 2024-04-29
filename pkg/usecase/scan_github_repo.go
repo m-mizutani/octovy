@@ -47,11 +47,6 @@ func (x *useCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRep
 	}
 	utils.CtxLogger(ctx).Info("scan finished", "input", input, "report", report)
 
-	if x.clients.BigQuery() == nil {
-		utils.CtxLogger(ctx).Warn("skip BigQuery logging")
-		return nil
-	}
-
 	if err := x.InsertScanResult(ctx, input.GitHubMetadata, *report); err != nil {
 		return err
 	}
