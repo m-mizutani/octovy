@@ -11,6 +11,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 func (x *useCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report) error {
@@ -51,7 +52,7 @@ func (x *useCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadat
 		}
 		branchRef := types.FireStoreRef{
 			CollectionID: "branch",
-			DocumentID:   types.FSDocumentID(scan.GitHub.Branch),
+			DocumentID:   utils.HashBranch(scan.GitHub.Branch),
 		}
 
 		if err := x.clients.Firestore().Put(ctx, scan, repoRef, commitRef); err != nil {

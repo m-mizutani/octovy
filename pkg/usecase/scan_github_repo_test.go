@@ -141,7 +141,7 @@ func TestScanGitHubRepo(t *testing.T) {
 		},
 		{
 			CollectionID: "branch",
-			DocumentID:   "main",
+			DocumentID:   utils.HashBranch("main"),
 		},
 	}
 	gt.NoError(t, mockDB.Get(ctx, &branchScan, branchRefs...))
