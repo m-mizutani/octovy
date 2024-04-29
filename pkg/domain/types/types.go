@@ -25,6 +25,11 @@ type (
 	FSDocumentID   string
 )
 
+type FireStoreRef struct {
+	CollectionID FSCollectionID
+	DocumentID   FSDocumentID
+}
+
 func (x GoogleProjectID) String() string { return string(x) }
 func (x BQDatasetID) String() string     { return string(x) }
 func (x BQTableID) String() string       { return string(x) }

@@ -15,6 +15,7 @@ import (
 )
 
 func handleGitHubAppEvent(uc interfaces.UseCase, r *http.Request, key types.GitHubAppSecret) error {
+	ctx := r.Context()
 	payload, err := github.ValidatePayload(r, []byte(key))
 	if err != nil {
 		return goerr.Wrap(err, "validating payload")
@@ -24,6 +25,8 @@ func handleGitHubAppEvent(uc interfaces.UseCase, r *http.Request, key types.GitH
 	if err != nil {
 		return goerr.Wrap(err, "parsing webhook")
 	}
+
+	utils.CtxLogger(ctx).With(slog.Any("event", event)).Info("Received GitHub App event")
 
 	scanInput := githubEventToScanInput(event)
 	if scanInput == nil {

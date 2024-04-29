@@ -13,6 +13,7 @@ type Clients struct {
 	httpClient  HTTPClient
 	trivyClient trivy.Client
 	bqClient    interfaces.BigQuery
+	fsClient    interfaces.Firestore
 }
 
 type HTTPClient interface {
@@ -46,6 +47,9 @@ func (x *Clients) Trivy() trivy.Client {
 func (x *Clients) BigQuery() interfaces.BigQuery {
 	return x.bqClient
 }
+func (x *Clients) Firestore() interfaces.Firestore {
+	return x.fsClient
+}
 
 func WithGitHubApp(client gh.Client) Option {
 	return func(x *Clients) {
@@ -68,5 +72,11 @@ func WithTrivy(client trivy.Client) Option {
 func WithBigQuery(client interfaces.BigQuery) Option {
 	return func(x *Clients) {
 		x.bqClient = client
+	}
+}
+
+func WithFirestore(client interfaces.Firestore) Option {
+	return func(x *Clients) {
+		x.fsClient = client
 	}
 }

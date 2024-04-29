@@ -16,7 +16,7 @@ type BigQuery interface {
 	CreateTable(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error
 }
 
-type Database interface {
-	Put(ctx context.Context, colID types.FSCollectionID, docID types.FSDocumentID, value any) error
-	Get(ctx context.Context, colID types.FSCollectionID, docID types.FSDocumentID, value any) error
+type Firestore interface {
+	Get(ctx context.Context, value any, docRefs ...types.FireStoreRef) error
+	Put(ctx context.Context, value any, docRefs ...types.FireStoreRef) error
 }

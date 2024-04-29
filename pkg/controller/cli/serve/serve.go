@@ -33,6 +33,7 @@ func New() *cli.Command {
 
 		githubApp config.GitHubApp
 		bigQuery  config.BigQuery
+		fireStore config.Firestore
 		sentry    config.Sentry
 	)
 	serveFlags := []cli.Flag{
@@ -65,6 +66,7 @@ func New() *cli.Command {
 			serveFlags,
 			githubApp.Flags(),
 			bigQuery.Flags(),
+			fireStore.Flags(),
 			sentry.Flags(),
 		),
 		Action: func(c *cli.Context) error {
@@ -73,6 +75,7 @@ func New() *cli.Command {
 				slog.Any("TrivyPath", trivyPath),
 				slog.Any("GitHubApp", githubApp),
 				slog.Any("BigQuery", bigQuery),
+				slog.Any("FireStore", fireStore),
 				slog.Any("Sentry", sentry),
 			)
 
@@ -85,16 +88,24 @@ func New() *cli.Command {
 				return err
 			}
 
-			bqClient, err := bigQuery.NewClient(c.Context)
-			if err != nil {
-				return err
-			}
-
-			clients := infra.New(
+			infraOptions := []infra.Option{
 				infra.WithGitHubApp(ghApp),
 				infra.WithTrivy(trivy.New(trivyPath)),
-				infra.WithBigQuery(bqClient),
-			)
+			}
+
+			if bqClient, err := bigQuery.NewClient(c.Context); err != nil {
+				return err
+			} else if bqClient != nil {
+				infraOptions = append(infraOptions, infra.WithBigQuery(bqClient))
+			}
+
+			if fsClient, err := fireStore.NewClient(c.Context); err != nil {
+				return err
+			} else if fsClient != nil {
+				infraOptions = append(infraOptions, infra.WithFirestore(fsClient))
+			}
+
+			clients := infra.New(infraOptions...)
 
 			uc := usecase.New(clients)
 			s := server.New(uc, server.WithGitHubSecret(githubApp.Secret))

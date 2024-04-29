@@ -24,7 +24,6 @@ func (x *BigQuery) Flags() []cli.Flag {
 			Category:    "BigQuery",
 			Destination: (*string)(&x.projectID),
 			EnvVars:     []string{"OCTOVY_BIGQUERY_PROJECT_ID"},
-			Required:    true,
 		},
 		&cli.StringFlag{
 			Name:        "bigquery-dataset-id",
@@ -32,7 +31,6 @@ func (x *BigQuery) Flags() []cli.Flag {
 			Category:    "BigQuery",
 			Destination: (*string)(&x.datasetID),
 			EnvVars:     []string{"OCTOVY_BIGQUERY_DATASET_ID"},
-			Required:    true,
 		},
 		&cli.StringFlag{
 			Name:        "bigquery-table-id",
@@ -57,5 +55,8 @@ func (x *BigQuery) LogValue() slog.Value {
 }
 
 func (x *BigQuery) NewClient(ctx context.Context) (interfaces.BigQuery, error) {
+	if x.projectID == "" && x.datasetID == "" {
+		return nil, nil
+	}
 	return bq.New(ctx, x.projectID, x.datasetID)
 }
