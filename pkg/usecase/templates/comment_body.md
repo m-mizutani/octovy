@@ -1,6 +1,4 @@
 {{ .Signature }}
-# Octovy scan result
-
 {{ if .Added }}
 ## 🚨New Vulnerabilities
 {{ range .Added }}
