@@ -69,7 +69,7 @@ func toStorageCommitKey(meta model.GitHubMetadata) string {
 		meta.RepoName,
 		"commit",
 		meta.CommitID,
-		"scan.json",
+		"scan.json.gz",
 	}, "/")
 }
 
@@ -79,7 +79,7 @@ func toStorageBranchKey(meta model.GitHubMetadata) string {
 		meta.RepoName,
 		"branch",
 		meta.Branch,
-		"scan.json",
+		"scan.json.gz",
 	}, "/")
 }
 

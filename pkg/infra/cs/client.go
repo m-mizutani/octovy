@@ -2,12 +2,14 @@
 package cs
 
 import (
+	"compress/gzip"
 	"context"
 	"io"
 
 	"cloud.google.com/go/storage"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 type Client struct {
@@ -58,12 +60,18 @@ func (c *Client) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 func (c *Client) Put(ctx context.Context, key string, r io.ReadCloser) error {
 	obj := c.client.Bucket(c.bucket).Object(c.prefix + key)
 	w := obj.NewWriter(ctx)
-	if _, err := io.Copy(w, r); err != nil {
-		return goerr.Wrap(err, "Failed to write object")
-	}
+	w.ContentType = "application/json"
+	w.ContentEncoding = "gzip"
 
-	if err := w.Close(); err != nil {
-		return goerr.Wrap(err, "Failed to close object writer")
+	zw := gzip.NewWriter(w)
+
+	defer func() {
+		utils.SafeClose(zw)
+		utils.SafeClose(w)
+	}()
+
+	if _, err := io.Copy(zw, r); err != nil {
+		return goerr.Wrap(err, "Failed to write object")
 	}
 
 	return nil

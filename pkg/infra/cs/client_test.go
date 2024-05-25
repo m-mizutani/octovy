@@ -3,7 +3,6 @@ package cs_test
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -23,7 +22,7 @@ func TestCloudStorage(t *testing.T) {
 		key := "test-key/" + uuid.NewString() + ".txt"
 		r := strings.NewReader("blue")
 
-		gt.NoError(t, client.Put(context.Background(), key, ioutil.NopCloser(r)))
+		gt.NoError(t, client.Put(context.Background(), key, io.NopCloser(r)))
 
 		r2, err := client.Get(context.Background(), key)
 		gt.NoError(t, err)
