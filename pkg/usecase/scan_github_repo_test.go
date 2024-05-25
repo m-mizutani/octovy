@@ -14,11 +14,11 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/m-mizutani/gt"
+	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/bq"
-	"github.com/m-mizutani/octovy/pkg/infra/db"
 	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
@@ -35,19 +35,19 @@ func TestScanGitHubRepo(t *testing.T) {
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
 	mockBQ := &bq.Mock{}
-	mockDB := db.NewMock()
+	mockStorage := interfaces.NewStorageMock()
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
 		infra.WithHTTPClient(mockHTTP),
 		infra.WithTrivy(mockTrivy),
 		infra.WithBigQuery(mockBQ),
-		infra.WithFirestore(mockDB),
+		infra.WithStorage(mockStorage),
 	))
 
 	ctx := context.Background()
 
-	mockGH.mockGetArchiveURL = func(ctx context.Context, input *gh.GetArchiveURLInput) (*url.URL, error) {
+	mockGH.mockGetArchiveURL = func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
 		gt.V(t, input.Owner).Equal("m-mizutani")
 		gt.V(t, input.Repo).Equal("octovy")
 		gt.V(t, input.CommitID).Equal("f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca")
@@ -120,40 +120,39 @@ func TestScanGitHubRepo(t *testing.T) {
 	gt.Equal(t, calledBQInsert, 1)
 
 	var commitScan *model.Scan
-	commitRefs := []types.FireStoreRef{
-		{
-			CollectionID: "m-mizutani",
-			DocumentID:   "octovy",
-		},
-		{
-			CollectionID: "commit",
-			DocumentID:   "f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca",
-		},
-	}
-	gt.NoError(t, mockDB.Get(ctx, &commitScan, commitRefs...))
+	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/commit/f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca/scan.json", &commitScan))
 	gt.Equal(t, commitScan.GitHub.Owner, "m-mizutani")
 
 	var branchScan *model.Scan
-	branchRefs := []types.FireStoreRef{
-		{
-			CollectionID: "m-mizutani",
-			DocumentID:   "octovy",
-		},
-		{
-			CollectionID: "branch",
-			DocumentID:   utils.HashBranch("main"),
-		},
-	}
-	gt.NoError(t, mockDB.Get(ctx, &branchScan, branchRefs...))
+	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/branch/main/scan.json", &branchScan))
 	gt.Equal(t, branchScan.GitHub.Owner, "m-mizutani")
 }
 
 type ghMock struct {
-	mockGetArchiveURL func(ctx context.Context, input *gh.GetArchiveURLInput) (*url.URL, error)
+	mockGetArchiveURL      func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error)
+	mockCreateIssueComment func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int, body string) error
+	mockListIssueComments  func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error)
+	mockMinimizeComment    func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, subjectID string) error
 }
 
-func (x *ghMock) GetArchiveURL(ctx context.Context, input *gh.GetArchiveURLInput) (*url.URL, error) {
+// MinimizeComment implements interfaces.GitHub.
+func (x *ghMock) MinimizeComment(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, subjectID string) error {
+	return x.mockMinimizeComment(ctx, repo, id, subjectID)
+}
+
+// ListIssueComments implements interfaces.GitHub.
+func (x *ghMock) ListIssueComments(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
+	return x.mockListIssueComments(ctx, repo, id, prID)
+}
+
+var _ interfaces.GitHub = &ghMock{}
+
+func (x *ghMock) GetArchiveURL(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
 	return x.mockGetArchiveURL(ctx, input)
+}
+
+func (x *ghMock) CreateIssueComment(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int, body string) error {
+	return x.mockCreateIssueComment(ctx, repo, id, prID, body)
 }
 
 type trivyMock struct {

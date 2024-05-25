@@ -1,14 +1,6 @@
 package interfaces
 
-import (
-	"context"
-	"testing"
-
-	"github.com/google/uuid"
-	"github.com/m-mizutani/gt"
-	"github.com/m-mizutani/octovy/pkg/domain/types"
-)
-
+/*
 func FirestoreClientTest(t *testing.T, client Firestore) {
 	type testData struct {
 		Value string `firestore:"value"`
@@ -92,3 +84,4 @@ func FirestoreClientTest(t *testing.T, client Firestore) {
 		})
 	}
 }
+*/

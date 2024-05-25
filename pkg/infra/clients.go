@@ -4,16 +4,15 @@ import (
 	"net/http"
 
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
-	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
 type Clients struct {
-	githubApp   gh.Client
+	githubApp   interfaces.GitHub
 	httpClient  HTTPClient
 	trivyClient trivy.Client
 	bqClient    interfaces.BigQuery
-	fsClient    interfaces.Firestore
+	storage     interfaces.Storage
 }
 
 type HTTPClient interface {
@@ -35,7 +34,7 @@ func New(options ...Option) *Clients {
 	return client
 }
 
-func (x *Clients) GitHubApp() gh.Client {
+func (x *Clients) GitHubApp() interfaces.GitHub {
 	return x.githubApp
 }
 func (x *Clients) HTTPClient() HTTPClient {
@@ -47,11 +46,11 @@ func (x *Clients) Trivy() trivy.Client {
 func (x *Clients) BigQuery() interfaces.BigQuery {
 	return x.bqClient
 }
-func (x *Clients) Firestore() interfaces.Firestore {
-	return x.fsClient
+func (x *Clients) Storage() interfaces.Storage {
+	return x.storage
 }
 
-func WithGitHubApp(client gh.Client) Option {
+func WithGitHubApp(client interfaces.GitHub) Option {
 	return func(x *Clients) {
 		x.githubApp = client
 	}
@@ -75,8 +74,8 @@ func WithBigQuery(client interfaces.BigQuery) Option {
 	}
 }
 
-func WithFirestore(client interfaces.Firestore) Option {
+func WithStorage(client interfaces.Storage) Option {
 	return func(x *Clients) {
-		x.fsClient = client
+		x.storage = client
 	}
 }

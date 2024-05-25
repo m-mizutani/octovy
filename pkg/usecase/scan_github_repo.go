@@ -14,11 +14,11 @@ import (
 	"strings"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
-	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
@@ -51,11 +51,17 @@ func (x *useCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRep
 		return err
 	}
 
+	if nil != x.clients.Storage() && nil != input.GitHubMetadata.PullRequest {
+		if err := x.CommentGitHubPR(ctx, input, report); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (x *useCase) downloadGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput, dstDir string) error {
-	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &gh.GetArchiveURLInput{
+	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &interfaces.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.RepoName,
 		CommitID:  input.CommitID,

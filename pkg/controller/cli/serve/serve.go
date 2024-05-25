@@ -31,10 +31,10 @@ func New() *cli.Command {
 
 		skipMigration bool
 
-		githubApp config.GitHubApp
-		bigQuery  config.BigQuery
-		fireStore config.Firestore
-		sentry    config.Sentry
+		githubApp    config.GitHubApp
+		bigQuery     config.BigQuery
+		cloudStorage config.CloudStorage
+		sentry       config.Sentry
 	)
 	serveFlags := []cli.Flag{
 		&cli.StringFlag{
@@ -66,7 +66,7 @@ func New() *cli.Command {
 			serveFlags,
 			githubApp.Flags(),
 			bigQuery.Flags(),
-			fireStore.Flags(),
+			cloudStorage.Flags(),
 			sentry.Flags(),
 		),
 		Action: func(c *cli.Context) error {
@@ -75,7 +75,7 @@ func New() *cli.Command {
 				slog.Any("TrivyPath", trivyPath),
 				slog.Any("GitHubApp", githubApp),
 				slog.Any("BigQuery", bigQuery),
-				slog.Any("FireStore", fireStore),
+				slog.Any("CloudStorage", cloudStorage),
 				slog.Any("Sentry", sentry),
 			)
 
@@ -99,10 +99,10 @@ func New() *cli.Command {
 				infraOptions = append(infraOptions, infra.WithBigQuery(bqClient))
 			}
 
-			if fsClient, err := fireStore.NewClient(c.Context); err != nil {
+			if csClient, err := cloudStorage.NewClient(c.Context); err != nil {
 				return err
-			} else if fsClient != nil {
-				infraOptions = append(infraOptions, infra.WithFirestore(fsClient))
+			} else if csClient != nil {
+				infraOptions = append(infraOptions, infra.WithStorage(csClient))
 			}
 
 			clients := infra.New(infraOptions...)

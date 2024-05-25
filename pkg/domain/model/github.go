@@ -70,3 +70,10 @@ func (x *GitHubCommit) Validate() error {
 
 	return nil
 }
+
+type GitHubIssueComment struct {
+	ID          string
+	Login       string
+	Body        string
+	IsMinimized bool
+}

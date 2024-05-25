@@ -2,9 +2,12 @@ package interfaces
 
 import (
 	"context"
+	"io"
+	"net/url"
 
 	"cloud.google.com/go/bigquery"
 
+	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
@@ -16,7 +19,23 @@ type BigQuery interface {
 	CreateTable(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error
 }
 
-type Firestore interface {
-	Get(ctx context.Context, value any, docRefs ...types.FireStoreRef) error
-	Put(ctx context.Context, value any, docRefs ...types.FireStoreRef) error
+type Storage interface {
+	Put(ctx context.Context, key string, r io.ReadCloser) error
+	Get(ctx context.Context, key string) (io.ReadCloser, error)
+}
+
+type GitHub interface {
+	GetArchiveURL(ctx context.Context, input *GetArchiveURLInput) (*url.URL, error)
+	CreateIssueComment(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int, body string) error
+	ListIssueComments(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error)
+	MinimizeComment(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, subjectID string) error
+	// CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error)
+	// UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error
+}
+
+type GetArchiveURLInput struct {
+	Owner     string
+	Repo      string
+	CommitID  string
+	InstallID types.GitHubAppInstallID
 }

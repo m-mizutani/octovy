@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -11,7 +14,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
-	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 func (x *useCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report) error {
@@ -41,28 +43,44 @@ func (x *useCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadat
 		}
 	}
 
-	if x.clients.Firestore() != nil {
-		repoRef := types.FireStoreRef{
-			CollectionID: types.FSCollectionID(scan.GitHub.Owner),
-			DocumentID:   types.FSDocumentID(scan.GitHub.RepoName),
-		}
-		commitRef := types.FireStoreRef{
-			CollectionID: "commit",
-			DocumentID:   types.FSDocumentID(scan.GitHub.CommitID),
-		}
-		branchRef := types.FireStoreRef{
-			CollectionID: "branch",
-			DocumentID:   utils.HashBranch(scan.GitHub.Branch),
+	if x.clients.BigQuery() != nil {
+		raw, err := json.Marshal(scan)
+		if err != nil {
+			return goerr.Wrap(err, "failed to marshal scan data")
 		}
 
-		if err := x.clients.Firestore().Put(ctx, scan, repoRef, commitRef); err != nil {
-			return err
-		}
-		if err := x.clients.Firestore().Put(ctx, scan, repoRef, branchRef); err != nil {
-			return err
+		commitKey := toStorageCommitKey(scan.GitHub)
+		branchKey := toStorageBranchKey(scan.GitHub)
+
+		for _, key := range []string{commitKey, branchKey} {
+			buf := strings.NewReader(string(raw))
+			reader := io.NopCloser(buf)
+			if err := x.clients.Storage().Put(ctx, key, reader); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+func toStorageCommitKey(meta model.GitHubMetadata) string {
+	return strings.Join([]string{
+		meta.Owner,
+		meta.RepoName,
+		"commit",
+		meta.CommitID,
+		"scan.json",
+	}, "/")
+}
+
+func toStorageBranchKey(meta model.GitHubMetadata) string {
+	return strings.Join([]string{
+		meta.Owner,
+		meta.RepoName,
+		"branch",
+		meta.Branch,
+		"scan.json",
+	}, "/")
 }
 
 func createOrUpdateBigQueryTable(ctx context.Context, bq interfaces.BigQuery, tableID types.BQTableID, scan *model.Scan) (bigquery.Schema, error) {
