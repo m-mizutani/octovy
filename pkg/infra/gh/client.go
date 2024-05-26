@@ -132,7 +132,7 @@ func (x *Client) CreateIssueComment(ctx context.Context, repo *model.GitHubRepo,
 //go:embed queries/list_comments.graphql
 var queryListIssueComments string
 
-func (x Client) ListIssueComments(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
+func (x *Client) ListIssueComments(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
 	type response struct {
 		Repository struct {
 			PullRequest struct {
