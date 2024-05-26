@@ -267,49 +267,49 @@ const (
 	apiGraphQLEndpoint = "https://api.github.com/graphql"
 )
 
-/*
-func (x *Client) CreateCheckRun(repo *model.GitHubRepo, commit string) (int64, error) {
-	client, err := x.githubClient()
+func (x *Client) CreateCheckRun(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
+	client, err := x.buildGithubClient(id)
 	if err != nil {
 		return 0, err
 	}
 
-	ctx := context.Background()
 	opt := github.CreateCheckRunOptions{
 		Name:    "Octovy: package vulnerability check",
 		HeadSHA: commit,
 		Status:  github.String("in_progress"),
 	}
 
-	run, resp, err := client.Checks.CreateCheckRun(ctx, repo.Owner, repo.Name, opt)
+	run, resp, err := client.Checks.CreateCheckRun(ctx, repo.Owner, repo.RepoName, opt)
 	if err != nil {
 		return 0, goerr.Wrap(err, "Failed to create check run").With("repo", repo).With("commit", commit)
 	}
 	if resp.StatusCode != http.StatusCreated {
 		return 0, goerr.Wrap(err, "Failed to ")
 	}
-	utils.Logger.With("run", run).Debug("Created check run")
+	utils.CtxLogger(ctx).With("run", run).Debug("Created check run")
 
 	return *run.ID, nil
 }
 
-func (x *Client) UpdateCheckRun(repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
-	client, err := x.githubClient()
+func (x *Client) UpdateCheckRun(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+	client, err := x.buildGithubClient(id)
 	if err != nil {
 		return err
 	}
 
-	ctx := context.Background()
-
-	_, resp, err := client.Checks.UpdateCheckRun(ctx, repo.Owner, repo.Name, checkID, *opt)
+	_, resp, err := client.Checks.UpdateCheckRun(ctx, repo.Owner, repo.RepoName, checkID, *opt)
 	if err != nil {
 		return goerr.Wrap(err, "Failed to update check status to complete").With("repo", repo).With("id", checkID).With("opt", opt)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return goerr.Wrap(err, "Failed to update status to complete")
 	}
-	utils.Logger.With("repo", repo).With("id", checkID).Debug("Created check run")
+	utils.CtxLogger(ctx).Debug("Updated check run",
+		slog.Any("opt", opt),
+		slog.Any("resp", resp),
+		slog.Any("repo", repo),
+		slog.Any("checkID", checkID),
+	)
 
 	return nil
 }
-*/

@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/go-github/v53/github"
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
@@ -24,10 +25,26 @@ import (
 
 // ScanGitHubRepo is a usecase to download a source code from GitHub and scan it with Trivy. Using GitHub App credentials to download a private repository, then the app should be installed to the repository and have read access.
 // After scanning, the result is stored to the database. The temporary files are removed after the scan.
-func (x *useCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput) error {
+func (x *UseCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
+
+	// Create and finalize GitHub check
+	conclusion := "failure"
+	checkID, err := x.clients.GitHubApp().CreateCheckRun(ctx, input.InstallID, &input.GitHubRepo, input.CommitID)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		opt := &github.UpdateCheckRunOptions{
+			Status:     github.String("completed"),
+			Conclusion: &conclusion,
+		}
+		if err := x.clients.GitHubApp().UpdateCheckRun(ctx, input.InstallID, &input.GitHubRepo, checkID, opt); err != nil {
+			utils.CtxLogger(ctx).Error("Failed to update check run", "err", err)
+		}
+	}()
 
 	// Extract zip file to local temp directory
 	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("octovy.%s.%s.%s.*", input.Owner, input.RepoName, input.CommitID))
@@ -56,10 +73,12 @@ func (x *useCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRep
 		}
 	}
 
+	conclusion = "success"
+
 	return nil
 }
 
-func (x *useCase) downloadGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput, dstDir string) error {
+func (x *UseCase) downloadGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput, dstDir string) error {
 	zipURL, err := x.clients.GitHubApp().GetArchiveURL(ctx, &interfaces.GetArchiveURLInput{
 		Owner:     input.Owner,
 		Repo:      input.RepoName,
@@ -93,7 +112,7 @@ func (x *useCase) downloadGitHubRepo(ctx context.Context, input *model.ScanGitHu
 	return nil
 }
 
-func (x *useCase) scanGitHubRepo(ctx context.Context, codeDir string) (*trivy.Report, error) {
+func (x *UseCase) scanGitHubRepo(ctx context.Context, codeDir string) (*trivy.Report, error) {
 	// Scan local directory
 	tmpResult, err := os.CreateTemp("", "octovy_result.*.json")
 	if err != nil {

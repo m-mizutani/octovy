@@ -1,18 +1,17 @@
 package usecase
 
 import (
-	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
 )
 
-type useCase struct {
+type UseCase struct {
 	tableID types.BQTableID
 	clients *infra.Clients
 }
 
-func New(clients *infra.Clients, options ...Option) interfaces.UseCase {
-	uc := &useCase{
+func New(clients *infra.Clients, options ...Option) *UseCase {
+	uc := &UseCase{
 		tableID: "scans",
 		clients: clients,
 	}
@@ -24,10 +23,10 @@ func New(clients *infra.Clients, options ...Option) interfaces.UseCase {
 	return uc
 }
 
-type Option func(*useCase)
+type Option func(*UseCase)
 
 func WithBigQueryTableID(tableID types.BQTableID) Option {
-	return func(x *useCase) {
+	return func(x *UseCase) {
 		x.tableID = tableID
 	}
 }

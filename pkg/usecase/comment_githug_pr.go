@@ -12,13 +12,10 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/logic"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
+	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
-const (
-	commentSignature = "<!-- octovy-scan-report -->"
-)
-
-func (x *useCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRepoInput, report *trivy.Report) error {
+func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRepoInput, report *trivy.Report) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -72,7 +69,7 @@ func (x *useCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRe
 	return nil
 }
 
-func (x *useCase) hideGitHubOldComments(ctx context.Context, input *model.ScanGitHubRepoInput) error {
+func (x *UseCase) hideGitHubOldComments(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 	if nil == input.GitHubMetadata.PullRequest {
 		return goerr.New("PullRequest is not set")
 	}
@@ -87,7 +84,7 @@ func (x *useCase) hideGitHubOldComments(ctx context.Context, input *model.ScanGi
 	}
 
 	for _, comment := range comments {
-		if !comment.IsMinimized && strings.HasPrefix(comment.Body, commentSignature) {
+		if !comment.IsMinimized && strings.HasPrefix(comment.Body, types.GitHubCommentSignature) {
 			if err := x.clients.GitHubApp().MinimizeComment(ctx, &input.GitHubMetadata.GitHubRepo, input.InstallID, comment.ID); err != nil {
 				return err
 			}
@@ -115,7 +112,7 @@ var commentBodyTemplate string
 
 func renderScanReport(report *trivy.Report, added, fixed trivy.Results) (string, error) {
 	data := scanReport{
-		Signature: commentSignature,
+		Signature: types.GitHubCommentSignature,
 		Report:    report,
 		Added:     added,
 		Fixed:     fixed,
