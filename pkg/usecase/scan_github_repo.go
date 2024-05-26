@@ -31,7 +31,7 @@ func (x *UseCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRep
 	}
 
 	// Create and finalize GitHub check
-	conclusion := "failure"
+	conclusion := "cancelled"
 	checkID, err := x.clients.GitHubApp().CreateCheckRun(ctx, input.InstallID, &input.GitHubRepo, input.CommitID)
 	if err != nil {
 		return err
