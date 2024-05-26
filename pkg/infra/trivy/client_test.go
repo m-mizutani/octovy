@@ -39,9 +39,13 @@ func Test(t *testing.T) {
 	body := gt.R1(os.ReadFile(tmp.Name())).NoError(t)
 	gt.NoError(t, json.Unmarshal(body, &report))
 	gt.V(t, report.SchemaVersion).Equal(2)
-	gt.A(t, report.Results).Length(1).At(0, func(t testing.TB, v trivy_model.Result) {
-		gt.A(t, v.Packages).Any(func(v trivy_model.Package) bool {
-			return v.Name == "github.com/m-mizutani/goerr"
-		})
+	gt.A(t, report.Results).Longer(0).Any(func(v trivy_model.Result) bool {
+		if v.Target == "go.mod" {
+			gt.A(t, v.Packages).Any(func(v trivy_model.Package) bool {
+				return v.Name == "github.com/m-mizutani/goerr"
+			})
+		}
+
+		return v.Target == "go.mod"
 	})
 }

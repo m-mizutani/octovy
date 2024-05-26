@@ -120,11 +120,11 @@ func TestScanGitHubRepo(t *testing.T) {
 	gt.Equal(t, calledBQInsert, 1)
 
 	var commitScan *model.Scan
-	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/commit/f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca/scan.json", &commitScan))
+	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/commit/f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca/scan.json.gz", &commitScan))
 	gt.Equal(t, commitScan.GitHub.Owner, "m-mizutani")
 
 	var branchScan *model.Scan
-	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/branch/main/scan.json", &branchScan))
+	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/branch/main/scan.json.gz", &branchScan))
 	gt.Equal(t, branchScan.GitHub.Owner, "m-mizutani")
 }
 
