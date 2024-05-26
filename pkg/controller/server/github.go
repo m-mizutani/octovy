@@ -78,6 +78,10 @@ func githubEventToScanInput(event interface{}) *model.ScanGitHubRepoInput {
 			utils.Logger().Debug("ignore PR event", slog.String("action", ev.GetAction()))
 			return nil
 		}
+		if ev.GetPullRequest().GetDraft() {
+			utils.Logger().Debug("ignore draft PR", slog.String("action", ev.GetAction()))
+			return nil
+		}
 
 		pr := ev.GetPullRequest()
 

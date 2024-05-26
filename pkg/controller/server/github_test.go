@@ -25,6 +25,9 @@ var testGitHubPullRequestOpened []byte
 //go:embed testdata/github/pull_request.synchronize.json
 var testGitHubPullRequestSynchronize []byte
 
+//go:embed testdata/github/pull_request.synchronize-draft.json
+var testGitHubPullRequestSynchronizeDraft []byte
+
 //go:embed testdata/github/push.json
 var testGitHubPush []byte
 
@@ -35,7 +38,7 @@ func TestGitHubPullRequestSync(t *testing.T) {
 	const secret = "dummy"
 
 	type testCase struct {
-		input model.ScanGitHubRepoInput
+		input *model.ScanGitHubRepoInput
 		event string
 		body  []byte
 	}
@@ -46,7 +49,7 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			mock := &usecase.Mock{
 				MockScanGitHubRepo: func(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 					called++
-					gt.V(t, input).Equal(&tc.input)
+					gt.V(t, input).Equal(tc.input)
 					return nil
 				},
 			}
@@ -56,14 +59,18 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			w := httptest.NewRecorder()
 			serv.Mux().ServeHTTP(w, req)
 			gt.V(t, w.Code).Equal(http.StatusOK)
-			gt.V(t, called).Equal(1)
+			if tc.input != nil {
+				gt.V(t, called).Equal(1)
+			} else {
+				gt.V(t, called).Equal(0)
+			}
 		}
 	}
 
 	t.Run("pull_request.opened", runTest(testCase{
 		event: "pull_request",
 		body:  testGitHubPullRequestOpened,
-		input: model.ScanGitHubRepoInput{
+		input: &model.ScanGitHubRepoInput{
 			GitHubMetadata: model.GitHubMetadata{
 				GitHubCommit: model.GitHubCommit{
 					GitHubRepo: model.GitHubRepo{
@@ -98,7 +105,7 @@ func TestGitHubPullRequestSync(t *testing.T) {
 	t.Run("pull_request.synchronize", runTest(testCase{
 		event: "pull_request",
 		body:  testGitHubPullRequestSynchronize,
-		input: model.ScanGitHubRepoInput{
+		input: &model.ScanGitHubRepoInput{
 			GitHubMetadata: model.GitHubMetadata{
 				GitHubCommit: model.GitHubCommit{
 					GitHubRepo: model.GitHubRepo{
@@ -130,10 +137,16 @@ func TestGitHubPullRequestSync(t *testing.T) {
 		},
 	}))
 
+	t.Run("pull_request.synchronize: draft", runTest(testCase{
+		event: "pull_request",
+		body:  testGitHubPullRequestSynchronizeDraft,
+		input: nil,
+	}))
+
 	t.Run("push", runTest(testCase{
 		event: "push",
 		body:  testGitHubPush,
-		input: model.ScanGitHubRepoInput{
+		input: &model.ScanGitHubRepoInput{
 			GitHubMetadata: model.GitHubMetadata{
 				GitHubCommit: model.GitHubCommit{
 					GitHubRepo: model.GitHubRepo{
@@ -158,7 +171,7 @@ func TestGitHubPullRequestSync(t *testing.T) {
 	t.Run("push: to default", runTest(testCase{
 		event: "push",
 		body:  testGitHubPushDefault,
-		input: model.ScanGitHubRepoInput{
+		input: &model.ScanGitHubRepoInput{
 			GitHubMetadata: model.GitHubMetadata{
 				GitHubCommit: model.GitHubCommit{
 					GitHubRepo: model.GitHubRepo{
