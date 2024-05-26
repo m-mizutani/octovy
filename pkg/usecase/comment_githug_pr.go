@@ -99,9 +99,15 @@ func (x *useCase) hideGitHubOldComments(ctx context.Context, input *model.ScanGi
 
 type scanReport struct {
 	Signature string
+	Metadata  scanReportMetadata
 	Report    *trivy.Report
 	Added     trivy.Results
 	Fixed     trivy.Results
+}
+
+type scanReportMetadata struct {
+	TotalVulnCount   int
+	FixableVulnCount int
 }
 
 //go:embed templates/comment_body.md
@@ -113,6 +119,15 @@ func renderScanReport(report *trivy.Report, added, fixed trivy.Results) (string,
 		Report:    report,
 		Added:     added,
 		Fixed:     fixed,
+	}
+
+	for _, result := range report.Results {
+		for _, vuln := range result.Vulnerabilities {
+			data.Metadata.TotalVulnCount++
+			if vuln.FixedVersion != "" {
+				data.Metadata.FixableVulnCount++
+			}
+		}
 	}
 
 	tmpl, err := template.New("scanReport").Parse(commentBodyTemplate)

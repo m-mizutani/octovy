@@ -40,7 +40,6 @@ func (x *useCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRep
 		return err
 	}
 
-	ctx = context.Background()
 	report, err := x.scanGitHubRepo(ctx, tmpDir)
 	if err != nil {
 		return err
