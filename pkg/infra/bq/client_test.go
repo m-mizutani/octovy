@@ -12,6 +12,8 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra/bq"
 	"github.com/m-mizutani/octovy/pkg/utils"
+	"google.golang.org/api/impersonate"
+	"google.golang.org/api/option"
 )
 
 func TestClient(t *testing.T) {
@@ -55,4 +57,42 @@ func TestClient(t *testing.T) {
 		}
 		gt.NoError(t, client.Insert(ctx, tblName, mergedSchema, record))
 	})
+}
+
+func TestImpersonation(t *testing.T) {
+	projectID := utils.LoadEnv(t, "TEST_BIGQUERY_PROJECT_ID")
+	datasetID := utils.LoadEnv(t, "TEST_BIGQUERY_DATASET_ID")
+	serviceAccount := utils.LoadEnv(t, "TEST_BIGQUERY_IMPERSONATE_SERVICE_ACCOUNT")
+
+	ctx := context.Background()
+
+	ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
+		TargetPrincipal: serviceAccount,
+		Scopes: []string{
+			"https://www.googleapis.com/auth/bigquery",
+			"https://www.googleapis.com/auth/cloud-platform",
+			"https://www.googleapis.com/auth/bigquery.readonly",
+			"https://www.googleapis.com/auth/cloud-platform.read-only",
+		},
+	})
+	gt.NoError(t, err)
+
+	client, err := bq.New(ctx, types.GoogleProjectID(projectID), types.BQDatasetID(datasetID), option.WithTokenSource(ts))
+	gt.NoError(t, err)
+
+	msg := struct {
+		Msg string
+	}{
+		Msg: "Hello, BigQuery: " + time.Now().String(),
+	}
+
+	schema := gt.R1(bqs.Infer(msg)).NoError(t)
+
+	tblName := types.BQTableID(time.Now().Format("impersonation_test_20060102_150405"))
+	gt.NoError(t, client.CreateTable(ctx, tblName, &bigquery.TableMetadata{
+		Name:   tblName.String(),
+		Schema: schema,
+	}))
+
+	gt.NoError(t, client.Insert(ctx, tblName, schema, msg))
 }

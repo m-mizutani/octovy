@@ -12,6 +12,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/utils"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -27,13 +28,13 @@ type Client struct {
 
 var _ interfaces.BigQuery = (*Client)(nil)
 
-func New(ctx context.Context, projectID types.GoogleProjectID, datasetID types.BQDatasetID) (*Client, error) {
-	mwClient, err := managedwriter.NewClient(ctx, projectID.String())
+func New(ctx context.Context, projectID types.GoogleProjectID, datasetID types.BQDatasetID, options ...option.ClientOption) (*Client, error) {
+	mwClient, err := managedwriter.NewClient(ctx, projectID.String(), options...)
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed to create bigquery client").With("projectID", projectID)
 	}
 
-	bqClient, err := bigquery.NewClient(ctx, string(projectID))
+	bqClient, err := bigquery.NewClient(ctx, string(projectID), options...)
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed to create BigQuery client").With("projectID", projectID)
 	}
