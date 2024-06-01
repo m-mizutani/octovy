@@ -71,8 +71,6 @@ func TestImpersonation(t *testing.T) {
 		Scopes: []string{
 			"https://www.googleapis.com/auth/bigquery",
 			"https://www.googleapis.com/auth/cloud-platform",
-			"https://www.googleapis.com/auth/bigquery.readonly",
-			"https://www.googleapis.com/auth/cloud-platform.read-only",
 		},
 	})
 	gt.NoError(t, err)
