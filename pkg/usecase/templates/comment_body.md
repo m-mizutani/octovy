@@ -6,7 +6,7 @@
 {{ end }}
 
 {{ if .Added }}
-## 🚨New Vulnerabilities
+## 🚨 New Vulnerabilities
 {{ range .Added }}
 ### {{ .Target }}
 {{ range .Vulnerabilities }}
@@ -30,7 +30,7 @@
 {{ end }}{{ end }}{{ end }}
 
 {{ if .Fixed }}
-## ✅Fix Vulnerabilities
+## ✅ Fix Vulnerabilities
 {{ range .Fixed }}
 ### {{ .Target }}
 {{ range .Vulnerabilities }}
@@ -55,7 +55,7 @@
 {{ end }}{{ end }}{{ end }}
 
 {{ if ne .Metadata.TotalVulnCount 0 }}
-## All detected vulnerabilities
+## 🗒️ All detected vulnerabilities
 {{ range .Report.Results }}
 <details>
 <summary>{{ .Target }}: ({{ .Vulnerabilities | len }})</summary>
