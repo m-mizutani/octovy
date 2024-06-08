@@ -55,7 +55,7 @@
 {{ end }}{{ end }}{{ end }}
 
 {{ if ne .Metadata.TotalVulnCount 0 }}
-## 🗒️ All detected vulnerabilities
+## ⚠️ All detected vulnerabilities
 {{ range .Report.Results }}
 <details>
 <summary>{{ .Target }}: ({{ .Vulnerabilities | len }})</summary>
