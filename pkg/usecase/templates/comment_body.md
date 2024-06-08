@@ -25,8 +25,7 @@
 
 #### References
 {{ range .References }}
-- [{{ . }}]({{ . }})
-{{ end }}
+- [{{ . }}]({{ . }}){{ end }}
 </details>
 {{ end }}{{ end }}{{ end }}
 
@@ -49,9 +48,9 @@
 {{ .Description }}
 
 #### References
+
 {{ range .References }}
-- [{{ . }}]({{ . }})
-{{ end }}
+- [{{ . }}]({{ . }}){{ end }}
 </details>
 {{ end }}{{ end }}{{ end }}
 

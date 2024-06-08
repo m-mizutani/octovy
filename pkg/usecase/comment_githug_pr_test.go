@@ -43,7 +43,10 @@ func TestRenderScanReport(t *testing.T) {
 						Title:       "Vuln title2",
 						Description: "Vuln description2",
 						Severity:    "CRITICAL",
-						References:  []string{"https://example.com"},
+						References: []string{
+							"https://example.com",
+							"https://example.com/2",
+						},
 					},
 				},
 			},
