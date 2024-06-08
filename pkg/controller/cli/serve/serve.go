@@ -35,6 +35,7 @@ func New() *cli.Command {
 		bigQuery     config.BigQuery
 		cloudStorage config.CloudStorage
 		sentry       config.Sentry
+		policy       config.Policy
 	)
 	serveFlags := []cli.Flag{
 		&cli.StringFlag{
@@ -68,6 +69,7 @@ func New() *cli.Command {
 			bigQuery.Flags(),
 			cloudStorage.Flags(),
 			sentry.Flags(),
+			policy.Flags(),
 		),
 		Action: func(c *cli.Context) error {
 			utils.Logger().Info("starting serve",
@@ -77,6 +79,7 @@ func New() *cli.Command {
 				slog.Any("BigQuery", bigQuery),
 				slog.Any("CloudStorage", cloudStorage),
 				slog.Any("Sentry", sentry),
+				slog.Any("Policy", policy),
 			)
 
 			if err := sentry.Configure(); err != nil {
@@ -103,6 +106,12 @@ func New() *cli.Command {
 				return err
 			} else if csClient != nil {
 				infraOptions = append(infraOptions, infra.WithStorage(csClient))
+			}
+
+			if policyClient, err := policy.Configure(); err != nil {
+				return err
+			} else if policyClient != nil {
+				infraOptions = append(infraOptions, infra.WithPolicy(policyClient))
 			}
 
 			clients := infra.New(infraOptions...)

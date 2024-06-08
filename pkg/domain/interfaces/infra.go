@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
+	"github.com/m-mizutani/opac"
 )
 
 type BigQuery interface {
@@ -39,4 +40,8 @@ type GetArchiveURLInput struct {
 	Repo      string
 	CommitID  string
 	InstallID types.GitHubAppInstallID
+}
+
+type Policy interface {
+	Query(ctx context.Context, query string, input, output any, options ...opac.QueryOption) error
 }

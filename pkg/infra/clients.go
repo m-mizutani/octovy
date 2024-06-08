@@ -13,6 +13,7 @@ type Clients struct {
 	trivyClient trivy.Client
 	bqClient    interfaces.BigQuery
 	storage     interfaces.Storage
+	policy      interfaces.Policy
 }
 
 type HTTPClient interface {
@@ -49,6 +50,9 @@ func (x *Clients) BigQuery() interfaces.BigQuery {
 func (x *Clients) Storage() interfaces.Storage {
 	return x.storage
 }
+func (x *Clients) Policy() interfaces.Policy {
+	return x.policy
+}
 
 func WithGitHubApp(client interfaces.GitHub) Option {
 	return func(x *Clients) {
@@ -77,5 +81,11 @@ func WithBigQuery(client interfaces.BigQuery) Option {
 func WithStorage(client interfaces.Storage) Option {
 	return func(x *Clients) {
 		x.storage = client
+	}
+}
+
+func WithPolicy(client interfaces.Policy) Option {
+	return func(x *Clients) {
+		x.policy = client
 	}
 }

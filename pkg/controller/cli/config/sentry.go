@@ -19,13 +19,13 @@ func (x *Sentry) Flags() []cli.Flag {
 		&cli.StringFlag{
 			Name:        "sentry-dsn",
 			Usage:       "Sentry DSN for error reporting",
-			EnvVars:     []string{"SWARM_SENTRY_DSN"},
+			EnvVars:     []string{"OCTOVY_SENTRY_DSN"},
 			Destination: &x.dsn,
 		},
 		&cli.StringFlag{
 			Name:        "sentry-env",
 			Usage:       "Sentry environment",
-			EnvVars:     []string{"SWARM_SENTRY_ENV"},
+			EnvVars:     []string{"OCTOVY_SENTRY_ENV"},
 			Destination: &x.env,
 		},
 	}
