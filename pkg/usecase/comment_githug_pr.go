@@ -108,7 +108,13 @@ type scanReportMetadata struct {
 }
 
 //go:embed templates/comment_body.md
-var commentBodyTemplate string
+var commentBodyTemplateData string
+
+var commentBodyTemplate *template.Template
+
+func init() {
+	commentBodyTemplate = template.Must(template.New("commentBody").Parse(commentBodyTemplateData))
+}
 
 func renderScanReport(report *trivy.Report, added, fixed trivy.Results) (string, error) {
 	data := scanReport{
@@ -127,13 +133,8 @@ func renderScanReport(report *trivy.Report, added, fixed trivy.Results) (string,
 		}
 	}
 
-	tmpl, err := template.New("scanReport").Parse(commentBodyTemplate)
-	if err != nil {
-		return "", goerr.Wrap(err, "failed to parse comment body template")
-	}
-
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
+	if err := commentBodyTemplate.Execute(&buf, data); err != nil {
 		return "", goerr.Wrap(err, "failed to render comment body template")
 	}
 

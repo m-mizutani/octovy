@@ -40,7 +40,10 @@ func TestRenderScanReport(t *testing.T) {
 					VulnerabilityID: "CVE-0000-0002",
 					PkgName:         "pkg2",
 					Vulnerability: trivy.Vulnerability{
-						Title: "Vuln title2",
+						Title:       "Vuln title2",
+						Description: "Vuln description2",
+						Severity:    "CRITICAL",
+						References:  []string{"https://example.com"},
 					},
 				},
 			},
