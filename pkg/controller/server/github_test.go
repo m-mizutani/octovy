@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	_ "embed"
@@ -24,6 +25,9 @@ var testGitHubPullRequestOpened []byte
 //go:embed testdata/github/pull_request.synchronize.json
 var testGitHubPullRequestSynchronize []byte
 
+//go:embed testdata/github/pull_request.synchronize-draft.json
+var testGitHubPullRequestSynchronizeDraft []byte
+
 //go:embed testdata/github/push.json
 var testGitHubPush []byte
 
@@ -33,121 +37,165 @@ var testGitHubPushDefault []byte
 func TestGitHubPullRequestSync(t *testing.T) {
 	const secret = "dummy"
 
-	testCases := map[string]struct {
+	type testCase struct {
+		input *model.ScanGitHubRepoInput
 		event string
 		body  []byte
-		input usecase.ScanGitHubRepoInput
-	}{
-		"pull_request.opened": {
-			event: "pull_request",
-			body:  testGitHubPullRequestOpened,
-			input: usecase.ScanGitHubRepoInput{
-				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: model.GitHubCommit{
-						GitHubRepo: model.GitHubRepo{
-							RepoID:   581995051,
-							Owner:    "m-mizutani",
-							RepoName: "masq",
-						},
-						CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
-					},
-					PullRequestID:   13,
-					Branch:          "update/packages/20230918",
-					BaseCommitID:    "8acdc26c9f12b9cc88e5f0b23f082f648d9e5645",
-					IsDefaultBranch: false,
-				},
-				InstallID: 41633205,
-			},
-		},
-		"pull_request.synchronize": {
-			event: "pull_request",
-			body:  testGitHubPullRequestSynchronize,
-			input: usecase.ScanGitHubRepoInput{
-				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: model.GitHubCommit{
-						GitHubRepo: model.GitHubRepo{
-							RepoID:   359010704,
-							Owner:    "m-mizutani",
-							RepoName: "octovy",
-						},
-						CommitID: "69454c171c2f0f2dbc9ccb0c9ef9b72fd769f046",
-					},
-					PullRequestID:   89,
-					Branch:          "release/v0.2.0",
-					BaseCommitID:    "bca5ddd2023d5c906a0420492deb2ede8d99eb79",
-					IsDefaultBranch: false,
-				},
-				InstallID: 41633205,
-			},
-		},
-
-		"push": {
-			event: "push",
-			body:  testGitHubPush,
-			input: usecase.ScanGitHubRepoInput{
-				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: model.GitHubCommit{
-						GitHubRepo: model.GitHubRepo{
-							RepoID:   581995051,
-							Owner:    "m-mizutani",
-							RepoName: "masq",
-						},
-						CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
-					},
-					PullRequestID:   0,
-					Branch:          "update/packages/20230918",
-					BaseCommitID:    "0000000000000000000000000000000000000000",
-					IsDefaultBranch: false,
-				},
-				InstallID: 41633205,
-			},
-		},
-		"push: to default": {
-			event: "push",
-			body:  testGitHubPushDefault,
-			input: usecase.ScanGitHubRepoInput{
-				GitHubRepoMetadata: usecase.GitHubRepoMetadata{
-					GitHubCommit: model.GitHubCommit{
-						GitHubRepo: model.GitHubRepo{
-							RepoID:   281879096,
-							Owner:    "m-mizutani",
-							RepoName: "ops",
-						},
-						CommitID: "f58ae7668c3dfc193a1d2c0372cc52847613cde4",
-					},
-					PullRequestID:   0,
-					Branch:          "master",
-					BaseCommitID:    "987e1005c2e3c79631b620c4a76afd4b8111b7b1",
-					IsDefaultBranch: true,
-				},
-				InstallID: 41633205,
-			},
-		},
 	}
 
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
+	runTest := func(tc testCase) func(t *testing.T) {
+		return func(t *testing.T) {
 			var called int
 			mock := &usecase.Mock{
-				MockScanGitHubRepo: func(ctx *model.Context, input *usecase.ScanGitHubRepoInput) error {
+				MockScanGitHubRepo: func(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 					called++
-					gt.V(t, input).Equal(&tc.input)
+					gt.V(t, input).Equal(tc.input)
 					return nil
 				},
 			}
 
-			serv := server.New(mock, secret)
+			serv := server.New(mock, server.WithGitHubSecret(secret))
 			req := newGitHubWebhookRequest(t, tc.event, tc.body, secret)
 			w := httptest.NewRecorder()
 			serv.Mux().ServeHTTP(w, req)
 			gt.V(t, w.Code).Equal(http.StatusOK)
-			gt.V(t, called).Equal(1)
-		})
+			if tc.input != nil {
+				gt.V(t, called).Equal(1)
+			} else {
+				gt.V(t, called).Equal(0)
+			}
+		}
 	}
+
+	t.Run("pull_request.opened", runTest(testCase{
+		event: "pull_request",
+		body:  testGitHubPullRequestOpened,
+		input: &model.ScanGitHubRepoInput{
+			GitHubMetadata: model.GitHubMetadata{
+				GitHubCommit: model.GitHubCommit{
+					GitHubRepo: model.GitHubRepo{
+						RepoID:   581995051,
+						Owner:    "m-mizutani",
+						RepoName: "masq",
+					},
+					Ref:      "update/packages/20230918",
+					Branch:   "update/packages/20230918",
+					CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
+					Committer: model.GitHubUser{
+						ID:    605953,
+						Login: "m-mizutani",
+					},
+				},
+				DefaultBranch: "main",
+				PullRequest: &model.GitHubPullRequest{
+					ID:           1518635674,
+					Number:       13,
+					BaseBranch:   "main",
+					BaseCommitID: "8acdc26c9f12b9cc88e5f0b23f082f648d9e5645",
+					User: model.GitHubUser{
+						ID:    605953,
+						Login: "m-mizutani",
+					},
+				},
+			},
+			InstallID: 41633205,
+		},
+	}))
+
+	t.Run("pull_request.synchronize", runTest(testCase{
+		event: "pull_request",
+		body:  testGitHubPullRequestSynchronize,
+		input: &model.ScanGitHubRepoInput{
+			GitHubMetadata: model.GitHubMetadata{
+				GitHubCommit: model.GitHubCommit{
+					GitHubRepo: model.GitHubRepo{
+						RepoID:   359010704,
+						Owner:    "m-mizutani",
+						RepoName: "octovy",
+					},
+					Ref:      "release/v0.2.0",
+					Branch:   "release/v0.2.0",
+					CommitID: "69454c171c2f0f2dbc9ccb0c9ef9b72fd769f046",
+					Committer: model.GitHubUser{
+						ID:    605953,
+						Login: "m-mizutani",
+					},
+				},
+				DefaultBranch: "main",
+				PullRequest: &model.GitHubPullRequest{
+					ID:           1473604329,
+					Number:       89,
+					BaseCommitID: "08fb7816c6d0a485239ca5f342342186f972a6e7",
+					BaseBranch:   "main",
+					User: model.GitHubUser{
+						ID:    605953,
+						Login: "m-mizutani",
+					},
+				},
+			},
+			InstallID: 41633205,
+		},
+	}))
+
+	t.Run("pull_request.synchronize: draft", runTest(testCase{
+		event: "pull_request",
+		body:  testGitHubPullRequestSynchronizeDraft,
+		input: nil,
+	}))
+
+	t.Run("push", runTest(testCase{
+		event: "push",
+		body:  testGitHubPush,
+		input: &model.ScanGitHubRepoInput{
+			GitHubMetadata: model.GitHubMetadata{
+				GitHubCommit: model.GitHubCommit{
+					GitHubRepo: model.GitHubRepo{
+						RepoID:   581995051,
+						Owner:    "m-mizutani",
+						RepoName: "masq",
+					},
+					CommitID: "aa0378cad00d375c1897c1b5b5a4dd125984b511",
+					Ref:      "refs/heads/update/packages/20230918",
+					Branch:   "update/packages/20230918",
+					Committer: model.GitHubUser{
+						Login: "m-mizutani",
+						Email: "mizutani@hey.com",
+					},
+				},
+				DefaultBranch: "main",
+			},
+			InstallID: 41633205,
+		},
+	}))
+
+	t.Run("push: to default", runTest(testCase{
+		event: "push",
+		body:  testGitHubPushDefault,
+		input: &model.ScanGitHubRepoInput{
+			GitHubMetadata: model.GitHubMetadata{
+				GitHubCommit: model.GitHubCommit{
+					GitHubRepo: model.GitHubRepo{
+						RepoID:   281879096,
+						Owner:    "m-mizutani",
+						RepoName: "ops",
+					},
+					CommitID: "f58ae7668c3dfc193a1d2c0372cc52847613cde4",
+					Ref:      "refs/heads/master",
+					Branch:   "master",
+					Committer: model.GitHubUser{
+						Login: "m-mizutani",
+						Email: "mizutani@hey.com",
+					},
+				},
+				DefaultBranch: "master",
+			},
+			InstallID: 41633205,
+		},
+	}))
 }
 
 func newGitHubWebhookRequest(t *testing.T, event string, body []byte, secret types.GitHubAppSecret) *http.Request {
-	req := gt.R1(http.NewRequest(http.MethodPost, "/webhook/github", bytes.NewReader(body))).NoError(t)
+	req := gt.R1(http.NewRequest(http.MethodPost, "/webhook/github/app", bytes.NewReader(body))).NoError(t)
 
 	h := hmac.New(sha256.New, []byte(secret))
 	h.Write(body)

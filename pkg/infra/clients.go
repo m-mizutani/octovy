@@ -1,18 +1,19 @@
 package infra
 
 import (
-	"database/sql"
 	"net/http"
 
-	gh "github.com/m-mizutani/octovy/pkg/infra/gh"
+	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 )
 
 type Clients struct {
-	githubApp   gh.Client
+	githubApp   interfaces.GitHub
 	httpClient  HTTPClient
 	trivyClient trivy.Client
-	dbClient    *sql.DB
+	bqClient    interfaces.BigQuery
+	storage     interfaces.Storage
+	policy      interfaces.Policy
 }
 
 type HTTPClient interface {
@@ -34,7 +35,7 @@ func New(options ...Option) *Clients {
 	return client
 }
 
-func (x *Clients) GitHubApp() gh.Client {
+func (x *Clients) GitHubApp() interfaces.GitHub {
 	return x.githubApp
 }
 func (x *Clients) HTTPClient() HTTPClient {
@@ -43,11 +44,17 @@ func (x *Clients) HTTPClient() HTTPClient {
 func (x *Clients) Trivy() trivy.Client {
 	return x.trivyClient
 }
-func (x *Clients) DB() *sql.DB {
-	return x.dbClient
+func (x *Clients) BigQuery() interfaces.BigQuery {
+	return x.bqClient
+}
+func (x *Clients) Storage() interfaces.Storage {
+	return x.storage
+}
+func (x *Clients) Policy() interfaces.Policy {
+	return x.policy
 }
 
-func WithGitHubApp(client gh.Client) Option {
+func WithGitHubApp(client interfaces.GitHub) Option {
 	return func(x *Clients) {
 		x.githubApp = client
 	}
@@ -65,8 +72,20 @@ func WithTrivy(client trivy.Client) Option {
 	}
 }
 
-func WithDB(client *sql.DB) Option {
+func WithBigQuery(client interfaces.BigQuery) Option {
 	return func(x *Clients) {
-		x.dbClient = client
+		x.bqClient = client
+	}
+}
+
+func WithStorage(client interfaces.Storage) Option {
+	return func(x *Clients) {
+		x.storage = client
+	}
+}
+
+func WithPolicy(client interfaces.Policy) Option {
+	return func(x *Clients) {
+		x.policy = client
 	}
 }

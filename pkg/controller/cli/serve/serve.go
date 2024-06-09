@@ -29,10 +29,11 @@ func New() *cli.Command {
 		addr      string
 		trivyPath string
 
-		skipMigration bool
-
-		githubApp config.GitHubApp
-		database  config.DB
+		githubApp    config.GitHubApp
+		bigQuery     config.BigQuery
+		cloudStorage config.CloudStorage
+		sentry       config.Sentry
+		policy       config.Policy
 	)
 	serveFlags := []cli.Flag{
 		&cli.StringFlag{
@@ -49,11 +50,6 @@ func New() *cli.Command {
 			EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 			Destination: &trivyPath,
 		},
-		&cli.BoolFlag{
-			Name:        "skip-migration",
-			Usage:       "Skip database migration",
-			Destination: &skipMigration,
-		},
 	}
 
 	return &cli.Command{
@@ -63,26 +59,24 @@ func New() *cli.Command {
 		Flags: slice.Flatten(
 			serveFlags,
 			githubApp.Flags(),
-			database.Flags(),
+			bigQuery.Flags(),
+			cloudStorage.Flags(),
+			sentry.Flags(),
+			policy.Flags(),
 		),
 		Action: func(c *cli.Context) error {
 			utils.Logger().Info("starting serve",
-				slog.Any("addr", addr),
-				slog.Any("trivyPath", trivyPath),
-				slog.Any("githubApp", githubApp),
-				slog.Any("database", database),
+				slog.Any("Addr", addr),
+				slog.Any("TrivyPath", trivyPath),
+				slog.Any("GitHubApp", githubApp),
+				slog.Any("BigQuery", bigQuery),
+				slog.Any("CloudStorage", cloudStorage),
+				slog.Any("Sentry", sentry),
+				slog.Any("Policy", policy),
 			)
 
-			dbClient, err := database.Connect(c.Context)
-			if err != nil {
-				return goerr.Wrap(err, "failed to open database")
-			}
-			defer utils.SafeClose(dbClient)
-
-			if !skipMigration {
-				if err := database.Migrate(false); err != nil {
-					return err
-				}
+			if err := sentry.Configure(); err != nil {
+				return err
 			}
 
 			ghApp, err := gh.New(githubApp.ID, githubApp.PrivateKey())
@@ -90,13 +84,33 @@ func New() *cli.Command {
 				return err
 			}
 
-			clients := infra.New(
+			infraOptions := []infra.Option{
 				infra.WithGitHubApp(ghApp),
 				infra.WithTrivy(trivy.New(trivyPath)),
-				infra.WithDB(dbClient),
-			)
+			}
+
+			if bqClient, err := bigQuery.NewClient(c.Context); err != nil {
+				return err
+			} else if bqClient != nil {
+				infraOptions = append(infraOptions, infra.WithBigQuery(bqClient))
+			}
+
+			if csClient, err := cloudStorage.NewClient(c.Context); err != nil {
+				return err
+			} else if csClient != nil {
+				infraOptions = append(infraOptions, infra.WithStorage(csClient))
+			}
+
+			if policyClient, err := policy.Configure(); err != nil {
+				return err
+			} else if policyClient != nil {
+				infraOptions = append(infraOptions, infra.WithPolicy(policyClient))
+			}
+
+			clients := infra.New(infraOptions...)
+
 			uc := usecase.New(clients)
-			s := server.New(uc, githubApp.Secret)
+			s := server.New(uc, server.WithGitHubSecret(githubApp.Secret))
 
 			serverErr := make(chan error, 1)
 			httpServer := &http.Server{

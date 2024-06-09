@@ -1,17 +1,16 @@
 package trivy_test
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/m-mizutani/gt"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/infra/trivy"
 
-	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
-	ttypes "github.com/aquasecurity/trivy/pkg/types"
+	trivy_model "github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 )
 
 func Test(t *testing.T) {
@@ -27,7 +26,7 @@ func Test(t *testing.T) {
 	gt.NoError(t, tmp.Close())
 
 	client := trivy.New(path)
-	ctx := model.NewContext()
+	ctx := context.Background()
 	gt.NoError(t, client.Run(ctx, []string{
 		"fs",
 		target,
@@ -36,13 +35,17 @@ func Test(t *testing.T) {
 		"--list-all-pkgs",
 	}))
 
-	var report ttypes.Report
+	var report trivy_model.Report
 	body := gt.R1(os.ReadFile(tmp.Name())).NoError(t)
 	gt.NoError(t, json.Unmarshal(body, &report))
 	gt.V(t, report.SchemaVersion).Equal(2)
-	gt.A(t, report.Results).Length(1).At(0, func(t testing.TB, v ttypes.Result) {
-		gt.A(t, v.Packages).Any(func(v ftypes.Package) bool {
-			return v.Name == "github.com/m-mizutani/goerr"
-		})
+	gt.A(t, report.Results).Longer(0).Any(func(v trivy_model.Result) bool {
+		if v.Target == "go.mod" {
+			gt.A(t, v.Packages).Any(func(v trivy_model.Package) bool {
+				return v.Name == "github.com/m-mizutani/goerr"
+			})
+		}
+
+		return v.Target == "go.mod"
 	})
 }

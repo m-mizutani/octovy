@@ -1,13 +1,20 @@
 package types
 
-import "github.com/m-mizutani/goerr"
+import "errors"
 
 var (
-	ErrInvalidOption = goerr.New("invalid option")
+	// ErrInvalidOption is an error that indicates an invalid option is given by user via CLI or configuration
+	ErrInvalidOption = errors.New("invalid option")
 
-	ErrInvalidRequest = goerr.New("invalid request")
+	// ErrInvalidRequest is an error that indicates an invalid HTTP request
+	ErrInvalidRequest = errors.New("invalid request")
 
-	ErrInvalidGitHubData = goerr.New("invalid GitHub data")
+	// ErrInvalidResponse is an error that indicates a failure in data consistency in the application
+	ErrValidationFailed = errors.New("validation failed")
 
-	ErrLogicError = goerr.New("logic error")
+	// ErrInvalidGitHubData is an error that indicates an invalid data provided by GitHub. Mainly used in GitHub API response
+	ErrInvalidGitHubData = errors.New("invalid GitHub data")
+
+	// ErrLogicError is an error that indicates a logic error in the application
+	ErrLogicError = errors.New("logic error")
 )

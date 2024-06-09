@@ -45,7 +45,7 @@
     "requested_teams": [],
     "labels": [],
     "milestone": null,
-    "draft": true,
+    "draft": false,
     "commits_url": "https://api.github.com/repos/m-mizutani/octovy/pulls/89/commits",
     "review_comments_url": "https://api.github.com/repos/m-mizutani/octovy/pulls/89/comments",
     "review_comment_url": "https://api.github.com/repos/m-mizutani/octovy/pulls/comments{/number}",

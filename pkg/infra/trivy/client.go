@@ -2,14 +2,15 @@ package trivy
 
 import (
 	"bytes"
+	"context"
 	"os/exec"
 
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
 type Client interface {
-	Run(ctx *model.Context, args []string) error
+	Run(ctx context.Context, args []string) error
 }
 
 type clientImpl struct {
@@ -22,7 +23,10 @@ func New(path string) Client {
 	}
 }
 
-func (x *clientImpl) Run(ctx *model.Context, args []string) error {
+func (x *clientImpl) Run(ctx context.Context, args []string) error {
+	// Why: The arguments are not from user input
+	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	// #nosec: G204
 	cmd := exec.CommandContext(ctx, x.path, args...)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -30,7 +34,7 @@ func (x *clientImpl) Run(ctx *model.Context, args []string) error {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		ctx.Logger().With("stderr", stderr.String()).With("stdout", stdout.String()).Error("trivy failed")
+		utils.CtxLogger(ctx).With("stderr", stderr.String()).With("stdout", stdout.String()).Error("trivy failed")
 		return goerr.Wrap(err, "executing trivy").
 			With("stderr", stderr.String()).
 			With("stdout", stdout.String())

@@ -7,7 +7,6 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/utils"
 )
 
@@ -15,10 +14,7 @@ func preProcess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := utils.Logger().With(slog.String("request_id", uuid.NewString()))
 
-		ctx := model.NewContext(
-			model.WithLogger(logger),
-			model.WithBase(r.Context()),
-		)
+		ctx := utils.CtxWithLogger(r.Context(), logger)
 
 		lw := &statusCodeLogger{ResponseWriter: w}
 

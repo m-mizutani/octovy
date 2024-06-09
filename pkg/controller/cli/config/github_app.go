@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/base64"
+	"log/slog"
 
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/urfave/cli/v2"
@@ -24,20 +25,19 @@ func (x *GitHubApp) Flags() []cli.Flag {
 			Required:    true,
 		},
 		&cli.StringFlag{
-			Name:        "github-app-secret",
-			Usage:       "GitHub App Secret",
-			Category:    "GitHub App",
-			Destination: (*string)(&x.Secret),
-			EnvVars:     []string{"OCTOVY_GITHUB_APP_SECRET"},
-			Required:    true,
-		},
-		&cli.StringFlag{
 			Name:        "github-app-private-key",
 			Usage:       "GitHub App Private Key",
 			Category:    "GitHub App",
 			Destination: (*string)(&x.privateKey),
 			EnvVars:     []string{"OCTOVY_GITHUB_APP_PRIVATE_KEY"},
 			Required:    true,
+		},
+		&cli.StringFlag{
+			Name:        "github-app-secret",
+			Usage:       "GitHub App Webhook Secret",
+			Category:    "GitHub App",
+			Destination: (*string)(&x.Secret),
+			EnvVars:     []string{"OCTOVY_GITHUB_APP_SECRET"},
 		},
 	}
 }
@@ -47,4 +47,12 @@ func (x *GitHubApp) PrivateKey() types.GitHubAppPrivateKey {
 		return types.GitHubAppPrivateKey(raw)
 	}
 	return x.privateKey
+}
+
+func (x *GitHubApp) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("ID", x.ID),
+		slog.Any("Secret.len", len(x.Secret)),
+		slog.Any("PrivateKey.len", len(x.privateKey)),
+	)
 }
