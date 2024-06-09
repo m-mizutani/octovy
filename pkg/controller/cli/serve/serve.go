@@ -29,8 +29,6 @@ func New() *cli.Command {
 		addr      string
 		trivyPath string
 
-		skipMigration bool
-
 		githubApp    config.GitHubApp
 		bigQuery     config.BigQuery
 		cloudStorage config.CloudStorage
@@ -51,11 +49,6 @@ func New() *cli.Command {
 			Value:       "trivy",
 			EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 			Destination: &trivyPath,
-		},
-		&cli.BoolFlag{
-			Name:        "skip-migration",
-			Usage:       "Skip database migration",
-			Destination: &skipMigration,
 		},
 	}
 

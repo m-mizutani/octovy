@@ -1,8 +1,15 @@
 # Octovy
 
-Octovy is a GitHub application designed to identify and alert you to any dependencies in your repository that could be potentially vulnerable. It uses [trivy](https://github.com/aquasecurity/trivy) for detection and then stores the results in a database for your reference.
+Octovy is a GitHub App that scans your repository's code for potentially vulnerable dependencies. It utilizes [trivy](https://github.com/aquasecurity/trivy) to detect software vulnerabilities. When triggered by events like `push` and `pull_request` from GitHub, Octovy scans the repository for dependency vulnerabilities and performs the following actions:
 
-![architecture](https://github.com/m-mizutani/octovy/assets/605953/a58c93e1-cfbf-4ff7-9427-1fc385cf7b9c)
+- Adds a comment to the pull request, summarizing the vulnerabilities found
+- Inserts the scan results into BigQuery
+
+![architecture](https://github.com/m-mizutani/octovy/assets/605953/4366161f-a4ff-4abb-9766-0fb4df818cb1)
+
+Octovy adds a comment to the pull request when it detects new vulnerabilities between the head of the PR and the merge destination.
+
+<img width="755" alt="comment example" src="https://github.com/m-mizutani/octovy/assets/605953/052a6362-c284-4857-921c-5c3c2f32065b">
 
 ## Setup
 
@@ -16,6 +23,7 @@ Start by creating a GitHub App [here](https://github.com/settings/apps). You can
 
 - **Permissions & events**
   - Repository Permissions
+    - **Checks**: Set to Read & Write
     - **Contents**: Set to Read-only
     - **Metadata**: Set to Read-only
     - **Pull Requests**: Set to Read & Write
@@ -23,22 +31,15 @@ Start by creating a GitHub App [here](https://github.com/settings/apps). You can
     - **Pull request**
     - **Push**
 
-Once complete, note down the following information from the **General** section for later:
+Once you have completed the setup, make sure to take note of the following information from the **General** section for future reference:
 
 - **App ID** (e.g. `123456`)
 - **Private Key**: Click `Generate a private key` and download the key file (e.g. `your-app-name.2023-08-14.private-key.pem`)
 
-### 2. Setting Up the Database
+### 2. Setting Up Cloud Resources
 
-Octovy requires a PostgreSQL database. You can use any PostgreSQL instance you like, but we recommend cloud-based database services such as [Google Cloud SQL](https://cloud.google.com/sql) or [Amazon RDS](https://aws.amazon.com/rds/).
-
-For database migration, [sqldef](https://github.com/k0kubun/sqldef) is recommended. After installing sqldef, you can migrate your database schema using the command below. Be sure to replace the placeholders with your actual database information.
-
-```bash
-# NOTICE: Be careful not to save the password to shell history
-$ export PGPASSWORD=[db_password]
-$ psqldef -U [db_user] -p [db_port] -h [db_host] -f database/schema.sql [db_name]
-```
+- **Cloud Storage**: Create a Cloud Storage bucket dedicated to storing the scan results exclusively for Octovy's use.
+- **BigQuery** (Optional): Create a BigQuery dataset and table for storing the scan results. Octovy will automatically update the schema. The default table name should be `scans`.
 
 ### 3. Deploying Octovy
 
@@ -46,21 +47,22 @@ The recommended method of deploying Octovy is via a container image, available a
 
 To run Octovy, set the following environment variables:
 
-- GitHub App
-  - `OCTOVY_GITHUB_APP_ID`: App ID of your GitHub App
-  - `OCTOVY_GITHUB_APP_PRIVATE_KEY`: Private key of your GitHub App
-  - `OCTOVY_GITHUB_SECRET`: Webhook secret of your GitHub App
-- Network
-  - `OCTOVY_ADDR`: Listening address (e.g. `0.0.0.0:8080`)
-- Database
-  - `OCTOVY_DB_HOST`: Hostname of your PostgreSQL database
-  - `OCTOVY_DB_PORT`: Port number of your PostgreSQL database
-  - `OCTOVY_DB_USER`: Username of your PostgreSQL database
-  - `OCTOVY_DB_PASSWORD`: Password of your PostgreSQL database
-  - `OCTOVY_DB_NAME`: Database name of your PostgreSQL database
-- Logging
-  - `OCTOVY_LOG_LEVEL`: Log level (e.g. `debug`, `info`, `warn`, `error`)
-  - `OCTOVY_LOG_FORMAT`: Log format, recommend to use `json`
+#### Required Environment Variables
+- `OCTOVY_ADDR`: The address to bind the server to (e.g. `:8080`)
+- `OCTOVY_GITHUB_APP_ID`: The GitHub App ID
+- `OCTOVY_GITHUB_APP_PRIVATE_KEY`: The path to the private key file
+- `OCTOVY_GITHUB_APP_SECRET`: The secret string used to verify the webhook request from GitHub
+- `OCTOVY_CLOUD_STORAGE_BUCKET`: The name of the Cloud Storage bucket
+
+#### Optional Environment Variables
+- `OCTOVY_TRIVY_PATH`: The path to the trivy binary. If you uses the our container image, you don't need to set this variable.
+- `OCTOVY_CLOUD_STORAGE_PREFIX`: The prefix for the Cloud Storage object
+- `OCTOVY_BIGQUERY_PROJECT_ID`: The name of the BigQuery dataset
+- `OCTOVY_BIGQUERY_DATASET_ID`: The name of the BigQuery table
+- `OCTOVY_BIGQUERY_TABLE_ID`: The name of the BigQuery table
+- `OCTOVY_BIGQUERY_IMPERSONATE_SERVICE_ACCOUNT`: The service account to impersonate when accessing BigQuery
+- `OCTOVY_SENTRY_DSN`: The DSN for Sentry
+- `OCTOVY_SENTRY_ENV`: The environment for Sentry
 
 ## License
 

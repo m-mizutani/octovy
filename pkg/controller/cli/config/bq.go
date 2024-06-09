@@ -48,7 +48,7 @@ func (x *BigQuery) Flags() []cli.Flag {
 			Name:        "bq-impersonate-service-account",
 			Usage:       "Impersonate service account for BigQuery",
 			Destination: &x.impersonateServiceAccount,
-			EnvVars:     []string{"OVERSEER_BIGQUERY_IMPERSONATE_SERVICE_ACCOUNT"},
+			EnvVars:     []string{"OCTOVY_BIGQUERY_IMPERSONATE_SERVICE_ACCOUNT"},
 		},
 	}
 }
