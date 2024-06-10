@@ -17,6 +17,7 @@ import (
 
 	"github.com/m-mizutani/gt"
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/pkg/domain/mock"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
@@ -33,7 +34,7 @@ var testCodeZip []byte
 var testTrivyResult []byte
 
 func TestScanGitHubRepo(t *testing.T) {
-	mockGH := &interfaces.GitHubMock{}
+	mockGH := &mock.GitHubMock{}
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
 	mockBQ := &bq.Mock{}
@@ -49,7 +50,7 @@ func TestScanGitHubRepo(t *testing.T) {
 
 	ctx := context.Background()
 
-	mockGH.MockGetArchiveURL = func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
+	mockGH.GetArchiveURLFunc = func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
 		gt.V(t, input.Owner).Equal("m-mizutani")
 		gt.V(t, input.Repo).Equal("octovy")
 		gt.V(t, input.CommitID).Equal("f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca")
@@ -58,10 +59,10 @@ func TestScanGitHubRepo(t *testing.T) {
 		resp := gt.R1(url.Parse("https://example.com/some/url.zip")).NoError(t)
 		return resp, nil
 	}
-	mockGH.MockCreateCheckRun = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
+	mockGH.CreateCheckRunFunc = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
 		return 0, nil
 	}
-	mockGH.MockUpdateCheckRun = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+	mockGH.UpdateCheckRunFunc = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
 		return nil
 	}
 
@@ -187,7 +188,7 @@ func TestScanGitHubRepoWithData(t *testing.T) {
 }
 
 func TestScanGitHubRepoWithPR(t *testing.T) {
-	mockGH := &interfaces.GitHubMock{}
+	mockGH := &mock.GitHubMock{}
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
 	mockBQ := &bq.Mock{}
@@ -237,27 +238,27 @@ func TestScanGitHubRepoWithPR(t *testing.T) {
 		return nil
 	}
 
-	mockGH.MockGetArchiveURL = func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
+	mockGH.GetArchiveURLFunc = func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
 		u := gt.R1(url.Parse("https://example.com/some/url.zip")).NoError(t)
 		return u, nil
 	}
 	var calledMockListIssueComments int
-	mockGH.MockListIssueComments = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
+	mockGH.ListIssueCommentsFunc = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
 		calledMockListIssueComments++
 		return nil, nil
 	}
 	var calledMockCreateIssueComment int
-	mockGH.MockCreateIssueComment = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int, body string) error {
+	mockGH.CreateIssueCommentFunc = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int, body string) error {
 		calledMockCreateIssueComment++
 		return nil
 	}
 	var calledMockGHCreateCheckRun int
-	mockGH.MockCreateCheckRun = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
+	mockGH.CreateCheckRunFunc = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
 		calledMockGHCreateCheckRun++
 		return 5, nil
 	}
 	var calledMockGHUpdateCheckRun int
-	mockGH.MockUpdateCheckRun = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+	mockGH.UpdateCheckRunFunc = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
 		gt.Equal(t, checkID, 5)
 		gt.Equal(t, *opt.Status, "completed")
 		gt.Equal(t, *opt.Conclusion, "success")
