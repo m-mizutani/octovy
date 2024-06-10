@@ -57,11 +57,24 @@
 {{ if ne .Metadata.TotalVulnCount 0 }}
 ## ⚠️ All detected vulnerabilities
 {{ range .Report.Results }}
+
+{{ if gt (len .Vulnerabilities) 0 }}
 <details>
 <summary>{{ .Target }}: ({{ .Vulnerabilities | len }})</summary>
 
 {{ range .Vulnerabilities }}- {{ .VulnerabilityID }}: ( `{{ .PkgName }}` ) {{ .Title }}
 {{ end }}
 </details>
+{{ end }}
+
+{{ if gt (len .Secrets) 0 }}
+<details>
+<summary>{{ .Target }}: ({{ .Secrets | len }})</summary>
+
+{{ range .Secrets }}- `{{ .RuleID }}`: {{ .Title }} ({{ .StartLine }}L-{{ .EndLine }}L)
+{{ end }}
+</details>
+{{ end }}
+
 {{ end }}
 {{ end }}
