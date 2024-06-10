@@ -31,6 +31,11 @@ func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRe
 		return goerr.New("Storage client is not configured")
 	}
 
+	// Do not comment if there is no scan target in the repository
+	if len(report.Results) == 0 {
+		return nil
+	}
+
 	var added, fixed trivy.Results
 	target := model.GitHubMetadata{
 		GitHubCommit: model.GitHubCommit{

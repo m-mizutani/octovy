@@ -7,6 +7,7 @@ import (
 
 	"github.com/m-mizutani/gt"
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
+	"github.com/m-mizutani/octovy/pkg/domain/mock"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
@@ -85,8 +86,42 @@ func TestRenderScanReport(t *testing.T) {
 	gt.NoError(t, os.WriteFile("templates/test_comment_body.md", []byte(body), 0644))
 }
 
+func TestIgnoreIfNoResults(t *testing.T) {
+	report := trivy.Report{
+		SchemaVersion: 1,
+		ArtifactName:  "test",
+	}
+
+	csMock := interfaces.StorageMock{}
+	ghMock := mock.GitHubMock{}
+	uc := usecase.New(infra.New(
+		infra.WithGitHubApp(&ghMock),
+		infra.WithStorage(&csMock),
+	))
+	input := &model.ScanGitHubRepoInput{
+		GitHubMetadata: model.GitHubMetadata{
+			GitHubCommit: model.GitHubCommit{
+				GitHubRepo: model.GitHubRepo{
+					Owner:    "blue",
+					RepoName: "magic",
+					RepoID:   12345,
+				},
+				Committer: model.GitHubUser{Login: "octovy-bot"},
+				CommitID:  "9b7cea90596429d5b1243caecc15b1f79598cb85",
+				Branch:    "main",
+				Ref:       "refs/pull/123/merge",
+			},
+			PullRequest: &model.GitHubPullRequest{Number: 123},
+		},
+		InstallID: 12345,
+	}
+
+	ctx := context.Background()
+	gt.NoError(t, uc.CommentGitHubPR(ctx, input, &report))
+}
+
 func TestHideGitHubOldComments(t *testing.T) {
-	mockGH := &interfaces.GitHubMock{}
+	mockGH := &mock.GitHubMock{}
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
@@ -99,12 +134,12 @@ func TestHideGitHubOldComments(t *testing.T) {
 
 	runTest := func(tc testCase) func(t *testing.T) {
 		return func(t *testing.T) {
-			mockGH.MockListIssueComments = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
+			mockGH.ListIssueCommentsFunc = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
 				return tc.comments, nil
 			}
 
 			var minimized []string
-			mockGH.MockMinimizeComment = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, subjectID string) error {
+			mockGH.MinimizeCommentFunc = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, subjectID string) error {
 				minimized = append(minimized, subjectID)
 				return nil
 			}
