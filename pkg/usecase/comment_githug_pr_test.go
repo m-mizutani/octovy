@@ -30,6 +30,19 @@ func TestRenderScanReport(t *testing.T) {
 					{VulnerabilityID: "CVE-0000-0003", PkgName: "pkg4", Vulnerability: trivy.Vulnerability{Title: "Vuln title3", Severity: "CRITICAL"}},
 				},
 			},
+			{
+				Target: "target3",
+				Secrets: []trivy.SecretFinding{
+					{
+						RuleID:    "slack-web-hook",
+						Category:  "Slack",
+						Severity:  "HIGH",
+						Title:     "Slack Web Hook",
+						StartLine: 14,
+						EndLine:   15,
+					},
+				},
+			},
 		},
 	}
 	added := trivy.Results{
