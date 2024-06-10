@@ -52,6 +52,11 @@ func refToBranch(v string) string {
 func githubEventToScanInput(event interface{}) *model.ScanGitHubRepoInput {
 	switch ev := event.(type) {
 	case *github.PushEvent:
+		if ev.HeadCommit == nil || ev.HeadCommit.ID == nil {
+			utils.Logger().Warn("ignore push event without head commit", slog.Any("event", ev))
+			return nil
+		}
+
 		return &model.ScanGitHubRepoInput{
 			GitHubMetadata: model.GitHubMetadata{
 				GitHubCommit: model.GitHubCommit{
