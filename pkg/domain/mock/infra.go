@@ -4,6 +4,7 @@
 package mock
 
 import (
+	"cloud.google.com/go/bigquery"
 	"context"
 	"github.com/google/go-github/v53/github"
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
@@ -404,5 +405,257 @@ func (mock *GitHubMock) UpdateCheckRunCalls() []struct {
 	mock.lockUpdateCheckRun.RLock()
 	calls = mock.calls.UpdateCheckRun
 	mock.lockUpdateCheckRun.RUnlock()
+	return calls
+}
+
+// Ensure, that BigQueryMock does implement interfaces.BigQuery.
+// If this is not the case, regenerate this file with moq.
+var _ interfaces.BigQuery = &BigQueryMock{}
+
+// BigQueryMock is a mock implementation of interfaces.BigQuery.
+//
+//	func TestSomethingThatUsesBigQuery(t *testing.T) {
+//
+//		// make and configure a mocked interfaces.BigQuery
+//		mockedBigQuery := &BigQueryMock{
+//			CreateTableFunc: func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
+//				panic("mock out the CreateTable method")
+//			},
+//			GetMetadataFunc: func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
+//				panic("mock out the GetMetadata method")
+//			},
+//			InsertFunc: func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
+//				panic("mock out the Insert method")
+//			},
+//			UpdateTableFunc: func(ctx context.Context, table types.BQTableID, md bigquery.TableMetadataToUpdate, eTag string) error {
+//				panic("mock out the UpdateTable method")
+//			},
+//		}
+//
+//		// use mockedBigQuery in code that requires interfaces.BigQuery
+//		// and then make assertions.
+//
+//	}
+type BigQueryMock struct {
+	// CreateTableFunc mocks the CreateTable method.
+	CreateTableFunc func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error
+
+	// GetMetadataFunc mocks the GetMetadata method.
+	GetMetadataFunc func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error)
+
+	// InsertFunc mocks the Insert method.
+	InsertFunc func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error
+
+	// UpdateTableFunc mocks the UpdateTable method.
+	UpdateTableFunc func(ctx context.Context, table types.BQTableID, md bigquery.TableMetadataToUpdate, eTag string) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// CreateTable holds details about calls to the CreateTable method.
+		CreateTable []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Table is the table argument value.
+			Table types.BQTableID
+			// Md is the md argument value.
+			Md *bigquery.TableMetadata
+		}
+		// GetMetadata holds details about calls to the GetMetadata method.
+		GetMetadata []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Table is the table argument value.
+			Table types.BQTableID
+		}
+		// Insert holds details about calls to the Insert method.
+		Insert []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// TableID is the tableID argument value.
+			TableID types.BQTableID
+			// Schema is the schema argument value.
+			Schema bigquery.Schema
+			// Data is the data argument value.
+			Data any
+		}
+		// UpdateTable holds details about calls to the UpdateTable method.
+		UpdateTable []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Table is the table argument value.
+			Table types.BQTableID
+			// Md is the md argument value.
+			Md bigquery.TableMetadataToUpdate
+			// ETag is the eTag argument value.
+			ETag string
+		}
+	}
+	lockCreateTable sync.RWMutex
+	lockGetMetadata sync.RWMutex
+	lockInsert      sync.RWMutex
+	lockUpdateTable sync.RWMutex
+}
+
+// CreateTable calls CreateTableFunc.
+func (mock *BigQueryMock) CreateTable(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
+	if mock.CreateTableFunc == nil {
+		panic("BigQueryMock.CreateTableFunc: method is nil but BigQuery.CreateTable was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Table types.BQTableID
+		Md    *bigquery.TableMetadata
+	}{
+		Ctx:   ctx,
+		Table: table,
+		Md:    md,
+	}
+	mock.lockCreateTable.Lock()
+	mock.calls.CreateTable = append(mock.calls.CreateTable, callInfo)
+	mock.lockCreateTable.Unlock()
+	return mock.CreateTableFunc(ctx, table, md)
+}
+
+// CreateTableCalls gets all the calls that were made to CreateTable.
+// Check the length with:
+//
+//	len(mockedBigQuery.CreateTableCalls())
+func (mock *BigQueryMock) CreateTableCalls() []struct {
+	Ctx   context.Context
+	Table types.BQTableID
+	Md    *bigquery.TableMetadata
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Table types.BQTableID
+		Md    *bigquery.TableMetadata
+	}
+	mock.lockCreateTable.RLock()
+	calls = mock.calls.CreateTable
+	mock.lockCreateTable.RUnlock()
+	return calls
+}
+
+// GetMetadata calls GetMetadataFunc.
+func (mock *BigQueryMock) GetMetadata(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
+	if mock.GetMetadataFunc == nil {
+		panic("BigQueryMock.GetMetadataFunc: method is nil but BigQuery.GetMetadata was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Table types.BQTableID
+	}{
+		Ctx:   ctx,
+		Table: table,
+	}
+	mock.lockGetMetadata.Lock()
+	mock.calls.GetMetadata = append(mock.calls.GetMetadata, callInfo)
+	mock.lockGetMetadata.Unlock()
+	return mock.GetMetadataFunc(ctx, table)
+}
+
+// GetMetadataCalls gets all the calls that were made to GetMetadata.
+// Check the length with:
+//
+//	len(mockedBigQuery.GetMetadataCalls())
+func (mock *BigQueryMock) GetMetadataCalls() []struct {
+	Ctx   context.Context
+	Table types.BQTableID
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Table types.BQTableID
+	}
+	mock.lockGetMetadata.RLock()
+	calls = mock.calls.GetMetadata
+	mock.lockGetMetadata.RUnlock()
+	return calls
+}
+
+// Insert calls InsertFunc.
+func (mock *BigQueryMock) Insert(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
+	if mock.InsertFunc == nil {
+		panic("BigQueryMock.InsertFunc: method is nil but BigQuery.Insert was just called")
+	}
+	callInfo := struct {
+		Ctx     context.Context
+		TableID types.BQTableID
+		Schema  bigquery.Schema
+		Data    any
+	}{
+		Ctx:     ctx,
+		TableID: tableID,
+		Schema:  schema,
+		Data:    data,
+	}
+	mock.lockInsert.Lock()
+	mock.calls.Insert = append(mock.calls.Insert, callInfo)
+	mock.lockInsert.Unlock()
+	return mock.InsertFunc(ctx, tableID, schema, data)
+}
+
+// InsertCalls gets all the calls that were made to Insert.
+// Check the length with:
+//
+//	len(mockedBigQuery.InsertCalls())
+func (mock *BigQueryMock) InsertCalls() []struct {
+	Ctx     context.Context
+	TableID types.BQTableID
+	Schema  bigquery.Schema
+	Data    any
+} {
+	var calls []struct {
+		Ctx     context.Context
+		TableID types.BQTableID
+		Schema  bigquery.Schema
+		Data    any
+	}
+	mock.lockInsert.RLock()
+	calls = mock.calls.Insert
+	mock.lockInsert.RUnlock()
+	return calls
+}
+
+// UpdateTable calls UpdateTableFunc.
+func (mock *BigQueryMock) UpdateTable(ctx context.Context, table types.BQTableID, md bigquery.TableMetadataToUpdate, eTag string) error {
+	if mock.UpdateTableFunc == nil {
+		panic("BigQueryMock.UpdateTableFunc: method is nil but BigQuery.UpdateTable was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Table types.BQTableID
+		Md    bigquery.TableMetadataToUpdate
+		ETag  string
+	}{
+		Ctx:   ctx,
+		Table: table,
+		Md:    md,
+		ETag:  eTag,
+	}
+	mock.lockUpdateTable.Lock()
+	mock.calls.UpdateTable = append(mock.calls.UpdateTable, callInfo)
+	mock.lockUpdateTable.Unlock()
+	return mock.UpdateTableFunc(ctx, table, md, eTag)
+}
+
+// UpdateTableCalls gets all the calls that were made to UpdateTable.
+// Check the length with:
+//
+//	len(mockedBigQuery.UpdateTableCalls())
+func (mock *BigQueryMock) UpdateTableCalls() []struct {
+	Ctx   context.Context
+	Table types.BQTableID
+	Md    bigquery.TableMetadataToUpdate
+	ETag  string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Table types.BQTableID
+		Md    bigquery.TableMetadataToUpdate
+		ETag  string
+	}
+	mock.lockUpdateTable.RLock()
+	calls = mock.calls.UpdateTable
+	mock.lockUpdateTable.RUnlock()
 	return calls
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
-	"github.com/m-mizutani/octovy/pkg/infra/bq"
 	"github.com/m-mizutani/octovy/pkg/infra/gh"
 	"github.com/m-mizutani/octovy/pkg/usecase"
 	"github.com/m-mizutani/octovy/pkg/utils"
@@ -37,8 +36,8 @@ func TestScanGitHubRepo(t *testing.T) {
 	mockGH := &mock.GitHubMock{}
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
-	mockBQ := &bq.Mock{}
-	mockStorage := interfaces.NewStorageMock()
+	mockBQ := &mock.BigQueryMock{}
+	mockStorage := mock.NewStorageMock()
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
@@ -95,18 +94,18 @@ func TestScanGitHubRepo(t *testing.T) {
 	}
 
 	var calledBQCreateTable int
-	mockBQ.FnCreateTable = func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
+	mockBQ.CreateTableFunc = func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
 		calledBQCreateTable++
 		gt.Equal(t, table, "scans")
 		return nil
 	}
 
-	mockBQ.FnGetMetadata = func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
+	mockBQ.GetMetadataFunc = func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
 		return nil, nil
 	}
 
 	var calledBQInsert int
-	mockBQ.FnInsert = func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
+	mockBQ.InsertFunc = func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
 		calledBQInsert++
 		return nil
 	}
@@ -191,8 +190,8 @@ func TestScanGitHubRepoWithPR(t *testing.T) {
 	mockGH := &mock.GitHubMock{}
 	mockHTTP := &httpMock{}
 	mockTrivy := &trivyMock{}
-	mockBQ := &bq.Mock{}
-	mockStorage := interfaces.NewStorageMock()
+	mockBQ := &mock.BigQueryMock{}
+	mockStorage := mock.NewStorageMock()
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(mockGH),
@@ -225,15 +224,15 @@ func TestScanGitHubRepoWithPR(t *testing.T) {
 	}
 
 	var calledBQCreateTable int
-	mockBQ.FnCreateTable = func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
+	mockBQ.CreateTableFunc = func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
 		calledBQCreateTable++
 		return nil
 	}
-	mockBQ.FnGetMetadata = func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
+	mockBQ.GetMetadataFunc = func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
 		return nil, nil
 	}
 	var calledBQInsert int
-	mockBQ.FnInsert = func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
+	mockBQ.InsertFunc = func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
 		calledBQInsert++
 		return nil
 	}
