@@ -1,4 +1,4 @@
-package interfaces
+package mock
 
 import (
 	"bytes"
@@ -7,13 +7,14 @@ import (
 	"io"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 )
 
 type StorageMock struct {
 	Data map[string][]byte
 }
 
-var _ Storage = (*StorageMock)(nil)
+var _ interfaces.Storage = (*StorageMock)(nil)
 
 func NewStorageMock() *StorageMock {
 	return &StorageMock{

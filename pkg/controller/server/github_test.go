@@ -14,9 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/m-mizutani/gt"
 	"github.com/m-mizutani/octovy/pkg/controller/server"
+	"github.com/m-mizutani/octovy/pkg/domain/mock"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
-	"github.com/m-mizutani/octovy/pkg/usecase"
 )
 
 //go:embed testdata/github/pull_request.opened.json
@@ -45,10 +45,8 @@ func TestGitHubPullRequestSync(t *testing.T) {
 
 	runTest := func(tc testCase) func(t *testing.T) {
 		return func(t *testing.T) {
-			var called int
-			mock := &usecase.Mock{
-				MockScanGitHubRepo: func(ctx context.Context, input *model.ScanGitHubRepoInput) error {
-					called++
+			mock := &mock.UseCaseMock{
+				ScanGitHubRepoFunc: func(ctx context.Context, input *model.ScanGitHubRepoInput) error {
 					gt.V(t, input).Equal(tc.input)
 					return nil
 				},
@@ -60,9 +58,9 @@ func TestGitHubPullRequestSync(t *testing.T) {
 			serv.Mux().ServeHTTP(w, req)
 			gt.V(t, w.Code).Equal(http.StatusOK)
 			if tc.input != nil {
-				gt.V(t, called).Equal(1)
+				gt.A(t, mock.ScanGitHubRepoCalls()).Length(1)
 			} else {
-				gt.V(t, called).Equal(0)
+				gt.A(t, mock.ScanGitHubRepoCalls()).Length(0)
 			}
 		}
 	}
