@@ -87,7 +87,7 @@ func insertCommand() *cli.Command {
 				return goerr.Wrap(err, "failed to parse trivy result data")
 			}
 
-			if err := uc.InsertScanResult(ctx, meta, report); err != nil {
+			if err := uc.InsertScanResult(ctx, meta, report, model.Config{}); err != nil {
 				return goerr.Wrap(err).With("file", filePath)
 			}
 

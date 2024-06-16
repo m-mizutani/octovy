@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/octovy/pkg/domain/logic"
@@ -15,7 +16,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
-func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRepoInput, report *trivy.Report) error {
+func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRepoInput, report *trivy.Report, cfg *model.Config) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -36,6 +37,9 @@ func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRe
 		return nil
 	}
 
+	// Filter report by ignore targets
+	report = logic.FilterReport(report, cfg, time.Now())
+
 	var added, fixed trivy.Results
 	target := model.GitHubMetadata{
 		GitHubCommit: model.GitHubCommit{
@@ -55,7 +59,9 @@ func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRe
 		if err := json.NewDecoder(r).Decode(&oldScan); err != nil {
 			return goerr.Wrap(err, "Failed to decode old scan result")
 		}
-		fixed, added = logic.DiffResults(&oldScan.Report, report)
+
+		oldReport := logic.FilterReport(&oldScan.Report, cfg, time.Now())
+		fixed, added = logic.DiffResults(oldReport, report)
 	}
 
 	body, err := renderScanReport(report, added, fixed)

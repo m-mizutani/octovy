@@ -57,18 +57,23 @@ func (x *UseCase) ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRep
 		return err
 	}
 
+	cfg, err := model.LoadConfigsFromDir(filepath.Join(tmpDir, ".octovy"))
+	if err != nil {
+		return err
+	}
+
 	report, err := x.scanGitHubRepo(ctx, tmpDir)
 	if err != nil {
 		return err
 	}
 	utils.CtxLogger(ctx).Info("scan finished", "input", input, "report", report)
 
-	if err := x.InsertScanResult(ctx, input.GitHubMetadata, *report); err != nil {
+	if err := x.InsertScanResult(ctx, input.GitHubMetadata, *report, *cfg); err != nil {
 		return err
 	}
 
 	if nil != x.clients.Storage() && nil != input.GitHubMetadata.PullRequest {
-		if err := x.CommentGitHubPR(ctx, input, report); err != nil {
+		if err := x.CommentGitHubPR(ctx, input, report, cfg); err != nil {
 			return err
 		}
 	}

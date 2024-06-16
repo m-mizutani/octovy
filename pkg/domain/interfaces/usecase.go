@@ -8,6 +8,6 @@ import (
 )
 
 type UseCase interface {
-	InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report) error
+	InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report, cfg model.Config) error
 	ScanGitHubRepo(ctx context.Context, input *model.ScanGitHubRepoInput) error
 }

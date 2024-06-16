@@ -116,7 +116,7 @@ func TestIgnoreIfNoResults(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	gt.NoError(t, uc.CommentGitHubPR(ctx, input, &report))
+	gt.NoError(t, uc.CommentGitHubPR(ctx, input, &report, &model.Config{}))
 }
 
 func TestHideGitHubOldComments(t *testing.T) {
