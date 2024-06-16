@@ -31,7 +31,7 @@ func TestFilterResults(t *testing.T) {
 				},
 			},
 			cfg: &model.Config{
-				IgnoreTargets: []model.IgnoreTarget{},
+				IgnoreList: []model.IgnoreConfig{},
 			},
 			expected: trivy.Results{
 				{
@@ -55,9 +55,9 @@ func TestFilterResults(t *testing.T) {
 				},
 			},
 			cfg: &model.Config{
-				IgnoreTargets: []model.IgnoreTarget{
+				IgnoreList: []model.IgnoreConfig{
 					{
-						File: "file1",
+						Target: "file1",
 						Vulns: []model.IgnoreVuln{
 							{ID: "vuln1", ExpiresAt: now.Add(-time.Hour)},
 							{ID: "vuln2", ExpiresAt: now.Add(time.Hour)},
@@ -86,9 +86,9 @@ func TestFilterResults(t *testing.T) {
 				},
 			},
 			cfg: &model.Config{
-				IgnoreTargets: []model.IgnoreTarget{
+				IgnoreList: []model.IgnoreConfig{
 					{
-						File: "file1",
+						Target: "file1",
 						Vulns: []model.IgnoreVuln{
 							{ID: "vuln1", ExpiresAt: now.Add(time.Hour)},
 						},
@@ -115,9 +115,9 @@ func TestFilterResults(t *testing.T) {
 				},
 			},
 			cfg: &model.Config{
-				IgnoreTargets: []model.IgnoreTarget{
+				IgnoreList: []model.IgnoreConfig{
 					{
-						File: "file1",
+						Target: "file1",
 						Vulns: []model.IgnoreVuln{
 							{ID: "vuln1", ExpiresAt: now.Add(time.Hour)},
 						},
@@ -144,9 +144,9 @@ func TestFilterResults(t *testing.T) {
 				},
 			},
 			cfg: &model.Config{
-				IgnoreTargets: []model.IgnoreTarget{
+				IgnoreList: []model.IgnoreConfig{
 					{
-						File: "file1",
+						Target: "file1",
 						Vulns: []model.IgnoreVuln{
 							{ID: "vuln1", ExpiresAt: now.Add(time.Hour)},
 						},

@@ -1,8 +1,8 @@
 package octovy
 
-IgnoreTargets: [
+IgnoreList: [
 	{
-		File: "test.data"
+		Target: "test.data"
 		Vulns: [
 			{
 				ID:          "CVE-2017-9999"
@@ -12,7 +12,7 @@ IgnoreTargets: [
 		]
 	},
 	{
-		File: "test2.data"
+		Target: "test2.data"
 		Vulns: [
 			{
 				ID:          "CVE-2017-11423"

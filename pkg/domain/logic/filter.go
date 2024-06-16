@@ -16,16 +16,16 @@ func FilterReport(oldReport *trivy.Report, cfg *model.Config, now time.Time) *tr
 
 func FilterResults(results trivy.Results, cfg *model.Config, now time.Time) trivy.Results {
 	ignoreMap := make(map[string]map[string]struct{})
-	for _, target := range cfg.IgnoreTargets {
-		if _, ok := ignoreMap[target.File]; !ok {
-			ignoreMap[target.File] = make(map[string]struct{})
+	for _, target := range cfg.IgnoreList {
+		if _, ok := ignoreMap[target.Target]; !ok {
+			ignoreMap[target.Target] = make(map[string]struct{})
 		}
 
 		for _, vuln := range target.Vulns {
 			if vuln.ExpiresAt.Before(now) {
 				continue
 			}
-			ignoreMap[target.File][vuln.ID] = struct{}{}
+			ignoreMap[target.Target][vuln.ID] = struct{}{}
 		}
 	}
 

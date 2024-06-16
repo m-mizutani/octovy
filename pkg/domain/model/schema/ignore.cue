@@ -2,8 +2,8 @@ package octovy
 
 import "time"
 
-#IgnoreTarget: {
-	File: string
+#IgnoreConfig: {
+	Target: string
 	Vulns: [...#IgnoreVuln] @go(,[]IgnoreVuln)
 }
 
@@ -13,4 +13,4 @@ import "time"
 	ExpiresAt:    time.Time
 }
 
-IgnoreTargets?: [...#IgnoreTarget]
+IgnoreList?: [...#IgnoreConfig]

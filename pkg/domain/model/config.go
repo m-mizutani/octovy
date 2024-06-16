@@ -11,18 +11,18 @@ import (
 )
 
 type Config struct {
-	IgnoreTargets []IgnoreTarget
+	IgnoreList []IgnoreConfig
 }
 
 //go:embed schema/ignore.cue
 var ignoreCue []byte
 
-type IgnoreTarget struct {
-	File  string
-	Vulns []IgnoreVuln
+type IgnoreConfig struct {
+	Target string
+	Vulns  []IgnoreVuln
 }
 
-func (x *IgnoreTarget) Validate() error {
+func (x *IgnoreConfig) Validate() error {
 	for _, v := range x.Vulns {
 		if err := v.Validate(); err != nil {
 			return err
