@@ -12,7 +12,7 @@ import (
 var testConfigIgnoreCue []byte
 
 func TestIgnoreConfig(t *testing.T) {
-	cfg, err := model.LoadConfig(testConfigIgnoreCue)
+	cfg, err := model.BuildConfig(testConfigIgnoreCue)
 	gt.NoError(t, err)
 	gt.A(t, cfg.IgnoreTargets).Length(2).
 		At(0, func(t testing.TB, v model.IgnoreTarget) {

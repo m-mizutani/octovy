@@ -16,7 +16,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 )
 
-func (x *UseCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report) error {
+func (x *UseCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadata, report trivy.Report, cfg model.Config) error {
 	if err := report.Validate(); err != nil {
 		return goerr.Wrap(err, "invalid trivy report")
 	}
@@ -26,6 +26,7 @@ func (x *UseCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadat
 		Timestamp: time.Now().UTC(),
 		GitHub:    meta,
 		Report:    report,
+		Config:    cfg,
 	}
 
 	if x.clients.BigQuery() != nil {
