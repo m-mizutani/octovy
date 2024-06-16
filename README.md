@@ -64,6 +64,42 @@ To run Octovy, set the following environment variables:
 - `OCTOVY_SENTRY_DSN`: The DSN for Sentry
 - `OCTOVY_SENTRY_ENV`: The environment for Sentry
 
+## Configuration
+
+### Ignore list
+
+The developer can ignore specific vulnerabilities by adding them to the ignore list. The config file is written in CUE. See CUE definition in [pkg/domain/model/schema/ignore.cue](pkg/domain/model/schema/ignore.cue).
+
+The config file should be placed in `.octovy` directory at the root of the repository. Octovy checks all files in the `.octovy` directory recursively and loads them. (e.g. `.octovy/ignore.cue`)
+
+The following is an example of the ignore list configuration:
+
+```cue
+package octovy
+
+IgnoreList: [
+	{
+		Target: "Gemfile.lock"
+		Vulns: [
+			{
+				ID:        "CVE-2020-8130"
+				ExpiresAt: "2024-08-01T00:00:00Z"
+				Comment:   "This is not used"
+			},
+		]
+	},
+]
+```
+
+`package` name should be `octovy`. `IgnoreList` is a list of `Ignore` struct.
+
+- `Target` is the file path to ignore. That should be matched `Target` of trivy
+- `Vulns` is a list of `IgnoreVuln` struct.
+  - `ID` (required):  the vulnerability ID to ignore. (e.g. `CVE-2022-2202`)
+  - `ExpiresAt` (required): The expiration date of the ignore. It should be in RFC3339 format. (e.g. `2023-08-01T00:00:00`). The date must be in 90 days and if it's over 90 days, Octovy will ignore it.
+  - `Comment` (optional): The developer's comment
+
+
 ## License
 
 Octovy is licensed under the Apache License 2.0. Copyright 2023 Masayoshi Mizutani <mizutani@hey.com>

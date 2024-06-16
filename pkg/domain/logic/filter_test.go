@@ -162,6 +162,35 @@ func TestFilterResults(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Not ignore vulnerability if expiresAt is too far in the future",
+			results: trivy.Results{
+				{
+					Target: "file2",
+					Vulnerabilities: []trivy.DetectedVulnerability{
+						{VulnerabilityID: "vuln3"},
+					},
+				},
+			},
+			cfg: &model.Config{
+				IgnoreList: []model.IgnoreConfig{
+					{
+						Target: "file2",
+						Vulns: []model.IgnoreVuln{
+							{ID: "vuln1", ExpiresAt: now.AddDate(0, 0, 91)},
+						},
+					},
+				},
+			},
+			expected: trivy.Results{
+				{
+					Target: "file2",
+					Vulnerabilities: []trivy.DetectedVulnerability{
+						{VulnerabilityID: "vuln3"},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
