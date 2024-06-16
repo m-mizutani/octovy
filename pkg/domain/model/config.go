@@ -98,8 +98,8 @@ func LoadConfigsFromDir(path string) (*Config, error) {
 		if info.IsDir() {
 			return nil
 		}
-		if filepath.Ext(filePath) == ".cue" {
-			data, err := os.ReadFile(filePath)
+		if filepath.Ext(filepath.Clean(filePath)) == ".cue" {
+			data, err := os.ReadFile(filepath.Clean(filePath))
 			if err != nil {
 				return goerr.Wrap(err, "failed to read file").With("path", filePath)
 			}
