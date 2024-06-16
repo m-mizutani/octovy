@@ -22,29 +22,14 @@ type IgnoreConfig struct {
 	Vulns  []IgnoreVuln
 }
 
-func (x *IgnoreConfig) Validate() error {
-	for _, v := range x.Vulns {
-		if err := v.Validate(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 type IgnoreVuln struct {
 	ID        string
 	Comment   string
 	ExpiresAt time.Time
 }
 
-func (x *IgnoreVuln) Validate() error {
-	maxExpiresAt := time.Now().Add(time.Hour * 24 * 90)
-	if x.ExpiresAt.After(maxExpiresAt) {
-		return goerr.New("expiresAt is too far in the future, must be within 90 days from now")
-	}
-
-	return nil
+func (x IgnoreVuln) IsActive(now time.Time) bool {
+	return x.ExpiresAt.Before(now) || x.ExpiresAt.After(now.AddDate(0, 0, 90))
 }
 
 func BuildConfig(configData ...[]byte) (*Config, error) {

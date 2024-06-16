@@ -22,7 +22,7 @@ func FilterResults(results trivy.Results, cfg *model.Config, now time.Time) triv
 		}
 
 		for _, vuln := range target.Vulns {
-			if vuln.ExpiresAt.Before(now) || vuln.ExpiresAt.After(now.AddDate(0, 0, 90)) {
+			if vuln.IsActive(now) {
 				continue
 			}
 			ignoreMap[target.Target][vuln.ID] = struct{}{}
