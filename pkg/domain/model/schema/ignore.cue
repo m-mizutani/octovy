@@ -8,9 +8,9 @@ import "time"
 }
 
 #IgnoreVuln: {
-	ID:           string
-	Description?: string
-	ExpiresAt:    time.Time
+	ID:        string
+	Comment?:  string
+	ExpiresAt: time.Time
 }
 
 IgnoreList?: [...#IgnoreConfig]

@@ -19,7 +19,7 @@ func TestIgnoreConfig(t *testing.T) {
 			gt.Equal(t, v.Target, "test.data")
 			gt.A(t, v.Vulns).Length(1).At(0, func(t testing.TB, v model.IgnoreVuln) {
 				gt.Equal(t, v.ID, "CVE-2017-9999")
-				gt.Equal(t, v.Description, "This is test data")
+				gt.Equal(t, v.Comment, "This is test data")
 				gt.Equal(t, v.ExpiresAt.Year(), 2018)
 			})
 		}).

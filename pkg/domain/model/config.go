@@ -33,9 +33,9 @@ func (x *IgnoreConfig) Validate() error {
 }
 
 type IgnoreVuln struct {
-	ID          string
-	Description string
-	ExpiresAt   time.Time
+	ID        string
+	Comment   string
+	ExpiresAt time.Time
 }
 
 func (x *IgnoreVuln) Validate() error {
