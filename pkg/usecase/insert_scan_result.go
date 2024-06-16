@@ -21,12 +21,17 @@ func (x *UseCase) InsertScanResult(ctx context.Context, meta model.GitHubMetadat
 		return goerr.Wrap(err, "invalid trivy report")
 	}
 
+	cfgData, err := json.Marshal(cfg)
+	if err != nil {
+		return goerr.Wrap(err, "failed to marshal config")
+	}
+
 	scan := &model.Scan{
 		ID:        types.NewScanID(),
 		Timestamp: time.Now().UTC(),
 		GitHub:    meta,
 		Report:    report,
-		Config:    cfg,
+		Config:    string(cfgData),
 	}
 
 	if x.clients.BigQuery() != nil {
