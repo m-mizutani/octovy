@@ -78,16 +78,16 @@ The following is an example of the ignore list configuration:
 package octovy
 
 IgnoreList: [
-	{
-		Target: "Gemfile.lock"
-		Vulns: [
-			{
-				ID:        "CVE-2020-8130"
-				ExpiresAt: "2024-08-01T00:00:00Z"
-				Comment:   "This is not used"
-			},
-		]
-	},
+  {
+    Target: "Gemfile.lock"
+    Vulns: [
+      {
+        ID:        "CVE-2020-8130"
+        ExpiresAt: "2024-08-01T00:00:00Z"
+        Comment:   "This is not used"
+      },
+    ]
+  },
 ]
 ```
 
