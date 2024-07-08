@@ -26,8 +26,9 @@ import (
 
 func New() *cli.Command {
 	var (
-		addr      string
-		trivyPath string
+		addr                      string
+		trivyPath                 string
+		disableNoDetectionComment bool
 
 		githubApp    config.GitHubApp
 		bigQuery     config.BigQuery
@@ -49,6 +50,12 @@ func New() *cli.Command {
 			Value:       "trivy",
 			EnvVars:     []string{"OCTOVY_TRIVY_PATH"},
 			Destination: &trivyPath,
+		},
+		&cli.BoolFlag{
+			Name:        "disable-no-detection-comment",
+			Usage:       "Disable comment to PR if no detection",
+			EnvVars:     []string{"OCTOVY_DISABLE_NO_DETECTION_COMMENT"},
+			Destination: &disableNoDetectionComment,
 		},
 	}
 
@@ -109,7 +116,12 @@ func New() *cli.Command {
 
 			clients := infra.New(infraOptions...)
 
-			uc := usecase.New(clients)
+			var ucOptions []usecase.Option
+			if disableNoDetectionComment {
+				ucOptions = append(ucOptions, usecase.WithDisableNoDetectionComment())
+			}
+
+			uc := usecase.New(clients, ucOptions...)
 			s := server.New(uc, server.WithGitHubSecret(githubApp.Secret))
 
 			serverErr := make(chan error, 1)
