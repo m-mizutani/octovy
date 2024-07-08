@@ -73,6 +73,20 @@ func (x *UseCase) CommentGitHubPR(ctx context.Context, input *model.ScanGitHubRe
 		return err
 	}
 
+	if x.disableNoDetectionComment {
+		var fixableVulnCount int
+		for _, result := range report.Results {
+			for _, vuln := range result.Vulnerabilities {
+				if vuln.FixedVersion != "" {
+					fixableVulnCount++
+				}
+			}
+		}
+		if fixableVulnCount == 0 {
+			return nil
+		}
+	}
+
 	if err := x.clients.GitHubApp().CreateIssueComment(ctx, &input.GitHubMetadata.GitHubRepo, input.InstallID, input.PullRequest.Number, body); err != nil {
 		return err
 	}

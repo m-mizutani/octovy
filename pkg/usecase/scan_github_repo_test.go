@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"os"
 	"strconv"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/m-mizutani/octovy/pkg/domain/interfaces"
 	"github.com/m-mizutani/octovy/pkg/domain/mock"
 	"github.com/m-mizutani/octovy/pkg/domain/model"
+	"github.com/m-mizutani/octovy/pkg/domain/model/trivy"
 	"github.com/m-mizutani/octovy/pkg/domain/types"
 	"github.com/m-mizutani/octovy/pkg/infra"
 	"github.com/m-mizutani/octovy/pkg/infra/gh"
@@ -290,6 +292,127 @@ func TestScanGitHubRepoWithPR(t *testing.T) {
 	gt.Equal(t, calledBQInsert, 1)
 	gt.Equal(t, calledMockListIssueComments, 1)
 	gt.Equal(t, calledMockCreateIssueComment, 1)
+	gt.Equal(t, calledMockGHCreateCheckRun, 1)
+	gt.Equal(t, calledMockGHUpdateCheckRun, 1)
+
+	var commitScan *model.Scan
+	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/commit/f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca/scan.json.gz", &commitScan))
+	gt.Equal(t, commitScan.GitHub.Owner, "m-mizutani")
+
+	var branchScan *model.Scan
+	gt.NoError(t, mockStorage.Unmarshal("m-mizutani/octovy/branch/main/scan.json.gz", &branchScan))
+	gt.Equal(t, branchScan.GitHub.Owner, "m-mizutani")
+}
+
+func TestScanGitHubRepoWithPRAndNoComment(t *testing.T) {
+	mockGH := &mock.GitHubMock{}
+	mockHTTP := &httpMock{}
+	mockTrivy := &trivyMock{}
+	mockBQ := &mock.BigQueryMock{}
+	mockStorage := mock.NewStorageMock()
+
+	uc := usecase.New(infra.New(
+		infra.WithGitHubApp(mockGH),
+		infra.WithHTTPClient(mockHTTP),
+		infra.WithTrivy(mockTrivy),
+		infra.WithBigQuery(mockBQ),
+		infra.WithStorage(mockStorage),
+	), usecase.WithDisableNoDetectionComment())
+
+	ctx := context.Background()
+
+	mockHTTP.mockDo = func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(testCodeZip)),
+		}, nil
+	}
+
+	mockTrivy.mockRun = func(ctx context.Context, args []string) error {
+		var report trivy.Report
+		gt.NoError(t, json.Unmarshal(testTrivyResult, &report))
+		report.Results[0].Vulnerabilities[0].FixedVersion = ""
+		newResult := gt.R1(json.Marshal(report)).NoError(t)
+
+		for i := range args {
+			if args[i] == "--output" {
+				fd := gt.R1(os.Create(args[i+1])).NoError(t)
+				gt.R1(fd.Write(newResult)).NoError(t)
+				gt.NoError(t, fd.Close())
+				return nil
+			}
+		}
+		t.Fatalf("no --output option")
+		return nil
+	}
+
+	var calledBQCreateTable int
+	mockBQ.CreateTableFunc = func(ctx context.Context, table types.BQTableID, md *bigquery.TableMetadata) error {
+		calledBQCreateTable++
+		return nil
+	}
+	mockBQ.GetMetadataFunc = func(ctx context.Context, table types.BQTableID) (*bigquery.TableMetadata, error) {
+		return nil, nil
+	}
+	var calledBQInsert int
+	mockBQ.InsertFunc = func(ctx context.Context, tableID types.BQTableID, schema bigquery.Schema, data any) error {
+		calledBQInsert++
+		return nil
+	}
+
+	mockGH.GetArchiveURLFunc = func(ctx context.Context, input *interfaces.GetArchiveURLInput) (*url.URL, error) {
+		u := gt.R1(url.Parse("https://example.com/some/url.zip")).NoError(t)
+		return u, nil
+	}
+	var calledMockListIssueComments int
+	mockGH.ListIssueCommentsFunc = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int) ([]*model.GitHubIssueComment, error) {
+		calledMockListIssueComments++
+		return nil, nil
+	}
+	var calledMockCreateIssueComment int
+	mockGH.CreateIssueCommentFunc = func(ctx context.Context, repo *model.GitHubRepo, id types.GitHubAppInstallID, prID int, body string) error {
+		calledMockCreateIssueComment++
+		return nil
+	}
+	var calledMockGHCreateCheckRun int
+	mockGH.CreateCheckRunFunc = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
+		calledMockGHCreateCheckRun++
+		return 5, nil
+	}
+	var calledMockGHUpdateCheckRun int
+	mockGH.UpdateCheckRunFunc = func(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+		gt.Equal(t, checkID, 5)
+		gt.Equal(t, *opt.Status, "completed")
+		gt.Equal(t, *opt.Conclusion, "success")
+		calledMockGHUpdateCheckRun++
+		return nil
+	}
+
+	gt.NoError(t, uc.ScanGitHubRepo(ctx, &model.ScanGitHubRepoInput{
+		GitHubMetadata: model.GitHubMetadata{
+			GitHubCommit: model.GitHubCommit{
+				GitHubRepo: model.GitHubRepo{
+					RepoID:   12345,
+					Owner:    "m-mizutani",
+					RepoName: "octovy",
+				},
+				CommitID: "f7c8851da7c7fcc46212fccfb6c9c4bda520f1ca",
+				Branch:   "main",
+			},
+			PullRequest: &model.GitHubPullRequest{
+				Number:       123,
+				ID:           12345,
+				BaseBranch:   "main",
+				BaseCommitID: "0f2324c367815ec3d928d21b892ce0ed9963aef3",
+			},
+		},
+		InstallID: 12345,
+	}))
+
+	gt.Equal(t, calledBQCreateTable, 1)
+	gt.Equal(t, calledBQInsert, 1)
+	gt.Equal(t, calledMockListIssueComments, 1)
+	gt.Equal(t, calledMockCreateIssueComment, 0)
 	gt.Equal(t, calledMockGHCreateCheckRun, 1)
 	gt.Equal(t, calledMockGHUpdateCheckRun, 1)
 
