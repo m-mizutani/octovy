@@ -1,8 +1,6 @@
 module github.com/m-mizutani/octovy
 
-go 1.23.8
-
-toolchain go1.24.3
+go 1.24.3
 
 require (
 	cloud.google.com/go/bigquery v1.69.0
