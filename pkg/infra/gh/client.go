@@ -20,13 +20,22 @@ import (
 )
 
 type Client struct {
-	appID types.GitHubAppID
-	pem   types.GitHubAppPrivateKey
+	appID           types.GitHubAppID
+	pem             types.GitHubAppPrivateKey
+	enableCheckRuns bool
 }
 
 var _ interfaces.GitHub = (*Client)(nil)
 
-func New(appID types.GitHubAppID, pem types.GitHubAppPrivateKey) (*Client, error) {
+type ClientOption func(*Client)
+
+func WithEnableCheckRuns(enable bool) ClientOption {
+	return func(c *Client) {
+		c.enableCheckRuns = enable
+	}
+}
+
+func New(appID types.GitHubAppID, pem types.GitHubAppPrivateKey, options ...ClientOption) (*Client, error) {
 	if appID == 0 {
 		return nil, goerr.Wrap(types.ErrInvalidOption, "appID is empty")
 	}
@@ -34,10 +43,16 @@ func New(appID types.GitHubAppID, pem types.GitHubAppPrivateKey) (*Client, error
 		return nil, goerr.Wrap(types.ErrInvalidOption, "pem is empty")
 	}
 
-	return &Client{
+	client := &Client{
 		appID: appID,
 		pem:   pem,
-	}, nil
+	}
+
+	for _, opt := range options {
+		opt(client)
+	}
+
+	return client, nil
 }
 
 func (x *Client) buildGithubClient(installID types.GitHubAppInstallID) (*github.Client, error) {
@@ -268,6 +283,11 @@ const (
 )
 
 func (x *Client) CreateCheckRun(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, commit string) (int64, error) {
+	if !x.enableCheckRuns {
+		utils.CtxLogger(ctx).Debug("GitHub Check Runs are disabled, skipping check run creation")
+		return 0, nil
+	}
+
 	client, err := x.buildGithubClient(id)
 	if err != nil {
 		return 0, err
@@ -292,6 +312,11 @@ func (x *Client) CreateCheckRun(ctx context.Context, id types.GitHubAppInstallID
 }
 
 func (x *Client) UpdateCheckRun(ctx context.Context, id types.GitHubAppInstallID, repo *model.GitHubRepo, checkID int64, opt *github.UpdateCheckRunOptions) error {
+	if !x.enableCheckRuns {
+		utils.CtxLogger(ctx).Debug("GitHub Check Runs are disabled, skipping check run update")
+		return nil
+	}
+
 	client, err := x.buildGithubClient(id)
 	if err != nil {
 		return err
