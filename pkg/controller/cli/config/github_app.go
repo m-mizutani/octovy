@@ -9,9 +9,10 @@ import (
 )
 
 type GitHubApp struct {
-	ID         types.GitHubAppID
-	Secret     types.GitHubAppSecret
-	privateKey types.GitHubAppPrivateKey
+	ID               types.GitHubAppID
+	Secret           types.GitHubAppSecret
+	privateKey       types.GitHubAppPrivateKey
+	EnableCheckRuns  bool
 }
 
 func (x *GitHubApp) Flags() []cli.Flag {
@@ -38,6 +39,13 @@ func (x *GitHubApp) Flags() []cli.Flag {
 			Category:    "GitHub App",
 			Destination: (*string)(&x.Secret),
 			EnvVars:     []string{"OCTOVY_GITHUB_APP_SECRET"},
+		},
+		&cli.BoolFlag{
+			Name:        "github-app-enable-check-runs",
+			Usage:       "Enable GitHub Check Runs creation and updates",
+			Category:    "GitHub App",
+			Destination: &x.EnableCheckRuns,
+			EnvVars:     []string{"OCTOVY_GITHUB_APP_ENABLE_CHECK_RUNS"},
 		},
 	}
 }

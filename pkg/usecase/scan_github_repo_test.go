@@ -165,7 +165,7 @@ func TestScanGitHubRepoWithData(t *testing.T) {
 	privateKey := utils.LoadEnv(t, "TEST_OCTOVY_GITHUB_APP_PRIVATE_KEY")
 
 	appID := gt.R1(strconv.ParseInt(strAppID, 10, 64)).NoError(t)
-	ghApp := gt.R1(gh.New(types.GitHubAppID(appID), types.GitHubAppPrivateKey(privateKey))).NoError(t)
+	ghApp := gt.R1(gh.New(types.GitHubAppID(appID), types.GitHubAppPrivateKey(privateKey), gh.WithEnableCheckRuns(true))).NoError(t)
 
 	uc := usecase.New(infra.New(
 		infra.WithGitHubApp(ghApp),

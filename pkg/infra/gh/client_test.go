@@ -38,7 +38,7 @@ func buildGitHubApp(t *testing.T) (*gh.Client, types.GitHubAppInstallID) {
 	appID := gt.R1(strconv.ParseInt(strAppID, 10, 64)).NoError(t)
 	installID := gt.R1(strconv.ParseInt(strInstallationID, 10, 64)).NoError(t)
 
-	ghApp := gt.R1(gh.New(types.GitHubAppID(appID), types.GitHubAppPrivateKey(privateKey))).NoError(t)
+	ghApp := gt.R1(gh.New(types.GitHubAppID(appID), types.GitHubAppPrivateKey(privateKey), gh.WithEnableCheckRuns(true))).NoError(t)
 
 	return ghApp, types.GitHubAppInstallID(installID)
 }
